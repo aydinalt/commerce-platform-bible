@@ -3,8 +3,10 @@
 - **UX ID:** UX-0007
 - **Title:** Messaging
 - **Status:** Draft
-- **Version:** 0.1
+- **Version:** 0.2
 - **Scope level:** UX behaviour (non-visual, non-technical)
+
+**Revision Note (0.2):** Controlled revision applying Product Owner decisions. Messaging remains intentionally minimal. Behaviour that `PRD-0004` does not own — specifically whether and how a Business responds within Messaging (a two-way exchange) — is not defined here and is preserved as an explicit TODO matching `PRD-0004`.
 
 > This document describes user, screen, and interaction behaviour only. It does not describe visual design (colors, typography, spacing, icons, animations, components) or implementation (HTML, CSS, frameworks, APIs, database, backend, frontend).
 
@@ -12,7 +14,7 @@
 
 ## 1. Purpose
 
-Messaging lets a logged-in User contact and exchange messages with the Business behind an Offering, as part of the Decision capability (`PRD-0004-decision.md`). It presents a conversation list and a conversation detail.
+Messaging lets a logged-in User contact and send messages to the Business behind an Offering, as part of the Decision capability (`PRD-0004-decision.md`). It presents a conversation list and a conversation detail. Whether and how the Business responds is not owned here and is recorded as a TODO (per `PRD-0004`).
 
 ## 2. Business Value
 
@@ -23,17 +25,19 @@ Messaging helps people move a decision forward by reaching the Business behind a
 - A conversation list.
 - A conversation detail.
 - Send message.
-- Receive message.
 - Authentication required.
+
+TODO — receiving messages / Business responses within Messaging are not owned by `PRD-0004-decision.md` (recorded as TODO there); this UX does not define that behaviour.
 
 ## 4. Out of Scope
 
 - Attachments.
 - Read receipts.
 - Typing indicators.
+- Business response workflows (not owned by `PRD-0004`; see TODO in Scope).
 - Any V2 or excluded-scope capability as defined in `V1_SCOPE.md`.
 
-> **Review Note (two-way messaging):** `PRD-0004-decision.md` defines that a User can Contact and send messages to the Business behind an Offering, but leaves "whether and how a Business responds within Messaging" as TODO. This UX brief includes "Receive message" and a conversation detail, which imply a two-way exchange. It is documented here as the approved UX brief; a decision-maker should resolve the corresponding TODO in `PRD-0004`. No decision has been made here.
+> **Review Note (two-way messaging):** `PRD-0004-decision.md` defines that a User can Contact and send messages to the Business behind an Offering, but leaves "whether and how a Business responds within Messaging" as TODO. Per the Product Owner decision, Messaging remains minimal: this UX does not define Business responses or any two-way exchange and preserves the corresponding TODO from `PRD-0004`.
 
 ## 5. Entry Points
 
@@ -47,14 +51,14 @@ Messaging helps people move a decision forward by reaching the Business behind a
 
 ## 7. Screen Overview
 
-Messaging presents a list of conversations and, for a selected conversation, a conversation detail where messages are sent and received.
+Messaging presents a list of conversations and, for a selected conversation, a conversation detail where the User sends messages. Whether the Business responds within the conversation is not defined here (TODO, per `PRD-0004`).
 
 ## 8. Screen Behaviour
 
 - The conversation list shows the User's conversations.
-- The conversation detail shows the messages in a selected conversation and lets the User send a message.
+- The conversation detail shows the messages the User has sent in a selected conversation and lets the User send a message.
 - A message about an Offering is directed to that Offering's owning Business (per `PRD-0004-decision.md`).
-- Received messages appear in the conversation detail. TODO — how and when a Business responds is undefined (see Review Note).
+- TODO — whether and how a Business responds, and whether received messages appear, are not owned by `PRD-0004` and are not defined here.
 
 ## 9. User Actions
 
@@ -65,7 +69,7 @@ Messaging presents a list of conversations and, for a selected conversation, a c
 ## 10. System Responses
 
 - Sending a message adds it to the conversation, directed to the Offering's owning Business.
-- Received messages appear in the relevant conversation.
+- TODO — receiving messages or Business responses are not owned by `PRD-0004` and are not defined here.
 
 ## 11. Validation Behaviour (Product level)
 
@@ -89,8 +93,8 @@ Messaging presents a list of conversations and, for a selected conversation, a c
 Per `PRD-0003-identity.md` and `PRD-0004-decision.md`:
 
 - **Guest** — cannot send messages; attempting to message routes to Authentication (see `UX-0008`).
-- **User** — can send and receive messages.
-- **Business** — as the recipient, receives messages about its Offerings. TODO — how a Business responds within Messaging is undefined (see Review Note).
+- **User** — can send messages. TODO — receiving Business responses is not owned by `PRD-0004` and is not defined here.
+- **Business** — as the recipient, receives messages about its Offerings. TODO — whether and how a Business responds within Messaging is not owned by `PRD-0004` and is not defined here.
 
 ## 16. Accessibility Notes
 
@@ -129,6 +133,6 @@ Scenario: No attachments, read receipts, or typing indicators
 
 ## 19. Open Questions (TODO only)
 
-- TODO — Resolve whether and how a Business responds within Messaging, per the `PRD-0004` TODO. (Section 4)
+- TODO — Whether and how a Business responds within Messaging is not owned by `PRD-0004` and remains undefined; resolve it in `PRD-0004` before defining it here. (Sections 3, 4, 8, 10, 15)
 - TODO — Define message content constraints. (Section 11)
 - TODO — Define empty, loading, and error behaviour. (Sections 12–14)

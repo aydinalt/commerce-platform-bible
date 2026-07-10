@@ -3,8 +3,10 @@
 - **UX ID:** UX-0008
 - **Title:** Authentication
 - **Status:** Draft
-- **Version:** 0.1
+- **Version:** 0.2
 - **Scope level:** UX behaviour (non-visual, non-technical)
+
+**Revision Note (0.2):** Controlled revision applying Product Owner decisions. This UX no longer defines behaviour beyond `PRD-0003`. Email verification is not defined here, and no behaviour assuming a completed email-verification flow remains. Where `PRD-0003` intentionally leaves behaviour undecided (registration fields, recovery method, email verification), explicit TODOs are recorded instead of UX behaviour.
 
 > This document describes user, screen, and interaction behaviour only. It does not describe visual design (colors, typography, spacing, icons, animations, components) or implementation (HTML, CSS, frameworks, APIs, database, backend, frontend).
 
@@ -12,7 +14,7 @@
 
 ## 1. Purpose
 
-Authentication lets a person register, log in, log out, reset a password, and verify their email, and it returns a person to an interrupted action after they authenticate, as governed by `PRD-0003-identity.md`.
+Authentication lets a person register, log in, log out, and reset a password, and it returns a person to an interrupted action after they authenticate, as governed by `PRD-0003-identity.md`.
 
 ## 2. Business Value
 
@@ -24,21 +26,23 @@ Authentication happens only when necessary, so Guests can experience the platfor
 - Login.
 - Logout.
 - Password Reset.
-- Email verification.
 - Return-to-action flow after successful authentication.
+
+TODO — email verification, registration fields, and the password-reset recovery method are undecided in `PRD-0003-identity.md`; this UX does not define them and records them as TODOs.
 
 ## 4. Out of Scope
 
 - Social login.
+- Email verification behaviour (undecided in `PRD-0003`; recorded as a TODO, not defined here).
 - Any V2 or excluded-scope capability as defined in `V1_SCOPE.md`.
 
-> **Review Note (email verification and registration fields):** `PRD-0003-identity.md` marks the registration identifiers/fields and the password-reset recovery method as TODO, and does not define email verification. This UX brief introduces Email verification and implies email-based registration. It is documented here as the approved UX brief; a decision-maker should reconcile it into `PRD-0003` (registration fields and recovery method). No decision has been made here.
+> **Review Note (registration fields, recovery method, email verification):** `PRD-0003-identity.md` marks the registration identifiers/fields and the password-reset recovery method as TODO and does not define email verification. Per the Product Owner decision, this UX does not define behaviour beyond `PRD-0003`: it defines no email-verification flow and records the undecided items as TODOs. Any such behaviour must first be defined in `PRD-0003`.
 
 ## 5. Entry Points
 
 - A Guest attempting a restricted action (for example revealing a Business phone number, using Favorites, Contacting/messaging) is routed here (see `UX-0003`, `UX-0004`, `UX-0007`).
 - A person choosing to Register or Login directly.
-- A person following a Password Reset or Email verification step.
+- A person following a Password Reset step.
 
 ## 6. Exit Points
 
@@ -48,15 +52,14 @@ Authentication happens only when necessary, so Guests can experience the platfor
 
 ## 7. Screen Overview
 
-Authentication presents Register, Login, Logout, Password Reset, and Email verification, and manages the return-to-action flow that resumes an interrupted action after success.
+Authentication presents Register, Login, Logout, and Password Reset, and manages the return-to-action flow that resumes an interrupted action after success.
 
 ## 8. Screen Behaviour
 
-- Register creates a User account. TODO — the specific registration fields are undefined (`PRD-0003`).
+- Register creates a User account. TODO — the specific registration fields are undefined (`PRD-0003`), and whether email verification is part of registration is undecided (`PRD-0003`); neither is defined here.
 - Login authenticates a User.
 - Logout ends the session and returns the person to Guest-level abilities.
 - Password Reset lets a User set a new password through a recovery process. TODO — the recovery method is undefined (`PRD-0003`).
-- Email verification confirms the person's email. TODO — the exact verification behaviour is undefined (`PRD-0003`).
 - Return-to-action: when authentication was triggered by a restricted action, success returns the person to that action.
 
 ## 9. User Actions
@@ -65,7 +68,6 @@ Authentication presents Register, Login, Logout, Password Reset, and Email verif
 - Log in.
 - Log out.
 - Request and complete a Password Reset.
-- Complete Email verification.
 
 ## 10. System Responses
 
@@ -76,7 +78,7 @@ Authentication presents Register, Login, Logout, Password Reset, and Email verif
 ## 11. Validation Behaviour (Product level)
 
 - Restricted actions are only completed for a logged-in User; Guests are routed here first (per `PRD-0003-identity.md`).
-- TODO — field-level validation for Register, Login, Password Reset, and Email verification is undefined, because the registration fields and recovery method are TODO in `PRD-0003`.
+- TODO — field-level validation for Register, Login, and Password Reset is undefined, because the registration fields and recovery method are TODO in `PRD-0003`.
 
 ## 12. Empty States
 
@@ -88,7 +90,7 @@ Authentication presents Register, Login, Logout, Password Reset, and Email verif
 
 ## 14. Error States
 
-- TODO — behaviour for failed Login, failed Register, failed Password Reset, and failed Email verification is not defined by approved decisions.
+- TODO — behaviour for failed Login, failed Register, and failed Password Reset is not defined by approved decisions.
 
 ## 15. Permissions
 
@@ -100,7 +102,7 @@ Per `PRD-0003-identity.md`:
 
 ## 16. Accessibility Notes
 
-- At the product level, Register, Login, Logout, Password Reset, and Email verification must be operable without a mouse and perceivable by assistive technology; the return-to-action flow must preserve context.
+- At the product level, Register, Login, Logout, and Password Reset must be operable without a mouse and perceivable by assistive technology; the return-to-action flow must preserve context.
 - TODO — detailed accessibility acceptance criteria are not defined by approved decisions.
 
 ## 17. Related PRDs
@@ -139,7 +141,7 @@ Scenario: No social login
 
 ## 19. Open Questions (TODO only)
 
-- TODO — Define the registration fields and reconcile Email verification into `PRD-0003`. (Sections 4, 8, 11)
+- TODO — Registration fields, email verification, and the recovery method are undefined in `PRD-0003`; this UX records them as TODO and defines no behaviour for them until `PRD-0003` defines them. (Sections 3, 4, 8, 11)
 - TODO — Define the password-reset recovery method. (Section 8)
 - TODO — Define error behaviour for each authentication step. (Section 14)
 - TODO — Define loading behaviour. (Section 13)

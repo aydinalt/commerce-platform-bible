@@ -3,12 +3,14 @@
 - **PRD ID:** PRD-0004
 - **Title:** Decision
 - **Status:** Draft
-- **Version:** 0.3
+- **Version:** 0.4
 - **Scope level:** Product behaviour (non-technical)
 
 **Revision Note (0.2):** Decision Chat is now owned by the Decision capability and integrated into this PRD as an assistive capability, per accepted architecture. The prior exclusion of the Decision Assistant / assistive AI has been removed. Decision Chat is assistive only — it helps a person reach a decision and never decides for them or acts on their behalf — consistent with the Frozen Foundation (`V1_SCOPE.md`).
 
 **Revision Note (0.3):** Per Product Owner clarification, Decision Chat login gating is intentionally undecided. This revision neither asserts nor denies Guest access to Decision Chat; every Guest permission regarding Decision Chat is recorded as a TODO pending a Product Owner decision.
+
+**Revision Note (0.4):** Ownership correction (superseding revision). The Product Owner decision that a person may compare a maximum of five Offerings simultaneously is now owned here, in the Decision PRD that owns the Compare capability. Comparison beyond five Offerings is outside V1 scope. This corrects a rule previously recorded only in `UX-0004`; no other change is made.
 
 > This document describes product behaviour only. It describes Decision Chat only as assistive product behaviour; it does not describe APIs, databases, frameworks, AI implementation, ranking algorithms, recommendation engines, storage, security, or frontend implementation.
 
@@ -81,6 +83,7 @@ Only approved behaviour is included.
 7. A decision reaches Completion through the completion flow (Affiliate / Contact → Completion, per `V1_SCOPE.md`).
 8. Decision Chat is assistive only: it helps a person reach a decision and never makes the decision for them or acts on their behalf.
 9. Within the decision flow, Decision Chat follows Compare and precedes the Affiliate / Contact handoff (per the core flow in `V1_SCOPE.md`).
+10. A person may compare a maximum of five Offerings simultaneously; comparison beyond five Offerings is outside V1 scope.
 
 ## 7. User Behaviour
 
@@ -210,6 +213,7 @@ Product behaviour only.
 11. A person can use Decision Chat as an assistive aid to help reach a decision.
 12. Decision Chat is assistive only; it supports the person and never decides for them or acts on their behalf.
 13. Admin can moderate Decision-related content after it exists.
+14. A person may compare at most five Offerings simultaneously; comparison beyond five Offerings is outside V1 scope.
 
 ## 12. Non-functional Requirements
 
