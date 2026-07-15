@@ -3,10 +3,12 @@
 - **PRD ID:** PRD-0001
 - **Title:** Offering
 - **Status:** Approved
-- **Version:** 1.0
+- **Version:** 1.1
 - **Scope level:** Product behaviour (non-technical)
 
 > This is the first Product Requirements Document of the project and the authoritative definition of the universal Offering model. It describes product behaviour only. It does not describe APIs, database tables, frameworks, backend architecture, frontend implementation, validation rules, storage, or security implementation.
+
+**Revision Note (1.1):** Controlled revision reconciling Offering-removal terminology with the Baseline Story architecture (`US-0001-offering.md`). The Business capability previously worded as "delete" is now worded as "retire" — taking an owned Offering out of active circulation through the Offering lifecycle, not permanent deletion — consistent with the Archived state already defined in §6 ("an Offering retired from active use"). No lifecycle state, transition, or new behaviour was added; the undecided consequences of retirement (resulting state, reversibility/restore, post-retirement visibility) are recorded as Open Questions in §16, owned by this PRD.
 
 ---
 
@@ -89,7 +91,7 @@ What each role can do with Offerings. Permissions are referenced from already-ap
 
 - **Guest** — may search, browse, filter, compare, and view Offering details. A Guest cannot perform login-gated actions such as Contact or Favorites, per PRD-0003.
 - **User** — may do everything a Guest can, and may additionally perform login-gated actions on Offerings, such as favouriting an Offering or contacting the Business behind an Offering, per PRD-0003.
-- **Business** — a User acting in the context of an owned Business may create, edit, and delete Offerings it owns, publish Offerings, and view its dashboard, per the PRD-0003 permissions matrix. Every Offering a Business publishes belongs to exactly one Business.
+- **Business** — a User acting in the context of an owned Business may create, edit, and retire Offerings it owns, publish Offerings, and view its dashboard, per the PRD-0003 permissions matrix. Every Offering a Business publishes belongs to exactly one Business.
 - **Admin** — moderates Offerings and their content after they exist (moderation happens afterwards). TODO — Admin abilities over Offerings beyond post-hoc moderation (for example whether Admin may Hide or Archive an Offering) are not defined by approved decisions and must not be assumed.
 
 # 9. State Transitions
@@ -147,7 +149,7 @@ Completion
 1. A Business creates one or more Offerings, each beginning as a Draft.
 2. The Business edits Offerings it owns.
 3. The Business publishes Offerings it owns (Draft → Published).
-4. The Business may delete Offerings it owns.
+4. The Business may retire Offerings it owns — taking them out of active circulation through the Offering lifecycle, not permanently deleting them (see Requirement 8 in Section 11 and Section 16).
 5. TODO — flows involving Hidden or Archived states depend on the transitions marked TODO in Section 9.
 
 # 11. Functional Requirements
@@ -161,7 +163,7 @@ Product behaviour only.
 5. A Business may own multiple Offerings.
 6. A Business can create an Offering, which begins as a Draft.
 7. A Business can edit an Offering it owns.
-8. A Business can delete an Offering it owns.
+8. A Business can retire an Offering it owns — taking it out of active circulation through the Offering lifecycle, rather than permanently deleting it. TODO — the resulting lifecycle state of a retired Offering (including any relationship to the Archived state, Section 6), whether retirement is reversible (restore), and a retired Offering's visibility in Discovery are not defined by approved decisions and are owned by this PRD (see Sections 6, 9, and 16).
 9. A Business can publish an Offering, moving it from Draft to Published.
 10. A Published Offering is available to Discovery.
 11. Discovery operates on Offerings through search, browse, and filter by Attributes.
@@ -258,6 +260,7 @@ No Architecture Decision Records are linked from this product document. ADR refe
 
 - TODO — Define the product behaviour of the Hidden state. (Section 6)
 - TODO — Define the product behaviour of the Archived state. (Section 6)
+- TODO — Define the product behaviour of Offering Retirement: the lifecycle state a retired Offering enters (including any relationship to the Archived state), whether retirement is reversible (restore), and a retired Offering's visibility in Discovery. (Sections 6, 8, 9, 11)
 - TODO — Define all lifecycle transitions other than Draft → Published. (Section 9)
 - TODO — Define whether Admin may Hide or Archive an Offering, and any other Admin abilities over Offerings beyond post-hoc moderation. (Section 8)
 - TODO — Confirm domain naming alignment: the inputs reference "Vehicle" and "Electronics" while `V1_SCOPE.md` names the V1 domains "Mobility" and "Technology." (Section 3)
