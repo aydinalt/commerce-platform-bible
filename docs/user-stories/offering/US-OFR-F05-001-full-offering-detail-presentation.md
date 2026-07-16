@@ -4,6 +4,8 @@
 
 > **Revision Note (0.2):** Controlled revision implementing Accepted `ADR-0002-offering-presentation-capability.md` (v1.0). The inferred Capability value `Representation (presented to a viewer)` is replaced by **Presentation**, consumed by reference from the authoritative `OFFERING_CAPABILITY_ARCHITECTURE.md` under the Accepted ADR-0002 decision; the §6 Capability reference row is updated accordingly. No Story behaviour changed: Story ID, title, Epic, Feature ID `F05`, viewer perspective, Purpose, Business Value, Description, Acceptance Criteria, BDD, Dependencies, Out of Scope, UX-owned TODOs, Story Size, and Delivery Status are unchanged, and UX-0003 TODOs are not resolved.
 
+> **Revision Note (1.0):** Owner-approved Golden Baseline transition. The F05 Golden Freeze Review passed with no blocking findings, and the Product Owner / Architecture Owner explicitly approved this Story. The lifecycle transitions were performed sequentially — Draft → In Review → Approved → Frozen — and the final repository designation is **Golden Baseline** (the repository designation corresponding to the canonical lifecycle state Frozen). Version advanced to 1.0 upon first Approval; Delivery Status remains Not Started. No Story behaviour, Acceptance Criterion, BDD scenario, TODO, dependency, scope boundary, identifier, Capability, Feature, Epic, PRD, UX, or ADR decision changed.
+
 ## 1. Metadata
 
 | Field | Value |
@@ -20,11 +22,11 @@
 | Perspective | Viewer — Guest / User (Decision Journey as owned by `glossary.md`) |
 | Behaviour Owner | `PRD-0001-offering.md` |
 | Experience Owner | `UX-0003-offering-detail.md` |
-| Status | Draft |
+| Status | Golden Baseline (canonical lifecycle state: Frozen) |
 | Delivery Status | Not Started |
 | Story Size | M |
-| Version | 0.2 |
-| Last Updated | 2026-07-15 |
+| Version | 1.0 |
+| Last Updated | 2026-07-16 |
 
 ---
 

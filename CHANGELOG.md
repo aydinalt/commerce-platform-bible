@@ -21,6 +21,25 @@ This project follows the principles of:
 
 ---
 
+## [1.6.0] - 2026-07-16
+
+### Added
+
+#### Golden Baseline Story
+- US-OFR-F05-001 — Full Offering Detail Presentation — Version 1.0, Status: Golden Baseline
+
+### Story Generation Progress
+
+- Offering Presentation (US-0001 Offering) — **Epic complete**:
+  - F05 — Full Offering Detail Presentation (US-OFR-F05-001) — Golden Baseline
+
+### Milestone
+
+- US-OFR-F05-001 review pipeline completed: Architecture Review → ADR-0002 Accepted → Coordinated Controlled Revisions → Final Story Validation → Parent Story Document Reconciliation → Golden Freeze Review → Product Owner / Architecture Owner Approval → Golden Baseline.
+- Offering Presentation Epic complete.
+
+---
+
 ## [1.5.0] - 2026-07-11
 
 ### Added
