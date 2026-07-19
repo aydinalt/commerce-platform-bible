@@ -1,8 +1,8 @@
 <!--
 Owner:        Architecture Owner
 Status:       Living
-Version:      2.7
-Last Updated: 2026-07-11
+Version:      2.8
+Last Updated: 2026-07-18
 
 Purpose:
 Defines the strategic execution roadmap for Commerce Platform Bible.
@@ -110,6 +110,7 @@ Release
 | M1 Documentation Foundation | ✅ Completed |
 | M2 UX Layer | ✅ Completed |
 | Capability Architecture Layer | ✅ Completed |
+| Offering Capability & Story Reconciliation | ✅ Completed |
 | Offering Pilot | 🚧 In Progress |
 | M3 User Story Layer | 🚧 In Progress |
 | M4 Engineering Standards | ⏳ Planned |
@@ -122,19 +123,25 @@ Release
 
 # Current Position (WE ARE HERE)
 
-The repository completed its **Governance phase** (REPOSITORY_GOVERNANCE.md and USER_STORY_HANDBOOK.md — Baseline v1.0) and is now in **Product Story Generation**.
+The repository completed its **Governance phase** (REPOSITORY_GOVERNANCE.md and USER_STORY_HANDBOOK.md — Baseline v1.0) and is in **Product Story Generation**.
+
+The **Offering Capability & Story Reconciliation** package is now **complete and closed**.
 
 **Offering Authoring (US-0001 Offering) — ✅ COMPLETED**
 
 - ✅ Offering Creation (F01) — US-OFR-F01-001 — Golden Baseline
 - ✅ Offering Editing (F02) — US-OFR-F02-001 — Golden Baseline
-- ✅ Offering Retirement (F03) — US-OFR-F03-001 — Golden Baseline
+- ✅ Offering Retirement (F03) — US-OFR-F03-001 — Frozen v1.0 Golden Baseline
 
 **Offering Publication (US-0001 Offering) — ✅ COMPLETED**
 
-- ✅ Offering Publication (F04) — US-OFR-F04-001 — Golden Baseline (Draft → Published)
+- ✅ Offering Publication (F04) — US-OFR-F04-001 — Frozen v1.0 Golden Baseline (Draft → Published)
 
-The next Epic is **Offering Presentation**.
+**Offering Presentation (US-0001 Offering) — ✅ COMPLETED**
+
+- ✅ Full Offering Detail Presentation (F05) — US-OFR-F05-001 — Golden Baseline
+
+Work advances to the next Story Document in the established `US-0001 … US-0006` sequence — **US-0002 Discovery**.
 
 ---
 
@@ -191,6 +198,41 @@ Success:
 
 ---
 
+## Offering Capability & Story Reconciliation
+Status: ✅ Completed
+
+Objective:
+- Decide and record the authoritative Offering-domain Feature → Capability associations, and reconcile the affected Golden Baseline Stories through controlled superseding revisions.
+
+Completed Deliverables:
+- ✅ ADR-0003 decision and acceptance — Accepted v1.0
+  - ✅ F01 → Creation accepted and recorded
+  - ✅ F03 → Lifecycle accepted and recorded
+  - ✅ F04 → Lifecycle accepted and recorded
+- ✅ OFFERING_CAPABILITY_ARCHITECTURE.md validation, Architecture Review, Final Review, approval, and freeze — Frozen v1.0 (authoritative Offering Capability Architecture baseline)
+- ✅ F03 controlled revision validation
+- ✅ F03 Architecture Review
+- ✅ F03 Final Review
+- ✅ F03 approval and freeze at v1.0 — US-OFR-F03-001 Frozen v1.0 Golden Baseline
+- ✅ F04 controlled revision validation
+- ✅ F04 Architecture Review
+- ✅ F04 Final Review
+- ✅ F04 approval and freeze at v1.0 — US-OFR-F04-001 Frozen v1.0 Golden Baseline
+- ✅ Epic–Capability conflict assessment — verdict **NO NORMATIVE CONFLICT**
+- ✅ Offering architecture and Story reconciliation package closure
+
+Preserved / Carried Forward:
+- ⏸ F02 — Offering Editing: capability home **Not Yet Decided**, decision status **Deferred**; not recorded as an association (Deferred is a decision status, not a Capability). A future architecture decision is required.
+- 📌 Optional `USER_STORY_HANDBOOK.md` terminology clarification (architectural Capability vs Epic delivery grouping) — non-blocking future maintenance.
+- 📌 F05 → Presentation remains accepted and recorded under ADR-0002.
+- 📌 The F03 and F04 v0.1 Frozen Golden Baselines remain preserved as historical superseded baselines.
+- 📌 No traceability.md update required — Feature → Capability associations are owned by OFFERING_CAPABILITY_ARCHITECTURE.md, not by traceability.md.
+
+Success:
+- Authoritative Feature → Capability associations recorded in a Frozen baseline, with affected Stories reconciled and no Story behaviour, Acceptance Criteria, BDD, scope, dependencies, Feature IDs, Feature names, PRD/UX meaning, Story Size, Delivery Status, or TODOs changed.
+
+---
+
 ## Offering Pilot
 Status: 🚧 In Progress
 
@@ -212,12 +254,14 @@ Deliverables:
 - USER_STORY_HANDBOOK — ✅ Baseline (v1.0)
 - ENGINEERING_CONSTITUTION — 🚧 In Progress
 - US-0001 … US-0006 — 🚧 In Progress (Product Story Generation)
-  - Offering Authoring: ✅ **Epic complete** — F01 Offering Creation (US-OFR-F01-001), F02 Offering Editing (US-OFR-F02-001), F03 Offering Retirement (US-OFR-F03-001), all Golden Baseline
-  - Offering Publication: ✅ **Epic complete** — F04 Offering Publication (US-OFR-F04-001), Golden Baseline (Draft → Published)
-  - Offering Presentation: ⏳ Next Epic
+  - Offering Authoring: ✅ **Epic complete** — F01 Offering Creation (US-OFR-F01-001), F02 Offering Editing (US-OFR-F02-001), F03 Offering Retirement (US-OFR-F03-001, Frozen v1.0), all Golden Baseline
+  - Offering Publication: ✅ **Epic complete** — F04 Offering Publication (US-OFR-F04-001, Frozen v1.0), Golden Baseline (Draft → Published)
+  - Offering Presentation: ✅ **Epic complete** — F05 Full Offering Detail Presentation (US-OFR-F05-001), Golden Baseline
+  - US-0002 Discovery: ⏳ Next in the established `US-0001 … US-0006` sequence
 
 Supporting Baseline:
 - REPOSITORY_GOVERNANCE — ✅ Baseline (v1.0); Story Domain Code Registry established
+- OFFERING_CAPABILITY_ARCHITECTURE — ✅ Frozen v1.0; authoritative Feature → Capability registry
 
 Exit:
 - Handbook Frozen ✅
@@ -381,7 +425,7 @@ The repository is considered complete when:
 | Capability Architecture | ██████████ 100% |
 | PRD | ██████████ 100% |
 | UX | ██████████ 100% |
-| User Stories | █████░░░░░ 48% |
+| User Stories | ██████░░░░ 55% |
 | Engineering | ░░░░░░░░░░ 0% |
 | Development | ░░░░░░░░░░ 0% |
 
@@ -399,3 +443,4 @@ The repository is considered complete when:
 | 2.5 | 2026-07-11 | Advanced the Current Position within Product Story Generation: Offering Authoring F01 (US-OFR-F01-001) and F02 (US-OFR-F02-001) recorded as Golden Baseline, F03 Offering Retirement marked Next; updated M3 deliverable states and the progress dashboard. No milestone order, gates, dates, or ownership changed. |
 | 2.6 | 2026-07-11 | Marked the Offering Authoring Epic COMPLETED (F01, F02, F03 all Golden Baseline; F03 = US-OFR-F03-001); updated the Current Position (WE ARE HERE) and M3 detail to show Offering Publication as the next Epic; updated the progress dashboard. No milestone order, gates, dates, or ownership changed. |
 | 2.7 | 2026-07-11 | Marked the Offering Publication Epic COMPLETED (F04 = US-OFR-F04-001, Golden Baseline, Draft → Published); updated the Current Position (WE ARE HERE) and M3 detail to show Offering Presentation as the next Epic; updated the progress dashboard. No milestone order, gates, dates, or ownership changed. |
+| 2.8 | 2026-07-18 | Recorded the **Offering Capability & Story Reconciliation** milestone as Completed: ADR-0003 decision and acceptance (F01 → Creation, F03 → Lifecycle, F04 → Lifecycle); OFFERING_CAPABILITY_ARCHITECTURE.md validation, review, approval, and freeze at v1.0; F03 and F04 controlled-revision validation, Architecture Review, Final Review, approval, and freeze at v1.0; Epic–Capability conflict assessment with verdict NO NORMATIVE CONFLICT; package closure. Preserved F02 as Deferred / Not Yet Decided, the optional USER_STORY_HANDBOOK terminology clarification as non-blocking future maintenance, F05 → Presentation under ADR-0002, the preserved v0.1 Frozen baselines, and the absence of any required traceability.md change. Updated the Current Position and M3 detail to show the next Story Document in the established `US-0001 … US-0006` sequence, and refreshed the progress dashboard. No implementation or development work marked complete; no unrelated Story marked complete; no milestone order, gates, dates, or ownership changed. |

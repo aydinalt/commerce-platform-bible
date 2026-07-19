@@ -1,9 +1,9 @@
 # Offering Capability Architecture
 
 - **Owner:** Product Owner / Architecture Owner
-- **Status:** Draft
-- **Version:** 0.6
-- **Last Updated:** 2026-07-15
+- **Status:** Frozen
+- **Version:** 1.0
+- **Last Updated:** 2026-07-18
 
 **Revision Note (0.2):** Controlled revision. Removed engineering-specific philosophy from Learning & Evolution (architecture-only). Epic is now referenced only and its ownership left with `USER_STORY_HANDBOOK.md` (no redefinition). Feature clarified as a structural decomposition unit owned here, explicitly excluding planning, prioritization, sequencing, estimation, and sprint planning.
 
@@ -14,6 +14,14 @@
 **Revision Note (0.5):** Controlled revision implementing Accepted `ADR-0002-offering-presentation-capability.md` (v1.0). (1) §6 Capability Map adds **Presentation** — the capability by which a complete Offering is presented to a viewer — with behaviour referenced to `PRD-0001-offering.md` and primary experience `UX-0003-offering-detail.md`; the Representation entry is unchanged, preserving the descriptor-structuring vs full-presentation distinction. (2) §7 extends the existing authoritative Feature Registry with a recorded Feature → Capability association for `F05 → Presentation` only; F01–F05 Feature IDs and names are unchanged, no new Feature or Feature ID is allocated, F01–F04 capability associations are not decided here (and are not marked "Unresolved"), and no separate "Feature-to-Capability Registry" artifact is created. No behaviour, PRD scope, UX behaviour, or Story is defined or redefined; the Presentation boundaries against adjacent capabilities are recorded in `ADR-0002` §5 and referenced here, not restated. Status remains Draft.
 
 **Revision Note (0.6):** Controlled revision. §2 Scope now explicitly records this document as the Single Information Owner of **authoritative Offering-domain Feature → Capability associations**, recorded in the authoritative Feature Registry (§7). Feature ID allocation remains a separate, existing ownership responsibility, listed distinctly in §2; the two responsibilities are kept distinct. This ownership does not extend to Feature behaviour, Story ownership, Acceptance Criteria, BDD, planning, prioritization, sequencing, estimation, sprint planning, or implementation. No Feature behaviour, Story ownership, planning concern, implementation concern, Capability, Feature, Feature ID, or accepted association changed; the Presentation definition, the Representation definition, their distinction, the accepted `F05 → Presentation` association, the undecided F01–F04 capability associations, the F02 deferral, the Feature IDs `F01`–`F05` and all Feature names, all existing Capabilities, all PRD and UX ownership boundaries, the authoritative Feature Registry, and its Recorded Feature → Capability associations subsection are all preserved. Status remains Draft.
+
+**Revision Note (0.7):** Controlled revision implementing Accepted `ADR-0003-offering-feature-capability-associations.md` (v1.0). The §7 "Recorded Feature → Capability associations" subsection is extended to record the newly accepted associations `F01 → Creation`, `F03 → Lifecycle`, and `F04 → Lifecycle` (Decided by `ADR-0003`, Accepted). The existing `F05 → Presentation` association (Decided by `ADR-0002`, Accepted) is preserved unchanged. `F02` — Offering Editing is **not** recorded: its capability home is **Not Yet Decided** and its decision status is **Deferred** (per `ADR-0003` §2 and §8; originally deferred by `ADR-0002` §9); Deferred is a decision status, not a Capability, and F02's absence from the recorded associations means its association is not yet decided, not "Unresolved." This revision records associations only (reference recording): it defines or redefines no capability, alters no capability boundary, changes no Feature definition, Feature ID, or Feature name, resolves nothing for F02, edits no Story, PRD, or UX, and creates no ADR. Status remains Draft.
+
+**Review Entry Note (0.7):** Entered formal review following completion of the ADR-0003 association recording, final validation, and the §11 reference correction. No Capability, Feature, Feature ID, Feature → Capability association, ownership boundary, PRD/UX/Story meaning, or architectural decision changed during this lifecycle transition.
+
+**Approval Note (1.0):** Approved by the Product Owner / Architecture Owner following successful completion of the formal Architecture Review and Final Review. The approval establishes the first Approved baseline at v1.0. No Capability, Capability definition, Capability boundary, Feature, Feature ID, Feature → Capability association, ownership boundary, PRD/UX/Story meaning, or architectural decision changed during this lifecycle transition.
+
+**Freeze Note (1.0):** Frozen by the Product Owner / Architecture Owner after formal review, Final Review, and explicit approval. This document is now the authoritative Offering Capability Architecture v1.0 baseline. Future changes must re-enter the controlled document lifecycle through a superseding revision; the Frozen baseline must not be edited in place. No Capability, Capability definition, Capability boundary, Feature, Feature ID, Feature → Capability association, ownership boundary, PRD/UX/Story meaning, or architectural decision changed during this lifecycle transition.
 
 > The architectural capability model for the universal Offering. It defines the capabilities that the Offering is composed of, their independence, and their boundaries. It sits between the Foundation and the PRD layer and is technology-independent. It defines no business rules, no user experience, and no implementation; those are owned by the layers below it and are referenced here, never redefined.
 
@@ -153,9 +161,12 @@ This is part of the authoritative Feature Registry above (it is not a separate r
 
 | Feature ID | Feature | Capability | Decided by |
 |------------|---------|------------|------------|
+| `F01` | Offering Creation | Creation | `ADR-0003-offering-feature-capability-associations.md` (Accepted) |
+| `F03` | Offering Retirement | Lifecycle | `ADR-0003-offering-feature-capability-associations.md` (Accepted) |
+| `F04` | Offering Publication | Lifecycle | `ADR-0003-offering-feature-capability-associations.md` (Accepted) |
 | `F05` | Full Offering Detail Presentation | Presentation | `ADR-0002-offering-presentation-capability.md` (Accepted) |
 
-`F01`–`F04` capability associations are not decided by this revision and remain outside its scope; `F02` — Offering Editing has no authoritatively supported capability home and is deferred to a separate decision (see `ADR-0002` §9). No Feature or Feature ID is added or changed by this subsection.
+`F02` — Offering Editing is **not** part of the recorded Feature → Capability associations above. Its **capability home is Not Yet Decided** and its **decision status is Deferred** (see `ADR-0003` §2 and §8; originally deferred by `ADR-0002` §9). Deferred is a decision status, not a Capability; consistent with the paragraph above, F02's absence from this list means its association is not yet decided, not "Unresolved." No Feature or Feature ID is added or changed by this subsection; recording `F01`, `F03`, and `F04` adds Feature → Capability associations only.
 
 ## 8. Decision Analysis vs Decision Support
 
@@ -189,6 +200,7 @@ For the authoritative statement of what is in and out of V1, refer to `V1_SCOPE.
 - `PRD-0001-offering.md` through `PRD-0006-platform.md` — the owners of capability behaviour.
 - `ADR-0001-decision-chat-ownership.md` — the ownership of Decision Support (Decision Chat).
 - `ADR-0002-offering-presentation-capability.md` — the introduction of the Presentation capability and the `F05 → Presentation` association.
+- `ADR-0003-offering-feature-capability-associations.md` — the Accepted decision recording the `F01 → Creation`, `F03 → Lifecycle`, and `F04 → Lifecycle` associations, with `F02` remaining Deferred.
 - `USER_STORY_HANDBOOK.md` — the definition of Epic and the User Story standards.
 - `glossary.md` — defined terms (Offering, Attribute, Category, Decision Chat, and others).
 - Governance: `REPOSITORY_GOVERNANCE.md`, `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, `ADR_PROCESS.md`.

@@ -14,15 +14,24 @@
 | Epic | Offering Publication |
 | Feature | F04 — Offering Publication |
 | Feature ID | `F04` (owned by `OFFERING_CAPABILITY_ARCHITECTURE.md`) |
-| Capability | Creation (Offering lifecycle family) |
+| Capability | Lifecycle |
 | Perspective | Business Owner (Decision Journey as owned by `glossary.md`) |
 | Behaviour Owner | `PRD-0001-offering.md` |
 | Experience Owner | `UX-0005-business-dashboard.md` |
-| Status | Draft |
+| Status | Frozen |
 | Delivery Status | Not Started |
 | Story Size | M |
-| Version | 0.1 |
-| Last Updated | 2026-07-11 |
+| Version | 1.0 |
+| Supersedes | `US-OFR-F04-001` v0.1 (Frozen Golden Baseline) |
+| Last Updated | 2026-07-18 |
+
+**Revision Note (0.2):** Superseding controlled revision of the Frozen Golden Baseline `US-OFR-F04-001` v0.1, re-entering the lifecycle per `DOCUMENT_LIFECYCLE.md` §6 (the frozen v0.1 baseline is preserved as the release baseline). The Capability metadata is reconciled with Accepted `ADR-0003-offering-feature-capability-associations.md`: the authoritative Feature → Capability association for `F04` is **Lifecycle** (previously self-declared "Creation (Offering lifecycle family)"), as recorded in the authoritative Feature Registry of `OFFERING_CAPABILITY_ARCHITECTURE.md` §7. The incorrect treatment of "Offering lifecycle family" as a Capability is removed; the Epic remains **Offering Publication** in its own metadata field. No Story behaviour, Acceptance Criteria, scope, actors, flows, rules, dependencies, PRD/UX meaning, Feature ID, or Feature name is changed.
+
+**Review Entry Note (0.2):** Entered formal review following successful controlled-revision validation. The superseding revision reconciles the `F04 → Lifecycle` Capability metadata with Accepted `ADR-0003-offering-feature-capability-associations.md` and the authoritative Feature Registry. No Story behaviour, Acceptance Criteria, BDD, scope, actor, dependency, Feature ID, Feature name, PRD/UX meaning, Story Size, Delivery Status, or TODO changed during this lifecycle transition.
+
+**Approval Note (1.0):** Approved by the Product Owner / Architecture Owner following successful controlled-revision validation, formal Architecture Review, and Final Review. This approval establishes `US-OFR-F04-001` v1.0 as the Approved successor to the preserved v0.1 Frozen Golden Baseline. The approved revision records the authoritative `F04 → Lifecycle` Capability association. No Story behaviour, Acceptance Criteria, BDD, scope, actor, dependency, Feature ID, Feature name, PRD/UX meaning, Story Size, Delivery Status, or TODO changed during this lifecycle transition.
+
+**Freeze Note (1.0):** Frozen by the Product Owner / Architecture Owner after successful controlled-revision validation, formal Architecture Review, Final Review, and explicit approval. `US-OFR-F04-001` v1.0 is now the authoritative Frozen Golden Baseline for Offering Publication and supersedes the preserved v0.1 Frozen baseline for current repository use. Future changes must re-enter the controlled document lifecycle through a new superseding revision; this Frozen v1.0 baseline must not be edited in place. No Story behaviour, Acceptance Criteria, BDD, scope, actor, dependency, Feature ID, Feature name, Epic, Capability, PRD/UX meaning, Story Size, Delivery Status, or TODO changed during this lifecycle transition.
 
 ---
 
@@ -75,7 +84,8 @@ Repository references only; each is consumed by reference and never redefined he
 
 | Layer | Document | Referenced For |
 |-------|----------|----------------|
-| Capability | `OFFERING_CAPABILITY_ARCHITECTURE.md` | The Offering lifecycle capability home and the Feature ID `F04` |
+| Capability | `OFFERING_CAPABILITY_ARCHITECTURE.md` | The Lifecycle capability home and the Feature ID `F04` |
+| ADR (association) | `ADR-0003-offering-feature-capability-associations.md` | The Accepted `F04 → Lifecycle` Feature → Capability association (recorded in `OFFERING_CAPABILITY_ARCHITECTURE.md` §7) |
 | Implementation Blueprint | `OFFERING_IMPLEMENTATION_BLUEPRINT.md` | The capability-wide integration view |
 | PRD (behaviour) | `PRD-0001-offering.md` | Publication behaviour (Draft → Published) and the Offering lifecycle |
 | PRD (Business context) | `PRD-0005-business.md` | The owning Business that publishes the Offering |

@@ -21,6 +21,42 @@ This project follows the principles of:
 
 ---
 
+## [1.7.0] - 2026-07-18
+
+### Added or recorded
+
+#### ADR-0003 — Offering Authoring & Publication Feature → Capability Associations (F01–F04) — Accepted v1.0
+- F01 → Creation
+- F03 → Lifecycle
+- F04 → Lifecycle
+
+### Changed through controlled revision
+
+- OFFERING_CAPABILITY_ARCHITECTURE.md reached **Frozen v1.0** and is the authoritative Offering Capability Architecture baseline.
+- US-OFR-F03-001 — Offering Retirement reached **Frozen v1.0** and became the current authoritative Golden Baseline.
+- US-OFR-F04-001 — Offering Publication reached **Frozen v1.0** and became the current authoritative Golden Baseline.
+
+### Preserved
+
+- The F03 and F04 v0.1 Frozen Golden Baselines remain preserved as historical superseded baselines.
+- Story behaviour and all behavioural sections — Purpose, Business Value, Description, Acceptance Criteria, BDD, Dependencies, Out of Scope, Story Size, Delivery Status, and TODOs — remained unchanged.
+- F02 — Offering Editing remains **Deferred**; its capability home remains **Not Yet Decided** and is not recorded as an association. Deferred is not a Capability.
+- F05 → Presentation remains accepted and recorded under ADR-0002.
+
+### Clarified
+
+- No normative Epic–Capability conflict exists; the Epic–Capability assessment concluded **NO NORMATIVE CONFLICT**.
+- Feature → Capability is the authoritative architectural relationship, owned by OFFERING_CAPABILITY_ARCHITECTURE.md.
+- No traceability.md change was required.
+- Corrected the historical version labels for the preserved F03 and F04 Frozen baselines from v1.0 to v0.1 in the [1.4.0] and [1.5.0] entries.
+
+### Milestone
+
+- Offering Capability and F03/F04 Story reconciliation complete and closed. Approval and freeze were recorded as separate Owner decisions for each document.
+- Optional USER_STORY_HANDBOOK.md terminology clarification recorded as non-blocking future maintenance.
+
+---
+
 ## [1.6.0] - 2026-07-16
 
 ### Added
@@ -45,7 +81,7 @@ This project follows the principles of:
 ### Added
 
 #### Golden Baseline Story
-- US-OFR-F04-001 — Offering Publication — Version 1.0, Status: Golden Baseline
+- US-OFR-F04-001 — Offering Publication — Version 0.1, Status: Frozen Golden Baseline
 
 ### Story Generation Progress
 
@@ -64,7 +100,7 @@ This project follows the principles of:
 ### Added
 
 #### Golden Baseline Story
-- US-OFR-F03-001 — Offering Retirement — Version 1.0, Status: Golden Baseline
+- US-OFR-F03-001 — Offering Retirement — Version 0.1, Status: Frozen Golden Baseline
 
 ### Story Generation Progress
 
