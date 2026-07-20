@@ -1,9 +1,13 @@
 # User Story Handbook
 
 - **Owner:** Product Owner / Architecture Owner
-- **Status:** Draft
-- **Version:** 0.9
-- **Last Updated:** 2026-07-11
+- **Status:** Frozen
+- **Version:** 1.0
+- **Last Updated:** 2026-07-20
+
+> **Approval Note (1.0).** Approved by explicit decision of the Product Owner / Architecture Owner on 2026-07-20 following successful Formal Architecture Review and Final Review. This first approval advances the handbook from In Review v0.10 to Approved v1.0. The approval establishes this document as the authoritative source for User Story standards, including Parent Story Document and Generated Story relationships, Epic and Feature structure, Generated Story identifiers and filenames, Story wording, acceptance criteria, Definition of Ready, Definition of Done boundaries, dependencies, sizing, traceability, mandatory semantic content, and Story quality rules. Domain codes and Feature identifiers remain owned by their authoritative governance and Capability Architecture sources. This approval does not freeze the handbook, update the User Story template, change any existing Story file, or modify another repository document automatically.
+
+> **Freeze Note (1.0).** Frozen by explicit decision of the Product Owner / Architecture Owner on 2026-07-20. This freeze locks the Approved v1.0 baseline of `USER_STORY_HANDBOOK.md` as the canonical User Story standards reference for the current release state. The Frozen handbook must not be edited in place. Any future change requires a separate superseding revision that begins independently at Draft under a new version, while this Frozen v1.0 baseline remains preserved. The freeze does not update `docs/_templates/US-template.md`, change any existing Parent Story Document or Generated Story file, allocate Domain codes or Feature IDs, create Feature → Capability associations, or modify another repository document automatically.
 
 **Revision Note (0.2):** Controlled revision applying the outcomes of the first Architecture Review. Clarifications only — no new standards, no change to ownership or purpose. Affected sections: Story Numbering, Epic Structure, Story Ownership, Story Lifecycle, Sprint Rules, QA Strategy, Definition of Done, Story Quality Principles, Story Anti-Patterns, and a new Relationship Diagram section.
 
@@ -21,19 +25,27 @@
 
 **Revision Note (0.9):** Controlled revision resolving Architecture Review blocking findings AF-1 and AF-2 only; no redesign, no new section, no new repository layer, and no change to the Generated Story ID structure. (1) AF-1 — the User Story Document scope is corrected in §5 to match the repository structure: a Story Document is allocated per Story Domain and may contain one or more Epics and one or more Features (one Document → one Domain → one or more Epics → one or more Features → the Stories within them). The prior statements that a document "groups the Stories of one Epic" or "typically one Epic's stories" are removed. Every Story still belongs to exactly one Epic and one Feature; Epic, Feature, and Story ownership and behaviour ownership (PRD) are unchanged; Story Document IDs already in use are unchanged. (2) AF-2 — the `[DOMAIN]` segment now has a Single Information Owner: `REPOSITORY_GOVERNANCE.md` owns the Story Domain Code Registry, referenced from §3, §5, and §21.5; the handbook consumes Domain codes and never allocates or redefines them, and the registry is referenced, not duplicated. Story Anatomy, Acceptance Criteria, BDD, INVEST, the Story Validation Checklist, Definition of Ready, Definition of Done, Story Lifecycle, Story Review, Sprint Rules, Feature ID ownership, and the repository hierarchy are unchanged.
 
+**Revision Note (0.10):** Controlled revision resolving the final handbook review findings against the Frozen governance baseline and the existing Offering Story architecture. It corrects the Epic model from a direct Epic → Story / one-Capability relationship to the repository's actual Parent Story Document → Domain → Epic → Feature → Generated Story structure; keeps Capability definitions, Feature IDs, and Feature → Capability associations with the applicable Capability Architecture owner; distinguishes Parent Story Documents from individual Generated Story files; completes Generated Story sequence and filename rules; aligns Story approval terminology, lifecycle separation, Definition of Ready, and traceability with `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, `REPOSITORY_GOVERNANCE.md`, and `ADR_PROCESS.md`; reconciles Story Anatomy with the Golden Story structure; makes Capability and Implementation Blueprint references conditional on authoritative applicability; removes duplicated reference rules; and replaces the noncanonical relationship diagram with the official repository hierarchy plus the internal User Story decomposition. The User Story template and existing Story files are not modified automatically and become separate review targets where they conflict with this handbook.
+
+**Review Entry Note (0.10):** Entered formal review after the controlled corrections above were applied. Reviewer role overlap is disclosed in the review record: ChatGPT drafted and materially corrected this revision and performed separate Architecture Review and Final Review passes under `REVIEW_PROCESS.md`. No Owner approval or freeze is inferred.
+
+**Revision Note (1.0):** First approval. Approved by explicit decision of the Product Owner / Architecture Owner on 2026-07-20 after Formal Architecture Review and Final Review completed with no remaining corrections. The handbook advances from In Review v0.10 to Approved v1.0. The authoritative Story decomposition is Parent Story Document → Story Domain → Epic → Feature → Generated Story. Each Generated Story belongs to exactly one Parent Story Document, one Epic, and one Feature. The handbook consumes Domain codes, Feature IDs, and applicable Feature → Capability associations from their owning sources and does not allocate or redefine them. Freeze remains a separate Owner decision. Template conformance and review of materially affected existing Story documents remain separate controlled work.
+
+**Freeze Record (1.0):** Frozen by explicit decision of the Product Owner / Architecture Owner on 2026-07-20 after first approval as v1.0. The lifecycle transition is Approved v1.0 → Frozen v1.0; the version remains 1.0. The handbook baseline is now locked against in-place edits. Future change requires a superseding Draft revision under a new version. User Story template conformance and review of materially affected existing Story documents remain separate controlled work.
+
 > The single source of truth for the standards that govern the User Story layer: how User Stories are structured, numbered, written, sized, reviewed, traced, delivered, and maintained. It defines standards only. It contains no User Stories, no tasks, and no feature-specific acceptance criteria. Concerns owned by other documents — document lifecycle, review process, repository authority, architecture decisions, and terminology — are referenced here, never redefined.
 
 ---
 
 ## 1. Purpose
 
-This handbook establishes the universal, timeless standards for creating and maintaining User Stories across the platform. Its purpose is to make every User Story consistent, valuable, testable, and traceable, so that the User Story layer conforms to Documentation First Development and integrates cleanly with the Foundation, PRD, and UX layers.
+This handbook establishes the universal, timeless standards for creating and maintaining User Stories across the platform. Its purpose is to make every User Story consistent, valuable, testable, and traceable, so that the User Story layer conforms to Documentation First Development and integrates cleanly with the upstream Foundation, Capability Architecture, PRD, and UX layers and the downstream Engineering and Development layers.
 
 The handbook governs the User Story layer as a whole. It is not itself a User Story, and it defines no product behaviour.
 
 ## 2. Scope
 
-This document is the authoritative owner of the following standards: Epic Structure, Story Numbering, Story Standard, Story Granularity, INVEST, Acceptance Criteria, BDD format, Definition of Ready, Story Ownership, Story Lifecycle (story-specific aspects only), Story Traceability (story-specific aspects only), Sprint Rules, Story Review (story-specific aspects only), QA Strategy, Definition of Done, Story Quality Principles, Story Anti-Patterns, the Story Generation Standards, and the Story Validation Checklist.
+This document is the authoritative owner of the following standards: Parent Story Document organization; Epic and Feature use within the User Story layer; Story numbering and filenames; Story Standard; Story Granularity; INVEST; Acceptance Criteria; BDD format; Definition of Ready; Story Ownership; Story Lifecycle (story-specific aspects only); Story Traceability (story-specific aspects only); Sprint Rules; Story Review (story-specific aspects only); QA Strategy; Definition of Done; Story Quality Principles; Story Anti-Patterns; Story Generation Standards; and the Story Validation Checklist.
 
 It is technology-independent and framework-independent. It contains no implementation details and no project-specific business rules.
 
@@ -46,42 +58,110 @@ To preserve Single Information Owner and Reference Never Redefine, this handbook
 - Repository scope, authority, and roles — owned by `REPOSITORY_GOVERNANCE.md`.
 - Architecture decision rules and their lifecycle — owned by `ADR_PROCESS.md`.
 - Defined terms — owned by the glossary.
-- The User Story document structure/skeleton — owned by the User Story template.
-- Feature identifiers (Feature IDs, e.g. `F01`, `F02`) — owned by the Capability Architecture layer (for example, `OFFERING_CAPABILITY_ARCHITECTURE.md`); this handbook consumes them inside Generated Story IDs and never allocates them.
+- The concrete User Story file layout, section order, and placeholders — implemented by the User Story template. The template consumes the mandatory content standards in this handbook and may not redefine them.
+- Capability definitions, Feature identifiers, and authoritative Feature → Capability associations — owned by the applicable Capability Architecture document where assigned (for example, `OFFERING_CAPABILITY_ARCHITECTURE.md` for the Offering domain). This handbook consumes them by reference and never allocates or redefines them.
 - Story Domain codes (the `[DOMAIN]` segment of a Generated Story ID, e.g. `OFR`) — owned by `REPOSITORY_GOVERNANCE.md` (its Story Domain Code Registry); this handbook consumes them inside Generated Story IDs and never allocates or redefines them.
 - Product behaviour and business rules — owned by the PRDs.
 
-## 4. Epic Structure
+## 4. Epic and Feature Structure
 
-An Epic is a named grouping of related User Stories that together deliver a single capability.
+A Parent Story Document is allocated to one Story Domain and organizes that domain's work through a bounded Epic → Feature decomposition.
 
-- An Epic is only an organizational grouping of Stories. An Epic never owns business behaviour.
-- Business behaviour always remains owned by the corresponding PRD. An Epic maps to exactly one capability owned by a PRD; it groups and organizes that capability's stories without defining any of its behaviour.
-- An Epic has one clear goal, a bounded scope, and a finite set of stories.
-- The hierarchy is intentionally shallow: Epic → Story. Epics do not nest within Epics.
-- An Epic is complete when its stories are complete; an Epic introduces no behaviour of its own beyond what its stories, tracing to the PRD, deliver.
+- An **Epic** is an outcome-oriented grouping of one or more related Features. It has one clear goal, a bounded scope, and a finite set of Features.
+- An Epic is organizational only. It owns neither product behaviour nor Capability definitions.
+- Product behaviour remains owned by the relevant PRD.
+- Capability definitions and authoritative Feature → Capability associations remain owned by the applicable Capability Architecture document where assigned.
+- A single Epic may contain Features associated with different Capabilities. An Epic therefore does not map automatically or exclusively to one Capability.
+- A **Feature** is the structural unit beneath an Epic and above Generated Stories. Feature identifiers and Feature → Capability associations are consumed from their applicable owner; the Parent Story Document records the Feature's placement under an Epic by reference.
+- Every Feature belongs to exactly one Epic within its Parent Story Document.
+- Every Generated Story belongs to exactly one Feature and, through that Feature, exactly one Epic.
+- Epics do not nest within Epics, and Features do not nest within Features.
+- An Epic is complete when all of its in-scope Features and their required Stories are complete or explicitly closed.
 
-## 5. Story Numbering
+The internal organization is:
 
-Story numbering follows the repository identifier convention and does not introduce a new or project-specific scheme. Two distinct identifier concepts exist and are **complementary, not competing**: the **User Story Document ID**, which identifies a Story document, and the **Generated User Story ID**, which identifies an individual Story inside that document. They operate at different levels and never form competing numbering schemes. No existing repository identifier is replaced.
+```text
+Parent Story Document
+→ one Story Domain
+→ one or more Epics
+→ one or more Features
+→ one or more Generated Stories
+```
 
-- **User Story Document ID.** A User Story document is identified as `US-NNNN`, using a zero-padded four-digit number — for example `US-0001`, `US-0002`, `US-0003`. A User Story Document is allocated per Story Domain (for example, `US-0001` is the Offering domain's Story Document); this is the stable identifier for the whole document. A Story Document ID identifies the document, and it never changes.
-- **Generated User Story ID.** An individual Story inside a document is identified by the **Generated Story ID**, whose format is owned and defined here: `US-[DOMAIN]-[FEATURE_ID]-[ID]` — for example `US-OFR-F01-001`, `US-OFR-F01-002`, `US-OFR-F01-003`. The leading `[DOMAIN]` segment identifies the Story Document domain (for example, `OFR` for the Offering domain), not an individual Capability defined in the Capability Architecture. Story Domain codes such as `OFR` are a controlled vocabulary owned by `REPOSITORY_GOVERNANCE.md` (its Story Domain Code Registry); this handbook consumes them and never allocates or redefines them. A Generated Story ID identifies a single Story. Its `[FEATURE_ID]` segment consumes a Feature ID owned by the corresponding Capability Architecture document (for example, `OFFERING_CAPABILITY_ARCHITECTURE.md` owns the Feature IDs used by the `US-0001` Offering Story document); this handbook consumes Feature IDs and never allocates them. A Generated Story ID remains stable because Feature IDs remain stable even if Feature names change.
-- **Complementary, not competing.** The Document ID identifies documents; the Generated Story ID identifies Stories within a document. Together they locate any Story unambiguously — the Document ID for the containing document, the Generated Story ID for the Story itself — so the repository uses both without either replacing or competing with the other.
-- **Scalability.** The four-digit document number and the open-ended Generated Story ID allow the layer to grow to many documents and many Stories per document without renumbering, so numbering scales over the long term.
-- **Document scope.** A User Story Document is allocated per Story Domain and may contain one or more Epics and one or more Features. The model is: one User Story Document → one Story Domain → one or more Epics → one or more Features → the Generated User Stories within them. For example, `US-0001` (the Offering domain) contains multiple Offering-domain Epics such as Offering Authoring, Offering Publication, and Offering Presentation. Every Story still belongs to exactly one Epic and exactly one Feature, and Epics remain bounded and outcome-oriented. This document-scoping model changes neither Epic ownership, Feature ownership, nor Story ownership; behaviour ownership remains with the relevant PRD, not the number. The Generated Story ID carries the domain and Feature segments, whose vocabularies are owned elsewhere — Domain codes by `REPOSITORY_GOVERNANCE.md` and Feature IDs by the Capability Architecture layer (see §3) — and are consumed here by reference.
-- **Stability.** Identifiers are assigned in order and are never reused or recycled. A Story Document ID never changes; a Generated Story ID is stable for the life of the Story and is not reused when a Story is superseded.
+## 5. Story Numbering and Filenames
+
+Two distinct identifier concepts exist and are complementary, not competing:
+
+1. the **Parent Story Document ID**, which identifies the domain-level Story document;
+2. the **Generated User Story ID**, which identifies one individual Story file attached to a Feature.
+
+### 5.1 Parent Story Document ID
+
+A Parent Story Document uses:
+
+```text
+US-NNNN
+```
+
+- `NNNN` is a zero-padded four-digit sequential number, for example `US-0001`, `US-0002`, and `US-0003`.
+- One Parent Story Document is allocated per Story Domain.
+- The identifier is stable and never reused.
+- The canonical filename is:
+
+```text
+US-NNNN-kebab-case-domain.md
+```
+
+### 5.2 Generated User Story ID
+
+An individual Generated Story uses:
+
+```text
+US-[DOMAIN]-[FEATURE_ID]-[ID]
+```
+
+Example:
+
+```text
+US-OFR-F01-001
+```
+
+- `US` is the prefix owned by this handbook.
+- `[DOMAIN]` is the Story Domain code owned by the Story Domain Code Registry in `REPOSITORY_GOVERNANCE.md`.
+- `[FEATURE_ID]` is an authoritative Feature ID consumed from the applicable Capability Architecture owner.
+- `[ID]` is a zero-padded three-digit Story sequence scoped to that Feature, beginning at `001`.
+- Story sequence values are assigned in order within the Feature and are never reused, including after a Story is deprecated or superseded.
+- A Generated Story ID remains stable for the life of the Story.
+- The canonical filename is:
+
+```text
+US-[DOMAIN]-[FEATURE_ID]-[ID]-kebab-case-title.md
+```
+
+If an authoritative Feature ID does not yet exist, a Generated Story ID cannot be allocated and Story generation remains blocked. The handbook never invents a Feature ID or a Feature → Capability association.
+
+### 5.3 Containment and stability
+
+The Parent Story Document identifies the domain container. The Generated User Story ID identifies the individual Story file within that domain's Epic → Feature organization.
+
+Every Generated Story:
+
+- is contained by exactly one Parent Story Document;
+- belongs to exactly one Feature;
+- belongs, through that Feature, to exactly one Epic;
+- uses a Domain code and Feature ID owned elsewhere;
+- retains its identifier even if its title changes.
 
 ## 6. Story Standard
 
 Every User Story is written in a single, consistent form:
 
 > **As a** &lt;role&gt;
-> **I want** &lt;capability&gt;
+> **I want** &lt;desired behaviour&gt;
 > **So that** &lt;benefit&gt;
 
 - The **role** is a defined actor. Actor definitions are owned by the relevant PRD and the glossary; the story references them.
-- The **capability** is a single behaviour the actor wants.
+- The **desired behaviour** is one observable behaviour the actor wants. The word “behaviour” here does not allocate or redefine a Capability Architecture capability.
 - The **benefit** states the value the behaviour provides.
 
 One story expresses exactly one behaviour for one actor. A story that requires "and" to join unrelated behaviours is more than one story.
@@ -112,7 +192,7 @@ A story that fails an INVEST criterion is revised or split before it proceeds.
 Every story has acceptance criteria (AC) that define, in observable terms, when the story is complete.
 
 - AC are testable, unambiguous, and complete for the behaviour the story expresses.
-- AC are derived only from approved documentation (the story's PRD and, where applicable, its UX specification). AC introduce no new product decisions.
+- AC are derived from the canonical upstream PRD and, where applicable, its UX specification. A Story may be drafted while an upstream source is non-authoritative, but it is not Ready until the behaviour is supported by the authoritative upstream sources required by §11. AC introduce no new product decisions.
 - Where upstream documentation intentionally leaves behaviour undecided, the AC records a TODO rather than inventing behaviour.
 - AC describe outcomes, not implementation.
 
@@ -133,7 +213,11 @@ Acceptance criteria are expressed in Behaviour-Driven Development form:
 A story is **Ready** — eligible to be committed to delivery — only when all of the following hold:
 
 - It is written in the Story Standard form.
-- It traces to an approved PRD, and to a UX specification where the behaviour has a UX surface.
+- Its behaviour traces to a canonical PRD in an authoritative lifecycle state (`Approved` or `Frozen`).
+- Where the behaviour has a UX surface, it traces to the applicable canonical UX specification, and that UX specification is `Frozen` before the Story is committed to delivery.
+- Its Parent Story Document identifies the Epic and Feature to which it belongs.
+- Its Domain code and Feature ID resolve to their authoritative owners.
+- Any required Feature → Capability association is referenced when assigned; no association is invented where the owner records it as undecided or deferred.
 - It has testable acceptance criteria in BDD form.
 - It satisfies INVEST.
 - It has no unresolved blocking dependency.
@@ -143,23 +227,28 @@ A story that is not Ready is not committed to delivery.
 
 ## 12. Story Ownership
 
-- Each story is authored by a contributor and reviewed under `REVIEW_PROCESS.md`. Final acceptance authority rests with the Product Owner / Architecture Owner, as defined in `REPOSITORY_GOVERNANCE.md`; this handbook does not redefine that authority.
-- Each story is owned by exactly one User Story document and one Epic (Single Information Owner).
-- The behaviour a story expresses is owned by the story's PRD, not by the story. A story references PRD behaviour; it never redefines it.
+- Each Story is authored by a contributor and reviewed under `REVIEW_PROCESS.md`. Final approval authority for a Story document rests with the Product Owner / Architecture Owner, as defined in `REPOSITORY_GOVERNANCE.md`; this handbook does not redefine that authority.
+- Each Generated Story file is the Single Information Owner of its own Story text, Acceptance Criteria, BDD scenarios, dependencies, size, scope exclusions, and delivery metadata.
+- Each Generated Story is contained by exactly one Parent Story Document, belongs to exactly one Feature, and belongs through that Feature to exactly one Epic.
+- The Parent Story Document owns the domain's Epic → Feature organization and records generated Story files by reference; it does not duplicate their full content.
+- The behaviour a Story expresses is owned by the Story's PRD, not by the Story. A Story references PRD behaviour; it never redefines it.
 - AI is an advisor only and never becomes the information owner of a Story.
 
 ## 13. Story Lifecycle
 
-A User Story document moves through the document lifecycle defined in `DOCUMENT_LIFECYCLE.md` (its states, transitions, versioning, freezing, deprecation, and archival). This handbook does not redefine those states.
+Each Parent Story Document and each Generated Story file carries its own document lifecycle Status and Version under `DOCUMENT_LIFECYCLE.md`. One file's lifecycle state does not advance another file automatically.
 
-In addition, a story carries a **delivery status** used only for planning — for example, Ready, In Progress, or Done. Delivery status is operational only: it is a planning signal for delivery, and it never changes document authority or the document lifecycle state. It is distinct from, and does not replace, the document lifecycle status. Definition of Ready governs entry to delivery; Definition of Done governs completion of delivery.
+A Generated Story may also carry a **delivery status** used only for planning — for example, Not Started, Ready, In Progress, or Done. Delivery status is operational only: it is a planning signal and never changes document authority or lifecycle Status. This handbook standardizes the Ready and Done gates through §§11 and 18; it does not turn delivery workflow labels into document lifecycle states.
 
 ## 14. Story Traceability
 
-- Every story traces upward to the PRD that owns its behaviour, and to the UX specification(s) that present it where applicable.
-- A story may reference an ADR where an accepted architecture decision constrains it, per `ADR_PROCESS.md`.
+- Every Story traces to its Parent Story Document, Epic, Feature, behaviour-owning PRD, and applicable UX specification.
+- Every Story references the owner of its Domain code and the applicable owner of its Feature ID.
+- A Story references a Capability Architecture document and Feature → Capability association where an authoritative association exists. Where an association is explicitly undecided or deferred, the Story records that state by reference and does not invent a Capability home.
+- A Story references an Implementation Blueprint only where an authoritative Blueprint exists and is applicable to the Story. Blueprint absence does not create an implied repository layer or permit invention.
+- A Story references an ADR where an Accepted architectural decision constrains it, per `ADR_PROCESS.md`.
 - Traceability is recorded and kept current per the traceability-update rule in `REVIEW_PROCESS.md`, and reflected in the traceability record; this handbook defines neither the update rule nor the record structure.
-- A story that cannot be traced to an approved PRD is not Ready; the gap is recorded as a TODO.
+- A Story that cannot be traced to an authoritative PRD is not Ready; the gap is recorded as a TODO.
 
 ## 15. Sprint Rules
 
@@ -178,7 +267,7 @@ Stories are reviewed under `REVIEW_PROCESS.md`. Story-specific review additional
 - follows the Story Standard form and satisfies INVEST;
 - has testable acceptance criteria in BDD form;
 - traces correctly to its PRD and UX;
-- is owned by exactly one document and Epic;
+- is contained by exactly one Parent Story Document and belongs to exactly one Feature and one Epic;
 - introduces no new product decision and no implementation detail;
 - uses terminology consistent with the glossary.
 
@@ -204,8 +293,7 @@ A story is **Done** only when all of the following hold:
 - Traceability is updated per `REVIEW_PROCESS.md`.
 - Review is complete per `REVIEW_PROCESS.md`.
 - No upstream-undecided behaviour has been silently implemented; recorded TODOs remain TODOs until their owning document decides them.
-- Monitoring / telemetry is updated where applicable.
-- Feature flags are configured where applicable.
+- Applicable Engineering, QA, observability, and release obligations owned by `ENGINEERING_CONSTITUTION.md` are satisfied or explicitly recorded as not applicable; this handbook does not redefine those technical gates.
 
 ## 19. Story Quality Principles
 
@@ -214,7 +302,7 @@ A story is **Done** only when all of the following hold:
 - **Testable** — every story is verifiable through its acceptance criteria.
 - **Traceable** — every story references its owning PRD and, where applicable, its UX.
 - **Implementation-neutral** — no technical or framework detail.
-- **Single owner** — one document and one Epic per story.
+- **Single owner** — one Generated Story file, one Parent Story Document, one Feature, and one Epic per Story.
 - **Reference, never redefine** — behaviour and terms are referenced from their owners.
 - **No new product decisions** — undecided behaviour is a TODO, not an invention.
 - **Deterministic** — a story's behaviour should be deterministic and unambiguous: the same actor performing the same action under the same conditions should always reach the same defined outcome, leaving no room for interpretation.
@@ -237,143 +325,145 @@ The following are not permitted:
 
 ## 21. Story Generation Standards
 
-These standards refine Story generation only. They record the approved method for generating User Stories against an approved Epic → Feature decomposition. They introduce no new repository layer, they do not replace this handbook, and they leave every existing standard in force. In particular, INVEST (§8), the BDD principles (§10), the Story lifecycle (§13), the Story workflow (Sprint Rules, §15), Story ownership (§12), and the review workflow (§16) are unchanged and remain authoritative in their existing sections. Where a standard below would otherwise touch a concern already owned elsewhere, it references that owner and does not redefine it.
+These standards govern generation of individual Story files from a reviewed Parent Story Document's Epic → Feature organization. Story generation also requires authoritative identifier inputs: the Domain code must resolve to `REPOSITORY_GOVERNANCE.md`, and the Feature ID must resolve to its applicable Capability Architecture owner. Generation does not make the Parent Story Document, PRD, UX, Capability Architecture, or Story authoritative.
 
-**1. Story Granularity.** A Story represents one meaningful step in the user's Decision Journey — a term owned by `glossary.md`, referenced here and not defined in this handbook. Stories describe user value; tasks describe technical work. This is consistent with — and does not replace — the Story Granularity standard in §7; the sizing rules there remain in force.
+**1. Story Granularity.** A Story represents one meaningful step in the user's Decision Journey — a term owned by `glossary.md`, referenced here and not defined in this handbook. Stories describe user value; tasks describe technical work. The sizing rules in §7 remain in force.
 
-**2. Story Anatomy.** Every Story shall contain exactly the following elements:
+**2. Mandatory Story Content.** Every Generated Story contains, at minimum:
 
-- Title
-- Purpose
-- Business Value
-- Description
-- References
-- Acceptance Criteria
-- BDD
-- Dependencies
-- Out of Scope
+- Metadata;
+- Story Identification;
+- Purpose;
+- Business Value, including the canonical As a / I want / So that statement;
+- Description;
+- References;
+- Acceptance Criteria;
+- BDD scenarios;
+- Dependencies;
+- Story Size;
+- Out of Scope;
+- a reference to Definition of Ready (§11);
+- a reference to Definition of Done (§18);
+- the Story Validation Checklist (§22).
 
-This enumerates the required content of a Story as a standard. The concrete document skeleton and layout remain owned by the User Story template (see §3), which this standard references and does not redefine.
+This handbook owns the mandatory semantic content. The User Story template implements the concrete layout, order, headings, and placeholders and must conform to this list without redefining it.
 
-By way of illustration only, the References element of a Story typically contains repository references such as:
+**3. Acceptance Criteria.** Acceptance Criteria are written as testable system behaviour. Each criterion begins with:
 
-> References
-> - Capability
-> - Implementation Blueprint
-> - PRD
-> - UX Specification
-> - Epic
-> - Feature
+> “The system shall…”
 
-These are examples of the repository references a Story usually names; they are informative only and add no required standard beyond the mandatory structure above.
+This refines §9. Each criterion's behaviour is also represented through one or more Given / When / Then scenarios under §10.
 
-**3. Acceptance Criteria.** Acceptance Criteria shall be written as testable system behaviour. Each Acceptance Criterion begins with:
+**4. BDD.** BDD scenarios remain inside the Story file. An external BDD document does not replace the Story's own scenarios.
 
-> "The system shall…"
+**5. Story ID.** Generated Story IDs and filenames follow §5. Domain codes and Feature IDs must already exist in their authoritative registries. No Story generator allocates either identifier vocabulary.
 
-This refines the Acceptance Criteria standard (§9) with a required phrasing. It does not change the BDD form (§10): each Acceptance Criterion's scenario remains expressed as Given / When / Then.
+**6. Dependency Model.** A Story declares only:
 
-**4. BDD.** BDD scenarios remain inside the Story. No external BDD documents. This is consistent with §10, which is unchanged.
+- **Depends On**
+- **Blocks**
 
-**5. Story ID.** Generated Story IDs follow the **Generated User Story ID** format that is owned and defined in §5; this standard references that format and does not repeat it. As §5 states, the Generated Story ID is distinct from the **User Story Document ID** (`US-NNNN`), the two are complementary, not competing, and this standard introduces no second numbering system. The leading `[DOMAIN]` segment is the Story Document domain code — for example, `OFR` is the governed code for the Offering Story Domain, not an individual Capability — and its controlled vocabulary is owned by `REPOSITORY_GOVERNANCE.md` (its Story Domain Code Registry, per §5). The `[FEATURE_ID]` segment consumes a Feature ID owned by the corresponding Capability Architecture document (per §5). This handbook consumes Domain codes and Feature IDs and allocates or redefines neither; Feature IDs remain stable even if Feature names change, which keeps the Generated Story ID stable. §5 and `REPOSITORY_GOVERNANCE.md` are referenced, not redefined.
+`Depends On` and `Blocks` are directional inverse views of the same dependency. Additional relationship labels such as Blocked By, Related To, or Duplicate Of are not normative Story dependency types.
 
-**6. Dependency Model.** A Story declares only the following dependency types:
-
-- Depends On
-- Blocks
-
-No additional dependency types are permitted.
-
-**7. Story Size.** Product documentation carries product estimates only:
+**7. Story Size.** Product documentation uses only:
 
 - XS
 - S
 - M
 - L
 
-No Story Points appear inside Product documentation. This does not modify INVEST (§8); it constrains only how size is expressed in Product documentation.
+No Story Points or `XL` size appear in Product documentation. Size expresses product-delivery scope, not implementation effort.
 
-**8. Definition of Done.** A Story never duplicates the Definition of Done; it references §18 of this handbook, which is the single authoritative owner of the Story-level Definition of Done. A Story references that standard rather than restating it.
+**8. Definition of Done.** A Story references §18 and never duplicates the Story-level Definition of Done.
 
-**9. Story Independence.** A Story should be independently understandable, independently testable, and independently deliverable whenever reasonably possible. This is consistent with INVEST (§8), which is unchanged.
+**9. Story Independence.** A Story should be independently understandable, independently testable, and independently deliverable whenever reasonably possible, consistent with INVEST (§8).
 
-**10. Story Traceability.** Every Story shall reference each of the following, without redefining any owner:
+**10. Story References and Traceability.** Every Story explicitly references:
 
-- Capability
-- Implementation Blueprint
-- PRD
-- UX Specification
-- Epic
-- Feature
+- its Parent Story Document;
+- its Epic;
+- its Feature and authoritative Feature ID owner;
+- its behaviour-owning PRD;
+- its applicable UX specification where the behaviour has a UX surface;
+- the Story Domain Code Registry owner;
+- this handbook.
 
-This complements the Story Traceability standard in §14, which remains in force; it adds the Capability, Implementation Blueprint, Epic, and Feature references that make the vertical chain legible from the Story.
+It additionally references, when applicable:
 
-**11. Duplicate Story Prevention.** A Story shall not duplicate another Story. Where overlap exists, the Stories are merged or redefined before approval. This is consistent with the Duplicated-ownership anti-pattern (§20).
+- the authoritative Capability Architecture document and Feature → Capability association;
+- an Implementation Blueprint that actually exists and applies;
+- Accepted ADRs that constrain the Story;
+- additional PRDs or UX specifications needed for cross-domain behaviour.
 
-**12. Story Reference Structure.** The References section of each Story shall explicitly identify:
+A missing optional reference is not replaced with invented architecture. A missing required authoritative input blocks readiness or generation as stated in §§5 and 11.
 
-- Capability
-- Blueprint
-- PRD
-- UX
-- Epic
-- Feature
+**11. Duplicate Story Prevention.** A Story does not duplicate another Story. Where overlap exists, the Stories are merged, split, or re-bounded before Owner approval. Duplication is not represented through an additional dependency type.
 
 ## 22. Story Validation Checklist
 
-Every Story must satisfy each of the following before approval:
+Every Generated Story must satisfy each item before Final Review recommends it for Owner approval:
 
 - ☐ Represents one Decision Journey step
 - ☐ Provides user value
-- ☐ Independently understandable
-- ☐ Independently testable
-- ☐ Traceable
-- ☐ References resolve correctly
-- ☐ No duplicate Story
-- ☐ No implementation details
-- ☐ No Story overlap
+- ☐ Uses the canonical Story Standard
+- ☐ Is independently understandable
+- ☐ Is independently testable
+- ☐ Is contained by one Parent Story Document
+- ☐ Belongs to one Epic and one Feature
+- ☐ Uses an authoritative Domain code and Feature ID
+- ☐ Does not invent a Feature → Capability association
+- ☐ Traces to an authoritative PRD and applicable UX
+- ☐ Required references resolve correctly
+- ☐ Conditional Capability, Blueprint, and ADR references are included only where applicable
+- ☐ Acceptance Criteria and BDD are consistent
+- ☐ Definition of Ready and Definition of Done are referenced, not duplicated
+- ☐ Uses only Depends On and Blocks dependency types
+- ☐ Uses XS, S, M, or L sizing
+- ☐ Contains no duplicate Story or overlapping behaviour
+- ☐ Contains no implementation details
+- ☐ Contains no silent upstream assumption
 
-## 23. Relationship Diagram
+## 23. Relationship Diagrams
 
-This diagram shows the documentation flow only — the order in which each layer derives from the one above it. It defines no behaviour and introduces no standard. The **Capability Architecture** layer sits immediately above PRD and is defined by `OFFERING_CAPABILITY_ARCHITECTURE.md`; the official repository layer hierarchy is owned by `REPOSITORY_GOVERNANCE.md`.
+The official repository documentation hierarchy is owned by `REPOSITORY_GOVERNANCE.md` and is referenced here exactly:
 
-```
-Vision
-  ↓
+```text
 Foundation
-  ↓
-Capability Architecture
-  ↓
-PRD
-  ↓
-UX
-  ↓
-Epic
-  ↓
-Story
-  ↓
-Task
-  ↓
-Code
-  ↓
-Tests
-  ↓
-Release
+→ Capability Architecture
+→ PRD
+→ UX
+→ User Stories
+→ Engineering
+→ Development
 ```
+
+Within the User Stories layer, this handbook owns the following internal organization standard:
+
+```text
+Parent Story Document
+→ Story Domain
+→ Epic
+→ Feature
+→ Generated Story file
+```
+
+The internal organization is not an additional repository layer hierarchy. Tasks, code, tests, and releases are downstream delivery artifacts governed by their applicable owners and are not inserted into the official documentation hierarchy by this handbook.
 
 ## 24. References
 
-- `DOCUMENT_LIFECYCLE.md` — document states and versioning.
-- `REVIEW_PROCESS.md` — review and the traceability-update rule.
-- `REPOSITORY_GOVERNANCE.md` — repository authority and roles, and the Story Domain Code Registry (owner of the `[DOMAIN]` codes consumed by Generated Story IDs).
-- `ADR_PROCESS.md` — architecture decision records.
-- `ENGINEERING_CONSTITUTION.md` — engineering philosophy and governance; it references this handbook for detailed User Story standards, and this handbook references it for engineering governance.
-- `OFFERING_CAPABILITY_ARCHITECTURE.md` — the Capability Architecture layer immediately above PRD, which owns the capability model that Epics map to.
-- `OFFERING_IMPLEMENTATION_BLUEPRINT.md` — the capability-wide integration view that a generated Story references in its traceability; referenced, not redefined.
-- The User Story template — the User Story document structure.
-- The glossary — defined terms.
+- `DOCUMENT_LIFECYCLE.md` — standard document states, transitions, versioning, freezing, deprecation, and archival.
+- `REVIEW_PROCESS.md` — review mechanics, verdicts, propagation, records, and the traceability-update rule.
+- `REPOSITORY_GOVERNANCE.md` — repository authority, official documentation hierarchy, roles, and the Story Domain Code Registry.
+- `ADR_PROCESS.md` — ADR-specific lifecycle, acceptance, maintenance, and supersession.
+- `ADR-0004-capability-architecture-layer-recognition.md` — Accepted recognition of Capability Architecture as an official repository layer.
+- `ENGINEERING_CONSTITUTION.md` — engineering, QA, observability, and release gates referenced by Story completion without being redefined here.
+- The applicable Capability Architecture document — Capability definitions, Feature IDs, and authoritative Feature → Capability associations where assigned.
+- `OFFERING_CAPABILITY_ARCHITECTURE.md` — the Offering-domain Capability Architecture and Feature Registry; an Offering-specific example, not the owner of the repository-wide layer.
+- An applicable Implementation Blueprint — a capability-wide integration view when one exists; not a universal mandatory reference.
+- The User Story template — the concrete Story file layout that must conform to this handbook.
+- `glossary.md` — defined terminology, including Decision Journey.
 
 ## 25. Next Recommended Reading
 
-- The User Story template — the document structure to apply these standards within.
+- The User Story template — the layout implementation that must be reconciled to and validated against these standards.
 - `REVIEW_PROCESS.md` — how stories are reviewed and how changes propagate.
