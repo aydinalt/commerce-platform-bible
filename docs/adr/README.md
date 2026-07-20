@@ -3,7 +3,7 @@
 - **Owner:** Architecture Owner
 - **Status:** Living
 - **Version:** 1.0
-- **Last Updated:** 2026-07-17
+- **Last Updated:** 2026-07-19
 
 ---
 
@@ -28,6 +28,7 @@ This document is an index only and must never duplicate or redefine those rules.
 | [ADR-0001](ADR-0001-decision-chat-ownership.md) | Decision Chat Ownership | Accepted | 2026-07-09 | PRD-0004, V1_SCOPE |
 | [ADR-0002](ADR-0002-offering-presentation-capability.md) | Offering Presentation Capability | Accepted (v1.0) | 2026-07-15 | OFFERING_CAPABILITY_ARCHITECTURE, PRD-0001, UX-0003 |
 | [ADR-0003](ADR-0003-offering-feature-capability-associations.md) | Offering Authoring & Publication Feature → Capability Associations (F01–F04) | Accepted (v1.0) | 2026-07-17 | OFFERING_CAPABILITY_ARCHITECTURE, ADR-0002 |
+| [ADR-0004](ADR-0004-capability-architecture-layer-recognition.md) | Capability Architecture Layer Recognition | Accepted (v1.0) | 2026-07-19 | REPOSITORY_GOVERNANCE, ENGINEERING_CONSTITUTION, OFFERING_CAPABILITY_ARCHITECTURE, ADR-0002, ADR-0003 |
 
 ---
 
