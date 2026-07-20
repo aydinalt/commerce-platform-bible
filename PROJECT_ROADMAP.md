@@ -1,8 +1,8 @@
 <!--
 Owner:        Architecture Owner
 Status:       Living
-Version:      2.8
-Last Updated: 2026-07-18
+Version:      2.9
+Last Updated: 2026-07-20
 
 Purpose:
 Defines the strategic execution roadmap for Commerce Platform Bible.
@@ -90,16 +90,18 @@ Release
 
 # Decision Gates
 
-| Gate | Requirement |
-|------|-------------|
-| Gate 1 | Foundation Frozen |
-| Gate 2 | PRDs Frozen |
-| Gate 3 | UX Frozen |
-| Gate 4 | User Stories Frozen |
-| Gate 5 | Engineering Standards Approved |
-| Gate 6 | Architecture Approved |
-| Gate 7 | Development Begins |
-| Gate 8 | Production Release |
+| Gate | Requirement | Current State |
+|------|-------------|---------------|
+| Gate 1 | Foundation Frozen | ✅ Met |
+| Gate 2 | Governance process documents authoritative | 🚧 Not met — three Draft v0.1 sources |
+| Gate 3 | PRD sources approved/frozen as required | 🚧 Not met — 2 Approved, 4 Draft |
+| Gate 4 | UX sources Frozen | ❌ Not met — all 8 Draft |
+| Gate 5 | User Story Handbook authoritative | ❌ Not met — Draft v0.9 |
+| Gate 6 | User Stories Frozen | 🚧 Existing Offering records preserved; new Discovery production blocked |
+| Gate 7 | Engineering Standards Approved | ⏳ Planned |
+| Gate 8 | Software Architecture Approved | ⏳ Planned |
+| Gate 9 | Development Begins | ⏳ Planned |
+| Gate 10 | Production Release | ⏳ Planned |
 
 ---
 
@@ -107,12 +109,15 @@ Release
 
 | Milestone | Status |
 |-----------|--------|
-| M1 Documentation Foundation | ✅ Completed |
-| M2 UX Layer | ✅ Completed |
+| Foundation | ✅ Completed / Frozen |
+| Repository Governance Recovery | ✅ Completed — Frozen v1.0 |
+| Repository Management Reconciliation | 🚧 Current |
+| Governance Process Documents | 🚧 Next |
 | Capability Architecture Layer | ✅ Completed |
 | Offering Capability & Story Reconciliation | ✅ Completed |
-| Offering Pilot | 🚧 In Progress |
-| M3 User Story Layer | 🚧 In Progress |
+| PRD Lifecycle Recovery | ⏳ Planned — Discovery priority |
+| UX Lifecycle Recovery | ⏳ Planned — Home/Discovery priority |
+| M3 User Story Layer | ⏸ Partially preserved / new production blocked |
 | M4 Engineering Standards | ⏳ Planned |
 | M5 Repository Completion | ⏳ Planned |
 | M6 Software Architecture | ⏳ Planned |
@@ -123,56 +128,69 @@ Release
 
 # Current Position (WE ARE HERE)
 
-The repository completed its **Governance phase** (REPOSITORY_GOVERNANCE.md and USER_STORY_HANDBOOK.md — Baseline v1.0) and is in **Product Story Generation**.
+The repository is in **Source-State Recovery and Lifecycle Completion**.
 
-The **Offering Capability & Story Reconciliation** package is now **complete and closed**.
+Verified current state:
 
-**Offering Authoring (US-0001 Offering) — ✅ COMPLETED**
+- `REPOSITORY_GOVERNANCE.md` — Frozen v1.0
+- ADR-0004 — Accepted v1.0
+- `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, `ADR_PROCESS.md` — Draft v0.1
+- `USER_STORY_HANDBOOK.md` — Draft v0.9
+- PRD sources — 2 Approved, 4 Draft
+- UX sources — all 8 Draft
+- `OFFERING_CAPABILITY_ARCHITECTURE.md` — Frozen v1.0
+- Offering Capability & Story Reconciliation — complete and preserved
 
-- ✅ Offering Creation (F01) — US-OFR-F01-001 — Golden Baseline
-- ✅ Offering Editing (F02) — US-OFR-F02-001 — Golden Baseline
-- ✅ Offering Retirement (F03) — US-OFR-F03-001 — Frozen v1.0 Golden Baseline
+The prior roadmap position that Governance, PRD, UX, and Story Handbook were complete Baselines was not supported by their canonical headers. Those claims are corrected here rather than treated as authority.
 
-**Offering Publication (US-0001 Offering) — ✅ COMPLETED**
+**Current work:** reconcile the three repository management documents, then complete the governance process sources, Handbook, PRDs, and UX in dependency order.
 
-- ✅ Offering Publication (F04) — US-OFR-F04-001 — Frozen v1.0 Golden Baseline (Draft → Published)
-
-**Offering Presentation (US-0001 Offering) — ✅ COMPLETED**
-
-- ✅ Full Offering Detail Presentation (F05) — US-OFR-F05-001 — Golden Baseline
-
-Work advances to the next Story Document in the established `US-0001 … US-0006` sequence — **US-0002 Discovery**.
+**Blocked target:** `US-0002 Discovery` resumes only after `PRD-0002`, `UX-0001`, `UX-0002`, and `USER_STORY_HANDBOOK.md` become authoritative through the lawful lifecycle.
 
 ---
 
 # Milestone Details
 
 ## M1 Documentation Foundation
-Status: ✅ Completed
+Status: 🚧 Partially Complete / Source Recovery
 
-Entry:
+Verified Complete:
 - Repository created
-
-Exit:
-- Governance complete
 - Foundation Frozen
-- ADR established
-- PRDs Frozen
+- ADR mechanism in active use
+- `REPOSITORY_GOVERNANCE.md` Frozen v1.0
 
-Success:
-- Single source of truth established.
+Open:
+- `DOCUMENT_LIFECYCLE.md` Draft v0.1
+- `REVIEW_PROCESS.md` Draft v0.1
+- `ADR_PROCESS.md` Draft v0.1
+- Repository management reconciliation
+
+Success condition:
+- All governance source documents reach authoritative lifecycle states and Living records match canonical headers.
 
 ---
 
 ## M2 UX Layer
-Status: ✅ Completed
+Status: 🔴 Reopened for Lifecycle Recovery
+
+Canonical Source State:
+- UX-0001 Home — Draft v0.1
+- UX-0002 Discovery — Draft v0.1
+- UX-0003 Offering Detail — Draft v0.1
+- UX-0004 Compare — Draft v0.2
+- UX-0005 Business Dashboard — Draft v0.1
+- UX-0006 Admin Dashboard — Draft v0.2
+- UX-0007 Messaging — Draft v0.2
+- UX-0008 Authentication — Draft v0.2
+
+Priority:
+- Complete PRD upstream recovery first.
+- Then review UX-0001 and UX-0002 for Discovery readiness.
+- Complete the remaining UX specifications through review, approval, and separate freeze.
 
 Exit:
-- UX validated
-- UX Frozen
-
-Success:
-- UX fully traceable to PRDs.
+- Every UX source has completed its lawful lifecycle; no layer-wide freeze is inferred from review history alone.
 
 ---
 
@@ -234,10 +252,10 @@ Success:
 ---
 
 ## Offering Pilot
-Status: 🚧 In Progress
+Status: ⏸ Paused Pending Upstream Recovery
 
 Objective:
-- Open the next milestone. Apply the baselined Foundation, Capability Architecture, PRD, and UX layers to pilot the Offering through the documentation layers.
+- Resume only after the PRD and UX source layers complete their lawful lifecycles. Existing Offering records are preserved; no new pilot claim is advanced during recovery.
 
 Deliverables:
 - TODO — to be defined as the Offering Pilot is planned.
@@ -248,28 +266,36 @@ Success:
 ---
 
 ## M3 User Story Layer
-Status: 🚧 In Progress
+Status: ⏸ Existing Offering Records Preserved / New Production Blocked
 
-Deliverables:
-- USER_STORY_HANDBOOK — ✅ Baseline (v1.0)
-- ENGINEERING_CONSTITUTION — 🚧 In Progress
-- US-0001 … US-0006 — 🚧 In Progress (Product Story Generation)
-  - Offering Authoring: ✅ **Epic complete** — F01 Offering Creation (US-OFR-F01-001), F02 Offering Editing (US-OFR-F02-001), F03 Offering Retirement (US-OFR-F03-001, Frozen v1.0), all Golden Baseline
-  - Offering Publication: ✅ **Epic complete** — F04 Offering Publication (US-OFR-F04-001, Frozen v1.0), Golden Baseline (Draft → Published)
-  - Offering Presentation: ✅ **Epic complete** — F05 Full Offering Detail Presentation (US-OFR-F05-001), Golden Baseline
-  - US-0002 Discovery: ⏳ Next in the established `US-0001 … US-0006` sequence
+Canonical Inputs:
+- `USER_STORY_HANDBOOK.md` — Draft v0.9
+- `ENGINEERING_CONSTITUTION.md` — Draft v1.3
+- `REPOSITORY_GOVERNANCE.md` — Frozen v1.0
+- `OFFERING_CAPABILITY_ARCHITECTURE.md` — Frozen v1.0
 
-Supporting Baseline:
-- REPOSITORY_GOVERNANCE — ✅ Baseline (v1.0); Story Domain Code Registry established
-- OFFERING_CAPABILITY_ARCHITECTURE — ✅ Frozen v1.0; authoritative Feature → Capability registry
+Preserved Work:
+- Existing US-0001 Offering records remain present.
+- F03 and F04 reconciliation remains complete.
+- F02 capability association remains Deferred / Not Yet Decided.
+
+Blocked Next Target:
+- `US-0002 Discovery` Story Architecture is blocked by Draft `PRD-0002`, Draft `UX-0001`, Draft `UX-0002`, and Draft `USER_STORY_HANDBOOK.md`.
+
+Recovery Sequence:
+1. Governance process documents
+2. User Story Handbook
+3. PRD lifecycle completion
+4. UX lifecycle completion
+5. Discovery readiness reassessment
 
 Exit:
-- Handbook Frozen ✅
-- Constitution Frozen
-- Stories Frozen
+- Handbook authoritative
+- Required PRD and UX inputs authoritative
+- Story documents reviewed and frozen according to the owning lifecycle process
 
 Success:
-- Development-ready backlog.
+- Development-ready backlog built only from authoritative upstream sources.
 
 ---
 
@@ -356,16 +382,15 @@ Success:
 
 # Estimated Timeline
 
-| Milestone | Estimate |
-|-----------|----------|
-| M1 | Completed |
-| M2 | Completed |
-| M3 | Current |
-| M4 | Next |
-| M5 | After M4 |
-| M6 | After M5 |
-| M7 | After M6 |
-| M8 | Final |
+| Sequence | Work |
+|----------|------|
+| Current | Repository management reconciliation |
+| Next | Governance process document lifecycle completion |
+| Then | USER_STORY_HANDBOOK lifecycle completion |
+| Then | PRD lifecycle recovery — Discovery priority |
+| Then | UX lifecycle recovery — Home/Discovery priority |
+| Then | US-0002 Discovery readiness and production |
+| Later | Engineering Standards → Repository Completion → Software Architecture → Development → Release |
 
 ---
 
@@ -388,14 +413,16 @@ Success:
 
 # Risk Register
 
-| Milestone | Primary Risk | Mitigation |
-|-----------|--------------|------------|
-| M3 | Scope Creep | INVEST + DoR |
-| M4 | Governance Drift | Reviews |
-| M5 | Documentation Inconsistency | Traceability |
-| M6 | Architectural Drift | ADR Process |
-| M7 | Technical Debt | Quality Gates |
-| M8 | Release Risk | CI/CD + Validation |
+| Area | Primary Risk | Mitigation |
+|------|--------------|------------|
+| Repository Management | Living records override canonical headers | Source-header reconciliation and correction notices |
+| Governance | Process owners remain Draft | Complete lifecycle before claiming governance completion |
+| PRD | Layer-wide Frozen claim masks mixed source states | Review each PRD; prioritize Discovery |
+| UX | All source files remain Draft | Recover after PRD authority is established |
+| User Stories | Stories produced from non-authoritative upstream sources | Block new production until readiness gate passes |
+| Capability Architecture | F02 association undecided | Future ADR / explicit architecture decision |
+| Engineering | Governance drift | Reviews and explicit gates |
+| Development | Technical debt from premature implementation | No development before authoritative upstream documentation |
 
 ---
 
@@ -403,14 +430,17 @@ Success:
 
 The repository is considered complete when:
 
-- Governance established
+- Repository Governance Frozen
+- Governance process documents authoritative
 - Foundation Frozen
-- ADRs accepted
-- PRDs Frozen
-- UX Frozen
+- ADRs accepted where required
+- Every PRD source authoritative and frozen where the release requires it
+- Every UX source authoritative and frozen where the release requires it
+- User Story Handbook authoritative
 - User Stories Frozen
 - Engineering Standards approved
 - Software Architecture approved
+- Living management documents match canonical source headers
 - Documentation validated
 - Marketplace Bible v1.0 Frozen
 
@@ -418,16 +448,20 @@ The repository is considered complete when:
 
 # Progress Dashboard
 
-| Layer | Progress |
-|--------|----------|
-| Governance | ██████████ 100% |
-| Foundation | ██████████ 100% |
-| Capability Architecture | ██████████ 100% |
-| PRD | ██████████ 100% |
-| UX | ██████████ 100% |
-| User Stories | ██████░░░░ 55% |
-| Engineering | ░░░░░░░░░░ 0% |
-| Development | ░░░░░░░░░░ 0% |
+Percentage reporting is suspended during source-state recovery. Verified lifecycle distribution replaces estimated progress.
+
+| Layer / Group | Verified State |
+|---------------|----------------|
+| Repository Governance | Frozen v1.0 |
+| Governance Process Documents | 3 Draft v0.1 |
+| Foundation | Frozen |
+| Capability Architecture | Frozen v1.0 |
+| ADRs | 4 Accepted |
+| PRDs | 2 Approved / 4 Draft |
+| UX | 8 Draft |
+| User Story Handbook | Draft v0.9 |
+| Engineering Constitution | Draft v1.3 |
+| New Discovery Story Production | Blocked |
 
 ---
 
@@ -444,3 +478,4 @@ The repository is considered complete when:
 | 2.6 | 2026-07-11 | Marked the Offering Authoring Epic COMPLETED (F01, F02, F03 all Golden Baseline; F03 = US-OFR-F03-001); updated the Current Position (WE ARE HERE) and M3 detail to show Offering Publication as the next Epic; updated the progress dashboard. No milestone order, gates, dates, or ownership changed. |
 | 2.7 | 2026-07-11 | Marked the Offering Publication Epic COMPLETED (F04 = US-OFR-F04-001, Golden Baseline, Draft → Published); updated the Current Position (WE ARE HERE) and M3 detail to show Offering Presentation as the next Epic; updated the progress dashboard. No milestone order, gates, dates, or ownership changed. |
 | 2.8 | 2026-07-18 | Recorded the **Offering Capability & Story Reconciliation** milestone as Completed: ADR-0003 decision and acceptance (F01 → Creation, F03 → Lifecycle, F04 → Lifecycle); OFFERING_CAPABILITY_ARCHITECTURE.md validation, review, approval, and freeze at v1.0; F03 and F04 controlled-revision validation, Architecture Review, Final Review, approval, and freeze at v1.0; Epic–Capability conflict assessment with verdict NO NORMATIVE CONFLICT; package closure. Preserved F02 as Deferred / Not Yet Decided, the optional USER_STORY_HANDBOOK terminology clarification as non-blocking future maintenance, F05 → Presentation under ADR-0002, the preserved v0.1 Frozen baselines, and the absence of any required traceability.md change. Updated the Current Position and M3 detail to show the next Story Document in the established `US-0001 … US-0006` sequence, and refreshed the progress dashboard. No implementation or development work marked complete; no unrelated Story marked complete; no milestone order, gates, dates, or ownership changed. |
+| 2.9 | 2026-07-20 | Repository source-state recovery revision: corrected unsupported Governance/PRD/UX/Handbook completion claims; recorded REPOSITORY_GOVERNANCE Frozen v1.0 and ADR-0004 Accepted v1.0; introduced recovery gates and dependency order; paused new US-0002 production until canonical upstream sources become authoritative; and suspended misleading percentage reporting. No product, UX, Story, Capability, Feature ID, or implementation decision changed. |

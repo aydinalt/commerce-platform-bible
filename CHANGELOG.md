@@ -21,6 +21,51 @@ This project follows the principles of:
 
 ---
 
+## [1.8.0] - 2026-07-20
+
+### Added or recorded
+
+#### ADR and Governance
+- ADR-0004 — Capability Architecture Layer Recognition — **Accepted v1.0** on 2026-07-19.
+- `REPOSITORY_GOVERNANCE.md` completed Formal Architecture Review, Final Review, explicit Owner Approval, and separate Owner Freeze — **Frozen v1.0**.
+- Repository management-document reconciliation recorded as the immediate follow-up required by Frozen `REPOSITORY_GOVERNANCE.md` §12.
+
+#### Canonical Source-State Inventory
+- Governance process documents: `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, `ADR_PROCESS.md` — **Draft v0.1**.
+- `USER_STORY_HANDBOOK.md` — **Draft v0.9**.
+- PRDs: PRD-0001 **Approved v1.1**; PRD-0003 **Approved v1.0**; PRD-0002 **Draft v0.1**; PRD-0004 **Draft v0.4**; PRD-0005 and PRD-0006 **Draft v0.1**.
+- UX: UX-0001 through UX-0008 remain **Draft** (v0.1 or v0.2 according to each canonical header).
+- `ENGINEERING_CONSTITUTION.md` — **Draft v1.3**.
+
+### Changed
+
+- `CURRENT_STATUS.md` updated to v1.8 and reconciled to canonical source headers.
+- `PROJECT_ROADMAP.md` updated to v2.9 with a source-recovery sequence and explicit readiness gates.
+- Completion percentages were suspended during recovery because previous values counted unsupported Baseline/Frozen claims as complete.
+- New `US-0002 Discovery` Story Architecture production is blocked until `PRD-0002`, `UX-0001`, `UX-0002`, and `USER_STORY_HANDBOOK.md` complete their lawful lifecycle.
+
+### Corrected
+
+- Corrected the unsupported claim that `USER_STORY_HANDBOOK.md` was Baseline v1.0; its canonical source remains Draft v0.9.
+- Corrected the unsupported claim that the complete PRD layer was Frozen; the current PRD sources are mixed Approved/Draft.
+- Corrected the unsupported claim that the UX layer was Frozen; all current UX sources remain Draft.
+- Corrected the unsupported claim that the governance layer was fully complete; three governance process documents remain Draft v0.1.
+- Preserved repository history by annotating earlier entries rather than pretending the unsupported lifecycle events occurred.
+
+### Preserved
+
+- Existing Offering Capability Architecture and F03/F04 reconciliation outcomes remain unchanged.
+- ADR-0001 through ADR-0004 remain Accepted.
+- F02 remains Deferred / Not Yet Decided and is not recorded as a Feature → Capability association.
+- No product behaviour, UX behaviour, Story behaviour, Capability, Feature, Feature ID, Feature → Capability association, implementation decision, or historical source file was changed by this reconciliation.
+
+### Milestone
+
+- Repository source-state recovery opened.
+- Next sequence: governance process documents → User Story Handbook → PRDs → UX → `US-0002 Discovery` readiness reassessment.
+
+---
+
 ## [1.7.0] - 2026-07-18
 
 ### Added or recorded
@@ -138,6 +183,8 @@ This project follows the principles of:
 
 ## [1.2.0] - 2026-07-11
 
+> **Correction notice — 2026-07-20:** The Baseline claims recorded in this entry were not supported by the canonical source headers. `REPOSITORY_GOVERNANCE.md` later completed a lawful lifecycle and became Frozen v1.0 on 2026-07-19. `USER_STORY_HANDBOOK.md` remains Draft v0.9. See [1.8.0].
+
 ### Added
 
 #### Story Governance Baseline
@@ -192,6 +239,8 @@ This project follows the principles of:
 ---
 
 ## [1.0.0] - 2026-07-10
+
+> **Correction notice — 2026-07-20:** The layer-wide PRD Frozen and UX Frozen labels below were not supported by the canonical source headers. Current PRD sources are mixed Approved/Draft, and all current UX sources remain Draft. See [1.8.0].
 
 ### Added
 
