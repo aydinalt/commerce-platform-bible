@@ -1,7 +1,11 @@
 # Commerce Decision Platform — V1 Scope
 
-- **Status:** Approved
-- **Version:** 1.0
+- **Status:** Frozen
+- **Version:** 1.1
+
+> **Approval Note (1.1):** Approved by explicit Product Owner / Architecture Owner direction on 2026-07-25 after Final Freeze Gate review. This controlled post-approval clarification records that Decision Chat ownership is now resolved by Accepted `ADR-0001`, Frozen `PRD-0004-decision.md`, Frozen `UX-0009-decision-flow.md`, and Frozen `docs/traceability.md`. It changes no V1 scope or product behaviour.
+
+> **Freeze Note (1.1):** Frozen by separate Product Owner / Architecture Owner direction on 2026-07-25. The V1 scope baseline is locked; future change requires a separate superseding Draft under `DOCUMENT_LIFECYCLE.md`.
 
 ## 1. Purpose
 
@@ -151,7 +155,7 @@ Key risks to the V1 launch:
 
 The following cross-document observations are recorded per the final review. They are flagged, not resolved; no scope, terminology, or decision in this document has been changed.
 
-> **Review Note (Decision Chat ownership):** This document lists "Decision Chat" as an included V1 capability (Section 3) and as a step in the core flow (Sections 5 and 10). Among the approved PRDs, no PRD currently owns Decision Chat: `PRD-0004-decision.md` explicitly excludes the Decision Assistant / assistive AI, and `PRD-0003-identity.md` refers to it as the "Decision Assistance capability." A decision-maker should confirm which PRD owns Decision Chat and reconcile it with `PRD-0004`.
+> **Resolution Note (Decision Chat ownership):** The earlier ownership observation is closed. Accepted `ADR-0001`, Frozen `PRD-0004-decision.md`, Frozen `UX-0009-decision-flow.md`, and Frozen `docs/traceability.md` establish Decision as the owning product domain and preserve Identity only as an authentication dependency. This clarification changes no V1 scope.
 
 > **Review Note (Categories / Attributes phrasing):** This document states "Categories are metadata" and "Attributes power filters and comparison" (Sections 9 and 12), whereas the approved PRDs and other Foundation documents phrase these as "Categories organize content/Offerings" and "Attributes power discovery, filtering, and comparison." These are compatible; the wording is left unchanged pending a source-of-truth harmonization decision.
 

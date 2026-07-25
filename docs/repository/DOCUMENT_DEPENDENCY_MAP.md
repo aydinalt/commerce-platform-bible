@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.1
+Version:      1.2
 Last Updated: 2026-07-25
 -->
 
@@ -71,10 +71,11 @@ ADRs record accepted architectural decisions that may affect one or more layers.
 
 ## Current Gate
 
-The six-domain Story layer is Frozen and locally reconciled. GitHub synchronization and full Feature-level traceability validation precede the Marketplace Bible v1.0 freeze gate.
+The Marketplace Bible v1.0 documentation baseline passed the Final Freeze Gate and is Frozen. Software Architecture is the next downstream layer; it must consume the Frozen baseline and Engineering Constitution without redefining product behaviour.
 
 ## Revision History
 
 | Version | Date | Summary |
 |---|---|---|
 | 1.1 | 2026-07-25 | Reconciled the map to the official Capability Architecture layer, Feature Registries, and Parent → Generated Story structure. |
+| 1.2 | 2026-07-25 | Recorded completion of the Marketplace Bible v1.0 Final Freeze Gate and opened the Software Architecture dependency step. |

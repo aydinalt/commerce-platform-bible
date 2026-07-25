@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      3.4
+Version:      3.5
 Last Updated: 2026-07-25
 -->
 
@@ -14,7 +14,7 @@ This roadmap records execution order. It does not define product, UX, Story, or 
 
 ## Current Position
 
-The documentation source-recovery and GitHub synchronization phases are complete. All 50 Feature-level chains passed repository-wide validation, traceability is Frozen v1.0, and the Engineering Constitution is Frozen v1.0 after explicit Owner Approval and a separate Freeze decision. The Marketplace Bible v1.0 final freeze gate is now the next open gate.
+The Marketplace Bible v1.0 documentation baseline passed the Final Freeze Gate and is Frozen. All 50 Feature-level chains passed repository-wide validation, traceability and the Engineering Constitution are Frozen v1.0, and all 50 Generated Stories remain Not Started. Software Architecture is now the active phase.
 
 ## Milestones
 
@@ -26,15 +26,16 @@ The documentation source-recovery and GitHub synchronization phases are complete
 | M4 — Repository reconciliation | Complete | Canonical files, indexes, registries, and ADRs are present in one repository tree |
 | M5 — GitHub synchronization | Complete | Reconciled package and final corrections are verified on `main` |
 | M6 — Full traceability validation | Complete | Cross-tier chains pass and traceability is Frozen v1.0 |
-| M7 — Marketplace Bible v1.0 freeze gate | Pending | Repository-wide documentation readiness is approved and frozen where applicable |
-| M8 — Software architecture | Not Started | Backend, frontend, infrastructure, security, and data decisions are documented |
+| M7 — Marketplace Bible v1.0 freeze gate | Complete | Repository-wide documentation readiness is approved and the baseline manifest is Frozen |
+| M8 — Software architecture | In Progress | Backend, frontend, infrastructure, security, and data decisions are documented |
 | M9 — Development | Not Started | Prior gates pass and delivery planning begins |
 | M10 — Release | Not Started | Product meets approved release criteria |
 
 ## Immediate Sequence
 
-1. Run the Marketplace Bible v1.0 final freeze gate.
-2. Prepare development prompts and implementation backlogs.
+1. Define the V1 software architecture and required ADRs.
+2. Review architecture against the Frozen Marketplace Bible and Engineering Constitution.
+3. Prepare development prompts and implementation backlogs.
 
 ## Gate Rules
 
@@ -63,3 +64,4 @@ The documentation source-recovery and GitHub synchronization phases are complete
 | 3.2 | 2026-07-25 | Recorded completion of Feature-level validation and moved traceability into lifecycle review. |
 | 3.3 | 2026-07-25 | Closed M6 after explicit Owner Approval and separate Freeze of traceability v1.0. |
 | 3.4 | 2026-07-25 | Closed the Engineering Constitution review record and advanced the immediate sequence to the Marketplace Bible v1.0 final freeze gate. |
+| 3.5 | 2026-07-25 | Completed M7 and opened M8 Software Architecture after the Marketplace Bible v1.0 baseline Freeze. |

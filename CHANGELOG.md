@@ -10,6 +10,23 @@ This project follows the principles of:
 
 ---
 
+## [2.4.0] - 2026-07-25
+
+### Frozen
+
+- Marketplace Bible v1.0 documentation baseline.
+- Five Foundation documents after lifecycle reconciliation.
+
+### Added
+
+- Marketplace Bible v1.0 baseline manifest.
+- Marketplace Bible v1.0 Final Freeze Gate review evidence.
+
+### Clarified
+
+- Closed the obsolete V1 Scope Decision Chat ownership observation through ADR-0001, Frozen PRD-0004, Frozen UX-0009, and Frozen traceability.
+- Opened M8 Software Architecture; all Generated Story Delivery Status values remain Not Started.
+
 ## [Unreleased]
 
 ### Corrected

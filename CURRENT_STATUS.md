@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.3
+Version:      2.4
 Last Updated: 2026-07-25
 -->
 
@@ -13,8 +13,8 @@ Last Updated: 2026-07-25
 | Item | Current state |
 |---|---|
 | Repository | Commerce Platform Bible |
-| Repository health | Reconciled and synchronized on GitHub; Feature-level validation passed |
-| Current phase | Marketplace Bible v1.0 final freeze gate |
+| Repository health | Marketplace Bible v1.0 documentation baseline Frozen |
+| Current phase | Software architecture preparation |
 | Development | Not Started |
 | Delivery Status of all Frozen Stories | Not Started |
 
@@ -57,8 +57,8 @@ Last Updated: 2026-07-25
 
 ## Remaining Work
 
-1. Complete the Marketplace Bible v1.0 repository freeze gate.
-2. Start software architecture and implementation planning only after the freeze gate passes.
+1. Define software architecture and record required technical decisions.
+2. Prepare implementation backlogs and development prompts after architecture review.
 
 ## Known Boundaries
 
@@ -76,3 +76,4 @@ Last Updated: 2026-07-25
 | 2.1 | 2026-07-25 | Recorded repository-wide Feature-level PASS, resolved UX-0007 treatment for V1, and completed Platform Freeze evidence reconciliation. |
 | 2.2 | 2026-07-25 | Recorded explicit Owner Approval and separate Freeze of traceability v1.0. |
 | 2.3 | 2026-07-25 | Closed the Engineering Constitution review record and recorded explicit Owner Approval followed by a separate Freeze of v1.0. |
+| 2.4 | 2026-07-25 | Closed the Marketplace Bible v1.0 Final Freeze Gate, reconciled Foundation lifecycle metadata, and opened the Software Architecture phase. |

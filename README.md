@@ -10,5 +10,6 @@ The authoritative documentation repository for the decision-completion marketpla
 - [Repository Index](docs/repository/REPOSITORY_INDEX.md)
 - [Traceability](docs/traceability.md)
 - [ADR Index](docs/adr/README.md)
+- [Marketplace Bible v1.0 Baseline](docs/releases/MARKETPLACE_BIBLE_V1_BASELINE.md)
 
-The current reconciled baseline includes six Frozen PRDs, eight current Frozen V1 UX specifications, nine Accepted ADRs, five non-Offering Frozen Feature Registries, six Frozen Parent Story Documents, and fifty Frozen Generated Stories.
+The Marketplace Bible v1.0 documentation baseline is Frozen. It includes five Frozen Foundation documents, six Frozen PRDs, eight current Frozen V1 UX specifications, nine Accepted ADRs, five non-Offering Frozen Feature Registries, six Frozen Parent Story Documents, fifty Frozen Generated Stories, Frozen traceability v1.0, and the Frozen Engineering Constitution v1.0.

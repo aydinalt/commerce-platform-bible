@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.4
+Version:      1.5
 Last Updated: 2026-07-25
 -->
 
@@ -42,6 +42,13 @@ Last Updated: 2026-07-25
 |---|---|
 | `docs/reviews/TRACEABILITY_ARCHITECTURE_AND_FINAL_REVIEW_2026-07-25.md` | Repository-wide Feature-level traceability validation |
 | `docs/reviews/ENGINEERING_CONSTITUTION_REVIEW_CLOSURE_2026-07-25.md` | Engineering Constitution repository-current closure validation and lifecycle evidence |
+| `docs/reviews/MARKETPLACE_BIBLE_V1_FINAL_FREEZE_GATE_2026-07-25.md` | Repository-wide Final Freeze Gate evidence |
+
+## Release Baseline
+
+| Path | State |
+|---|---|
+| `docs/releases/MARKETPLACE_BIBLE_V1_BASELINE.md` | Frozen v1.0 |
 
 ## Foundation
 
@@ -117,3 +124,4 @@ Last Updated: 2026-07-25
 | 1.2 | 2026-07-25 | Recorded Offering Capability Architecture Frozen v2.0 and authoritative F06/F07 → Handoff Enablement mappings. |
 | 1.3 | 2026-07-25 | Recorded traceability as Frozen v1.0 after completed validation, Owner Approval, and separate Freeze. |
 | 1.4 | 2026-07-25 | Recorded Engineering Constitution as Frozen v1.0 and added its review-closure evidence. |
+| 1.5 | 2026-07-25 | Added the Frozen Marketplace Bible v1.0 baseline manifest and Final Freeze Gate evidence. |

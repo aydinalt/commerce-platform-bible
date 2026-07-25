@@ -1,7 +1,9 @@
 # Vision
 
-- **Status:** Approved
+- **Status:** Frozen
 - **Version:** 1.0
+
+> **Freeze Note (1.0):** Frozen by explicit Product Owner / Architecture Owner direction on 2026-07-25 during the Marketplace Bible v1.0 Final Freeze Gate. The Approved v1.0 content is unchanged. Future change requires a separate superseding Draft under `DOCUMENT_LIFECYCLE.md`.
 
 ## 1. Vision Statement
 
