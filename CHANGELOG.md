@@ -10,6 +10,26 @@ This project follows the principles of:
 
 ---
 
+## [2.7.0] - 2026-07-25
+
+### Added
+
+- Living implementation backlog covering all 50 Frozen Generated Stories.
+- Governed delivery sequence and first vertical-slice definition.
+- TypeScript npm-workspace skeleton for Next.js Web, NestJS API, Worker,
+  technical packages, and nine domain-module boundaries.
+- Strict TypeScript, ESLint, Prettier, Vitest, structured redacted logging,
+  runtime configuration validation, API health endpoints, and local PostgreSQL.
+
+### Verified
+
+- Formatting, lint, strict TypeScript, two contract tests, API build, Worker
+  build, shared-package builds, and domain-module builds pass.
+- The restricted verification environment lacks the process-memory interface
+  required by Next.js production build; target CI must rerun that build before
+  I0 closes.
+- All 50 Frozen Generated Stories remain `Delivery Status: Not Started`.
+
 ## [2.6.0] - 2026-07-25
 
 ### Approved

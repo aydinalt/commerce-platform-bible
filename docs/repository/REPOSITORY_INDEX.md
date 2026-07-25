@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.7
+Version:      1.8
 Last Updated: 2026-07-25
 -->
 
@@ -46,8 +46,6 @@ Last Updated: 2026-07-25
 | `docs/reviews/V1_SOFTWARE_ARCHITECTURE_REVIEW_2026-07-25.md` | V1 Software Architecture formal Architecture Review evidence |
 | `docs/reviews/V1_SOFTWARE_ARCHITECTURE_FINAL_REVIEW_2026-07-25.md` | V1 Software Architecture Final Review and ADR acceptance evidence |
 | `docs/reviews/V1_SOFTWARE_ARCHITECTURE_OWNER_APPROVAL_AND_FREEZE_2026-07-25.md` | Exact v0.2 Owner Approval and separate V1 Software Architecture v1.0 Freeze evidence |
-| `docs/reviews/V1_SOFTWARE_ARCHITECTURE_REVIEW_2026-07-25.md` | Formal Architecture Review and ADR decision readiness |
-| `docs/reviews/V1_SOFTWARE_ARCHITECTURE_FINAL_REVIEW_2026-07-25.md` | ADR acceptance and Final Review evidence |
 
 ## Release Baseline
 
@@ -65,7 +63,18 @@ Last Updated: 2026-07-25
 
 ## V1 Software Architecture
 
-`docs/software-architecture/` contains the exact In Review v0.2 architecture package. Final Review passed; Owner Approval and a separate Freeze remain required.
+`docs/software-architecture/` contains the Owner Approved and Frozen V1
+Software Architecture v1.0 baseline.
+
+## Implementation
+
+| Path | Purpose |
+|---|---|
+| `docs/implementation/IMPLEMENTATION_BACKLOG.md` | Orders all 50 Frozen Generated Stories into delivery increments |
+| `docs/implementation/DELIVERY_SEQUENCE.md` | Defines increment gates and the first vertical slice |
+| `apps/` | Independently deployable Web, API, and Worker processes |
+| `packages/` | Shared technical contracts, configuration, observability, and test utilities |
+| `modules/` | Reserved product-domain ownership boundaries |
 
 ## PRD Layer
 
@@ -123,7 +132,7 @@ Last Updated: 2026-07-25
 | Current Frozen Story total | 56 |
 | Feature Registries | 5 present; Offering uses Capability Architecture |
 | ADR sequence | ADR-0001–ADR-0014 present and Accepted |
-| Development | Not Started |
+| Development | M9 foundation In Progress; all 50 Generated Stories remain Not Started |
 
 ## Revision History
 
@@ -135,3 +144,5 @@ Last Updated: 2026-07-25
 | 1.4 | 2026-07-25 | Recorded Engineering Constitution as Frozen v1.0 and added its review-closure evidence. |
 | 1.5 | 2026-07-25 | Added the Frozen Marketplace Bible v1.0 baseline manifest and Final Freeze Gate evidence. |
 | 1.6 | 2026-07-25 | Registered Accepted ADR-0010–ADR-0014 and the V1 Software Architecture Final Review evidence. |
+| 1.7 | 2026-07-25 | Registered Owner Approval and the separate V1 Software Architecture v1.0 Freeze. |
+| 1.8 | 2026-07-25 | Registered the implementation backlog, delivery sequence, and TypeScript monorepo foundation. |

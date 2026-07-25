@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      3.7
+Version:      3.8
 Last Updated: 2026-07-25
 -->
 
@@ -14,7 +14,10 @@ This roadmap records execution order. It does not define product, UX, Story, or 
 
 ## Current Position
 
-The Marketplace Bible v1.0 documentation baseline passed the Final Freeze Gate and is Frozen. All 50 Feature-level chains passed repository-wide validation, traceability and the Engineering Constitution are Frozen v1.0, and all 50 Generated Stories remain Not Started. Software Architecture is now the active phase.
+The Marketplace Bible and V1 Software Architecture baselines are Frozen. M9 is
+active at repository-foundation level: the implementation backlog, delivery
+sequence, and TypeScript monorepo skeleton are prepared. All 50 Generated
+Stories remain Not Started.
 
 ## Milestones
 
@@ -28,14 +31,14 @@ The Marketplace Bible v1.0 documentation baseline passed the Final Freeze Gate a
 | M6 — Full traceability validation | Complete | Cross-tier chains pass and traceability is Frozen v1.0 |
 | M7 — Marketplace Bible v1.0 freeze gate | Complete | Repository-wide documentation readiness is approved and the baseline manifest is Frozen |
 | M8 — Software architecture | Complete | ADR-0010–ADR-0014 are Accepted and the exact architecture package is Frozen v1.0 |
-| M9 — Development | Not Started | Prior gates pass and delivery planning begins |
+| M9 — Development | In Progress | Repository foundation passes and governed vertical increments deliver the Frozen Stories |
 | M10 — Release | Not Started | Product meets approved release criteria |
 
 ## Immediate Sequence
 
-1. Prepare the implementation backlog and delivery sequence.
-2. Create the application monorepo skeleton under the Frozen architecture.
-3. Implement the first vertical slice with tests and migration controls.
+1. Complete I0 CI, Prisma migration, OpenAPI, boundary-check, and web-build evidence.
+2. Approve the first product-bearing vertical slice entry.
+3. Implement verified User → Business → Offering → Publish → Discovery with tests and migration controls.
 
 ## Gate Rules
 
@@ -66,3 +69,5 @@ The Marketplace Bible v1.0 documentation baseline passed the Final Freeze Gate a
 | 3.4 | 2026-07-25 | Closed the Engineering Constitution review record and advanced the immediate sequence to the Marketplace Bible v1.0 final freeze gate. |
 | 3.5 | 2026-07-25 | Completed M7 and opened M8 Software Architecture after the Marketplace Bible v1.0 baseline Freeze. |
 | 3.6 | 2026-07-25 | Accepted ADR-0010–ADR-0014 and advanced the Final Review PASS architecture package to Owner Approval. |
+| 3.7 | 2026-07-25 | Recorded Owner Approval and separate Freeze of V1 Software Architecture v1.0; closed M8. |
+| 3.8 | 2026-07-25 | Opened M9 with the implementation backlog, delivery sequence, and monorepo foundation; no Generated Story delivery state changed. |

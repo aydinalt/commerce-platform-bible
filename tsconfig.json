@@ -1,0 +1,21 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/config" },
+    { "path": "./packages/contracts" },
+    { "path": "./packages/observability" },
+    { "path": "./packages/testing" },
+    { "path": "./modules/identity" },
+    { "path": "./modules/business" },
+    { "path": "./modules/catalog" },
+    { "path": "./modules/offering" },
+    { "path": "./modules/discovery" },
+    { "path": "./modules/decision" },
+    { "path": "./modules/moderation" },
+    { "path": "./modules/analytics" },
+    { "path": "./modules/audit" },
+    { "path": "./apps/api" },
+    { "path": "./apps/worker" },
+    { "path": "./apps/web" }
+  ]
+}

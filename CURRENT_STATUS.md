@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.6
+Version:      2.7
 Last Updated: 2026-07-25
 -->
 
@@ -13,9 +13,9 @@ Last Updated: 2026-07-25
 | Item | Current state |
 |---|---|
 | Repository | Commerce Platform Bible |
-| Repository health | Marketplace Bible v1.0 documentation baseline Frozen |
-| Current phase | Development planning and repository skeleton preparation |
-| Development | Not Started |
+| Repository health | Frozen documentation and architecture baselines; implementation foundation prepared |
+| Current phase | M9 Development — repository foundation |
+| Development | In Progress at foundation level; no product Story started |
 | Delivery Status of all Frozen Stories | Not Started |
 
 ## Canonical Layer Status
@@ -58,15 +58,16 @@ Last Updated: 2026-07-25
 
 ## Remaining Work
 
-1. Prepare the implementation backlog and delivery sequence under the Frozen architecture.
-2. Create the application monorepo skeleton and begin the first governed vertical slice.
+1. Complete I0 with CI, Prisma migration baseline, OpenAPI generation, boundary checks, and target-environment Next.js build evidence.
+2. Begin the first governed vertical slice only after the I0 gate passes.
 
 ## Known Boundaries
 
 - Non-blocking audit observations were not silently applied to Frozen Story content.
 - `UX-0007 Messaging` is retained as historical Draft v0.2 outside the Frozen V1 baseline and is not required by any validated V1 Feature chain.
 - Platform Parent and Generated Story lifecycle metadata now carries the missing Freeze evidence for the already-authorized 2026-07-25 Owner Freeze; Story behaviour and Delivery Status are unchanged.
-- No implementation, API, database, infrastructure, or code decision is inferred from documentation reconciliation.
+- The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
+- The restricted verification environment cannot expose the process-memory interface required by `next build`; the web production build must be rerun in target CI.
 
 ## Revision History
 
@@ -80,3 +81,4 @@ Last Updated: 2026-07-25
 | 2.4 | 2026-07-25 | Closed the Marketplace Bible v1.0 Final Freeze Gate, reconciled Foundation lifecycle metadata, and opened the Software Architecture phase. |
 | 2.5 | 2026-07-25 | Accepted ADR-0010–ADR-0014, recorded V1 Software Architecture Final Review PASS, and opened the Owner Approval gate. |
 | 2.6 | 2026-07-25 | Recorded Owner Approval and the separate V1 Software Architecture v1.0 Freeze; closed M8 and opened development planning. |
+| 2.7 | 2026-07-25 | Added the 50-Story implementation backlog, delivery sequence, and executable TypeScript monorepo foundation; opened M9 without starting a product Story. |

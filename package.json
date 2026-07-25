@@ -1,0 +1,49 @@
+{
+  "name": "commerce-platform",
+  "version": "0.0.0",
+  "private": true,
+  "description": "V1 commerce platform monorepo",
+  "packageManager": "npm@11.9.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "modules/*"
+  ],
+  "overrides": {
+    "@nestjs/platform-fastify": {
+      "find-my-way": "9.7.0"
+    },
+    "fastify": {
+      "find-my-way": "9.7.0"
+    },
+    "next": {
+      "postcss": "8.5.23",
+      "sharp": "0.35.3"
+    }
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspace=@commerce/web",
+    "dev:api": "npm run dev --workspace=@commerce/api",
+    "dev:worker": "npm run dev --workspace=@commerce/worker",
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,json}\" \"packages/**/*.{ts,json}\" \"modules/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{json,mjs,yaml}\"",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc -b --pretty false",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "@types/node": "^24.1.0",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vitest": "^4.1.10"
+  }
+}

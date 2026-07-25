@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: commerce
+      POSTGRES_PASSWORD: commerce
+      POSTGRES_USER: commerce
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commerce -d commerce"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - commerce_postgres:/var/lib/postgresql/data
+
+volumes:
+  commerce_postgres:
