@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.2
+Version:      2.3
 Last Updated: 2026-07-25
 -->
 
@@ -14,7 +14,7 @@ Last Updated: 2026-07-25
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Reconciled and synchronized on GitHub; Feature-level validation passed |
-| Current phase | Engineering Constitution review closure |
+| Current phase | Marketplace Bible v1.0 final freeze gate |
 | Development | Not Started |
 | Delivery Status of all Frozen Stories | Not Started |
 
@@ -32,7 +32,7 @@ Last Updated: 2026-07-25
 | Feature-ID ownership | Offering Capability Architecture is Frozen v2.0; DSC, IDN, DEC, BUS, and PLT registries are Frozen v1.0 |
 | User Stories | 6 Parent Story Documents and 50 Generated Stories are Frozen |
 | Traceability | Frozen v1.0; all 50 Feature-level chains validated with PASS |
-| Engineering | `ENGINEERING_CONSTITUTION.md` remains Draft |
+| Engineering | `ENGINEERING_CONSTITUTION.md` is Frozen v1.0 |
 
 ## Frozen User Story Inventory
 
@@ -57,9 +57,8 @@ Last Updated: 2026-07-25
 
 ## Remaining Work
 
-1. Close the Engineering Constitution review record.
-2. Complete the Marketplace Bible v1.0 repository freeze gate.
-3. Start software architecture and implementation planning only after the freeze gate passes.
+1. Complete the Marketplace Bible v1.0 repository freeze gate.
+2. Start software architecture and implementation planning only after the freeze gate passes.
 
 ## Known Boundaries
 
@@ -76,3 +75,4 @@ Last Updated: 2026-07-25
 | 2.0 | 2026-07-25 | Recorded Offering Capability Architecture Frozen v2.0 and closed the F06/F07 capability-home gap. |
 | 2.1 | 2026-07-25 | Recorded repository-wide Feature-level PASS, resolved UX-0007 treatment for V1, and completed Platform Freeze evidence reconciliation. |
 | 2.2 | 2026-07-25 | Recorded explicit Owner Approval and separate Freeze of traceability v1.0. |
+| 2.3 | 2026-07-25 | Closed the Engineering Constitution review record and recorded explicit Owner Approval followed by a separate Freeze of v1.0. |

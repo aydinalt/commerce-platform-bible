@@ -27,7 +27,6 @@ This project follows the principles of:
 ### Planned
 
 - Marketplace Bible v1.0 freeze gate
-- Engineering Standards completion
 - Software Architecture
 - Development Phase
 
@@ -43,6 +42,15 @@ This project follows the principles of:
 - Approved the exact reviewed traceability v0.8 candidate as v1.0 after Architecture Review and Final Review passed.
 - Separately froze traceability v1.0 as the authoritative current V1 cross-tier baseline.
 - Changed no product, UX, Feature, Story, Capability, Delivery Status, or implementation behaviour.
+
+### Engineering Constitution Lifecycle
+
+- Recovered the clean Engineering Constitution Draft v0.1 candidate and validated it against the current Frozen governance, Accepted ADR, Story-standard, and traceability baselines.
+- Preserved the historical Draft v1.3 as non-authoritative source history rather than treating its noncanonical pre-approval version as an authoritative baseline.
+- Recorded that the recovered Claude package contained an audit prompt but no completed Claude verdict; no independent-audit result was inferred.
+- Closed Architecture Review and Final Review with no Blocker, Major, or required correction.
+- Approved the exact reviewed candidate as v1.0 and separately froze it as the authoritative universal engineering-governance baseline.
+- Changed no product behaviour, Story behaviour, Story Delivery Status, implementation, infrastructure, or ADR.
 
 ---
 

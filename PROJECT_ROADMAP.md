@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      3.3
+Version:      3.4
 Last Updated: 2026-07-25
 -->
 
@@ -14,7 +14,7 @@ This roadmap records execution order. It does not define product, UX, Story, or 
 
 ## Current Position
 
-The documentation source-recovery and GitHub synchronization phases are complete. All 50 Feature-level chains passed repository-wide validation, and traceability is Frozen v1.0 after explicit Owner Approval and a separate Freeze decision. The Engineering Constitution review record is the next open gate before the Marketplace Bible v1.0 freeze gate.
+The documentation source-recovery and GitHub synchronization phases are complete. All 50 Feature-level chains passed repository-wide validation, traceability is Frozen v1.0, and the Engineering Constitution is Frozen v1.0 after explicit Owner Approval and a separate Freeze decision. The Marketplace Bible v1.0 final freeze gate is now the next open gate.
 
 ## Milestones
 
@@ -33,9 +33,8 @@ The documentation source-recovery and GitHub synchronization phases are complete
 
 ## Immediate Sequence
 
-1. Close the Engineering Constitution open review record.
-2. Run the Marketplace Bible v1.0 final freeze gate.
-3. Prepare development prompts and implementation backlogs.
+1. Run the Marketplace Bible v1.0 final freeze gate.
+2. Prepare development prompts and implementation backlogs.
 
 ## Gate Rules
 
@@ -63,3 +62,4 @@ The documentation source-recovery and GitHub synchronization phases are complete
 | 3.1 | 2026-07-25 | Closed the Offering F06/F07 capability-home gap through Offering Capability Architecture Frozen v2.0. |
 | 3.2 | 2026-07-25 | Recorded completion of Feature-level validation and moved traceability into lifecycle review. |
 | 3.3 | 2026-07-25 | Closed M6 after explicit Owner Approval and separate Freeze of traceability v1.0. |
+| 3.4 | 2026-07-25 | Closed the Engineering Constitution review record and advanced the immediate sequence to the Marketplace Bible v1.0 final freeze gate. |
