@@ -1,11 +1,11 @@
 # V1 Architecture ADR Assessment
 
 - **Owner:** Architecture Owner
-- **Status:** In Review
-- **Version:** 0.2
+- **Status:** Complete
+- **Version:** 1.0
 - **Last Updated:** 2026-07-25
 
-**Revision Note (0.2):** Formal Architecture Review completed with PASS and no blocker or major finding. Exact Proposed ADR-0010 through ADR-0014 candidates now exist. This assessment remains non-authoritative until the Product Owner / Architecture Owner records an outcome for each proposal.
+**Revision Note (1.0):** The Product Owner / Architecture Owner accepted exact Proposed ADR-0010 through ADR-0014 as Accepted v1.0. The ADR decision gate is complete and the architecture package passed Final Review.
 
 ## 1. Purpose
 
@@ -13,7 +13,7 @@ This assessment applies Engineering Constitution §6.2. It distinguishes reversi
 
 ## 2. Required ADR Candidates
 
-| Proposed ADR | Decision | Recommended option | Blocks |
+| ADR | Decision | Accepted option | Blocks |
 |---|---|---|---|
 | ADR-0010 | V1 system shape and module boundaries | TypeScript monorepo; Next.js Web; NestJS modular-monolith API/Worker | production-bound application skeleton |
 | ADR-0011 | Persistence, projection and search architecture | PostgreSQL system of record; module-owned schema; PostgreSQL V1 search projection; transactional outbox | schema and search implementation |
@@ -57,8 +57,11 @@ New ADR assessment is required if V1 proposes:
 
 ## 6. Current Gate
 
-Verdict: **ARCHITECTURE REVIEW PASS — READY FOR ADR OWNER DECISION — NOT YET READY FOR IMPLEMENTATION**.
+Verdict: **ADR OWNER DECISION COMPLETE — FINAL REVIEW PASS — READY FOR ARCHITECTURE OWNER APPROVAL**.
 
-Review evidence: `docs/reviews/V1_SOFTWARE_ARCHITECTURE_REVIEW_2026-07-25.md`.
+Review evidence:
 
-The Product Owner / Architecture Owner must accept, reject or revise ADR-0010 through ADR-0014 before their affected implementation work begins.
+- `docs/reviews/V1_SOFTWARE_ARCHITECTURE_REVIEW_2026-07-25.md`
+- `docs/reviews/V1_SOFTWARE_ARCHITECTURE_FINAL_REVIEW_2026-07-25.md`
+
+ADR-0010 through ADR-0014 are Accepted v1.0. The exact architecture package remains In Review until explicit Owner Approval and a separate Freeze decision.

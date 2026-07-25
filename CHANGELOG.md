@@ -10,6 +10,21 @@ This project follows the principles of:
 
 ---
 
+## [2.5.0] - 2026-07-25
+
+### Accepted
+
+- ADR-0010 — V1 System Shape and Module Boundaries.
+- ADR-0011 — Persistence, Projection and Search Architecture.
+- ADR-0012 — Identity, Session and Authorization Architecture.
+- ADR-0013 — Deployment and Infrastructure Architecture.
+- ADR-0014 — Decision Chat Provider Boundary and Data Handling.
+
+### Reviewed
+
+- V1 Software Architecture Final Review passed with zero blocker and zero major finding.
+- The exact architecture package advanced to In Review v0.2 and is ready for Owner Approval; it is not yet Frozen.
+
 ## [2.4.0] - 2026-07-25
 
 ### Frozen

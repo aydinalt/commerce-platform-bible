@@ -3,8 +3,10 @@
 - **Owner:** Architecture Owner
 - **Status:** Draft
 - **Maintenance Mode:** Living
-- **Version:** 1.2
+- **Version:** 1.3
 - **Last Updated:** 2026-07-25
+
+**Revision Note (1.3):** Registered ADR-0010 through ADR-0014 after the Product Owner / Architecture Owner accepted each exact Proposed v0.1 decision as Accepted v1.0.
 
 **Revision Note (1.2):** Repository reconciliation registered Accepted ADR-0006 through ADR-0009 and reconciled the header with Accepted ADR-0005 by separating lifecycle `Status` from `Maintenance Mode: Living`. This index update records existing accepted decisions only; it creates or changes no architectural decision.
 
@@ -39,6 +41,11 @@ This document is an index only and must never duplicate or redefine those rules.
 | [ADR-0007](ADR-0007-domain-scope-of-capability-first-rule.md) | Domain Scope of Capability-First Rule | Accepted (v1.0) | 2026-07-21 | User Story domains, Capability Architecture |
 | [ADR-0008](ADR-0008-handoff-enablement-capability.md) | Handoff Enablement Capability | Accepted (v1.0) | 2026-07-21 | Affiliate Handoff, Direct Contact, Offering and Decision |
 | [ADR-0009](ADR-0009-story-domain-feature-registry-ownership.md) | Story Domain Feature Registry Ownership | Accepted (v1.0) | 2026-07-22 | User Story Handbook, non-Offering Feature Registries |
+| [ADR-0010](ADR-0010-v1-system-shape-and-module-boundaries.md) | V1 System Shape and Module Boundaries | Accepted (v1.0) | 2026-07-25 | V1 Software, Backend and Frontend Architecture |
+| [ADR-0011](ADR-0011-persistence-projection-and-search-architecture.md) | Persistence, Projection and Search Architecture | Accepted (v1.0) | 2026-07-25 | V1 Data, Backend and Software Architecture |
+| [ADR-0012](ADR-0012-identity-session-and-authorization-architecture.md) | Identity, Session and Authorization Architecture | Accepted (v1.0) | 2026-07-25 | V1 Security, Backend and Frontend Architecture |
+| [ADR-0013](ADR-0013-deployment-and-infrastructure-architecture.md) | Deployment and Infrastructure Architecture | Accepted (v1.0) | 2026-07-25 | V1 Infrastructure and Software Architecture |
+| [ADR-0014](ADR-0014-decision-chat-provider-boundary-and-data-handling.md) | Decision Chat Provider Boundary and Data Handling | Accepted (v1.0) | 2026-07-25 | PRD-0004, V1 Security and Backend Architecture |
 
 ---
 

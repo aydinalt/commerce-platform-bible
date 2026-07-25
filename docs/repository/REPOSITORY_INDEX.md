@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.5
+Version:      1.6
 Last Updated: 2026-07-25
 -->
 
@@ -43,6 +43,8 @@ Last Updated: 2026-07-25
 | `docs/reviews/TRACEABILITY_ARCHITECTURE_AND_FINAL_REVIEW_2026-07-25.md` | Repository-wide Feature-level traceability validation |
 | `docs/reviews/ENGINEERING_CONSTITUTION_REVIEW_CLOSURE_2026-07-25.md` | Engineering Constitution repository-current closure validation and lifecycle evidence |
 | `docs/reviews/MARKETPLACE_BIBLE_V1_FINAL_FREEZE_GATE_2026-07-25.md` | Repository-wide Final Freeze Gate evidence |
+| `docs/reviews/V1_SOFTWARE_ARCHITECTURE_REVIEW_2026-07-25.md` | Formal Architecture Review and ADR decision readiness |
+| `docs/reviews/V1_SOFTWARE_ARCHITECTURE_FINAL_REVIEW_2026-07-25.md` | ADR acceptance and Final Review evidence |
 
 ## Release Baseline
 
@@ -56,7 +58,11 @@ Last Updated: 2026-07-25
 
 ## Architecture Decisions
 
-`docs/adr/` contains Accepted ADR-0001 through ADR-0009. `docs/adr/README.md` is the authoritative ADR index.
+`docs/adr/` contains Accepted ADR-0001 through ADR-0014. `docs/adr/README.md` is the authoritative ADR index.
+
+## V1 Software Architecture
+
+`docs/software-architecture/` contains the exact In Review v0.2 architecture package. Final Review passed; Owner Approval and a separate Freeze remain required.
 
 ## PRD Layer
 
@@ -113,7 +119,7 @@ Last Updated: 2026-07-25
 | Generated Stories | 50 present |
 | Current Frozen Story total | 56 |
 | Feature Registries | 5 present; Offering uses Capability Architecture |
-| ADR sequence | ADR-0001–ADR-0009 present |
+| ADR sequence | ADR-0001–ADR-0014 present and Accepted |
 | Development | Not Started |
 
 ## Revision History
@@ -125,3 +131,4 @@ Last Updated: 2026-07-25
 | 1.3 | 2026-07-25 | Recorded traceability as Frozen v1.0 after completed validation, Owner Approval, and separate Freeze. |
 | 1.4 | 2026-07-25 | Recorded Engineering Constitution as Frozen v1.0 and added its review-closure evidence. |
 | 1.5 | 2026-07-25 | Added the Frozen Marketplace Bible v1.0 baseline manifest and Final Freeze Gate evidence. |
+| 1.6 | 2026-07-25 | Registered Accepted ADR-0010–ADR-0014 and the V1 Software Architecture Final Review evidence. |

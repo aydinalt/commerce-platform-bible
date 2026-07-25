@@ -1,9 +1,11 @@
 # V1 Security Architecture
 
 - **Owner:** Architecture Owner
-- **Status:** Draft
-- **Version:** 0.1
+- **Status:** In Review
+- **Version:** 0.2
 - **Last Updated:** 2026-07-25
+
+**Revision Note (0.2):** Governing ADR-0012 and ADR-0014 were accepted as v1.0; the exact document passed Final Review without behavior changes.
 
 ## 1. Security Model
 
@@ -89,4 +91,3 @@ Before production:
 - restore and incident contacts verified;
 - no Critical or High unaccepted finding;
 - privacy notice, retention and AI-provider data handling approved.
-

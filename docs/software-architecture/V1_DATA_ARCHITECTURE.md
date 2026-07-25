@@ -1,9 +1,11 @@
 # V1 Data Architecture
 
 - **Owner:** Architecture Owner
-- **Status:** Draft
-- **Version:** 0.1
+- **Status:** In Review
+- **Version:** 0.2
 - **Last Updated:** 2026-07-25
+
+**Revision Note (0.2):** Governing ADR-0011 was accepted as v1.0; the exact document passed Final Review without behavior changes.
 
 ## 1. Persistence Strategy
 
@@ -86,4 +88,3 @@ Exact retention periods require legal/product approval before production. The im
 - quarterly restore rehearsal after launch, with one successful rehearsal before first production release;
 - object-storage versioning or equivalent recovery for uploaded media;
 - RPO/RTO values explicitly accepted before production gate.
-

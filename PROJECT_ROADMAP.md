@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      3.5
+Version:      3.6
 Last Updated: 2026-07-25
 -->
 
@@ -27,15 +27,15 @@ The Marketplace Bible v1.0 documentation baseline passed the Final Freeze Gate a
 | M5 — GitHub synchronization | Complete | Reconciled package and final corrections are verified on `main` |
 | M6 — Full traceability validation | Complete | Cross-tier chains pass and traceability is Frozen v1.0 |
 | M7 — Marketplace Bible v1.0 freeze gate | Complete | Repository-wide documentation readiness is approved and the baseline manifest is Frozen |
-| M8 — Software architecture | In Progress | Backend, frontend, infrastructure, security, and data decisions are documented |
+| M8 — Software architecture | In Progress — Owner Approval | ADR-0010–ADR-0014 are Accepted; exact architecture package awaits Owner Approval and separate Freeze |
 | M9 — Development | Not Started | Prior gates pass and delivery planning begins |
 | M10 — Release | Not Started | Product meets approved release criteria |
 
 ## Immediate Sequence
 
-1. Define the V1 software architecture and required ADRs.
-2. Review architecture against the Frozen Marketplace Bible and Engineering Constitution.
-3. Prepare development prompts and implementation backlogs.
+1. Approve exact V1 Software Architecture v0.2.
+2. Record a separate Freeze as V1 Software Architecture v1.0 and close M8.
+3. Prepare development prompts, implementation backlog and repository skeleton.
 
 ## Gate Rules
 
@@ -65,3 +65,4 @@ The Marketplace Bible v1.0 documentation baseline passed the Final Freeze Gate a
 | 3.3 | 2026-07-25 | Closed M6 after explicit Owner Approval and separate Freeze of traceability v1.0. |
 | 3.4 | 2026-07-25 | Closed the Engineering Constitution review record and advanced the immediate sequence to the Marketplace Bible v1.0 final freeze gate. |
 | 3.5 | 2026-07-25 | Completed M7 and opened M8 Software Architecture after the Marketplace Bible v1.0 baseline Freeze. |
+| 3.6 | 2026-07-25 | Accepted ADR-0010–ADR-0014 and advanced the Final Review PASS architecture package to Owner Approval. |

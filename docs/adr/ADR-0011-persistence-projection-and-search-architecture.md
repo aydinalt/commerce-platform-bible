@@ -1,15 +1,15 @@
 # ADR-0011 — Persistence, Projection and Search Architecture
 
 - **Owner:** Product Owner / Architecture Owner
-- **Status:** Proposed
-- **Version:** 0.1
+- **Status:** Accepted
+- **Version:** 1.0
 - **Date:** 2026-07-25
 - **Deciders:** Product Owner / Architecture Owner
 - **Author:** ChatGPT (architecture and documentation advisor)
 - **Supersedes:** none
 - **Related:** `V1_DATA_ARCHITECTURE.md`, `V1_BACKEND_ARCHITECTURE.md`, `V1_SOFTWARE_ARCHITECTURE.md`
 
-> **Proposal note.** This candidate is non-authoritative until explicitly accepted by the Product Owner / Architecture Owner.
+> **Acceptance note.** The Product Owner / Architecture Owner accepted the exact Proposed v0.1 decision on 2026-07-25.
 
 ---
 
@@ -53,9 +53,8 @@ PRD-0001, PRD-0002, PRD-0004 and PRD-0006.
 
 ## 6. Related ADRs
 
-ADR-0002, ADR-0003, ADR-0004, ADR-0006, ADR-0007, ADR-0008 and proposed ADR-0010.
+ADR-0002, ADR-0003, ADR-0004, ADR-0006, ADR-0007, ADR-0008 and ADR-0010.
 
 ## 7. Notes
 
 The ORM and migration tool may be selected during implementation if it preserves constraints, transactions, migration safety and module ownership.
-

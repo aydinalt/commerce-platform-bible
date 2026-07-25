@@ -1,9 +1,11 @@
 # V1 Infrastructure Architecture
 
 - **Owner:** Architecture Owner
-- **Status:** Draft
-- **Version:** 0.1
+- **Status:** In Review
+- **Version:** 0.2
 - **Last Updated:** 2026-07-25
+
+**Revision Note (0.2):** Governing ADR-0013 was accepted as v1.0; the exact document passed Final Review without behavior changes.
 
 ## 1. Deployment Units
 
@@ -101,4 +103,3 @@ Start on managed entry tiers that meet security and backup requirements. Free ti
 - capacity/load-test result;
 - security scan and threat-model closure;
 - release checklist and incident contacts.
-

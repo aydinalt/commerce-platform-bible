@@ -1,15 +1,15 @@
 # ADR-0010 — V1 System Shape and Module Boundaries
 
 - **Owner:** Product Owner / Architecture Owner
-- **Status:** Proposed
-- **Version:** 0.1
+- **Status:** Accepted
+- **Version:** 1.0
 - **Date:** 2026-07-25
 - **Deciders:** Product Owner / Architecture Owner
 - **Author:** ChatGPT (architecture and documentation advisor)
 - **Supersedes:** none
 - **Related:** `V1_SOFTWARE_ARCHITECTURE.md`, `V1_BACKEND_ARCHITECTURE.md`, `V1_FRONTEND_ARCHITECTURE.md`, `ENGINEERING_CONSTITUTION.md`
 
-> **Proposal note.** This candidate is non-authoritative until explicitly accepted by the Product Owner / Architecture Owner. Acceptance would authorize the system shape and module boundaries, not product-scope changes or production release.
+> **Acceptance note.** The Product Owner / Architecture Owner accepted the exact Proposed v0.1 decision on 2026-07-25. Acceptance authorizes the system shape and module boundaries, not product-scope changes or production release.
 
 ---
 
@@ -60,4 +60,3 @@ ADR-0001, ADR-0004, ADR-0006, ADR-0007, ADR-0008 and ADR-0009.
 ## 7. Notes
 
 Exact package versions, internal directory names and component-library selection are implementation details unless they materially change this decision.
-

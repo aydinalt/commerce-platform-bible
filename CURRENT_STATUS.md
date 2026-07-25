@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.4
+Version:      2.5
 Last Updated: 2026-07-25
 -->
 
@@ -14,7 +14,7 @@ Last Updated: 2026-07-25
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Marketplace Bible v1.0 documentation baseline Frozen |
-| Current phase | Software architecture preparation |
+| Current phase | Software architecture Owner Approval gate |
 | Development | Not Started |
 | Delivery Status of all Frozen Stories | Not Started |
 
@@ -24,7 +24,7 @@ Last Updated: 2026-07-25
 |---|---|
 | Governance | `REPOSITORY_GOVERNANCE.md`, `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and `ADR_PROCESS.md` are Frozen v1.0 |
 | Foundation | Five Foundation documents are Frozen |
-| ADR | ADR-0001 through ADR-0009 are Accepted |
+| ADR | ADR-0001 through ADR-0014 are Accepted |
 | PRD | PRD-0001 through PRD-0006 are Frozen |
 | UX | UX-0001–UX-0006, UX-0008, and UX-0009 are Frozen v1.0 |
 | UX-0007 Messaging | Draft v0.2; preserved outside the current Frozen V1 UX baseline |
@@ -33,6 +33,7 @@ Last Updated: 2026-07-25
 | User Stories | 6 Parent Story Documents and 50 Generated Stories are Frozen |
 | Traceability | Frozen v1.0; all 50 Feature-level chains validated with PASS |
 | Engineering | `ENGINEERING_CONSTITUTION.md` is Frozen v1.0 |
+| V1 Software Architecture | Final Review PASS; exact package is In Review v0.2 and ready for Owner Approval |
 
 ## Frozen User Story Inventory
 
@@ -57,8 +58,8 @@ Last Updated: 2026-07-25
 
 ## Remaining Work
 
-1. Define software architecture and record required technical decisions.
-2. Prepare implementation backlogs and development prompts after architecture review.
+1. Record Owner Approval and separate Freeze of exact V1 Software Architecture v0.2 as v1.0.
+2. Prepare implementation backlogs, repository skeleton and development prompts after Architecture Freeze.
 
 ## Known Boundaries
 
@@ -77,3 +78,4 @@ Last Updated: 2026-07-25
 | 2.2 | 2026-07-25 | Recorded explicit Owner Approval and separate Freeze of traceability v1.0. |
 | 2.3 | 2026-07-25 | Closed the Engineering Constitution review record and recorded explicit Owner Approval followed by a separate Freeze of v1.0. |
 | 2.4 | 2026-07-25 | Closed the Marketplace Bible v1.0 Final Freeze Gate, reconciled Foundation lifecycle metadata, and opened the Software Architecture phase. |
+| 2.5 | 2026-07-25 | Accepted ADR-0010–ADR-0014, recorded V1 Software Architecture Final Review PASS, and opened the Owner Approval gate. |

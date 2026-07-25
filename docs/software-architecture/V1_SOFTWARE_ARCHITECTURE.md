@@ -1,10 +1,12 @@
 # V1 Software Architecture
 
 - **Owner:** Architecture Owner
-- **Status:** Draft
-- **Version:** 0.1
+- **Status:** In Review
+- **Version:** 0.2
 - **Last Updated:** 2026-07-25
 - **Applies To:** Backend, frontend, data, security, infrastructure and delivery
+
+**Revision Note (0.2):** ADR-0010–ADR-0014 were accepted as v1.0 and the exact architecture package passed Final Review. No technical behavior was added or removed.
 
 ## 1. Decision Summary
 
@@ -147,4 +149,3 @@ Admin-context authorization → open/retrieve Moderation Case → issue governed
 ## 12. Gate
 
 Implementation may begin only after the ADR-required decisions in `V1_ARCHITECTURE_ADR_ASSESSMENT.md` are accepted or explicitly changed by the Architecture Owner.
-

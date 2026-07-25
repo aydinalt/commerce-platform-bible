@@ -1,15 +1,15 @@
 # ADR-0013 — Deployment and Infrastructure Architecture
 
 - **Owner:** Product Owner / Architecture Owner
-- **Status:** Proposed
-- **Version:** 0.1
+- **Status:** Accepted
+- **Version:** 1.0
 - **Date:** 2026-07-25
 - **Deciders:** Product Owner / Architecture Owner
 - **Author:** ChatGPT (architecture and documentation advisor)
 - **Supersedes:** none
 - **Related:** `V1_INFRASTRUCTURE_ARCHITECTURE.md`, `V1_SOFTWARE_ARCHITECTURE.md`, `ENGINEERING_CONSTITUTION.md`
 
-> **Proposal note.** This candidate is non-authoritative until explicitly accepted by the Product Owner / Architecture Owner.
+> **Acceptance note.** The Product Owner / Architecture Owner accepted the exact Proposed v0.1 decision on 2026-07-25.
 
 ---
 
@@ -56,9 +56,8 @@ PRD-0006 and all PRDs whose flows depend on availability and recovery.
 
 ## 6. Related ADRs
 
-ADR-0004, proposed ADR-0010, proposed ADR-0011 and proposed ADR-0012.
+ADR-0004, ADR-0010, ADR-0011 and ADR-0012.
 
 ## 7. Notes
 
 Vendor names and regions must be selected after current pricing, data-location, backup, egress and service-limit verification.
-

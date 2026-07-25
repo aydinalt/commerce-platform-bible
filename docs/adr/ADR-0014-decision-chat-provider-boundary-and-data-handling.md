@@ -1,15 +1,15 @@
 # ADR-0014 — Decision Chat Provider Boundary and Data Handling
 
 - **Owner:** Product Owner / Architecture Owner
-- **Status:** Proposed
-- **Version:** 0.1
+- **Status:** Accepted
+- **Version:** 1.0
 - **Date:** 2026-07-25
 - **Deciders:** Product Owner / Architecture Owner
 - **Author:** ChatGPT (architecture and documentation advisor)
 - **Supersedes:** none
 - **Related:** `ADR-0001-decision-chat-ownership.md`, `V1_SECURITY_ARCHITECTURE.md`, `V1_BACKEND_ARCHITECTURE.md`, `PRD-0004-decision.md`
 
-> **Proposal note.** This candidate is non-authoritative until explicitly accepted by the Product Owner / Architecture Owner.
+> **Acceptance note.** The Product Owner / Architecture Owner accepted the exact Proposed v0.1 decision on 2026-07-25.
 
 ---
 
@@ -50,9 +50,8 @@ PRD-0004 and PRD-0006.
 
 ## 6. Related ADRs
 
-ADR-0001, ADR-0006, ADR-0008 and proposed ADR-0010 through ADR-0013.
+ADR-0001, ADR-0006, ADR-0008 and ADR-0010 through ADR-0013.
 
 ## 7. Notes
 
 The exact provider and model are replaceable deployment configuration subject to current capability, privacy, cost and safety verification.
-
