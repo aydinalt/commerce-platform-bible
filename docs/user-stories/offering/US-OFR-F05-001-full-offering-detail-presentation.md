@@ -1,213 +1,234 @@
 # US-OFR-F05-001 — Full Offering Detail Presentation
 
-> **Reference note (informative only).** This document follows the repository Story structure established by the Golden Baselines `US-OFR-F01-001` through `US-OFR-F04-001`. It reuses that structure only; it copies no behaviour. `USER_STORY_HANDBOOK.md` remains the Single Information Owner of the Story standards, behaviour is owned by `PRD-0001-offering.md`, the viewer experience is owned by `UX-0003-offering-detail.md`, and the Feature ID `F05` is consumed by reference from the authoritative Feature Registry in `OFFERING_CAPABILITY_ARCHITECTURE.md`.
+> **Freeze Note (2.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-22. Frozen v2.1 is the locked authoritative Story baseline. This exact Story must not be edited in place. Future behaviour, Acceptance Criteria, BDD, dependency, size, scope, Epic, Feature, or reference changes require a controlled revision. Delivery Status remains Not Started. This Freeze does not update GitHub automatically.
 
-> **Revision Note (0.2):** Controlled revision implementing Accepted `ADR-0002-offering-presentation-capability.md` (v1.0). The inferred Capability value `Representation (presented to a viewer)` is replaced by **Presentation**, consumed by reference from the authoritative `OFFERING_CAPABILITY_ARCHITECTURE.md` under the Accepted ADR-0002 decision; the §6 Capability reference row is updated accordingly. No Story behaviour changed: Story ID, title, Epic, Feature ID `F05`, viewer perspective, Purpose, Business Value, Description, Acceptance Criteria, BDD, Dependencies, Out of Scope, UX-owned TODOs, Story Size, and Delivery Status are unchanged, and UX-0003 TODOs are not resolved.
+> **Approval Note (2.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-22. The exact In Review v2.1 candidate becomes the authoritative Approved v2.1 Story baseline. Delivery Status remains Not Started. This approval does not Freeze the Story, does not change Acceptance Criteria, BDD, dependencies, size, scope, or architecture, and does not update GitHub automatically.
 
-> **Revision Note (1.0):** Owner-approved Golden Baseline transition. The F05 Golden Freeze Review passed with no blocking findings, and the Product Owner / Architecture Owner explicitly approved this Story. The lifecycle transitions were performed sequentially — Draft → In Review → Approved → Frozen — and the final repository designation is **Golden Baseline** (the repository designation corresponding to the canonical lifecycle state Frozen). Version advanced to 1.0 upon first Approval; Delivery Status remains Not Started. No Story behaviour, Acceptance Criterion, BDD scenario, TODO, dependency, scope boundary, identifier, Capability, Feature, Epic, PRD, UX, or ADR decision changed.
+> **Review Entry Note (2.1):** Clerical traceability-only correction after the independent Claude audit. Adds the already-consumed UX-0004 and UX-0009 handoff owners to §6 References. No Story ID, Feature ID, Epic, Capability, behaviour, Acceptance Criterion, BDD scenario, dependency, size, scope, or lifecycle result changes.
+
+> **Review Entry Note (2.0):** Exact Draft candidate entered formal review after internal architecture and handbook validation. No Story ID, Feature ID, Feature name, Capability state, PRD/UX behaviour, Acceptance Criterion, BDD scenario, dependency, size, or scope changed during lifecycle entry.
+
+> **Controlled Revision Note (2.0):** Substantive superseding revision of Frozen v1.0. Removes obsolete Favorites, Messaging, Related Offerings, phone-only gating, and unresolved display-state TODOs. Consumes Frozen PRD-0001 v3.1 and UX-0003 v1.0 for complete eligible public Presentation, optional-missing information, public Business identity, protected contact exclusion, exact Compare/Decision entries, unavailable/error boundaries, and Offering Presentation Open.
 
 ## 1. Metadata
 
 | Field | Value |
-|-------|-------|
+|---|---|
 | Story ID | `US-OFR-F05-001` |
 | Story Title | Full Offering Detail Presentation |
-| Story Document | `US-0001 Offering` (`US-0001-offering.md`) |
+| Parent Story Document | `US-0001 Offering` (`US-0001-offering.md`) |
 | Story Domain | Offering |
-| Domain Code | `OFR` (owned by `REPOSITORY_GOVERNANCE.md`) |
+| Domain Code | `OFR` — owned by `REPOSITORY_GOVERNANCE.md` |
 | Epic | Offering Presentation |
-| Feature | F05 — Full Offering Detail Presentation |
-| Feature ID | `F05` (allocated by `OFFERING_CAPABILITY_ARCHITECTURE.md` — Feature Registry) |
-| Capability | Presentation (owned by `OFFERING_CAPABILITY_ARCHITECTURE.md`; `F05 → Presentation` per Accepted `ADR-0002-offering-presentation-capability.md`, consumed by reference) |
-| Perspective | Viewer — Guest / User (Decision Journey as owned by `glossary.md`) |
+| Feature | `F05` — Full Offering Detail Presentation |
+| Feature ID | `F05` — owned by `OFFERING_CAPABILITY_ARCHITECTURE.md` |
+| Capability | Presentation — authoritative `F05 → Presentation` association |
+| Perspective | Person viewing one publicly eligible Offering; Guest or authenticated User |
 | Behaviour Owner | `PRD-0001-offering.md` |
 | Experience Owner | `UX-0003-offering-detail.md` |
-| Status | Golden Baseline (canonical lifecycle state: Frozen) |
+| Owner | Product Owner / Architecture Owner |
+| Status | Frozen |
 | Delivery Status | Not Started |
+| Priority | Must |
 | Story Size | M |
-| Version | 1.0 |
-| Last Updated | 2026-07-16 |
+| Version | 2.1 |
+| Last Updated | 2026-07-22 |
+| Approval Date | 2026-07-22 |
+| Approved By | Product Owner / Architecture Owner |
+| Approved Candidate | In Review v2.1 |
+| Freeze State | Frozen |
+| Freeze Date | 2026-07-22 |
+| Frozen By | Product Owner / Architecture Owner |
+| Supersedes | Frozen v1.0 — preserved historical baseline |
 
 ---
 
 ## 2. Story Identification
 
-The Story identifier follows the Generated User Story ID format owned and defined in `USER_STORY_HANDBOOK.md` (§5); that format is referenced here, not restated.
+The identifier follows `USER_STORY_HANDBOOK.md` §5 and consumes identifier components from their authoritative owners.
 
-| Segment | Value | Owner (by reference) |
-|---------|-------|----------------------|
+| Segment | Value | Owner by Reference |
+|---|---|---|
 | Prefix | `US` | `USER_STORY_HANDBOOK.md` |
-| `[DOMAIN]` | `OFR` (Offering Story Domain) | `REPOSITORY_GOVERNANCE.md` — Story Domain Code Registry |
-| `[FEATURE_ID]` | `F05` (Full Offering Detail Presentation) | `OFFERING_CAPABILITY_ARCHITECTURE.md` — Feature Registry |
-| `[ID]` | `001` (first Story of the Feature) | `USER_STORY_HANDBOOK.md` |
+| `[DOMAIN]` | `OFR` | `REPOSITORY_GOVERNANCE.md` — Story Domain Code Registry |
+| `[FEATURE_ID]` | `F05` | `OFFERING_CAPABILITY_ARCHITECTURE.md` — authoritative Offering Feature Registry |
+| `[ID]` | `001` | `USER_STORY_HANDBOOK.md` |
 
-This Story is contained by the Story Document `US-0001 Offering` (Document ID owned by `USER_STORY_HANDBOOK.md` §5) and belongs to exactly one Epic (Offering Presentation) and exactly one Feature (F05 — Full Offering Detail Presentation).
+This Story is contained by exactly one Parent Story Document and belongs to exactly one Epic and one Feature.
 
 ---
 
 ## 3. Purpose
 
-To let a viewer see a complete Offering in full, so that the viewer can evaluate the Offering thoroughly.
-
-This Story realizes the Full Offering Detail Presentation Feature only: presenting a single Offering in full to a viewer on the Offering Detail screen. Behaviour is owned by `PRD-0001-offering.md`; the viewer experience is owned by `UX-0003-offering-detail.md`; this Story references both and does not redefine them.
+Present one publicly eligible Offering completely enough for a person to understand it and choose a next Decision entry.
 
 ---
 
 ## 4. Business Value
 
-**As a** viewer (Guest or User),
-**I want** to see a complete Offering in full,
-**so that** I can evaluate the Offering thoroughly.
-
-The Offering Detail screen is where a person evaluates one Offering in depth: its image gallery, its Attribute groups, and the Business behind it (`UX-0003-offering-detail.md` §1). The value delivered here is the full presentation of the Offering to a viewer; it is not reaching the Offering (Discovery), nor performing any action on it (Compare, Favorites, Contact, phone reveal), each of which is delivered and owned elsewhere.
+> **As a** person viewing one publicly eligible Offering  
+> **I want** to inspect its complete public Offering Presentation  
+> **So that** I can understand the Offering and decide whether to compare it or continue to a Decision flow
 
 ---
 
 ## 5. Description
 
-A viewer on the Offering Detail screen sees a single Offering presented in full: its image gallery, its Attribute groups, and the Business behind it (`PRD-0001-offering.md` §11.13; `UX-0003-offering-detail.md` §1, §3, §7). The entries for Compare, Favorites, and Contact are shown on the screen; performing those actions is outside this Story. A Guest may view the complete Offering; a Guest may not view the Business phone number and may not initiate messaging (`UX-0003-offering-detail.md` §15).
+Public Presentation begins only when final Offering Public Eligibility is Eligible. It provides the recognizable title or name, available visuals, Category context, available description, applicable Attribute values in understandable groups, the public Business identity set, and available Decision entries.
 
-This Story is bounded to the single meaningful viewer outcome of **a viewer seeing a complete Offering in full**. Arriving at the Offering (search/browse) is owned by Discovery (`PRD-0002-discovery.md`) and is out of scope; the behaviour behind the on-screen action entries — Compare, Favorites, Contact, phone reveal — and the authentication routing they may trigger are owned by `PRD-0004-decision.md` and `PRD-0003-identity.md` (via `UX-0004`, `UX-0007`, `UX-0008`) and are out of scope. Defining or authoring the Offering's descriptors, and the Category/Attribute taxonomy, are also out of scope.
+Missing optional visuals, description, or Attribute values do not cause invented content. Protected phone, email, website, or contact URL information is not part of public Presentation.
 
-Several behaviours of the Offering Detail screen are undecided in the owning experience document and are carried here as TODO, not invented (in accordance with the Documentation-First discipline of `USER_STORY_HANDBOOK.md`): the selection of Related Offerings, the empty state when there are no Related Offerings, the no-gallery-images state, the loading state, the unavailable / not-Published / failed-load state, and detailed accessibility behaviour (see §7, §8, §11).
+The surface may present entries to optional Compare and the single-Offering Decision flow but does not execute Compare, Decision Chat, selection, Affiliate Handoff, Direct Contact, or Completion. `Offering Presentation Open` occurs only when eligible complete Presentation successfully begins.
 
 ---
 
 ## 6. References
 
-Repository references only; each is consumed by reference and never redefined here.
-
-| Layer | Document | Referenced For |
-|-------|----------|----------------|
-| Capability | `OFFERING_CAPABILITY_ARCHITECTURE.md` | The Presentation capability (F05 → Presentation, per Accepted `ADR-0002`, consumed by reference) and the Feature ID `F05` (Feature Registry) |
-| Implementation Blueprint | `OFFERING_IMPLEMENTATION_BLUEPRINT.md` | The capability-wide integration view |
-| PRD (behaviour) | `PRD-0001-offering.md` | Viewing Offering details (Guests and Users can view Offering details) |
-| PRD (gated actions) | `PRD-0004-decision.md` | Compare, Favorites, and Contact entries (behaviour out of scope) |
-| PRD (access gating) | `PRD-0003-identity.md` | Guest vs User gating for phone number and messaging |
-| PRD (Discovery) | `PRD-0002-discovery.md` | Reaching the Offering (out of scope; referenced for the boundary owner) |
-| UX | `UX-0003-offering-detail.md` | The Offering Detail screen and viewer behaviour |
-| Epic | `US-0001-offering.md` | Epic: Offering Presentation |
-| Feature | `US-0001-offering.md` | Feature: Full Offering detail presentation |
-| Domain Code | `REPOSITORY_GOVERNANCE.md` | The `OFR` Story Domain code |
-| Standards | `USER_STORY_HANDBOOK.md` | Story standards, INVEST, Definition of Ready, Definition of Done, Validation Checklist |
+| Concern | Document | Referenced For |
+|---|---|---|
+| Parent Story Document | `US-0001-offering.md` | Epic and Feature placement |
+| Domain Code Owner | `REPOSITORY_GOVERNANCE.md` | `OFR` code |
+| Capability Architecture | `OFFERING_CAPABILITY_ARCHITECTURE.md` | `F05` identity and authoritative Capability state |
+| PRD | `PRD-0001-offering.md` | Offering behaviour and product rules |
+| Supporting PRD | `PRD-0005-business.md`; `PRD-0006-platform.md` | Business access and Platform action surfaces where applicable |
+| UX | `UX-0003-offering-detail.md` | Offering Detail experience behaviour |
+| UX Handoff Owner | `UX-0004-compare.md` | Compare receives the exact eligible Offering context by reference |
+| UX Handoff Owner | `UX-0009-decision-flow.md` | Decision Flow receives the exact eligible Offering context by reference |
+| ADR | `ADR-0002-offering-presentation-capability.md` | Architectural constraint |
+| Story Standards | `USER_STORY_HANDBOOK.md` | Story standards, DoR, DoD, validation |
+| Engineering Governance | `ENGINEERING_CONSTITUTION.md` | Engineering and QA obligations by reference |
 
 ---
 
 ## 7. Acceptance Criteria
 
-Each Acceptance Criterion expresses behaviour only and is objectively testable. Behaviour is owned by `PRD-0001-offering.md` and the viewer experience by `UX-0003-offering-detail.md`; these criteria reference that behaviour and do not implement it.
-
-- **AC-1** — The system shall present a complete Offering in full to a viewer on the Offering Detail screen.
-- **AC-2** — The system shall present the Offering's image gallery, its Attribute groups, and the Business behind the Offering.
-- **AC-3** — The system shall allow a Guest to view the complete Offering.
-- **AC-4** — The system shall not disclose the Business phone number to a Guest.
-- **AC-5** — The system shall not allow a Guest to initiate messaging.
-- **AC-6** — The system shall present the Compare, Favorites, and Contact entries on the Offering Detail screen without performing those actions as part of presentation.
-
-> **TODO (owned by `UX-0003-offering-detail.md`):** The selection of Related Offerings ("newest in the same Category"), and the empty state when there are no Related Offerings in the same Category (§12), are undecided; the corresponding Acceptance Criteria remain a TODO and are not defined in this Story.
-> **TODO (owned by `UX-0003-offering-detail.md`):** The behaviour when an Offering has no gallery images (§12), the loading state while the Offering is retrieved (§13), and the behaviour when the Offering fails to load or is unavailable (for example, not Published) (§14) are undecided; the corresponding Acceptance Criteria remain a TODO and are not defined in this Story.
-> **TODO (owned by `UX-0003-offering-detail.md`):** Detailed accessibility acceptance criteria (§16) are undecided; the corresponding Acceptance Criteria remain a TODO and are not defined in this Story.
+- **AC-1** — The system shall begin complete public Offering Presentation only when final Offering Public Eligibility is Eligible.
+- **AC-2** — The system shall present the Offering title or name, Category context, available description, applicable Attribute values, public Business identity, and available visual set.
+- **AC-3** — The system shall organize applicable Attribute values into understandable groups while preserving authoritative units, allowed-value meaning, and missing optional-value treatment.
+- **AC-4** — The system shall continue the complete Presentation without inventing media or copy when optional visuals, description, or Attribute values are absent.
+- **AC-5** — The system shall exclude protected telephone, email, external website, and contact URL information from public Business identity.
+- **AC-6** — The system shall present available Compare and single-Offering Decision entries without executing their owned behaviours.
+- **AC-7** — The system shall pass the exact eligible Offering and any received transient Compare-preparation context to the applicable owning UX.
+- **AC-8** — The system shall produce Offering Presentation Open only when eligible complete Presentation successfully begins.
+- **AC-9** — The system shall withhold public Offering content, Compare entry, Decision entry, and Offering Presentation Open when eligibility is Ineligible or Presentation cannot begin.
 
 ---
 
 ## 8. BDD
 
-Given / When / Then scenarios are contained inside this Story. No external test documents are referenced.
+### Scenario: Eligible Offering begins complete Presentation
 
-### Scenario: A viewer sees a complete Offering in full
-```
-Given a viewer on the Offering Detail screen for a Published Offering
-When the Offering Detail screen is presented
-Then the system presents the Offering in full
-And the system presents its image gallery, its Attribute groups, and the Business behind it
-```
-
-### Scenario: A Guest views the complete Offering but not gated data
-```
-Given a Guest on the Offering Detail screen
-When the Offering Detail screen is presented
-Then the system presents the complete Offering to the Guest
-And the system does not disclose the Business phone number
-And the system does not allow the Guest to initiate messaging
+```gherkin
+Given final Offering Public Eligibility is Eligible
+When complete public Offering Presentation successfully begins
+Then the title or name, Category context, available description, applicable Attributes, and public Business identity are available
+And Offering Presentation Open occurs
 ```
 
-### Scenario: The action entries are presented without being performed
-```
-Given a viewer on the Offering Detail screen
-When the Offering Detail screen is presented
-Then the system presents the Compare, Favorites, and Contact entries
-And presenting them does not perform Compare, Favorites, or Contact
+### Scenario: Optional information is absent without invention
+
+```gherkin
+Given an eligible Offering has no optional visual, description, or Attribute value
+When Presentation begins
+Then the remaining authoritative Offering information is presented
+And no missing media, value, or copy is invented
 ```
 
-> **TODO (owned by `UX-0003-offering-detail.md`):** Scenarios covering Related Offerings selection and the empty, no-image, loading, and unavailable / not-Published states are undecided and are carried as TODO until decided there.
-> **TODO (owned by `UX-0003-offering-detail.md`):** Scenarios covering detailed accessibility behaviour are undecided and are carried as TODO until decided there.
+### Scenario: Public Presentation protects Direct Contact information
+
+```gherkin
+Given a Guest or authenticated person views Offering Detail
+When public Business identity is presented
+Then protected phone, email, external website, and contact URL information are not revealed
+```
+
+### Scenario: Presentation hands off but does not execute Decision behaviour
+
+```gherkin
+Given an eligible Offering Presentation
+When the person chooses Compare or Start Decision
+Then the exact Offering context is passed to UX-0004 or UX-0009
+And Presentation does not execute Compare, Decision Chat, selection, handoff, Direct Contact, or Completion
+```
+
+### Scenario: Ineligible Offering does not open publicly
+
+```gherkin
+Given final Offering Public Eligibility is Ineligible
+When a public route attempts to open the Offering
+Then complete public Presentation does not begin
+And Decision and Compare entries are unavailable
+And Offering Presentation Open is not produced
+```
 
 ---
 
 ## 9. Dependencies
 
-Only the `Depends On` and `Blocks` relationships defined by `USER_STORY_HANDBOOK.md` are used.
+### Depends On
 
-**Depends On**
-- Offering Publication (F04) — an Offering is presented to viewers when it is Published (`UX-0003-offering-detail.md` §14 references the not-Published case as a TODO).
-- `PRD-0001-offering.md` — viewing Offering details.
-- `UX-0003-offering-detail.md` — the Offering Detail screen and viewer behaviour.
-- `PRD-0003-identity.md` — Guest vs User gating for phone number and messaging.
+- `US-OFR-F04-001` — lifecycle publication is one required input to final public eligibility.
+- `PRD-0005-business.md` — public Business identity set.
 
-**Blocks**
-- None identified at this time.
+### Blocks
 
-The listed relationships represent the immediate dependencies of this Story and are not intended to be an exhaustive dependency inventory.
+- Decision-domain Compare and Decision Flow Stories that consume the exact eligible Offering context.
 
 ---
 
 ## 10. Story Size
 
-**M** (repository T-Shirt sizing per `USER_STORY_HANDBOOK.md`).
+**M**
 
-No Story Points are used in this document.
+One viewer outcome covering the authoritative product minimum, optional-missing states, protected-contact boundary, action-entry handoff, and open occurrence.
 
 ---
 
 ## 11. Out of Scope
 
-The following behaviour is intentionally excluded from this Story:
-
-- **Reaching the Offering** (search, browse, filter to arrive at it) — owned by `PRD-0002-discovery.md`.
-- **Compare behaviour** — owned by `PRD-0004-decision.md` (experience `UX-0004`). The Compare entry is presented; performing Compare is out of scope.
-- **Favorites behaviour** — owned by `PRD-0004-decision.md`, gated by `PRD-0003-identity.md`. The Favorites entry is presented; performing Favorites is out of scope.
-- **Contact / messaging behaviour** — owned by `PRD-0004-decision.md`, gated by `PRD-0003-identity.md` (experience `UX-0007`). The Contact entry is presented; performing Contact is out of scope.
-- **Phone-reveal behaviour** — owned by `PRD-0004-decision.md`, gated by `PRD-0003-identity.md`. The entry is presented; revealing the phone number is out of scope.
-- **Authentication flows** (routing a Guest to Authentication and return-to-action) — owned by `PRD-0003-identity.md` (experience `UX-0008`).
-- **Descriptor authoring** — assigning Categories or entering Attribute values (Business-side Authoring / Representation-authoring, owned by `PRD-0001-offering.md` and `UX-0005-business-dashboard.md`). This Story presents Attribute groups; it does not author them.
-- **Category / Attribute taxonomy management** — owned by `PRD-0006-platform.md`.
-- **Related Offerings selection logic, empty / no-image / loading / unavailable (not-Published) / accessibility behaviour** — owned by `UX-0003-offering-detail.md`; carried as TODO where undecided (see §7, §8).
-- **Business-side (Business Owner) behaviour** — this Story is written from the viewer (Guest / User) perspective only.
+- Discovery entry, ranking, filtering, or Listing Cards — `PRD-0002-discovery.md`.
+- Compare mechanics — `UX-0004-compare.md` and Decision domain.
+- Decision Chat, explicit selection, Affiliate Handoff, Direct Contact, and Completion — `PRD-0004-decision.md` / `UX-0009-decision-flow.md`.
+- Favorites, Messaging, Related Offerings, recommendations, and featured entries — excluded from the Frozen V1 UX.
+- Non-public Draft, Hidden, or Archived management views.
+- Visual hierarchy, components, responsive behaviour, and exact state copy — `UX-0003-offering-detail.md`.
 
 ---
 
 ## 12. Definition of Ready
 
-This Story's readiness is governed by the Definition of Ready in `USER_STORY_HANDBOOK.md` (§11). It is referenced here and not duplicated.
+Readiness is governed by `USER_STORY_HANDBOOK.md` §11 and is referenced here, not duplicated.
+
+This Story is not committed to delivery merely because its document reaches Approved or Frozen.
 
 ---
 
 ## 13. Definition of Done
 
-This Story's completion is governed by the Definition of Done in `USER_STORY_HANDBOOK.md` (§18). It is referenced here and not duplicated.
+Completion is governed by `USER_STORY_HANDBOOK.md` §18 and is referenced here, not duplicated.
+
+Applicable Engineering and QA obligations are consumed by reference from `ENGINEERING_CONSTITUTION.md`.
 
 ---
 
 ## 14. Story Validation Checklist
 
-Per the Story Validation Checklist in `USER_STORY_HANDBOOK.md` (§22):
+- [x] Represents one bounded actor outcome
+- [x] Provides observable user or business value
+- [x] Independently understandable
+- [x] Independently testable
+- [x] Traceable to one Parent Story Document, Epic, Feature, PRD, and applicable UX
+- [x] Domain code and Feature ID resolve to authoritative owners
+- [x] No duplicate Story identified in the current Offering package
+- [x] No implementation details
+- [x] No invented upstream behaviour
+- [x] Acceptance Criteria begin with “The system shall…”
+- [x] Acceptance Criteria have corresponding BDD coverage
 
-- ☑ Represents one Decision Journey step (Decision Journey as owned by `glossary.md`; here, a viewer sees a complete Offering in full)
-- ☑ Provides user value (a viewer can evaluate the complete Offering)
-- ☑ Independently understandable
-- ☑ Independently testable
-- ☑ Traceable (Capability, Blueprint, PRD, UX, Epic, Feature — see §6)
-- ☑ References resolve correctly
-- ☑ No duplicate Story
-- ☑ No implementation details
-- ☑ No Story overlap (Discovery, Compare, Favorites, Contact, phone reveal, authentication, descriptor authoring, taxonomy excluded — see §11)
+---
+
+## 15. Notes
+
+No additional product, UX, architecture, lifecycle, or implementation decision is recorded here.
+
+This Frozen baseline must not be edited in place and does not update GitHub automatically.

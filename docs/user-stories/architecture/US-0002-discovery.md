@@ -1,208 +1,134 @@
 # US-0002 — Discovery User Stories
 
-- **Status:** Draft
-- **Version:** 0.1
+- **Owner:** Product Owner / Architecture Owner
+- **Status:** Frozen
+- **Version:** 1.0
+- **Last Updated:** 2026-07-24
+- **Approval Date:** 2026-07-24
+- **Approved By:** Product Owner / Architecture Owner
+- **Approved Candidate:** In Review v0.4
+- **Freeze State:** Frozen
+- **Freeze Date:** 2026-07-24
+- **Frozen By:** Product Owner / Architecture Owner
+- **Story Domain:** Discovery
+- **Domain Code:** `DSC`
+- **Feature Registry Owner:** Frozen `DISCOVERY_FEATURE_REGISTRY.md` v1.0
+- **GitHub effect:** None
+
+**Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-24. Frozen v1.0 is the locked authoritative Discovery Parent Story Document baseline. This exact file must not be edited in place. Future Epic placement, Feature placement, Generated Story inventory, reference, or scope changes require a controlled revision. This Freeze changes no Generated Story Delivery Status, does not claim completion of all ADR-0002 §10 follow-ups, and does not update GitHub automatically.
+
+**Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-24. The exact In Review v0.4 candidate becomes the authoritative Approved v1.0 Discovery Parent Story Document baseline. This approval does not Freeze the document, does not advance any Generated Story Delivery Status, does not claim completion of all ADR-0002 §10 follow-ups, and does not update GitHub automatically.
+
+**Revision Note (0.2):** Controlled replacement of documented Draft v0.1 embedded-Story content with the Frozen Handbook Parent → Epic → Feature architecture. Consumes authoritative DSC F01–F10, removes embedded `US-NNNN.n` Story ownership, establishes four bounded Epics, and records ten first Generated Story candidates by reference. It changes no Feature ID, Capability, PRD behaviour, UX behaviour, Acceptance Criterion, implementation, approval, Freeze, or GitHub file.
+
+**Review Entry Note (0.4):** Documentation-precision inventory correction after the focused Claude PASS. Updates only the by-reference F09 candidate version from In Review v0.2 to In Review v0.3. No Epic, Feature, Story ID, Capability assignment, PRD/UX behaviour, Acceptance Criterion, BDD content, dependency, size, scope, lifecycle authority, or GitHub file changes.
+
+**Review Entry Note (0.3):** Bounded post-audit inventory correction. Updates only the by-reference candidate versions for F01, F02, F04, F06, F07, and F09 after BDD and dependency-verification remediation. No Epic, Feature, Story ID, Capability assignment, PRD/UX behaviour, Acceptance Criterion, BDD content, or lifecycle authority is owned or changed by the Parent.
+
+**Review Entry Note (0.2):** The exact Draft v0.2 candidate entered formal review on 2026-07-24. No Feature ID, Feature name, Epic placement, Story identifier, PRD/UX behaviour, Capability relationship, or lifecycle authority changed during review entry.
+
+> The Parent Story Document for the Discovery Story Domain. It owns Epic → Feature placement and records Generated Story files by reference. It does not own Feature IDs, Capability assignments, product behaviour, UX behaviour, or the complete text or lifecycle of any Generated Story.
+
+---
 
 ## 1. Purpose
 
-User stories for the Discovery capability, derived only from `PRD-0002-discovery.md` and the related UX specifications. Discovery lets a person find Offerings through Search and Browse, narrow with Categories and Filters (Attributes), order with Sorting, and move through with Pagination.
+Organize Discovery into bounded Epics and authoritative Features F01–F10 so every Generated Discovery Story has exactly one Parent Story Document, one Epic, and one Feature.
 
-## 2. Related PRDs
+## 2. Scope
 
-- `PRD-0002-discovery.md`
+This Parent Story Document owns:
 
-## 3. Related UX Specifications
+- Discovery Epic names and bounded outcomes;
+- Feature placement under exactly one Epic;
+- by-reference Generated Story inventory;
+- Discovery package coverage and reconciliation state.
 
-- `UX-0001-home.md`
-- `UX-0002-discovery.md`
+## 3. Out of Scope
 
-## 4. User Stories
+This document does not own or redefine:
 
-### US-0002.1 — Search for Offerings
+- Feature IDs, canonical Feature names, or Feature relationship classifications — Frozen `DISCOVERY_FEATURE_REGISTRY.md`;
+- Discovery Capability meaning — `OFFERING_CAPABILITY_ARCHITECTURE.md`;
+- product behaviour — Frozen `PRD-0002-discovery.md`;
+- experience behaviour — Frozen UX documents;
+- Generated Story text, Acceptance Criteria, BDD, dependency, size, scope, or lifecycle;
+- implementation, technical architecture, delivery sequencing, or Sprint planning.
 
-**As a** person (Guest or User)
-**I want** to search for Offerings by entering a query
-**So that** I can find relevant Offerings quickly.
+## 4. Epic Map
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Search returns matching Offerings
-  Given Offerings match a query
-  When a person searches with that query
-  Then Discovery returns those Offerings as Offering Results
-```
+| Epic | Bounded Outcome | Features |
+|---|---|---|
+| Discovery Entry | A person explicitly begins public Discovery through the approved Home prompt and Search or Browse route. | F01 |
+| Search and Browse Navigation | A person submits Search or navigates the active Category hierarchy and may narrow Search to one leaf Category. | F02, F03, F04 |
+| Results and Refinement | Matching eligible Offerings are refined, ordered, represented, and recoverable when no result exists. | F05, F06, F07, F08 |
+| Discovery Continuity and Handoff | A person opens one Offering for Presentation or continues one transient Compare-preparation flow through Discovery. | F09, F10 |
 
-- **Priority:** Critical
-- **Dependencies:** US-0001 (Offerings exist and are Published)
-- **Related PRDs:** `PRD-0002-discovery.md`
-- **Related UX:** `UX-0001-home.md`, `UX-0002-discovery.md`
-- **Business Rules:** Discovery operates on Offerings; available without login.
-- **Out of Scope:** AI search; recommendation engine; map.
+## 5. Feature Map
 
-### US-0002.2 — Browse by Category
+| Feature ID | Canonical Feature | Epic | Capability Relationship | Behaviour Owner | Primary Experience |
+|---|---|---|---|---|---|
+| F01 | Homepage Discovery Entry | Discovery Entry | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0001-home.md`; `UX-0002-discovery.md` |
+| F02 | Search | Search and Browse Navigation | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md` |
+| F03 | Browse | Search and Browse Navigation | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md` |
+| F04 | Search Category Narrowing | Search and Browse Navigation | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md` |
+| F05 | Attribute Filtering | Results and Refinement | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md` |
+| F06 | Discovery Results and Listing Cards | Results and Refinement | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md` |
+| F07 | Default Result Ordering | Results and Refinement | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md` |
+| F08 | Zero Results Recovery | Results and Refinement | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md` |
+| F09 | Offering Presentation Handoff | Discovery Continuity and Handoff | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md`; `UX-0003-offering-detail.md` |
+| F10 | Compare Preparation Discovery Return | Discovery Continuity and Handoff | Direct Frozen assignment → Discovery | `PRD-0002-discovery.md` | `UX-0002-discovery.md`; `UX-0003-offering-detail.md`; `UX-0004-compare.md` |
 
-**As a** person
-**I want** to browse Offerings by navigating Categories
-**So that** I can explore without entering a query.
+## 6. Generated Story Inventory
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Browse a Category
-  Given a Category organizes Offerings
-  When a person browses that Category
-  Then Discovery returns the Offerings organized under it
-```
+| Feature | Generated Story | Candidate State |
+|---|---|---|
+| F01 | `US-DSC-F01-001` — Homepage Discovery Entry | In Review v0.2 |
+| F02 | `US-DSC-F02-001` — Search | In Review v0.2 |
+| F03 | `US-DSC-F03-001` — Browse | In Review v0.1 |
+| F04 | `US-DSC-F04-001` — Search Category Narrowing | In Review v0.2 |
+| F05 | `US-DSC-F05-001` — Attribute Filtering | In Review v0.1 |
+| F06 | `US-DSC-F06-001` — Discovery Results and Listing Cards | In Review v0.2 |
+| F07 | `US-DSC-F07-001` — Default Result Ordering | In Review v0.2 |
+| F08 | `US-DSC-F08-001` — Zero Results Recovery | In Review v0.1 |
+| F09 | `US-DSC-F09-001` — Offering Presentation Handoff | In Review v0.3 |
+| F10 | `US-DSC-F10-001` — Compare Preparation Discovery Return | In Review v0.1 |
 
-- **Priority:** High
-- **Dependencies:** US-0001
-- **Related PRDs:** `PRD-0002-discovery.md`
-- **Related UX:** `UX-0001-home.md`, `UX-0002-discovery.md`
-- **Business Rules:** Categories organize Offerings.
-- **Out of Scope:** Category navigation structure/nesting (TODO in `PRD-0002`).
+The candidate-state column is informative and recorded by reference. This Parent does not advance any Generated Story lifecycle state.
 
-### US-0002.3 — Filter by Attributes
+## 7. Coverage and Readiness
 
-**As a** person
-**I want** to narrow Offering Results using Filters
-**So that** I can focus on Offerings matching my criteria.
+| Check | Result |
+|---|---|
+| Authoritative F01–F10 consumed exactly | PASS |
+| Every Feature placed under exactly one Epic | PASS |
+| Ten first Generated Story candidates exist | PASS |
+| Embedded legacy Stories removed | PASS |
+| Parent embeds no Acceptance Criteria or BDD | PASS |
+| PRD and UX behaviour referenced, not redefined | PASS |
+| No Favorites, Messaging, Autocomplete, user Sort, recommendation, saved criteria, or Pagination product behaviour | PASS |
+| GitHub unchanged | PASS |
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Filters narrow by Attributes
-  Given a set of Offering Results
-  When a person applies a Filter
-  Then results are narrowed according to the Attributes the Filter acts on
-```
+## 8. Reconciliation Boundary
 
-- **Priority:** High
-- **Dependencies:** US-0002.1 or US-0002.2
-- **Related PRDs:** `PRD-0002-discovery.md`
-- **Related UX:** `UX-0002-discovery.md`
-- **Business Rules:** Attributes power filtering.
-- **Out of Scope:** Filter set and combination rules (TODO in `PRD-0002`).
+This Frozen baseline does not:
 
-### US-0002.4 — Sort results
+- permit direct in-place modification;
+- approve or Freeze a Generated Story;
+- change the Frozen Feature Registry;
+- create another Feature or Capability;
+- broaden PRD or UX scope;
+- start implementation;
+- update traceability, repository indexes, changelog, or GitHub automatically.
 
-**As a** person
-**I want** to sort Offering Results
-**So that** I can order them usefully.
+## 9. References
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Sorting orders results
-  Given Offering Results
-  When a person changes the Sort
-  Then the results are ordered accordingly
-```
-
-- **Priority:** Medium
-- **Dependencies:** US-0002.1 or US-0002.2
-- **Related PRDs:** `PRD-0002-discovery.md`
-- **Related UX:** `UX-0002-discovery.md`
-- **Business Rules:** Sorting is available.
-- **Out of Scope:** Sort options and default order / ranking (TODO in `PRD-0002`).
-
-### US-0002.5 — Move through results with Pagination
-
-**As a** person
-**I want** to move through Offering Results with Pagination
-**So that** I can reach more than the first set of results.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Pagination reaches further results
-  Given more Offering Results than are shown at once
-  When a person moves through the results
-  Then Pagination lets them reach further results
-```
-
-- **Priority:** Medium
-- **Dependencies:** US-0002.1 or US-0002.2
-- **Related PRDs:** `PRD-0002-discovery.md`
-- **Related UX:** `UX-0002-discovery.md`
-- **Business Rules:** Pagination is available.
-- **Out of Scope:** Pagination style/page size (TODO in `PRD-0002`).
-
-### US-0002.6 — See a Zero Results state
-
-**As a** person
-**I want** a clear Zero Results state when nothing matches
-**So that** I understand there are no matching Offerings.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Zero Results
-  Given a query or Filter combination that matches no Offering
-  When a person performs it
-  Then Discovery shows the Zero Results state
-```
-
-- **Priority:** Medium
-- **Dependencies:** US-0002.1, US-0002.3
-- **Related PRDs:** `PRD-0002-discovery.md`
-- **Related UX:** `UX-0002-discovery.md`
-- **Business Rules:** A Zero Results state is shown when nothing matches.
-- **Out of Scope:** Zero Results content/next steps (TODO); Recommendations.
-
-### US-0002.7 — Use Autocomplete while searching
-
-**As a** person
-**I want** Autocomplete while entering a query
-**So that** I can search more easily.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Autocomplete appears while typing
-  Given a person entering a Search query
-  When Autocomplete is available
-  Then suggestions may appear as they type
-```
-
-- **Priority:** Low
-- **Dependencies:** US-0002.1
-- **Related PRDs:** `PRD-0002-discovery.md`
-- **Related UX:** `UX-0002-discovery.md`
-- **Business Rules:** Autocomplete is part of Discovery.
-- **Out of Scope:** What Autocomplete suggests (TODO); History.
-
-### US-0002.8 — Discovery state reflected in the URL
-
-**As a** person
-**I want** the URL to reflect my current discovery state
-**So that** my current view is represented consistently.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: URL reflects discovery state
-  Given a person has searched, filtered, sorted, and paginated
-  When the discovery state changes
-  Then the URL reflects the current discovery state
-```
-
-- **Priority:** Low
-- **Dependencies:** US-0002.1–US-0002.5
-- **Related PRDs:** `PRD-0002-discovery.md`
-- **Related UX:** `UX-0002-discovery.md`
-- **Business Rules:** Discovery has URL behaviour.
-- **Out of Scope:** Exact parameters and shareability (TODO in `PRD-0002`).
-
-### US-0002.9 — Discover without logging in
-
-**As a** Guest
-**I want** to use all Discovery actions without logging in
-**So that** I can experience the platform before authenticating.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Guest uses Discovery without login
-  Given a Guest
-  When they Search, Browse, Filter, Sort, and paginate
-  Then all actions succeed without login
-```
-
-- **Priority:** High
-- **Dependencies:** —
-- **Related PRDs:** `PRD-0002-discovery.md`, `PRD-0003-identity.md`
-- **Related UX:** `UX-0001-home.md`, `UX-0002-discovery.md`
-- **Business Rules:** Discovery is available to Guests without login.
-- **Out of Scope:** Login-gated actions (Favorites, Contact, Messaging).
+- `DISCOVERY_FEATURE_REGISTRY.md` — F01–F10 identity and relationships.
+- `OFFERING_CAPABILITY_ARCHITECTURE.md` — Discovery Capability boundary.
+- `PRD-0002-discovery.md` — Discovery behaviour.
+- `UX-0001-home.md` — public Home entry.
+- `UX-0002-discovery.md` — Search, Browse, Filters, Results, ordering, recovery, and handoff.
+- `UX-0003-offering-detail.md` — selected Offering and transient Compare context reception.
+- `UX-0004-compare.md` — Compare-preparation return.
+- `ADR-0007`, `ADR-0009`, and `ADR-0002` where Presentation boundary applies.
+- `USER_STORY_HANDBOOK.md`, `REPOSITORY_GOVERNANCE.md`, `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`.

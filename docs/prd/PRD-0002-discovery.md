@@ -1,246 +1,1040 @@
 # PRD-0002 — Discovery
 
+- **Owner:** Product Owner / Architecture Owner
 - **PRD ID:** PRD-0002
 - **Title:** Discovery
-- **Status:** Draft
-- **Version:** 0.1 (pending review)
+- **Status:** Frozen
+- **Version:** 2.1
+- **Last Updated:** 2026-07-21
 - **Scope level:** Product behaviour (non-technical)
+- **Supersedes:** Approved v1.0
+- **Approved candidate:** In Review v2.1
+- **Approval Date:** 2026-07-21
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-07-21
+- **Frozen By:** Product Owner / Architecture Owner
 
-> This document describes product behaviour only. It does not describe APIs, search engines, databases, ranking implementation, indexes, or infrastructure.
+> This document is the Single Information Owner of Discovery product behaviour: the V1 Homepage entry, the required opening prompt, Search and Browse routing, Search matching boundaries, Category navigation, Attribute Filter behaviour, Discovery Results, the Listing Card product minimum, default result ordering, Zero Results, Discovery Start meaning, and the handoff from a selected result to Offering Presentation. It defines no search engine, ranking algorithm, linguistic-processing implementation, index, API, database, route format, pagination mechanism, frontend component, storage, security implementation, analytics instrumentation, or infrastructure.
+
+**Freeze Note (2.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-21. Frozen v2.1 is the locked V1 PRD baseline for PRD-0002 — Discovery. This exact version must not be edited in place. Any future change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise UX, User Stories, traceability, repository indexes, or GitHub content.
+
+**Approval Note (2.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-21 after Architecture Review, Final Review, package-level reconciliation, independent Claude audit, and all bounded audit corrections. Approved v2.1 supersedes Approved v1.0 and is the authoritative PRD baseline for PRD-0002 — Discovery. This historical Approval Note records that approval and Freeze were separate decisions. The PRD was subsequently Frozen on 2026-07-21. No UX, User Story, traceability, or GitHub file changes automatically.
+
+**Revision Note (2.1):** Controlled Claude-audit correction for finding A-01. Corrects Attribute ownership language: PRD-0006 owns the Attribute value kind and definition properties; PRD-0001 owns the authoritative Offering value and its product meaning. No Filter behaviour or architecture changes.
+
+**Revision Note (2.0):** Controlled post-approval Freeze-correction candidate applying Owner Decisions P-03, P-04, and P-05. Adds value-kind-specific Filter behaviour, consumes Category-derived Domain association, defines Discovery Start Domain attribution, replaces ambiguous publication recency with PRD-0001-owned immutable `Initial Published At`, and converts pre-approval Open Question wording into accepted deferrals. No Search engine, ranking algorithm, Pagination, Sorting, Recommendation, Capability, or Feature is introduced. Status remains In Review v2.0. Approved v1.0 remains authoritative until explicit approval.
+
+**Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-21 after Architecture Review and Final Review verdict `PASS — READY FOR OWNER APPROVAL`. Approved v1.0 becomes the authoritative product-behaviour source for the V1 Homepage entry, the prompt **“Bugün ne yapmak istiyorsunuz?”**, Search and Browse routing, public Search matching boundaries, active Category navigation, Attribute Filter semantics, Discovery Results, the Listing Card product minimum, fixed default ordering, Zero Results recovery, Discovery Start, and the handoff to complete Offering Presentation. It preserves final Offering Public Eligibility as the sole Discovery eligibility input; excludes protected contact and Affiliate Destination information; preserves UX ownership of presentation; and excludes user-controlled Sorting, paid priority, Pagination product behaviour, Autocomplete, persisted URL state, Search History, Saved Search, Notifications, Recommendations, Favorites, and Messaging from V1. It is not Frozen. Freeze requires a separate Product Owner / Architecture Owner decision.
+
+**Revision Note (0.3):** Controlled decision-reconciled revision of In Review v0.2 after the independent Cross-PRD Architecture Audit, explicit Owner Decision D-18, and approval of the authoritative Offering, Identity, Decision, Business, Platform, and Capability Architecture documents. Adds Homepage entry ownership and the required prompt **“Bugün ne yapmak istiyorsunuz?”**; defines deterministic routing to Search or Browse; replaces Published-only assumptions with final Offering Public Eligibility; defines active Category hierarchy navigation and leaf-only result context; defines the approved Search-match information set while excluding protected contact information; defines Filter availability and OR-within / AND-across combination semantics; defines the Listing Card product minimum; defines Search and Browse default ordering without introducing user-controlled Sorting or a ranking algorithm; defines bounded Zero Results recovery; defines Discovery Start for Platform consumption; removes Favorites and Messaging from the PRD-0004 ownership reference; closes the Homepage, Search matching, Category navigation, Filter availability, Filter combination, default ordering, Listing Card minimum, and Zero Results product Open Questions. Approved v1.0 is authoritative from 2026-07-21. No other repository document changes automatically.
 
 ---
 
-# 1. Purpose
+## 1. Purpose
 
-Define the Discovery capability of the platform. Discovery is responsible for helping people discover Offerings. It covers how people search and browse Offerings, narrow them with Categories and Filters, order them with Sorting, move through them with Pagination, and how the platform behaves when there are results, no results, or a search in progress (Autocomplete), including the platform's URL behaviour during Discovery.
+Discovery helps a person move from an open need to one or more publicly eligible Offerings that can be evaluated.
 
-Discovery operates on Offerings as defined in `PRD-0001-offering.md`.
+Discovery begins at the V1 Homepage.
 
-# 2. Business Value
+The required opening prompt is:
 
-Discovery exists so people can find the Offerings relevant to their decision quickly. This directly serves the Foundation: it respects the user's time and helps people complete decisions faster by making Offerings easy to find, narrow, and move through. Because Discovery works uniformly on the universal Offering model, the same discovery experience applies across every domain and can scale across many industries.
+> **Bugün ne yapmak istiyorsunuz?**
 
-# 3. Scope
+From that entry, a person may begin one of two alternative Discovery paths:
 
-Discovery includes only:
+- **Search** — submit a person-entered query;
+- **Browse** — choose and navigate the active Category hierarchy.
 
-- Search
-- Browse
-- Categories
-- Filters
-- Sorting
-- Pagination
-- Offering Results
-- Zero Results
-- Autocomplete
-- URL behaviour
+Discovery may narrow the current context through Category selection and Attribute Filters.
 
-All of the above operate on Offerings, are organized by Categories, and are narrowed by Attributes, consistent with the Foundation and `PRD-0001-offering.md`.
+Discovery ends when the person opens a selected Offering. Complete Offering Presentation begins under `PRD-0001-offering.md`.
 
-# 4. Out of Scope
+---
 
-Discovery does not include:
+## 2. Business Value
 
-- Compare
-- Favorites
-- Messaging
-- Contact
-- AI
-- Recommendations
-- History
-- Saved Search
-- Notifications
-- Any V2 or excluded-scope capability as defined in `V1_SCOPE.md`.
+Discovery reduces the effort between a person's open need and an understandable set of Offerings.
 
-Discovery also does not define result ranking, search-engine behaviour, or any technical implementation; those are outside this product document.
+It supports the Foundation by:
 
-# 5. Core Concepts
+- respecting the person's time;
+- presenting an immediate Search or Browse choice;
+- using one universal Offering model across Mobility, Real Estate, and Technology;
+- using governed Categories and Attributes rather than category-specific code paths;
+- preventing ineligible Offerings or protected Business information from appearing;
+- providing predictable matching, filtering, ordering, and Zero Results recovery;
+- moving the person toward Offering Presentation and Decision rather than maximizing time spent in results.
 
-These concepts use Foundation terminology and are referenced, not redefined.
+Discovery succeeds when a person can:
 
-- **Offering** — the universal object of the platform; every discoverable item is an Offering (see `PRD-0001-offering.md`). Discovery operates on Offerings.
-- **Category** — organizes Offerings. Per `V1_SCOPE.md`, categories are metadata that organize Offerings. Browse and Filters use Categories to narrow Offerings.
-- **Attributes** — describe Offerings. Attributes power discovery, filtering, and comparison; within Discovery, Attributes are what Filters act on.
-- **Discovery** — the capability that helps people find Offerings through Search and Browse.
-- **Search** — finding Offerings by a person's entered query.
-- **Browse** — finding Offerings by navigating Categories rather than entering a query.
+1. understand how to begin;
+2. find or narrow eligible Offerings;
+3. identify an Offering from its Listing Card;
+4. open it for complete Presentation;
+5. understand and recover when no eligible result exists.
 
-# 6. Discovery Behaviour
+---
 
-- Discovery helps a person move from an open need to a set of relevant Offerings.
-- A person can discover Offerings by Search (entering a query) or by Browse (navigating Categories).
-- Discovered Offerings are returned as **Offering Results** — the result cards referred to as "Listing cards" in `V1_SCOPE.md`.
-- Results can be narrowed with Filters (acting on Attributes) and Categories, ordered with Sorting, and moved through with Pagination.
-- When nothing matches, Discovery presents a **Zero Results** state (Section 13).
-- While a person is entering a Search query, the platform may offer **Autocomplete** (Section 14).
-- The Discovery experience is the same across all domains, because it operates on the universal Offering model.
+## 3. Scope
 
-# 7. User Behaviour
+V1 Discovery includes:
 
-Discovery is available without login. Permissions are referenced from approved decisions (`V1_SCOPE.md`, PRD-0003 Identity); none are invented.
+- Homepage entry behaviour;
+- the opening prompt **“Bugün ne yapmak istiyorsunuz?”**;
+- routing a submitted query to Search;
+- routing a Category choice to Browse;
+- Search against the approved public searchable-information set;
+- Browse through active root, child, and leaf Categories;
+- active leaf Category selection before category-specific result display;
+- Category narrowing for cross-category Search Results;
+- Attribute Filters supplied by authoritative filterable definitions;
+- combining Search, active leaf Category, and Filters;
+- Filter-combination semantics;
+- Discovery Results containing only publicly eligible Offerings;
+- the Listing Card product minimum;
+- product-defined default result ordering;
+- Zero Results and bounded recovery actions;
+- opening a selected Offering and handing off to Offering Presentation;
+- Discovery Start meaning for Admin-facing Basic Analytics consumption;
+- public use without login;
+- the same product behaviour across Mobility, Real Estate, and Technology.
 
-- **Guest** — may Search, Browse, apply Filters and Categories, Sort, and move through results with Pagination, and view Offering Results, all without logging in.
-- **User** — may do everything a Guest can within Discovery. Login does not add Discovery-specific abilities, because login-gated features such as Favorites and Saved Search are out of scope for Discovery.
-- **Business** — a User acting in the context of an owned Business discovers Offerings with the same Discovery abilities as any User. Managing the Business's own Offerings is defined in `PRD-0001-offering.md` and the Business capability, not in Discovery.
-- **Admin** — TODO — no Admin-specific Discovery behaviour is defined by approved decisions. Admin moderation is defined elsewhere and is out of scope here.
+PRD-0002 owns the product minimum of the Listing Card.
 
-# 8. Search Behaviour
+UX owns its layout, hierarchy, visual treatment, responsive behaviour, and controls.
 
-- A person can enter a query to Search for Offerings.
-- Search returns matching Offerings as Offering Results.
-- Search operates on Offerings, which are described by Attributes.
-- If no Offering matches, Search leads to the Zero Results state (Section 13).
-- TODO — the precise matching behaviour of Search (for example which parts of an Offering a query matches against) is not defined by approved decisions.
-- TODO — result **ordering/ranking** for Search is intentionally not decided in this document. No ranking decision is made here.
+---
 
-# 9. Browse Behaviour
+## 4. Out of Scope
 
-- A person can Browse Offerings by navigating Categories rather than entering a query.
-- Browsing within a Category returns the Offerings organized under that Category as Offering Results.
-- Browsed results can be further narrowed with Filters and ordered with Sorting, and moved through with Pagination.
-- TODO — the structure of Category navigation (for example whether Categories are nested and how deep) is not defined by approved decisions.
+The following are outside PRD-0002:
 
-# 10. Filters
+- Offering creation, editing, publication, retirement, lifecycle, ownership, or final Offering Public Eligibility composition;
+- Category or Attribute definition and management;
+- Offering Presentation;
+- Compare;
+- Decision Chat;
+- Affiliate Handoff;
+- Direct Contact;
+- Completion;
+- Favorites;
+- Messaging;
+- user-controlled Sorting;
+- Pagination style, page size, continuous loading, or another result-delivery mechanism;
+- Autocomplete;
+- persisted, shareable, restorable, or bookmarkable Discovery URL state;
+- Search History;
+- Saved Search;
+- Notifications;
+- Recommendations or advanced recommendations;
+- sponsored, paid, or promoted ordering;
+- protected telephone, email, or external contact URL matching or exposure;
+- Admin-specific Discovery tooling, moderation, or analytics presentation;
+- Business-facing analytics;
+- search-engine selection;
+- index design;
+- query parsing, tokenization, stemming, synonym, typo-tolerance, language-detection, or normalization implementation;
+- ranking-algorithm implementation;
+- analytics event instrumentation, storage, or query implementation;
+- API, database, caching, routing, frontend, backend, storage, security, logging, monitoring, deployment, or infrastructure;
+- any V2 or excluded behaviour in `V1_SCOPE.md`.
 
-- A person can narrow Offering Results with Filters.
-- Filters act on Attributes, since Attributes power filtering.
-- Filters may be combined with Search and with Browse/Categories to narrow results further.
-- TODO — the specific set of Filters, the Attributes exposed as Filters, and how multiple Filters combine are not defined by approved decisions.
+User-controlled Sorting, Pagination, Autocomplete, URL-state persistence, Search History, Saved Search, and Recommendations require a future explicit scope and ownership decision.
 
-# 11. Sorting
+---
 
-- A person can Sort Offering Results.
-- TODO — the available Sort options and the default order are not defined by approved decisions. No ranking or ordering decision is made in this document.
+## 5. Core Concepts and Ownership
 
-# 12. Pagination
+### 5.1 Homepage entry
 
-- Offering Results are presented with Pagination so a person can move through them.
-- TODO — the Pagination style (for example paged navigation versus continuous loading) and the number of results shown at a time are not defined by approved decisions.
+The V1 entry behaviour owned by PRD-0002.
 
-# 13. Zero Results
+`UX-0001-home.md` owns screen layout, presentation, and interaction specification.
 
-- When no Offering matches a Search or a Browse/Filter combination, Discovery presents a Zero Results state.
-- TODO — the exact Zero Results experience (for example messaging and any suggested next steps) is not defined by approved decisions. Any next steps must remain within Discovery scope and must not introduce out-of-scope capabilities such as Recommendations or Saved Search.
+### 5.2 Search
 
-# 14. Autocomplete
+A Discovery path started by submitting a non-empty person-entered query.
 
-- While a person is entering a Search query, the platform may present Autocomplete suggestions.
-- TODO — what Autocomplete suggests (for example Offerings, Categories, Attributes, or query terms) and how it behaves are not defined by approved decisions. Autocomplete must remain within Discovery scope and must not introduce out-of-scope capabilities such as History or Recommendations.
+### 5.3 Browse
 
-# 15. URL Behaviour
+A Discovery path started by choosing and navigating an active Category hierarchy.
 
-- Discovery has defined URL behaviour as part of its scope.
-- TODO — the specific Discovery state represented in the URL (for example query, selected Category, applied Filters, Sorting, and Pagination position), and whether a Discovery URL can be shared, bookmarked, or restored, are not defined by approved decisions. (Kept implementation-neutral: no URL format, parameter names, or routing mechanism is specified here.)
+### 5.4 Category context
 
-# 16. User Flows
+The current active Category path.
 
-Product flows using only approved, in-scope behaviour.
+An Offering is assigned to exactly one active leaf Category under `PRD-0001-offering.md`.
 
-### 16.1 Search flow
+### 5.5 Attribute Filter
 
-1. A person enters a Search query.
-2. Discovery returns matching Offerings as Offering Results.
-3. The person narrows results with Filters and Categories, orders them with Sorting, and moves through them with Pagination.
-4. The person opens an Offering to view its detail.
-5. From the Offering detail, the person continues along the core flow beyond Discovery (for example to Compare), which is defined in other PRDs and is out of scope here.
+A Discovery constraint based on an Attribute definition whose authoritative `filterable` property is enabled by `PRD-0006-platform.md`.
 
-### 16.2 Browse flow
+V1 Filter behaviour depends on the PRD-0006-owned Attribute value kind and definition properties, together with the PRD-0001-owned authoritative Offering value and its product meaning.
 
-1. A person Browses by navigating a Category.
-2. Discovery returns the Offerings organized under that Category as Offering Results.
-3. The person narrows, sorts, and paginates the results.
-4. The person opens an Offering to view its detail.
+### 5.6 Discovery criteria
 
-### 16.3 Zero Results flow
+The current combination of:
 
-1. A person performs a Search or applies Filters/Categories that match no Offering.
-2. Discovery presents the Zero Results state.
-3. TODO — the next steps offered from Zero Results are undefined (Section 13).
+- submitted Search query, where present;
+- selected active leaf Category, where present;
+- applied Attribute Filters.
 
-# 17. Functional Requirements
+### 5.7 Discovery Results
 
-Product behaviour only.
+The publicly eligible Offerings matching the current Discovery criteria.
 
-1. A person can Search for Offerings by entering a query.
-2. A person can Browse Offerings by navigating Categories.
-3. Discovery returns matching Offerings as Offering Results.
-4. A person can narrow Offering Results using Filters, which act on Attributes.
-5. A person can narrow Offering Results using Categories.
-6. A person can Sort Offering Results. (Available options and default order: TODO — Section 11.)
-7. A person can move through Offering Results using Pagination. (Style and page size: TODO — Section 12.)
-8. When no Offering matches, Discovery presents a Zero Results state. (Details: TODO — Section 13.)
-9. While entering a Search query, a person may be offered Autocomplete. (Behaviour: TODO — Section 14.)
-10. Discovery has URL behaviour. (Details: TODO — Section 15.)
-11. All Discovery actions are available to Guests without login.
+### 5.8 Listing Card
 
-# 18. Non-functional Requirements
+The Discovery-owned product representation through which a person identifies and opens one Offering.
 
-Stated as qualitative expectations derived only from Foundation principles. These are not technical metrics.
+### 5.9 Zero Results
 
-- **Respects the user's time.** Discovery helps people find relevant Offerings quickly and move through them without friction.
-- **Helps complete decisions faster.** Discovery is a step toward a completed decision, not an end in itself.
-- **Simplicity over complexity.** Discovery keeps finding Offerings simple and consistent.
-- **One universal model, many industries.** Because Discovery operates on the universal Offering model, the same experience scales across domains.
+The state in which no publicly eligible Offering matches the current criteria.
 
-# 19. Acceptance Criteria
+### 5.10 Discovery Start
 
-Written in Gherkin (Given / When / Then).
+The bounded product occurrence when a person:
 
-```gherkin
-Scenario: Search returns matching Offerings
-  Given Offerings exist that match a person's query
-  When the person searches with that query
-  Then Discovery returns those Offerings as Offering Results
+- submits a valid Search query; or
+- selects the first active Category that begins a Browse path.
 
-Scenario: Browse by Category returns Offerings under it
-  Given a Category organizes a set of Offerings
-  When a person browses that Category
-  Then Discovery returns the Offerings organized under that Category
+Domain attribution:
 
-Scenario: Filters narrow results by Attributes
-  Given a set of Offering Results
-  When a person applies a Filter
-  Then the results are narrowed according to the Attributes the Filter acts on
+- a Browse Discovery Start inherits the Domain of the selected Category;
+- a Search Discovery Start has no Domain association until the current Discovery criteria include one selected active leaf Category;
+- the lack of a Domain association does not block overall counting.
 
-Scenario: Zero Results when nothing matches
-  Given a Search or Filter combination that matches no Offering
-  When the person performs it
-  Then Discovery presents the Zero Results state
+`PRD-0006-platform.md` may consume Discovery Start and its available Domain association for Basic Analytics without redefining either.
 
-Scenario: Pagination lets a person move through results
-  Given more Offering Results than are shown at once
-  When a person moves through the results
-  Then Pagination allows them to reach further results
+### 5.11 Offering Presentation boundary
 
-Scenario: A Guest can use Discovery without logging in
-  Given a person using the platform as a Guest
-  When they Search, Browse, Filter, Sort, and paginate
-  Then all of these Discovery actions succeed without requiring login
+Discovery ends when a Listing Card is opened.
+
+Complete Offering Presentation begins under PRD-0001 and Accepted ADR-0002.
+
+---
+
+## 6. Homepage Entry and Routing
+
+### 6.1 Required prompt
+
+The Homepage must present the approved opening prompt:
+
+> **Bugün ne yapmak istiyorsunuz?**
+
+The exact layout, typography, placement, visual hierarchy, and control design are UX-owned.
+
+### 6.2 Search routing
+
+When a person submits a non-empty query:
+
+```text
+Homepage
+→ Search path
+→ Discovery Start
+→ Search Results or Zero Results
 ```
 
-TODO — Additional acceptance criteria for Sorting options and default order, Pagination style, Zero Results details, Autocomplete behaviour, and URL behaviour depend on the decisions marked TODO in Sections 11–15.
+Whitespace-only input does not start Search.
 
-# 20. Related PRDs
+### 6.3 Browse routing
 
-- **PRD-0001 — Offering** — defines the Offering that Discovery operates on.
-- **PRD-0003 — Identity** — defines the roles (Guest, User, Business, Admin) referenced in Section 7.
-- **PRD-0004 — Decision** — defines steps of the core flow after Discovery (for example Compare and the path to Completion), which are out of scope here. TODO — confirm which downstream PRD owns Compare and Contact.
-- **PRD-0006 — Platform** — TODO — confirm any platform-level Discovery concerns owned here.
+When a person chooses an active Category:
 
-# 21. Related ADRs
+```text
+Homepage
+→ Browse path
+→ Discovery Start
+→ Category navigation
+→ active leaf Category
+→ Browse Results or Zero Results
+```
 
-No Architecture Decision Records are linked from this product document. ADR references belong to the Architecture workstream and will be recorded there.
+### 6.4 Routing boundary
 
-# 22. Open Questions
+The Homepage does not:
 
-- TODO — Define Search matching behaviour (which parts of an Offering a query matches). (Section 8)
-- TODO — Result ordering/ranking is intentionally undecided; it must be settled outside this document without embedding a ranking decision here. (Sections 8, 11)
-- TODO — Define Category navigation structure (for example nesting). (Section 9)
-- TODO — Define the Filter set and how Filters combine. (Section 10)
-- TODO — Define Sort options and default order. (Section 11)
-- TODO — Define Pagination style and page size. (Section 12)
-- TODO — Define the Zero Results experience and any in-scope next steps. (Section 13)
-- TODO — Define Autocomplete behaviour and what it suggests. (Section 14)
-- TODO — Define Discovery URL behaviour (state represented, shareability). (Section 15)
-- TODO — Define any Admin-specific Discovery behaviour, if any. (Section 7)
-- TODO — Confirm which downstream PRD owns Compare and Contact. (Section 20)
+- infer a hidden goal and silently choose a path;
+- require login;
+- start Compare or Decision Chat directly;
+- create Recommendations;
+- create persistent preference or history.
+
+The person initiates Search by submitting a query or Browse by choosing a Category.
+
+---
+
+## 7. Public Eligibility and Discovery Inputs
+
+### 7.1 Eligibility consumption
+
+Discovery consumes exactly one Offering-level result:
+
+```text
+final Offering Public Eligibility
+```
+
+Only:
+
+```text
+final Offering Public Eligibility = Eligible
+```
+
+may appear in Discovery Results.
+
+Discovery does not inspect or recalculate:
+
+- Offering lifecycle;
+- Business Moderation Status;
+- Business Public Exposure Input;
+- Affiliate Destination Handoff Eligibility.
+
+### 7.2 Category consumption
+
+Discovery consumes:
+
+- active root Categories;
+- active child relationships;
+- active leaf Categories;
+- stable Category identity;
+- Category display names;
+- the V1 Domain inherited by each Category.
+
+Retired Categories do not appear as active Browse destinations.
+
+A selected leaf Category supplies the current Discovery Domain context.
+
+### 7.3 Attribute consumption
+
+Discovery consumes:
+
+- Attribute applicability to the selected active leaf Category;
+- the authoritative `filterable` property;
+- authoritative Offering Attribute values.
+
+Discovery does not manage Attribute definitions.
+
+---
+
+## 8. Search Matching Policy
+
+### 8.1 Approved searchable-information set
+
+A Search query may match only public authoritative information belonging to an eligible Offering:
+
+- Offering title or name;
+- Offering description;
+- active Category display names in the Offering's Category path;
+- public Business display name;
+- applicable public Offering Attribute display values.
+
+Search must not match against or expose:
+
+- telephone number;
+- email address;
+- external website or contact URL;
+- Affiliate Destination;
+- Admin-only information;
+- owner-only information;
+- historical or ineligible Offering records.
+
+### 8.2 Product matching boundary
+
+An Offering may enter Search Results only when the approved matching process finds a meaningful relationship between the submitted query and at least one item in the approved searchable-information set.
+
+An Offering that matches none of the approved searchable information must not enter the Search Result set.
+
+The exact linguistic processing used to identify a meaningful relationship is implementation-owned and must not expand the searchable-information set.
+
+### 8.3 Category narrowing from Search
+
+A Search may initially produce eligible results from more than one active leaf Category.
+
+Where multiple leaf Categories are represented:
+
+- Category narrowing is available;
+- category-specific Attribute Filters are not available until one active leaf Category is selected;
+- selecting a leaf Category retains the Search query and narrows the result set.
+
+---
+
+## 9. Browse Behaviour
+
+### 9.1 Active hierarchy
+
+Browse presents the active Category hierarchy supplied by PRD-0006.
+
+A person may:
+
+- start from an active root Category;
+- move through active child Categories;
+- move back to a parent Category;
+- choose another active branch;
+- select an active leaf Category.
+
+### 9.2 Leaf-only result context
+
+V1 Browse Results are presented only after an active leaf Category is selected.
+
+A non-leaf Category:
+
+- provides navigation to active children;
+- does not aggregate descendant Offerings into a parent-category result set in V1.
+
+### 9.3 Depth boundary
+
+PRD-0002 imposes no separate Category-depth limit.
+
+Browse follows the authoritative active hierarchy.
+
+UX must make the current Category path understandable without redefining the hierarchy.
+
+---
+
+## 10. Filter Behaviour
+
+### 10.1 Availability
+
+Attribute Filters are available only when:
+
+```text
+active leaf Category selected
+AND
+Attribute applies to that Category
+AND
+Attribute filterable = true
+```
+
+An Attribute that is not applicable or not filterable must not appear as a Filter.
+
+Text Attributes are not filterable in V1.
+
+### 10.2 Value-kind behaviour
+
+#### Number
+
+A Number Filter may use:
+
+- an inclusive minimum;
+- an inclusive maximum;
+- both.
+
+An Offering matches when its authoritative numeric value is inside every supplied bound.
+
+An Offering with no value does not match the Number Filter.
+
+#### Boolean
+
+A Boolean Filter matches the exact selected true/false value.
+
+An Offering with no value does not match the Boolean Filter.
+
+#### Single Select
+
+One or more selected allowed values combine with OR.
+
+An Offering matches when its authoritative single value equals at least one selected value.
+
+#### Multi Select
+
+One or more selected allowed values combine with OR.
+
+An Offering matches when the Offering's authoritative value set intersects at least one selected Filter value.
+
+### 10.3 Combination semantics
+
+For multiple selected values within the same Single Select or Multi Select Filter:
+
+```text
+value A OR value B OR value C
+```
+
+For different Attribute Filters:
+
+```text
+Filter 1 AND Filter 2 AND Filter 3
+```
+
+Where Search query, active leaf Category, and Attribute Filters coexist:
+
+```text
+Search match
+AND
+active leaf Category
+AND
+all applied Attribute Filters
+```
+
+### 10.4 Missing values
+
+An Offering without a value for an applied Filter does not satisfy that Filter.
+
+Discovery does not invent a default value.
+
+### 10.5 Filter changes
+
+Applying a Filter narrows or preserves the current result set.
+
+Removing a Filter expands or preserves the current result set.
+
+Clearing all Filters retains the current Search query and active leaf Category unless the person separately changes them.
+
+Discovery does not invent a Filter for a missing Attribute definition.
+
+## 11. Listing Card Product Minimum
+
+Every Discovery Result must be represented by one Listing Card.
+
+The minimum information set is:
+
+- recognizable Offering title or name;
+- available primary visual, where one has been supplied;
+- active leaf Category display name;
+- owning Business display name;
+- a clear product affordance to open the Offering.
+
+A Listing Card:
+
+- represents one Offering only;
+- must not expose protected telephone, email, or external contact URL information;
+- must not expose Affiliate Destination information;
+- must not imply purchase, transaction, Completion, or external success;
+- does not perform complete Offering Presentation;
+- does not own Compare, Decision Chat, Affiliate Handoff, or Direct Contact.
+
+UX owns:
+
+- card layout;
+- component hierarchy;
+- image treatment;
+- truncation;
+- spacing;
+- responsive behaviour;
+- whether the whole card or a dedicated control implements the open affordance.
+
+---
+
+## 12. Default Result Ordering
+
+### 12.1 Authoritative publication recency
+
+Discovery consumes PRD-0001-owned:
+
+```text
+Initial Published At
+```
+
+It is created once by the first Draft → Published transition.
+
+Offering edits and Hidden → Published restore do not change it.
+
+### 12.2 Search default order
+
+Search Results use **Best Match** as the fixed V1 product order.
+
+Best Match prioritizes, in this order:
+
+1. direct title or name relationship to the query;
+2. active Category-path relationship;
+3. public Business display-name relationship;
+4. Offering description and applicable Attribute-value relationship.
+
+Within the same product match level:
+
+1. the later `Initial Published At` appears first;
+2. any remaining tie uses a stable deterministic order.
+
+This section defines product priority, not a ranking algorithm.
+
+### 12.3 Browse default order
+
+Browse Results use:
+
+```text
+later Initial Published At first
+```
+
+Any remaining tie uses a stable deterministic order.
+
+### 12.4 Filtered results
+
+Filters do not create a new ordering mode.
+
+- filtered Search retains Best Match order;
+- filtered Browse retains Initial-Published-At order.
+
+### 12.5 Ordering exclusions
+
+V1 provides no:
+
+- user-controlled Sort;
+- paid placement;
+- sponsored priority;
+- promoted Listing Card;
+- Business-controlled ranking override.
+
+## 13. Zero Results
+
+Zero Results must:
+
+- state that no publicly eligible Offering matches the current criteria;
+- preserve an understandable summary of the current query, Category, and Filters;
+- allow one or more Filters to be removed;
+- allow all Filters to be cleared;
+- allow the Search query to be changed or cleared;
+- allow the person to move to a parent Category or choose another active Category;
+- allow return to the Homepage entry.
+
+Zero Results must not:
+
+- invent Recommendations;
+- show an ineligible Offering;
+- create Saved Search, History, Notification, or Messaging;
+- silently remove criteria;
+- silently switch from Search to Browse or Browse to Search.
+
+Exact copy and layout are UX-owned.
+
+---
+
+## 14. Discovery Result Handoff
+
+When a person opens a Listing Card:
+
+```text
+Discovery Result
+→ selected Offering
+→ complete Offering Presentation
+```
+
+Discovery supplies the selected Offering identity.
+
+PRD-0001 owns the Presentation behaviour.
+
+Opening an Offering:
+
+- ends the Discovery responsibility;
+- is not Completion;
+- does not automatically begin Compare;
+- does not automatically begin Decision Chat;
+- does not initiate Affiliate Handoff or Direct Contact.
+
+---
+
+## 15. Permissions Matrix
+
+Legend:
+
+- `✓` — permitted through public Discovery;
+- `✗` — not permitted;
+- `Conditional` — available when applicable public criteria exist.
+
+| Action | Guest | Enabled User | Business Context | Admin Context |
+|---|---:|---:|---:|---:|
+| View Homepage prompt | ✓ | ✓ | ✓ | ✓ |
+| Start Search | ✓ | ✓ | ✓ | ✓ |
+| Start Browse | ✓ | ✓ | ✓ | ✓ |
+| Navigate active Categories | ✓ | ✓ | ✓ | ✓ |
+| Select active leaf Category | ✓ | ✓ | ✓ | ✓ |
+| Apply or remove applicable Filters | Conditional | Conditional | Conditional | Conditional |
+| View Discovery Results | ✓ | ✓ | ✓ | ✓ |
+| View Zero Results | ✓ | ✓ | ✓ | ✓ |
+| Open an Offering | ✓ | ✓ | ✓ | ✓ |
+| Receive role-specific Discovery priority | ✗ | ✗ | ✗ | ✗ |
+| Use user-controlled Sorting | ✗ | ✗ | ✗ | ✗ |
+| Access Admin-specific Discovery tooling through PRD-0002 | ✗ | ✗ | ✗ | ✗ |
+
+Business and Admin contexts receive only the public person baseline.
+
+Login or role does not grant a Discovery-specific ordering, visibility, or matching advantage.
+
+---
+
+## 16. Product Flows
+
+### 16.1 Homepage to Search
+
+```text
+Homepage
+→ “Bugün ne yapmak istiyorsunuz?”
+→ person submits non-empty query
+→ Discovery Start
+→ Search evaluates eligible Offerings
+→ Search Results or Zero Results
+```
+
+### 16.2 Homepage to Browse
+
+```text
+Homepage
+→ “Bugün ne yapmak istiyorsunuz?”
+→ person chooses active Category
+→ Discovery Start
+→ navigate active hierarchy
+→ choose active leaf Category
+→ Browse Results or Zero Results
+```
+
+### 16.3 Search with Category and Filters
+
+```text
+Search query
+→ cross-category eligible results
+→ choose active leaf Category
+→ applicable filterable Attributes become available
+→ apply Filters
+→ narrowed Search Results or Zero Results
+```
+
+### 16.4 Browse with Filters
+
+```text
+active leaf Category
+→ eligible Browse Results
+→ applicable filterable Attributes
+→ apply Filters
+→ narrowed Browse Results or Zero Results
+```
+
+### 16.5 Result to Presentation
+
+```text
+Listing Card
+→ open Offering
+→ PRD-0001 complete Offering Presentation
+```
+
+### 16.6 Zero Results recovery
+
+```text
+Zero Results
+→ remove / clear Filters
+or
+→ change / clear query
+or
+→ change Category
+or
+→ return Homepage
+→ reevaluate criteria
+```
+
+---
+
+## 17. Functional Requirements
+
+### Homepage and entry
+
+1. Discovery shall own the V1 Homepage entry behaviour.
+2. Homepage shall present **“Bugün ne yapmak istiyorsunuz?”**.
+3. Submitting a non-empty query shall route to Search.
+4. Choosing an active Category shall route to Browse.
+5. Homepage entry shall require no login.
+6. Discovery Start shall occur on valid Search submission or first active Category selection.
+
+### Eligibility and inputs
+
+7. Discovery shall include only Offerings whose final Offering Public Eligibility is Eligible.
+8. Discovery shall consume active Category hierarchy and filterable Attribute definitions by reference.
+9. Discovery shall not recalculate Offering eligibility.
+
+### Search
+
+10. Search shall match only the approved searchable-information set in §8.1.
+11. Search shall not match protected contact or owner/Admin-only information.
+12. An Offering matching none of the approved information shall not enter Search Results.
+13. A cross-category Search shall provide Category narrowing.
+14. Category-specific Attribute Filters shall require one selected active leaf Category.
+
+### Browse
+
+15. Browse shall navigate active root, child, and leaf Categories.
+16. Browse Results shall require an active leaf Category.
+17. Non-leaf Categories shall not aggregate descendant Offering Results in V1.
+18. Retired Categories shall not appear as active Browse destinations.
+
+### Filters
+
+19. A Filter shall require applicable Category association and `filterable = true`.
+20. Text Attributes shall not be filterable in V1.
+21. Number Filters shall use inclusive minimum and/or maximum bounds.
+22. Boolean Filters shall use exact true/false selection.
+23. Single Select and Multi Select selected values shall combine with OR.
+24. Multi Select shall match when Offering values intersect a selected Filter value.
+25. Different Attribute Filters shall combine with AND.
+26. Search, selected leaf Category, and Attribute Filters shall combine with AND.
+27. An Offering with no value for an applied Filter shall not satisfy that Filter.
+28. Discovery shall allow applied Filters to be removed or cleared.
+
+### Listing Card
+
+29. Every Discovery Result shall use one Listing Card.
+30. Every Listing Card shall contain the §11 product minimum.
+31. Listing Cards shall not expose protected contact or Affiliate Destination information.
+32. Listing Cards shall allow the represented Offering to be opened.
+33. Listing Cards shall not perform complete Offering Presentation or Decision actions.
+
+### Ordering
+
+34. Search Results shall use the Best Match product order in §12.2.
+35. Browse Results shall use later Initial Published At first.
+36. Filter application shall preserve the applicable Search or Browse order.
+37. V1 shall expose no user-controlled Sort, paid placement, or ranking override.
+
+### Zero Results and handoff
+
+38. Discovery shall present Zero Results where no eligible Offering matches.
+39. Zero Results shall provide only the bounded recovery actions in §13.
+40. Discovery shall not silently remove or change criteria.
+41. Opening a Listing Card shall hand off the selected Offering to PRD-0001 Presentation.
+42. The same Discovery rules shall apply across Mobility, Real Estate, and Technology.
+
+---
+
+## 18. Acceptance Criteria
+
+```gherkin
+Scenario: Homepage owns the V1 entry prompt
+  Given a person enters the V1 Homepage
+  When Discovery entry is presented
+  Then the prompt “Bugün ne yapmak istiyorsunuz?” is available
+  And login is not required
+
+Scenario: Query submission routes to Search
+  Given a person is on the Homepage
+  When the person submits a non-empty query
+  Then Discovery Start occurs
+  And the Search path begins
+  And Browse is not selected silently
+
+Scenario: Category choice routes to Browse
+  Given a person is on the Homepage
+  When the person chooses an active Category
+  Then Discovery Start occurs
+  And the Browse path begins
+  And Search is not selected silently
+
+Scenario: Discovery consumes final public eligibility
+  Given an Offering has final Offering Public Eligibility Ineligible
+  When Search or Browse Results are composed
+  Then the Offering is excluded
+
+Scenario: Search uses only approved public information
+  Given an eligible Offering matches the query through its title, description, Category path, public Business display name, or applicable Attribute value
+  When Search is evaluated
+  Then the Offering may enter Search Results
+  And protected telephone, email, external URL, Affiliate Destination, owner-only, and Admin-only information are not searched or exposed
+
+Scenario: Search excludes unrelated Offering
+  Given an eligible Offering matches none of the approved searchable information
+  When Search is evaluated
+  Then the Offering is excluded from Search Results
+
+Scenario: Cross-category Search requires leaf selection for Attribute Filters
+  Given Search Results include more than one active leaf Category
+  When no active leaf Category is selected
+  Then Category narrowing is available
+  And category-specific Attribute Filters are unavailable
+
+Scenario: Browse follows the active hierarchy
+  Given active root, child, and leaf Categories exist
+  When a person browses
+  Then only active Category relationships are navigable
+  And Results are presented after an active leaf Category is selected
+
+Scenario: Non-leaf Category does not aggregate Offerings
+  Given an active Category has active child Categories
+  When the person selects the non-leaf Category
+  Then active children are available
+  And descendant Offerings are not aggregated into a V1 parent result set
+
+Scenario: Filter values combine with OR
+  Given one filterable Attribute has more than one selected value
+  When the Filter is applied
+  Then an Offering satisfies the Filter when it matches at least one selected value
+
+Scenario: Different Filters combine with AND
+  Given more than one Attribute Filter is applied
+  When Results are evaluated
+  Then an Offering appears only when it satisfies every applied Filter
+
+Scenario: Number Filter uses inclusive bounds
+  Given a filterable Number Attribute applies to the selected leaf Category
+  And the person supplies a minimum and maximum
+  When Results are evaluated
+  Then an Offering matches only when its authoritative numeric value is inside both inclusive bounds
+  And an Offering without a value does not match
+
+Scenario: Multi Select Filter uses intersection
+  Given a filterable Multi Select Attribute applies
+  And more than one allowed value is selected
+  When Results are evaluated
+  Then an Offering matches when its authoritative value set contains at least one selected value
+
+Scenario: Discovery Start carries Domain where available
+  Given the person begins Browse from an active Category
+  When Discovery Start occurs
+  Then the occurrence inherits the Category Domain
+  Given the person submits a cross-category Search without a leaf Category
+  When Discovery Start occurs
+  Then the occurrence has no Domain association
+  And it remains countable overall
+
+Scenario: Listing Card exposes the product minimum
+  Given an eligible Offering appears in Discovery Results
+  When its Listing Card is presented
+  Then its title or name is available
+  And its supplied primary visual may be available
+  And its active leaf Category is available
+  And its owning Business display name is available
+  And a clear Offering-open affordance is available
+
+Scenario: Listing Card protects out-of-scope information
+  Given an Offering has contact and Affiliate Destination information
+  When its Listing Card is presented
+  Then telephone, email, external contact URL, and Affiliate Destination information are not exposed
+  And no Completion or external-success claim is made
+
+Scenario: Search uses Best Match order
+  Given multiple eligible Offerings match a Search query
+  When Search Results are ordered
+  Then title or name relationship has the highest product priority
+  And Category-path relationship precedes Business-name relationship
+  And Business-name relationship precedes description and Attribute-value relationship
+  And ties prefer the Offering with the later Initial Published At
+
+Scenario: Browse uses publication recency
+  Given multiple eligible Offerings belong to the selected active leaf Category
+  When Browse Results are ordered
+  Then the Offering with the later Initial Published At appears first
+  And no user-controlled Sort is required
+
+Scenario: Zero Results preserves user control
+  Given no eligible Offering matches the current criteria
+  When Zero Results is presented
+  Then the current criteria remain understandable
+  And the person may remove Filters, change the query, change the Category, or return to Homepage
+  And Discovery does not silently change the criteria or invent Recommendations
+
+Scenario: Result opens complete Offering Presentation
+  Given an eligible Offering appears on a Listing Card
+  When the person opens it
+  Then Discovery supplies the selected Offering
+  And PRD-0001 complete Offering Presentation begins
+  And Compare, Chat, handoff, Contact, and Completion do not begin automatically
+
+Scenario: Role grants no Discovery advantage
+  Given a Guest, Enabled User, Business context, and Admin context use the same criteria
+  When Discovery evaluates them
+  Then the same public matching, eligibility, filtering, Listing Card, and ordering behaviour applies
+```
+
+---
+
+## 19. Related PRDs
+
+### PRD-0001 — Offering
+
+Owns:
+
+- universal Offering;
+- Category and Attribute product concepts;
+- final Offering Public Eligibility;
+- complete Offering Presentation;
+- Listing Card source information.
+
+Discovery consumes those results.
+
+### PRD-0003 — Identity
+
+Owns the public Guest baseline.
+
+Discovery is public and creates no additional role gate.
+
+### PRD-0004 — Decision
+
+Owns:
+
+- Compare;
+- Decision Chat;
+- Affiliate Handoff;
+- Direct Contact;
+- Completion.
+
+Discovery does not begin those actions automatically.
+
+### PRD-0005 — Business
+
+Owns:
+
+- Business Profile;
+- public Business display name;
+- Business Information;
+- protected contact-information authoring.
+
+Discovery consumes only the public Business display name for Search and Listing Cards.
+
+### PRD-0006 — Platform
+
+Owns:
+
+- active Category hierarchy management;
+- Attribute applicability;
+- the `filterable` property;
+- Admin-facing Basic Analytics.
+
+It may consume Discovery Start.
+
+---
+
+## 20. Related ADRs, Capability Architecture, and Owner Decisions
+
+### Accepted ADRs
+
+- `ADR-0002 — Offering Presentation Capability`
+  - Discovery ends when the selected Offering is opened; Presentation begins there.
+
+- `ADR-0007 — Domain Scope of the Capability First Rule`
+  - Discovery is Offering-domain behaviour and traces to the Frozen Discovery Capability.
+
+### Frozen Capability Architecture
+
+- `OFFERING_CAPABILITY_ARCHITECTURE.md` Frozen v2.0
+  - Discovery Capability;
+  - Visibility & Eligibility consumption boundary;
+  - Presentation handoff boundary.
+
+### Applied Owner Decision
+
+- D-18 — Homepage Entry Behaviour Ownership
+  - PRD-0002 owns Homepage entry, the required prompt, and Search/Browse routing;
+  - UX-0001 owns layout and interaction specification.
+
+No new ADR is required for this controlled product-behaviour revision.
+
+---
+
+## 21. Accepted Deferrals
+
+The following are accepted V1 deferrals and do not block Freeze:
+
+1. **Linguistic matching implementation**
+   - Tokenization, stemming, synonyms, typo handling, language processing, and normalization remain implementation concerns.
+   - They may not expand the approved searchable-information set.
+
+2. **Result-delivery implementation**
+   - Page size, pagination, continuous loading, and result retrieval remain outside V1 product behaviour.
+   - Every delivered result must preserve the approved ordering.
+
+3. **Listing Card visual design**
+   - Layout, visual hierarchy, truncation, image treatment, and responsive behaviour remain UX-owned.
+
+4. **Zero Results copy**
+   - Exact language and control placement remain UX-owned.
+   - Available actions may not exceed §13.
+
+5. **Future Discovery capabilities**
+   - User-controlled Sorting, Autocomplete, URL-state persistence, Search History, Saved Search, Notifications, Recommendations, and sponsored placement remain outside V1.
+
+No downstream UX or User Story may broaden these deferrals.
+

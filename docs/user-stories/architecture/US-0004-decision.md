@@ -1,150 +1,130 @@
 # US-0004 — Decision User Stories
 
-- **Status:** Draft
-- **Version:** 0.1
+- **Owner:** Product Owner / Architecture Owner
+- **Status:** Frozen
+- **Version:** 1.0
+- **Last Updated:** 2026-07-25
+- **Approval Date:** 2026-07-25
+- **Approved By:** Product Owner / Architecture Owner
+- **Approved Candidate:** In Review v0.2
+- **Freeze State:** Frozen
+- **Freeze Date:** 2026-07-25
+- **Frozen By:** Product Owner / Architecture Owner
+- **Story Domain:** Decision
+- **Domain Code:** `DEC`
+- **Feature Registry Owner:** Frozen `DECISION_FEATURE_REGISTRY.md` v1.0
+- **GitHub effect:** None
+
+**Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-25. Frozen v1.0 is the locked authoritative Decision Parent Story Document baseline. This exact file must not be edited in place. Future Epic placement, Feature placement, relationship classification, Capability reference, Generated Story inventory, UX reference, or scope changes require a controlled revision. This Freeze changes no Generated Story Delivery Status, does not make Compare mandatory, does not grant Decision Chat selection or handoff authority, does not alter Affiliate Handoff, Direct Contact, or Completion boundaries, and does not update GitHub automatically.
+
+**Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-25. The exact In Review v0.2 candidate becomes the authoritative Approved v1.0 Decision Parent Story Document baseline. This approval does not Freeze the document, does not change any Generated Story Delivery Status, does not make Compare mandatory, does not grant Decision Chat selection or handoff authority, does not change Affiliate Handoff, Direct Contact, or Completion boundaries, and does not update GitHub automatically.
+
+**Revision Note (0.2):** Controlled replacement of documented Draft v0.1 embedded-Story content with the Frozen Handbook Parent → Epic → Feature architecture. Consumes authoritative DEC F01–F07, removes embedded `US-NNNN.n` Story ownership, establishes four bounded Epics, and records seven first Generated Story candidates by reference. It changes no Feature ID, canonical Feature name, relationship classification, Capability, PRD behaviour, UX behaviour, implementation, approval, Freeze, or GitHub file.
+
+**Review Entry Note (0.2):** The exact Draft v0.2 candidate entered formal review on 2026-07-25. No Feature ID, canonical Feature name, Epic placement, Story identifier, PRD/UX behaviour, relationship classification, Capability reference, approval, Freeze, or GitHub state changed during review entry.
+
+> This Parent Story Document owns Decision Epic → Feature placement and records Generated Story files by reference. It does not own Feature IDs, relationship classifications, Capability references, product behaviour, UX behaviour, Generated Story content, or implementation.
+
+---
 
 ## 1. Purpose
 
-User stories for the Decision capability, derived only from `PRD-0004-decision.md` and the related UX specifications. Decision covers Compare, Favorites, Contact, Messaging, and the completion flow.
+Organize the Decision Story Domain into bounded Epics and authoritative Features F01–F07 so every Generated Decision Story has exactly one Parent, one Epic, and one Feature.
 
-## 2. Related PRDs
+## 2. Scope
 
-- `PRD-0004-decision.md`
+This Parent owns:
 
-## 3. Related UX Specifications
+- Decision Epic names and bounded outcomes;
+- Feature placement under exactly one Epic;
+- by-reference Generated Story inventory;
+- Decision package coverage and reconciliation state.
 
-- `UX-0004-compare.md`
-- `UX-0003-offering-detail.md`
-- `UX-0007-messaging.md`
+## 3. Out of Scope
 
-## 4. User Stories
+This Parent does not own or redefine:
 
-### US-0004.1 — Compare Offerings
+- Feature IDs, canonical names, short scope labels, references, or relationship classifications — Frozen `DECISION_FEATURE_REGISTRY.md`;
+- Capability names or boundaries — Frozen Capability Architecture and Accepted ADRs;
+- product behaviour — Frozen `PRD-0004-decision.md`;
+- experience behaviour — Frozen `UX-0004-compare.md` and `UX-0009-decision-flow.md`;
+- Generated Story Acceptance Criteria, BDD, dependencies, size, scope, lifecycle, or complete content;
+- implementation, technical architecture, delivery sequencing, or Sprint planning.
 
-**As a** person (Guest or User)
-**I want** to compare up to four Offerings by their Attributes
-**So that** I can weigh the differences and decide.
+## 4. Epic Map
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Compare up to four Offerings by Attributes
-  Given a person comparing Offerings
-  When they add Offerings and view the comparison
-  Then the comparison operates on their Attributes and does not exceed four Offerings
-```
+| Epic | Bounded Outcome | Features |
+|---|---|---|
+| Comparison and Decision Context | A person optionally compares compatible Offerings and enters one bounded current Decision Context. | F01, F02 |
+| Assistive Decision and Selection | Public assistive Chat supports understanding while the person retains explicit control of one Selected Offering. | F03, F04 |
+| Handoff Execution | The person explicitly initiates an eligible public Affiliate Handoff or authenticated Direct Contact path. | F05, F06 |
+| Completion and Journey End | The platform produces the correct bounded Completion result without claiming external success. | F07 |
 
-- **Priority:** Critical
-- **Dependencies:** US-0001 (Offerings), US-0002 (Discovery)
-- **Related PRDs:** `PRD-0004-decision.md`
-- **Related UX:** `UX-0004-compare.md`, `UX-0003-offering-detail.md`
-- **Business Rules:** Comparison operates on Offerings by Attributes; Compare is available without login; maximum four Offerings.
-- **Out of Scope:** Saved comparisons; Sharing; recommendations; AI.
+## 5. Feature Map
 
-### US-0004.2 — Focus on differences in a comparison
+| Feature ID | Canonical Feature | Epic | Relationship Classification | Capability Reference | Behaviour Owner | Primary Experience |
+|---|---|---|---|---|---|---|
+| F01 | Comparison Set and Compare | Comparison and Decision Context | Direct Frozen assignment | Decision Analysis | `PRD-0004-decision.md` | `UX-0004-compare.md` |
+| F02 | Decision Context | Comparison and Decision Context | Direct Frozen assignment | Decision Support | `PRD-0004-decision.md` | `UX-0009-decision-flow.md` §6 |
+| F03 | Decision Chat | Assistive Decision and Selection | Direct Frozen assignment | Decision Support | `PRD-0004-decision.md` | `UX-0009-decision-flow.md` §7 |
+| F04 | Explicit Offering Selection | Assistive Decision and Selection | Direct Frozen assignment | Contact & Action | `PRD-0004-decision.md` | `UX-0009-decision-flow.md` §8 |
+| F05 | Affiliate Handoff | Handoff Execution | Direct Frozen assignment | Contact & Action | `PRD-0004-decision.md` | `UX-0009-decision-flow.md` §10 |
+| F06 | Direct Contact | Handoff Execution | Direct Frozen assignment | Contact & Action | `PRD-0004-decision.md` | `UX-0009-decision-flow.md` §11; `UX-0008-authentication.md` §10 |
+| F07 | Decision Completion | Completion and Journey End | Direct Frozen assignment | Contact & Action | `PRD-0004-decision.md` | `UX-0009-decision-flow.md` §12 |
 
-**As a** person
-**I want** to highlight differences and optionally show only differing Attributes
-**So that** I can focus on what distinguishes the Offerings.
+## 6. Generated Story Inventory
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Show only differing Attributes
-  Given Offerings in Compare
-  When the person chooses to show only differing Attributes
-  Then only the Attributes that differ are displayed
-```
+| Feature | Generated Story | Candidate State |
+|---|---|---|
+| F01 | `US-DEC-F01-001` — Comparison Set and Compare | In Review v0.1 |
+| F02 | `US-DEC-F02-001` — Decision Context | In Review v0.1 |
+| F03 | `US-DEC-F03-001` — Decision Chat | In Review v0.1 |
+| F04 | `US-DEC-F04-001` — Explicit Offering Selection | In Review v0.1 |
+| F05 | `US-DEC-F05-001` — Affiliate Handoff | In Review v0.1 |
+| F06 | `US-DEC-F06-001` — Direct Contact | In Review v0.1 |
+| F07 | `US-DEC-F07-001` — Decision Completion | In Review v0.1 |
 
-- **Priority:** Medium
-- **Dependencies:** US-0004.1
-- **Related PRDs:** `PRD-0004-decision.md`
-- **Related UX:** `UX-0004-compare.md`
-- **Business Rules:** Differences are highlighted; only-differing-Attributes view is available.
-- **Out of Scope:** —
+The candidate-state column is informative and by reference. This Parent advances no Generated Story lifecycle state.
 
-### US-0004.3 — Save an Offering as a Favorite
+## 7. Coverage and Readiness
 
-**As a** User
-**I want** to mark an Offering as a Favorite
-**So that** I can hold it for consideration.
+| Check | Result |
+|---|---|
+| Authoritative F01–F07 consumed exactly | PASS |
+| Every Feature placed under exactly one Epic | PASS |
+| Seven first Generated Story candidates exist | PASS |
+| Embedded legacy Stories removed | PASS |
+| Parent embeds no Acceptance Criteria or BDD | PASS |
+| Relationship classifications and Capability references match the Frozen Registry | PASS |
+| Compare remains optional | PASS |
+| Decision Chat remains public and assistive | PASS |
+| Selection remains explicit and person-controlled | PASS |
+| Affiliate Handoff remains public | PASS |
+| Direct Contact remains authenticated-only and creates no Messaging | PASS |
+| Completion remains separate and claims no external success | PASS |
+| No Favorites, Messaging, persistent personal Decision history, or autonomous selection | PASS |
+| GitHub unchanged | PASS |
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Favorite requires login
-  Given a Guest attempts to Favorite an Offering
-  When the action requires login
-  Then it does not succeed until they log in as a User
-```
+## 8. Reconciliation Boundary
 
-- **Priority:** High
-- **Dependencies:** US-0003 (login)
-- **Related PRDs:** `PRD-0004-decision.md`, `PRD-0003-identity.md`
-- **Related UX:** `UX-0003-offering-detail.md`
-- **Business Rules:** Favorites require login.
-- **Out of Scope:** Decision Memory.
+This Frozen baseline does not:
 
-### US-0004.4 — Contact the Business behind an Offering
+- permit direct in-place modification;
+- approve or Freeze any Generated Story;
+- revise the Frozen Feature Registry;
+- create a Feature or Capability;
+- broaden PRD or UX scope;
+- start implementation;
+- update traceability, repository indexes, changelog, or GitHub automatically.
 
-**As a** User
-**I want** to contact the Business behind an Offering
-**So that** I can progress my decision.
+## 9. References
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Contact requires login
-  Given a Guest attempts to Contact the Business behind an Offering
-  When the action requires login
-  Then it does not succeed until they log in as a User
-```
-
-- **Priority:** Critical
-- **Dependencies:** US-0003 (login), US-0001 (Offering)
-- **Related PRDs:** `PRD-0004-decision.md`, `PRD-0003-identity.md`
-- **Related UX:** `UX-0003-offering-detail.md`, `UX-0007-messaging.md`
-- **Business Rules:** Contact requires login.
-- **Out of Scope:** —
-
-### US-0004.5 — Message the Offering's owning Business
-
-**As a** User
-**I want** to send messages about an Offering to its owning Business
-**So that** I can ask what I need to decide.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Message reaches the owning Business
-  Given a logged-in User viewing an Offering
-  When they send a message about that Offering
-  Then the message is directed to the single Business that owns the Offering
-```
-
-- **Priority:** Critical
-- **Dependencies:** US-0004.4
-- **Related PRDs:** `PRD-0004-decision.md`, `PRD-0001-offering.md`
-- **Related UX:** `UX-0007-messaging.md`
-- **Business Rules:** Sending messages requires login; a message about an Offering goes to its one owning Business.
-- **Out of Scope:** Attachments; read receipts; typing indicators.
-
-### US-0004.6 — Complete a decision
-
-**As a** User
-**I want** to complete my decision through the completion flow
-**So that** I can finish and move on.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Reach Completion
-  Given a person who has evaluated and contacted the Business
-  When they complete the decision through the completion flow
-  Then the decision reaches Completion
-```
-
-- **Priority:** High
-- **Dependencies:** US-0004.4
-- **Related PRDs:** `PRD-0004-decision.md`
-- **Related UX:** `UX-0004-compare.md`, `UX-0007-messaging.md`
-- **Business Rules:** A decision reaches Completion through the completion flow (Affiliate / Contact → Completion).
-- **Out of Scope:** Guest completion via affiliate handoff (TODO in `PRD-0004`).
-
-### TODO — Business responses within Messaging
-
-- TODO — A firm story for a Business replying within Messaging cannot be traced to a PRD, because `PRD-0004-decision.md` leaves "whether and how a Business responds within Messaging" as TODO. `UX-0007` implies a two-way exchange and must be reconciled into `PRD-0004`.
+- `DECISION_FEATURE_REGISTRY.md` — F01–F07 identity, references, and Capability relationships.
+- `PRD-0004-decision.md` — Decision behaviour and Completion meaning.
+- `UX-0004-compare.md` — Compare experience.
+- `UX-0009-decision-flow.md` — Decision Context, Chat, selection, handoff, and Completion experience.
+- `UX-0008-authentication.md` — exact Direct Contact authentication return.
+- `PRD-0001-offering.md`, `PRD-0003-identity.md`, `PRD-0005-business.md`, `PRD-0006-platform.md` — supporting authoritative inputs.
+- `ADR-0007`, `ADR-0008`, `ADR-0009`.
+- Owner Decisions D01/D02, D04, D05, D17, and D23.
+- `USER_STORY_HANDBOOK.md`, `REPOSITORY_GOVERNANCE.md`, `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`.

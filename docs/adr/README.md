@@ -1,11 +1,14 @@
 # ADR Index
 
 - **Owner:** Architecture Owner
-- **Status:** Living
-- **Version:** 1.1
-- **Last Updated:** 2026-07-20
+- **Status:** Draft
+- **Maintenance Mode:** Living
+- **Version:** 1.2
+- **Last Updated:** 2026-07-25
 
-**Revision Note (1.1):** Registered ADR-0005 — Living Document Classification and Lifecycle Relationship (Accepted v1.0, 2026-07-20). This controlled index update adds an Accepted ADR only. The existing `Status: Living` metadata is preserved temporarily; its reconciliation to a valid lifecycle Status plus optional `Maintenance Mode: Living`, as required by Accepted ADR-0005, is a separate controlled change and is not performed by this index-entry update.
+**Revision Note (1.2):** Repository reconciliation registered Accepted ADR-0006 through ADR-0009 and reconciled the header with Accepted ADR-0005 by separating lifecycle `Status` from `Maintenance Mode: Living`. This index update records existing accepted decisions only; it creates or changes no architectural decision.
+
+**Revision Note (1.1):** Registered ADR-0005 — Living Document Classification and Lifecycle Relationship (Accepted v1.0, 2026-07-20).
 
 ---
 
@@ -32,6 +35,10 @@ This document is an index only and must never duplicate or redefine those rules.
 | [ADR-0003](ADR-0003-offering-feature-capability-associations.md) | Offering Authoring & Publication Feature → Capability Associations (F01–F04) | Accepted (v1.0) | 2026-07-17 | OFFERING_CAPABILITY_ARCHITECTURE, ADR-0002 |
 | [ADR-0004](ADR-0004-capability-architecture-layer-recognition.md) | Capability Architecture Layer Recognition | Accepted (v1.0) | 2026-07-19 | REPOSITORY_GOVERNANCE, ENGINEERING_CONSTITUTION, OFFERING_CAPABILITY_ARCHITECTURE, ADR-0002, ADR-0003 |
 | [ADR-0005](ADR-0005-living-document-classification.md) | Living Document Classification and Lifecycle Relationship | Accepted (v1.0) | 2026-07-20 | DOCUMENT_LIFECYCLE, REVIEW_PROCESS, REPOSITORY_GOVERNANCE, CURRENT_STATUS, PROJECT_ROADMAP, CHANGELOG |
+| [ADR-0006](ADR-0006-affiliate-destination-ownership.md) | Affiliate Destination Ownership | Accepted (v1.0) | 2026-07-21 | PRD-0001, PRD-0004, PRD-0005, PRD-0006 |
+| [ADR-0007](ADR-0007-domain-scope-of-capability-first-rule.md) | Domain Scope of Capability-First Rule | Accepted (v1.0) | 2026-07-21 | User Story domains, Capability Architecture |
+| [ADR-0008](ADR-0008-handoff-enablement-capability.md) | Handoff Enablement Capability | Accepted (v1.0) | 2026-07-21 | Affiliate Handoff, Direct Contact, Offering and Decision |
+| [ADR-0009](ADR-0009-story-domain-feature-registry-ownership.md) | Story Domain Feature Registry Ownership | Accepted (v1.0) | 2026-07-22 | User Story Handbook, non-Offering Feature Registries |
 
 ---
 

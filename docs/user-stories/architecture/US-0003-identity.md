@@ -1,171 +1,131 @@
 # US-0003 — Identity User Stories
 
-- **Status:** Draft
-- **Version:** 0.1
+- **Owner:** Product Owner / Architecture Owner
+- **Status:** Frozen
+- **Version:** 1.0
+- **Last Updated:** 2026-07-25
+- **Approval Date:** 2026-07-25
+- **Approved By:** Product Owner / Architecture Owner
+- **Approved Candidate:** In Review v0.3
+- **Freeze State:** Frozen
+- **Freeze Date:** 2026-07-25
+- **Frozen By:** Product Owner / Architecture Owner
+- **Story Domain:** Identity
+- **Domain Code:** `IDN`
+- **Feature Registry Owner:** Frozen `IDENTITY_FEATURE_REGISTRY.md` v1.0
+- **GitHub effect:** None
+
+**Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-25. Frozen v1.0 is the locked authoritative Identity Parent Story Document baseline. This exact file must not be edited in place. Future Epic placement, Feature placement, relationship classification, Capability reference, Generated Story inventory, UX reference, or scope changes require a controlled revision. This Freeze changes no Generated Story Delivery Status, does not apply the F06 section-level UX citation future-maintenance observation as an authoritative change, and does not update GitHub automatically.
+
+**Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-25. The exact In Review v0.3 candidate becomes the authoritative Approved v1.0 Identity Parent Story Document baseline. This approval does not Freeze the document, does not change any Generated Story Delivery Status, does not apply the F06 section-level UX citation future-maintenance observation as an authoritative change, and does not update GitHub automatically.
+
+**Revision Note (0.2):** Controlled replacement of documented Draft v0.1 embedded-Story content with the Frozen Handbook Parent → Epic → Feature architecture. Consumes authoritative IDN F01–F09, removes embedded `US-NNNN.n` Story ownership, establishes five bounded Epics, and records nine first Generated Story candidates by reference. It changes no Feature ID, canonical Feature name, relationship classification, Capability, PRD behaviour, UX behaviour, implementation, approval, Freeze, or GitHub file.
+
+**Review Entry Note (0.3):** Bounded SIO-alignment correction after independent Claude audit. Updates only the F06 Primary Experience entry to `UX-0008-authentication.md` and the by-reference F06 candidate state to In Review v0.2. No Epic, Feature, Story ID, relationship classification, Capability reference, PRD/UX behaviour, Acceptance Criterion, BDD, dependency, size, scope, lifecycle authority, or GitHub file changes.
+
+**Review Entry Note (0.2):** The exact Draft v0.2 candidate entered formal review on 2026-07-25. No Feature ID, canonical Feature name, Epic placement, Story identifier, PRD/UX behaviour, relationship classification, Capability reference, approval, Freeze, or GitHub state changed during review entry.
+
+> This Parent Story Document owns Identity Epic → Feature placement and records Generated Story files by reference. It does not own Feature IDs, relationship classifications, Capability references, product behaviour, UX behaviour, Generated Story content, or implementation.
+
+---
 
 ## 1. Purpose
 
-User stories for the Identity capability, derived only from `PRD-0003-identity.md` and the related UX specifications. Identity covers roles (Guest, User, Business, Admin), authentication, and login gating.
+Organize the Identity Story Domain into bounded Epics and authoritative Features F01–F09 so every Generated Identity Story has exactly one Parent, one Epic, and one Feature.
 
-## 2. Related PRDs
+## 2. Scope
 
-- `PRD-0003-identity.md`
+This Parent owns:
 
-## 3. Related UX Specifications
+- Identity Epic names and bounded outcomes;
+- Feature placement under exactly one Epic;
+- by-reference Generated Story inventory;
+- Identity package coverage and reconciliation state.
 
-- `UX-0008-authentication.md`
-- `UX-0003-offering-detail.md`
-- `UX-0007-messaging.md`
+## 3. Out of Scope
 
-## 4. User Stories
+This Parent does not own or redefine:
 
-### US-0003.1 — Register to become a User
+- Feature IDs, canonical names, short scope labels, references, or relationship classifications — Frozen `IDENTITY_FEATURE_REGISTRY.md`;
+- product behaviour — Frozen `PRD-0003-identity.md`;
+- experience behaviour — referenced Frozen UX documents;
+- Generated Story Acceptance Criteria, BDD, dependencies, size, scope, lifecycle, or complete content;
+- implementation, technical architecture, delivery sequencing, or Sprint planning.
 
-**As a** Guest
-**I want** to register
-**So that** I can access login-gated abilities.
+## 4. Epic Map
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Guest registers
-  Given a Guest
-  When they complete registration
-  Then they become a Registered User with User-level abilities
-```
+| Epic | Bounded Outcome | Features |
+|---|---|---|
+| Public Access and Account Establishment | Public Guest gates remain low-friction and one Enabled account may be established after email-control proof. | F01, F02 |
+| Authentication Lifecycle | Existing account holders may enter and leave authenticated context or recover the ability to attempt Login. | F03, F04, F05 |
+| Account Access Governance | Enabled and Suspended states produce authoritative access consequences without mutating unrelated state. | F06 |
+| Authorized Context Access | Enabled Users may explicitly enter only owned Business or Owner-authorized Admin contexts. | F07, F08 |
+| Authenticated Action Continuity | Exact Direct Contact intent may return through Authentication without creating Messaging or persistence. | F09 |
 
-- **Priority:** Critical
-- **Dependencies:** —
-- **Related PRDs:** `PRD-0003-identity.md`
-- **Related UX:** `UX-0008-authentication.md`
-- **Business Rules:** A Guest can register to become a User.
-- **Out of Scope:** Registration fields and Email verification (TODO in `PRD-0003`); social login.
+## 5. Feature Map
 
-### US-0003.2 — Log in
+| Feature ID | Canonical Feature | Epic | Relationship Classification | Behaviour Owner | Primary Experience |
+|---|---|---|---|---|---|
+| F01 | Public Guest Access Baseline | Public Access and Account Establishment | Supporting relationship | `PRD-0003-identity.md` | `UX-0001-home.md`; `UX-0002-discovery.md`; `UX-0009-decision-flow.md` |
+| F02 | Registration and Email-Control Proof | Public Access and Account Establishment | No Capability Architecture required | `PRD-0003-identity.md` | `UX-0008-authentication.md` |
+| F03 | Login | Authentication Lifecycle | No Capability Architecture required | `PRD-0003-identity.md` | `UX-0008-authentication.md` |
+| F04 | Logout | Authentication Lifecycle | No Capability Architecture required | `PRD-0003-identity.md` | `UX-0008-authentication.md` |
+| F05 | Password Recovery | Authentication Lifecycle | No Capability Architecture required | `PRD-0003-identity.md` | `UX-0008-authentication.md` |
+| F06 | User Account Access Status | Account Access Governance | No Capability Architecture required | `PRD-0003-identity.md` | `UX-0008-authentication.md` |
+| F07 | Business Context Access | Authorized Context Access | No Capability Architecture required | `PRD-0003-identity.md` | `UX-0008-authentication.md`; `UX-0005-business-dashboard.md` |
+| F08 | Admin Authorization and Context Access | Authorized Context Access | No Capability Architecture required | `PRD-0003-identity.md` | `UX-0008-authentication.md`; `UX-0006-admin-dashboard.md` |
+| F09 | Direct Contact Authentication Return | Authenticated Action Continuity | Supporting relationship | `PRD-0003-identity.md` | `UX-0008-authentication.md`; `UX-0009-decision-flow.md` |
 
-**As a** User
-**I want** to log in
-**So that** I can use my account's abilities.
+## 6. Generated Story Inventory
 
-**Acceptance Criteria**
-```gherkin
-Scenario: User logs in
-  Given a person with a User account
-  When they log in
-  Then they gain User abilities
-```
+| Feature | Generated Story | Candidate State |
+|---|---|---|
+| F01 | `US-IDN-F01-001` — Public Guest Access Baseline | In Review v0.1 |
+| F02 | `US-IDN-F02-001` — Registration and Email-Control Proof | In Review v0.1 |
+| F03 | `US-IDN-F03-001` — Login | In Review v0.1 |
+| F04 | `US-IDN-F04-001` — Logout | In Review v0.1 |
+| F05 | `US-IDN-F05-001` — Password Recovery | In Review v0.1 |
+| F06 | `US-IDN-F06-001` — User Account Access Status | In Review v0.2 |
+| F07 | `US-IDN-F07-001` — Business Context Access | In Review v0.1 |
+| F08 | `US-IDN-F08-001` — Admin Authorization and Context Access | In Review v0.1 |
+| F09 | `US-IDN-F09-001` — Direct Contact Authentication Return | In Review v0.1 |
 
-- **Priority:** Critical
-- **Dependencies:** US-0003.1
-- **Related PRDs:** `PRD-0003-identity.md`
-- **Related UX:** `UX-0008-authentication.md`
-- **Business Rules:** A User can log in.
-- **Out of Scope:** Social login.
+The candidate-state column is informative and by reference. This Parent advances no Generated Story lifecycle state.
 
-### US-0003.3 — Log out
+## 7. Coverage and Readiness
 
-**As a** User
-**I want** to log out
-**So that** I can end my session.
+| Check | Result |
+|---|---|
+| Authoritative F01–F09 consumed exactly | PASS |
+| Every Feature placed under exactly one Epic | PASS |
+| Nine first Generated Story candidates exist | PASS |
+| Embedded legacy Stories removed | PASS |
+| Parent embeds no Acceptance Criteria or BDD | PASS |
+| Relationship classifications match the Frozen registry | PASS |
+| No separate Business or Admin login | PASS |
+| No Pending or Verified account state | PASS |
+| No Favorites, Messaging, social login, SSO, MFA, account deletion, or self-service Admin authorization | PASS |
+| GitHub unchanged | PASS |
 
-**Acceptance Criteria**
-```gherkin
-Scenario: User logs out
-  Given a logged-in User
-  When they log out
-  Then they return to Guest-level abilities and the account still exists
-```
+## 8. Reconciliation Boundary
 
-- **Priority:** High
-- **Dependencies:** US-0003.2
-- **Related PRDs:** `PRD-0003-identity.md`
-- **Related UX:** `UX-0008-authentication.md`
-- **Business Rules:** Logout returns the person to Guest-level abilities.
-- **Out of Scope:** —
+This Frozen baseline does not:
 
-### US-0003.4 — Reset a forgotten password
+- permit direct in-place modification;
+- approve or Freeze any Generated Story;
+- revise the Frozen Feature Registry;
+- create a Feature or Capability;
+- broaden PRD or UX scope;
+- start implementation;
+- update traceability, repository indexes, changelog, or GitHub automatically.
 
-**As a** User
-**I want** to reset a forgotten password
-**So that** I can regain access.
+## 9. References
 
-**Acceptance Criteria**
-```gherkin
-Scenario: User resets password
-  Given a User with a forgotten password
-  When they complete the recovery process
-  Then they can log in with the new password
-```
-
-- **Priority:** High
-- **Dependencies:** US-0003.1
-- **Related PRDs:** `PRD-0003-identity.md`
-- **Related UX:** `UX-0008-authentication.md`
-- **Business Rules:** A User can reset a forgotten password.
-- **Out of Scope:** The recovery/verification method (TODO in `PRD-0003`).
-
-### US-0003.5 — Explore as a Guest before logging in
-
-**As a** Guest
-**I want** to explore the platform without logging in
-**So that** I can experience it before authenticating.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Guest explores without login
-  Given a Guest
-  When they search, browse, filter, compare, and view Offering details
-  Then all of these succeed without login
-```
-
-- **Priority:** High
-- **Dependencies:** US-0002, US-0004 (Compare)
-- **Related PRDs:** `PRD-0003-identity.md`
-- **Related UX:** `UX-0001-home.md`, `UX-0002-discovery.md`, `UX-0003-offering-detail.md`
-- **Business Rules:** Guests may search, browse, filter, compare, and view Offering details.
-- **Out of Scope:** Favorites, Contact, and Messaging (login-gated).
-
-### US-0003.6 — Authenticate for a gated action and return to it
-
-**As a** Guest
-**I want** to be routed to Authentication when I attempt a login-gated action, and returned to that action after logging in
-**So that** I can continue without losing my place.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Return to the interrupted action
-  Given a Guest attempts a login-gated action (phone reveal, Favorites, Contact, or Messaging)
-  When they authenticate successfully
-  Then they return to the original action to continue it
-```
-
-- **Priority:** Critical
-- **Dependencies:** US-0003.1, US-0003.2
-- **Related PRDs:** `PRD-0003-identity.md`
-- **Related UX:** `UX-0003-offering-detail.md`, `UX-0007-messaging.md`, `UX-0008-authentication.md`
-- **Business Rules:** Favorites and Contact require login; Guests cannot see Business phone numbers or send messages.
-- **Out of Scope:** —
-
-### US-0003.7 — Own multiple Businesses under one account
-
-**As a** User
-**I want** to create and own multiple Businesses under my single account
-**So that** I can operate more than one Business without separate logins.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: One User owns multiple Businesses
-  Given a User who already owns a Business
-  When they create additional Businesses
-  Then all are operated through the same single User account with no new identity created
-```
-
-- **Priority:** High
-- **Dependencies:** US-0003.2, US-0005 (Business creation)
-- **Related PRDs:** `PRD-0003-identity.md`, `PRD-0005-business.md`
-- **Related UX:** `UX-0005-business-dashboard.md`
-- **Business Rules:** A Business is not a separate account; one User may own multiple Businesses.
-- **Out of Scope:** Admin provisioning (owned by `PRD-0006`).
-
-### TODO — Email verification
-
-- TODO — A firm story for Email verification cannot be traced to a PRD, because `PRD-0003-identity.md` marks registration identifiers/fields as TODO and does not define Email verification. It appears in `UX-0008` as the approved UX brief and must be reconciled into `PRD-0003` before a story is written.
+- `IDENTITY_FEATURE_REGISTRY.md` — F01–F09 identity and relationship classifications.
+- `PRD-0003-identity.md` — Identity behaviour.
+- `UX-0008-authentication.md` — Registration, Login, Logout, Recovery, context entry, and Direct Contact return.
+- `UX-0005-business-dashboard.md` — Business-context entry conditions.
+- `UX-0006-admin-dashboard.md` — Admin-context entry conditions.
+- `UX-0001-home.md`, `UX-0002-discovery.md`, `UX-0009-decision-flow.md` — supporting public and Direct Contact experiences.
+- `ADR-0007`, `ADR-0009`, Owner Decisions D07 and D22.
+- `USER_STORY_HANDBOOK.md`, `REPOSITORY_GOVERNANCE.md`, `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`.

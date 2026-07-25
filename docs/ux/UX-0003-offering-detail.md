@@ -2,159 +2,331 @@
 
 - **UX ID:** UX-0003
 - **Title:** Offering Detail
-- **Status:** Draft
-- **Version:** 0.1
+- **Status:** Frozen
+- **Version:** 1.0
+- **Supersedes:** Draft v0.1
+- **Approved candidate:** In Review v0.3
+- **Approval Date:** 2026-07-22
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-07-22
+- **Frozen By:** Product Owner / Architecture Owner
 - **Scope level:** UX behaviour (non-visual, non-technical)
 
-> This document describes user, screen, and interaction behaviour only. It does not describe visual design (colors, typography, spacing, icons, animations, components) or implementation (HTML, CSS, frameworks, APIs, database, backend, frontend).
+**Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-22. Frozen v1.0 is the locked V1 UX baseline for UX-0003 — Offering Detail. This exact version must not be edited in place. Any future change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise User Stories, traceability, repository indexes, or GitHub content.
+
+**Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-22 after Architecture Review, Final Review, package-level reconciliation, independent Claude UX audit, and focused delta audit. The exact In Review v0.3 content becomes the authoritative UX baseline as Approved v1.0 under the first-approval versioning rule. This historical Approval Note records that approval and Freeze were separate decisions. The document was subsequently Frozen on 2026-07-22. User Stories, traceability, repository indexes, and GitHub content do not change automatically.
+
+**Revision Note (0.3):** Focused independent-audit correction supporting UX-A02. Preserves a transient current-flow Compare-preparation context received from UX-0002 and passes it unchanged to UX-0004 when the person chooses Compare. UX-0003 does not own, save, mutate, or persist the preparation context.
+
+**Revision Note (0.2):** Controlled revision against Frozen PRD-0001 v3.1, PRD-0003 v3.1, PRD-0004 v1.2, PRD-0005 v1.3, and the accepted UX ownership decision. Removes Favorites, Messaging, Related Offerings, featured-entry behaviour, and phone-only gating. Defines complete public Offering Presentation, public Business identity boundaries, `Offering Presentation Open`, and handoff of Decision execution to UX-0004 or UX-0009.
+
+> This document defines experience behaviour only. It does not define product state, visual style, component technology, APIs, storage, or implementation architecture.
 
 ---
 
 ## 1. Purpose
 
-The Offering Detail screen presents a single Offering in full: its image gallery, its Attribute groups, and the Business behind it, with entries into Compare, Favorites, and Contact.
+Offering Detail presents one publicly eligible Offering as a complete, understandable Offering Presentation and gives the person clear entries into optional Compare or the single-Offering Decision flow.
 
 ## 2. Business Value
 
-Offering Detail helps a person evaluate one Offering thoroughly and move toward a decision, while gating Contact and phone number behind login to protect trust (per `PRD-0003-identity.md`).
+The experience helps a person understand one Offering without unnecessary registration, unsupported recommendations, or protected-contact exposure.
 
 ## 3. Scope
 
-- A large image gallery with thumbnail navigation, a full-screen gallery, and zoom support.
-- Attribute groups displayed clearly.
-- The Business profile visible.
-- Entries into Compare, Favorites, and Contact.
-- A sticky contact panel on desktop and a sticky bottom action bar on mobile.
-- Related Offerings showing the newest Offerings from the same Category only.
+- complete public Offering Presentation;
+- Offering title or name;
+- available visual or visual set;
+- Category context;
+- available description;
+- applicable Attribute values in understandable groups;
+- PRD-0005-owned public Business identity set;
+- entry to optional Compare;
+- entry to single-Offering Decision Flow;
+- bounded unavailable and error behaviour;
+- `Offering Presentation Open`.
 
 ## 4. Out of Scope
 
-- Attribute-based similarity for Related Offerings (out of scope for V1).
-- Recommendations or AI.
-- Any V2 or excluded-scope capability as defined in `V1_SCOPE.md`.
-
-> **Terminology note:** The UX brief uses "Favourite"; this document uses "Favorites" to match the approved PRD terminology (`PRD-0003`, `PRD-0004`). No behaviour is changed.
+- Search, Browse, Filter, Listing Card, or result ordering;
+- Compare mechanics;
+- Decision Chat;
+- explicit Offering selection;
+- Affiliate Handoff execution;
+- Direct Contact reveal or execution;
+- Completion;
+- Favorites;
+- Messaging;
+- Related Offerings or recommendations;
+- Business contact-information authoring;
+- owner or Admin management views.
 
 ## 5. Entry Points
 
-- Selecting an Offering from Discovery (see `UX-0002`).
-- Selecting a featured Offering from Home (see `UX-0001`).
-- Selecting a Related Offering on another Offering Detail screen.
-- Returning here after Authentication (return-to-action, see `UX-0008`).
+- opening a Listing Card from UX-0002;
+- opening a Listing Card from UX-0002 with one transient current-flow Compare-preparation context;
+- returning from UX-0004 after removing the Offering from a Comparison Set;
+- returning from UX-0009 before handoff, where the Offering remains eligible;
+- a direct public Offering route that resolves to an eligible Offering.
 
-## 6. Exit Points
+## 6. Entry Conditions
 
-- Entering Compare (see `UX-0004`).
-- Entering Contact / Messaging (see `UX-0007`), which for a Guest first routes to Authentication (see `UX-0008`).
-- Selecting a Related Offering (another Offering Detail).
-- Returning to Discovery.
+The public experience begins only when:
+
+```text
+final Offering Public Eligibility = Eligible
+```
+
+UX-0003 consumes this authoritative result and does not recalculate it.
 
 ## 7. Screen Overview
 
-Offering Detail shows the Offering's image gallery, its Attribute groups, the Business profile, entries for Compare/Favorites/Contact, and a Related Offerings section (newest in the same Category). Desktop shows a sticky contact panel; mobile shows a sticky bottom action bar.
+The screen provides:
 
-## 8. Screen Behaviour
+- recognizable Offering identity;
+- available Offering media;
+- active Category context;
+- available Offering description;
+- applicable Attribute information;
+- public Business identity;
+- applicable Decision entries.
 
-- The gallery supports thumbnail navigation, a full-screen view, and zoom.
-- Attribute groups present the Offering's Attributes clearly.
-- The Business profile behind the Offering is visible.
-- The contact entry is sticky (desktop panel; mobile bottom action bar).
-- Related Offerings show the newest Offerings from the same Category only; attribute-based similarity is not used in V1.
+Protected telephone, email, and external website or contact URL information is not part of public Presentation.
 
-## 9. User Actions
+## 8. Presentation Behaviour
 
-- Browse the gallery (thumbnails, full-screen, zoom).
-- View Attribute groups and the Business profile.
-- Add the Offering to Compare.
-- Add the Offering to Favorites (login-gated).
-- Reveal the Business phone number (login-gated).
-- Contact the Business / initiate messaging (login-gated).
-- Open a Related Offering.
+### 8.1 Offering identity
 
-## 10. System Responses
+The Offering title or name remains identifiable throughout the screen.
 
-- Compare entry adds the Offering to Compare (see `UX-0004`).
-- Favorites entry, phone reveal, and Contact each require login: for a Guest, the action routes to Authentication and, after success, returns to this Offering (see Section on Authentication behaviour and `UX-0008`).
-- Selecting a Related Offering opens that Offering's detail.
+### 8.2 Visual information
 
-## 11. Validation Behaviour (Product level)
+Where one or more visuals are supplied, the person may inspect the available set.
 
-- Login-gated actions (Favorites, phone reveal, Contact/messaging) are only completed for a logged-in User; a Guest is routed to Authentication first.
-- TODO — behaviour when Compare already holds the maximum number of Offerings is defined in `UX-0004`.
+Where no visual is supplied, the experience remains complete through the other required Offering information and does not invent media.
 
-## 12. Empty States
+### 8.3 Category and description
 
-- TODO — behaviour when there are no Related Offerings in the same Category is not defined by approved decisions.
-- TODO — behaviour when an Offering has no gallery images is not defined by approved decisions.
+The active Category context is visible.
 
-## 13. Loading States
+The available description is presented without inventing missing content.
 
-- While the Offering and its Related Offerings are being retrieved, a loading state is shown. TODO — the specific loading behaviour is not defined by approved decisions.
+### 8.4 Attributes
 
-## 14. Error States
+Applicable Attribute values are organized into understandable groups.
 
-- TODO — behaviour when the Offering fails to load, or is unavailable (for example not Published), is not defined by approved decisions.
+The experience:
 
-## 15. Permissions
+- shows authoritative values;
+- preserves governed units and allowed-value meaning;
+- distinguishes missing optional values without inventing defaults;
+- does not expose an Attribute that is not applicable to the Offering Category.
 
-Per `PRD-0003-identity.md`:
+### 8.5 Public Business identity
 
-- **Guest** — may view the complete Offering, but may NOT view the Business phone number and may NOT initiate messaging.
-- **User** — may view the phone number, use Favorites, and Contact / message the Business.
+The experience may present only:
 
-### Authentication behaviour
+- Business display name;
+- Business logo, where supplied;
+- public Business description, where supplied.
 
-- Attempting to reveal the phone number or send a message must route a Guest to Authentication.
-- After successful authentication, the user returns to the original Offering to continue the interrupted action (return-to-action, see `UX-0008`).
+It does not reveal protected Direct Contact information.
 
-## 16. Accessibility Notes
+## 9. Decision Entries
 
-- At the product level, the gallery (including full-screen and zoom), Attribute groups, Business profile, and Compare/Favorites/Contact entries must be operable without a mouse and perceivable by assistive technology. Full-screen gallery must be dismissible and preserve context on return.
-- TODO — detailed accessibility acceptance criteria are not defined by approved decisions.
+### 9.1 Start Decision
 
-## 17. Related PRDs
+The person may enter UX-0009 with this eligible Offering as a single-Offering Decision Context.
 
-- `PRD-0001-offering.md` — the Offering, its Attributes, and the owning Business.
-- `PRD-0003-identity.md` — Guest vs User gating for phone and messaging.
-- `PRD-0004-decision.md` — Compare, Favorites, and Contact entries.
-- `PRD-0005-business.md` — the Business profile shown.
+Starting Decision does not require authentication.
 
-## 18. Acceptance Criteria
+### 9.2 Compare
+
+The person may enter UX-0004 to form or continue a valid Comparison Set.
+
+Where UX-0003 received a transient Compare-preparation context from UX-0002:
+
+- the context remains current-flow only;
+- UX-0003 does not alter or persist it;
+- choosing Compare passes the exact preparation context and the currently viewed Offering to UX-0004.
+
+Without that context, UX-0004 receives only the currently viewed eligible Offering as a new preparation entry.
+
+UX-0003 does not:
+
+- create a valid Compare surface with fewer than two Offerings;
+- add a member to the Comparison Set itself;
+- compare Attributes;
+- enforce replacement at five;
+- transfer the Comparison Set into Decision Chat.
+
+Those behaviours belong to UX-0004.
+
+### 9.3 Ownership boundary
+
+UX-0003 presents entries only.
+
+UX-0004 executes Compare.
+
+UX-0009 executes Decision Chat, selection, handoffs, and Completion.
+
+## 10. Offering Presentation Open
+
+`Offering Presentation Open` occurs when:
+
+- the Offering is eligible; and
+- complete public Presentation successfully begins.
+
+The occurrence is not produced by:
+
+- a management view;
+- an unavailable screen;
+- an error screen;
+- an ineligible Offering.
+
+## 11. Eligibility Change Behaviour
+
+If the Offering is no longer eligible before Presentation begins:
+
+- public Offering content is not presented;
+- Decision and Compare entries are unavailable;
+- the person receives a bounded unavailable state;
+- the person may return to Discovery.
+
+If eligibility becomes invalid before a later Decision action, UX-0009 or UX-0004 handles that action boundary.
+
+## 12. User Actions
+
+- inspect available Offering information;
+- inspect available visuals;
+- enter optional Compare;
+- enter the single-Offering Decision flow;
+- return to Discovery.
+
+## 13. System Responses
+
+- begins complete Presentation only for an eligible Offering;
+- preserves authoritative content and missing-information meaning;
+- opens UX-0004 or UX-0009 with the exact Offering context;
+- preserves and forwards an existing transient Compare-preparation context without owning it;
+- prevents protected contact information from appearing publicly.
+
+## 14. Empty and Missing-Information States
+
+- no visual: continue with the remaining complete Presentation;
+- no optional description: omit the missing optional content without invented copy;
+- no optional Attribute value: preserve the authoritative missing-value treatment;
+- no applicable Decision entry: keep Presentation available without fabricating an action.
+
+## 15. Loading Behaviour
+
+While eligibility and Offering Presentation information are being resolved:
+
+- the experience does not expose partial protected information;
+- actions that depend on eligibility are not active;
+- the person's navigation context is preserved.
+
+## 16. Error Behaviour
+
+When Presentation cannot begin:
+
+- no `Offering Presentation Open` occurs;
+- no Decision or Compare action starts;
+- the person may retry or return to Discovery;
+- entered or previously selected Decision context is not silently invented.
+
+## 17. Permissions
+
+| Action | Guest | Enabled User | Business Context | Admin Context |
+|---|---:|---:|---:|---:|
+| View eligible public Offering Presentation | ✓ | ✓ | ✓ | ✓ |
+| Start single-Offering Decision Flow | ✓ | ✓ | ✓ | ✓ |
+| Enter optional Compare | Conditional | Conditional | Conditional | Conditional |
+| View protected Direct Contact information | ✗ | ✗ | ✗ | ✗ |
+| Use Favorites | ✗ | ✗ | ✗ | ✗ |
+| Use Messaging | ✗ | ✗ | ✗ | ✗ |
+
+Business and Admin contexts receive only the public person baseline on this screen.
+
+## 18. Accessibility Requirements
+
+- Offering identity and Category context are programmatically distinguishable.
+- Every available visual has an accessible equivalent or is marked non-informational.
+- Attribute groups and values have a meaningful reading order.
+- Missing values are not communicated by visual treatment alone.
+- Decision entries are keyboard operable and have unambiguous names.
+- Loading, unavailable, and error changes are perceivable without relying only on color or motion.
+
+## 19. Related Documents
+
+- `PRD-0001-offering.md` — Presentation, eligibility, lifecycle, Attribute-value meaning.
+- `PRD-0003-identity.md` — public baseline and protected-contact gate.
+- `PRD-0004-decision.md` — Decision entry consumption.
+- `PRD-0005-business.md` — public Business identity and protected Direct Contact set.
+- `UX-0002-discovery.md` — Listing Card entry.
+- `UX-0004-compare.md` — Compare execution.
+- `UX-0009-decision-flow.md` — Decision execution.
+
+## 20. Acceptance Criteria
 
 ```gherkin
-Scenario: Guest views the complete Offering
-  Given a Guest on an Offering Detail screen
-  When they view the Offering
-  Then they can see the complete Offering including its gallery and Attribute groups
+Scenario: Eligible Offering opens complete Presentation
+  Given final Offering Public Eligibility is Eligible
+  When public Offering Presentation successfully begins
+  Then the title or name, Category context, available description, applicable Attributes, and public Business identity are available
+  And Offering Presentation Open occurs
 
-Scenario: Guest cannot see the phone number
-  Given a Guest on an Offering Detail screen
-  When they attempt to reveal the Business phone number
-  Then they are routed to Authentication instead
+Scenario: Public Presentation protects Direct Contact
+  Given a Guest or authenticated person views Offering Detail
+  When Business identity is presented
+  Then telephone, email, and external contact URL information are not revealed by UX-0003
 
-Scenario: Guest cannot initiate messaging
-  Given a Guest on an Offering Detail screen
-  When they attempt to send a message
-  Then they are routed to Authentication instead
+Scenario: Start a single-Offering Decision
+  Given an eligible Offering Presentation
+  When the person starts Decision
+  Then UX-0009 receives exactly that Offering as the Decision Context
+  And authentication is not required
 
-Scenario: Return-to-action after authentication
-  Given a Guest was routed to Authentication from an Offering
-  When they authenticate successfully
-  Then they return to the original Offering to continue the action
+Scenario: Enter Compare
+  Given an eligible Offering
+  When the person chooses Compare
+  Then UX-0004 receives the Offering
+  And UX-0003 does not execute comparison behaviour
 
-Scenario: Related Offerings are newest in the same Category
-  Given an Offering in a Category
-  When Related Offerings are shown
-  Then they are the newest Offerings from the same Category only, without attribute-based similarity
+Scenario: Preserve Compare preparation context
+  Given UX-0003 receives an eligible Offering and one transient Compare-preparation context from UX-0002
+  When the person chooses Compare
+  Then UX-0004 receives the exact existing preparation context and the current Offering
+  And UX-0003 does not save, alter, or complete the Comparison Set
 
-Scenario: Compare entry adds the Offering
-  Given a person on an Offering Detail screen
-  When they use the Compare entry
-  Then the Offering is added to Compare
+Scenario: Ineligible Offering does not open publicly
+  Given final Offering Public Eligibility is Ineligible
+  When the public route is opened
+  Then complete Offering Presentation does not begin
+  And Offering Presentation Open is not produced
+  And Decision and Compare entries are unavailable
+
+Scenario: Missing optional information is not invented
+  Given an eligible Offering lacks an optional description, visual, or Attribute value
+  When Presentation begins
+  Then the experience preserves the missing-information meaning
+  And does not invent a replacement value
+
+Scenario: Favorites and Messaging are absent
+  Given a person views Offering Detail
+  When available actions are presented
+  Then no Favorites or Messaging action is available
 ```
 
-## 19. Open Questions (TODO only)
+## 21. Accepted UX Deferrals
 
-- TODO — Define behaviour when there are no Related Offerings in the same Category. (Section 12)
-- TODO — Define behaviour when an Offering has no gallery images. (Section 12)
-- TODO — Define loading and error behaviour, including unavailable/unpublished Offerings. (Sections 13–14)
+The following do not block review:
+
+- exact visual hierarchy and responsive layout;
+- visual-gallery interaction design;
+- copywriting for unavailable and error states;
+- technical media loading and caching;
+- implementation of navigation between UX documents.
+
+No deferral may add Favorites, Messaging, recommendations, protected public contact, or action behaviour owned by UX-0004 or UX-0009.

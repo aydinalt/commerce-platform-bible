@@ -14,10 +14,65 @@ This project follows the principles of:
 
 ### Planned
 
-- User Story Layer
-- Engineering Standards
+- Full capability-level traceability validation
+- Marketplace Bible v1.0 freeze gate
+- Engineering Standards completion
 - Software Architecture
 - Development Phase
+
+---
+
+## [2.0.0] - 2026-07-25
+
+### Capability Architecture
+
+- Approved and separately froze the exact reviewed Offering Capability Architecture v2.0 candidate.
+- Added Handoff Enablement as the authoritative capability home for F06 and F07 under Accepted ADR-0008.
+- Preserved PRD-0001 as sole behaviour owner and PRD-0005/PRD-0006 as supporting relationships.
+- Preserved F01–F05 and left F02 Deferred / Not Yet Decided.
+- Superseded Frozen v1.0 without editing its historical baseline.
+
+### Repository Reconciliation
+
+- Updated traceability, repository index, current status, roadmap, and changelog records.
+- Changed no PRD, UX, Story behaviour, Delivery Status, or implementation decision.
+
+---
+
+## [1.9.0] - 2026-07-25
+
+### Restored
+
+- Recovered and installed the authoritative Frozen PRD-0001 through PRD-0006 sources from the completed audit packages.
+- Recovered the current Frozen V1 UX baseline: UX-0001 through UX-0006, UX-0008, and UX-0009.
+- Added Accepted ADR-0006 through ADR-0009 and reconciled the ADR index.
+- Added Frozen Discovery, Identity, Decision, Business, and Platform Feature Registries. Offering Feature-ID ownership remains with `OFFERING_CAPABILITY_ARCHITECTURE.md`.
+
+### User Story Layer
+
+- Restored 6 Frozen Parent Story Documents.
+- Restored 50 Frozen Generated Stories:
+  - Offering: 7
+  - Discovery: 10
+  - Identity: 9
+  - Decision: 7
+  - Business: 7
+  - Platform: 10
+- Preserved all Story Delivery Status values as `Not Started`.
+- Reconciled the exact Approved Platform Story package to the explicit 2026-07-25 Owner Freeze decision by changing only lifecycle status metadata to `Frozen`; versions and dates remain unchanged.
+
+### Repository Reconciliation
+
+- Reconciled `CURRENT_STATUS.md`, `PROJECT_ROADMAP.md`, `docs/repository/REPOSITORY_INDEX.md`, `docs/README.md`, and `docs/traceability.md` to the recovered canonical source state.
+- Renamed the ADR-0003 file to its canonical path without changing its content.
+- Preserved `UX-0007 Messaging` as Draft v0.2 because no explicit retirement, deletion, approval, or freeze decision was recovered.
+- Did not apply non-blocking audit observations to Frozen Story baselines.
+- Created no new Feature, Capability, PRD behaviour, UX behaviour, Story behaviour, Delivery Status, or implementation decision.
+
+### Next Gate
+
+- Upload and verify the reconciled repository on GitHub.
+- Complete Feature-level traceability validation before the Marketplace Bible v1.0 freeze gate.
 
 ---
 

@@ -2,8 +2,19 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Frozen
-- **Version:** 1.0
-- **Last Updated:** 2026-07-18
+- **Version:** 2.0
+- **Last Updated:** 2026-07-25
+
+- **Supersedes:** Frozen v1.0
+- **Supersession state:** Frozen v2.0 is the current authoritative baseline
+
+**Revision Note (2.0):** Combined superseding revision implementing Accepted `ADR-0007-domain-scope-of-capability-first-rule.md` and Accepted `ADR-0008-handoff-enablement-capability.md`. Adds **Handoff Enablement** to the Capability Map; allocates `F06 — Affiliate Destination Configuration` and `F07 — Affiliate Destination Eligibility Governance`; records `F06 → Handoff Enablement` and `F07 → Handoff Enablement`; preserves `PRD-0001-offering.md` as the sole Capability behaviour owner; records `PRD-0005-business.md` and `PRD-0006-platform.md` only as supporting relationships; preserves Contact & Action ownership of the person-facing Affiliate Handoff and Completion; reconciles the Capability First production rule with ADR-0007 so it applies to Offering-domain behaviour, direct Offering Capability assignments, and governed Offering relationships rather than unrelated own-domain behaviour; preserves F01–F05 and all existing associations; leaves F02 Deferred / Not Yet Decided; and performs no PRD, UX, Story, planning, or implementation work.
+
+**Review Entry Note (2.0):** Entered formal review after completion of the combined ADR-0007 / ADR-0008 superseding revision.
+
+**Approval Note (2.0):** Approved by the Product Owner / Architecture Owner on 2026-07-25 following successful Architecture Review and Final Review. The exact In Review v2.0 candidate became the authoritative Approved v2.0 successor without changing its architectural content.
+
+**Freeze Note (2.0):** Frozen by the Product Owner / Architecture Owner on 2026-07-25 after explicit approval. This document is now the authoritative Offering Capability Architecture v2.0 baseline. Frozen v1.0 is superseded and preserved in repository history. Future changes must use a new controlled superseding revision.
 
 **Revision Note (0.2):** Controlled revision. Removed engineering-specific philosophy from Learning & Evolution (architecture-only). Epic is now referenced only and its ownership left with `USER_STORY_HANDBOOK.md` (no redefinition). Feature clarified as a structural decomposition unit owned here, explicitly excluding planning, prioritization, sequencing, estimation, and sprint planning.
 
@@ -113,6 +124,7 @@ The Offering comprises the following capabilities. Each entry states the capabil
 - **Lifecycle** — the capability by which an Offering moves through its states over time. Behaviour owned by `PRD-0001-offering.md`.
 - **Visibility & Eligibility** — the capability that governs whether and where an Offering is eligible to appear. Behaviour owned by `PRD-0001-offering.md` (states) and `PRD-0006-platform.md` (moderation).
 - **Contact & Action** — the capability by which a person acts on a decision and reaches the Business behind an Offering. Behaviour owned by `PRD-0004-decision.md`; access governed by `PRD-0003-identity.md`.
+- **Handoff Enablement** — the capability by which an Offering is equipped with and governed through an Offering-associated external destination that may become eligible for a later person-facing handoff. Behaviour owned solely by `PRD-0001-offering.md`. `PRD-0005-business.md` provides the authorized Business-management entry and `PRD-0006-platform.md` provides the approved administration action surface as supporting relationships under `ADR-0007`; neither becomes the Capability owner. Contact & Action consumes the authoritative eligibility result and retains the person-facing Affiliate Handoff and Completion. Introduced by `ADR-0008-handoff-enablement-capability.md`.
 - **Learning & Evolution** — the capability by which the platform learns from decision outcomes and improves the Offering model over time. It introduces no behaviour here and is an architectural capability for future scope.
 
 ## 7. Capability Breakdown
@@ -152,8 +164,10 @@ The following is the authoritative allocation of Offering-domain Feature IDs. It
 | `F03` | Offering Retirement |
 | `F04` | Offering Publication |
 | `F05` | Full Offering Detail Presentation |
+| `F06` | Affiliate Destination Configuration |
+| `F07` | Affiliate Destination Eligibility Governance |
 
-`F01`–`F04` are the identifiers already consumed by the Golden Baseline Stories `US-OFR-F01-001` through `US-OFR-F04-001`; their allocation is confirmed here. `F05` is allocated for the Full Offering Detail Presentation Feature. No Feature beyond `F05` is allocated by this revision; further Feature IDs are allocated only by a future controlled revision of this document.
+`F01`–`F04` are the identifiers already consumed by the Golden Baseline Stories `US-OFR-F01-001` through `US-OFR-F04-001`; their allocation remains confirmed. `F05` remains allocated for Full Offering Detail Presentation. `F06` is allocated for the structural configuration concern through which an authorized Business creates or edits an Affiliate Destination associated with one Offering. `F07` is allocated for the structural governance concern through which the PRD-0001-owned destination status, validation meaning, and Affiliate Destination Handoff Eligibility are maintained, with the PRD-0006 administration action surface participating only as a supporting relationship. These descriptions identify structural decomposition only and define no product behaviour. Further Feature IDs are allocated only by a future controlled revision of this document.
 
 #### Recorded Feature → Capability associations
 
@@ -165,8 +179,12 @@ This is part of the authoritative Feature Registry above (it is not a separate r
 | `F03` | Offering Retirement | Lifecycle | `ADR-0003-offering-feature-capability-associations.md` (Accepted) |
 | `F04` | Offering Publication | Lifecycle | `ADR-0003-offering-feature-capability-associations.md` (Accepted) |
 | `F05` | Full Offering Detail Presentation | Presentation | `ADR-0002-offering-presentation-capability.md` (Accepted) |
+| `F06` | Affiliate Destination Configuration | Handoff Enablement | This superseding revision, authorized by `ADR-0008-handoff-enablement-capability.md` |
+| `F07` | Affiliate Destination Eligibility Governance | Handoff Enablement | This superseding revision, authorized by `ADR-0008-handoff-enablement-capability.md` |
 
-`F02` — Offering Editing is **not** part of the recorded Feature → Capability associations above. Its **capability home is Not Yet Decided** and its **decision status is Deferred** (see `ADR-0003` §2 and §8; originally deferred by `ADR-0002` §9). Deferred is a decision status, not a Capability; consistent with the paragraph above, F02's absence from this list means its association is not yet decided, not "Unresolved." No Feature or Feature ID is added or changed by this subsection; recording `F01`, `F03`, and `F04` adds Feature → Capability associations only.
+`F02` — Offering Editing is **not** part of the recorded Feature → Capability associations above. Its **capability home is Not Yet Decided** and its **decision status is Deferred** (see `ADR-0003` §2 and §8; originally deferred by `ADR-0002` §9). Deferred is a decision status, not a Capability; consistent with the paragraph above, F02's absence from this list means its association is not yet decided, not "Unresolved."
+
+`F06` and `F07` act on the distinct Affiliate Destination object and do not broaden or decide `F01 — Offering Creation` or `F02 — Offering Editing`. `F06` and `F07` are structural Features of Handoff Enablement; their concrete product behaviour remains owned by `PRD-0001-offering.md`.
 
 ## 8. Decision Analysis vs Decision Support
 
@@ -181,9 +199,11 @@ Neither capability redefines the other. Analysis informs; support communicates. 
 
 The following rules bind downstream production to this capability model:
 
-- **Capability First.** Every downstream document — PRD, UX, User Story, and the work below them — traces to a Capability defined here. No behaviour, experience, or feature is produced without a capability home.
-- **Feature Mapping.** Every Feature maps to exactly one Capability (Single Information Owner). A unit of work that appears to span capabilities is decomposed until each part maps to a single capability.
-- **Behavioural Scope.** This layer defines capability concerns and boundaries only. Behaviour, rules, experience, and implementation are out of scope here and are owned by the layers below; this layer never specifies them.
+- **Capability First — V1 Offering-domain application.** Every downstream Offering-domain behaviour, experience, Feature, direct Offering Capability assignment, and governed Offering relationship traces to a Capability defined here. No Offering-domain behaviour, experience, or Feature is produced without an authorized Capability home.
+- **Own-domain boundary.** Identity, Business, and Platform own-domain behaviour that is not directly assigned to an Offering Capability follows the Foundation → Domain PRD → Domain UX → Domain User Story chain and is not forced into this Capability model.
+- **Supporting relationships.** A non-Offering PRD may provide a gate, management entry, administration action, or target effect to an Offering-domain flow without becoming the Capability owner. Such contributions are recorded at behaviour, section, or governed-relationship level.
+- **Feature Mapping.** Every Offering-domain Feature maps to exactly one Capability (Single Information Owner). A structural unit that appears to span capabilities is decomposed until each Feature maps to one Capability.
+- **Behavioural Scope.** This layer defines capability concerns, structural Features, identifiers, associations, and boundaries only. Behaviour, rules, experience, planning, and implementation are out of scope here and are owned by the applicable downstream layers.
 
 ## 10. V1 Capability Scope
 
@@ -201,6 +221,9 @@ For the authoritative statement of what is in and out of V1, refer to `V1_SCOPE.
 - `ADR-0001-decision-chat-ownership.md` — the ownership of Decision Support (Decision Chat).
 - `ADR-0002-offering-presentation-capability.md` — the introduction of the Presentation capability and the `F05 → Presentation` association.
 - `ADR-0003-offering-feature-capability-associations.md` — the Accepted decision recording the `F01 → Creation`, `F03 → Lifecycle`, and `F04 → Lifecycle` associations, with `F02` remaining Deferred.
+- `ADR-0006-affiliate-destination-ownership.md` — Cross-PRD ownership of Affiliate Destination configuration, administration support, handoff consumption, and Completion.
+- `ADR-0007-domain-scope-of-capability-first-rule.md` — authoritative V1 domain scope of the Capability First rule and direct-assignment / supporting-relationship classification.
+- `ADR-0008-handoff-enablement-capability.md` — introduction and boundaries of Handoff Enablement.
 - `USER_STORY_HANDBOOK.md` — the definition of Epic and the User Story standards.
 - `glossary.md` — defined terms (Offering, Attribute, Category, Decision Chat, and others).
 - Governance: `REPOSITORY_GOVERNANCE.md`, `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, `ADR_PROCESS.md`.

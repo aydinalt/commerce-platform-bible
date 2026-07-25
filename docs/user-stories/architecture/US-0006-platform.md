@@ -1,150 +1,132 @@
 # US-0006 — Platform User Stories
 
-- **Status:** Draft
-- **Version:** 0.1
+- **Owner:** Product Owner / Architecture Owner
+- **Status:** Frozen
+- **Version:** 1.0
+- **Last Updated:** 2026-07-25
+- **Approval Date:** 2026-07-25
+- **Approved By:** Product Owner / Architecture Owner
+- **Approved Candidate:** In Review v0.2
+- **Freeze State:** Frozen
+- **Story Domain:** Platform
+- **Domain Code:** `PLT`
+- **Feature Registry Owner:** Frozen `PLATFORM_FEATURE_REGISTRY.md` v1.0
+- **GitHub effect:** None
+
+**Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-25. The exact In Review v0.2 candidate becomes the authoritative Approved v1.0 Platform Parent Story Document baseline. This approval does not Freeze the document, does not change any Generated Story Delivery Status, does not create a separate Admin identity, account, or login, does not add Admin self-service provisioning, does not merge General Moderation with Affiliate Destination Administration, does not transfer target-owned results to Platform, does not apply the non-blocking observations as candidate changes, and does not update GitHub automatically.
+
+**Revision Note (0.2):** Controlled replacement of documented Draft v0.1 embedded-Story content with the Frozen Handbook Parent → Epic → Feature architecture. Consumes authoritative PLT F01–F10, removes embedded `US-NNNN.n` Story ownership, establishes four bounded Epics, and records ten first Generated Story candidates by reference. It changes no Feature ID, canonical Feature name, relationship classification, Capability, PRD behaviour, UX behaviour, implementation, approval, Freeze, or GitHub file.
+
+**Review Entry Note (0.2):** The exact Draft v0.2 candidate entered formal review on 2026-07-25. No Feature ID, canonical Feature name, Epic placement, Story identifier, PRD/UX behaviour, relationship classification, Capability reference, approval, Freeze, or GitHub state changed during review entry.
+
+> This Parent Story Document owns Platform Epic → Feature placement and records Generated Story files by reference. It does not own Feature IDs, relationship classifications, Capability references, product behaviour, UX behaviour, Generated Story content, or implementation.
+
+---
 
 ## 1. Purpose
 
-User stories for the Platform capability, derived only from `PRD-0006-platform.md` and the related UX specification. Platform covers administration, moderation, Category and Attribute management, Platform configuration, and roles.
+Organize the Platform Story Domain into bounded Epics and authoritative Features F01–F10 so every Generated Platform Story has exactly one Parent, one Epic, and one Feature.
 
-## 2. Related PRDs
+## 2. Scope
 
-- `PRD-0006-platform.md`
+This Parent owns:
 
-## 3. Related UX Specifications
+- Platform Epic names and bounded outcomes;
+- Feature placement under exactly one Epic;
+- by-reference Generated Story inventory;
+- Platform package coverage and reconciliation state.
 
-- `UX-0006-admin-dashboard.md`
+## 3. Out of Scope
 
-## 4. User Stories
+This Parent does not own or redefine:
 
-### US-0006.1 — Moderate content after it exists
+- Feature IDs, canonical names, short scope labels, references, or relationship classifications — Frozen `PLATFORM_FEATURE_REGISTRY.md`;
+- Capability names or boundaries — Frozen Capability Architecture and Accepted ADRs;
+- product behaviour — Frozen `PRD-0006-platform.md`;
+- experience behaviour — referenced Frozen UX documents;
+- Generated Story Acceptance Criteria, BDD, dependencies, size, scope, lifecycle, or complete content;
+- implementation, technical architecture, delivery sequencing, or Sprint planning.
 
-**As an** Admin
-**I want** to moderate Businesses, Offerings, and their content after they exist
-**So that** the platform stays trustworthy without gating participation.
+## 4. Epic Map
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Moderation happens afterwards
-  Given a Business or Offering created without prior approval
-  When it appears for moderation
-  Then the Admin can moderate it after it exists rather than as a pre-creation approval
-```
+| Epic | Bounded Outcome | Features |
+|---|---|---|
+| Admin Context and Moderation Workload | One authorized Admin context enters the Platform and manages explicit Open/Closed moderation workload. | F01, F02 |
+| Target Moderation and Correction | Platform applies approved Offering, Business, and User actions and coordinates bounded correction and re-review. | F03, F04, F05, F06 |
+| Handoff and Representation Administration | Admin manages Affiliate Destination administration and authoritative Category/Attribute definitions without absorbing target-owned behaviour. | F07, F08, F09 |
+| Operational Visibility | Admin consumes bounded current-state, workload, and core-flow indicators without automated action. | F10 |
 
-- **Priority:** Critical
-- **Dependencies:** US-0005 (Businesses/Offerings exist)
-- **Related PRDs:** `PRD-0006-platform.md`
-- **Related UX:** `UX-0006-admin-dashboard.md`
-- **Business Rules:** Moderation happens afterwards; creation is not gated by admin approval.
-- **Out of Scope:** Specific moderation outcomes/actions and their effect on visibility/state (TODO in `PRD-0006` and `PRD-0001`).
+## 5. Feature Map
 
-### US-0006.2 — Operate through actionable guidance
+| Feature ID | Canonical Feature | Epic | Relationship Classification | Capability Reference | Behaviour Owner | Primary Experience |
+|---|---|---|---|---|---|---|
+| F01 | Admin Panel Access and Baseline | Admin Context and Moderation Workload | No Capability Architecture required | Not required under ADR-0007 | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §§5–6; `UX-0008-authentication.md` §8.3 |
+| F02 | General Moderation Case Management | Admin Context and Moderation Workload | No Capability Architecture required | Not required under ADR-0007 | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §§7–8 |
+| F03 | Offering Moderation Actions | Target Moderation and Correction | Supporting relationship | Lifecycle; Visibility & Eligibility | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §§7.3–7.4 |
+| F04 | Business Moderation Actions | Target Moderation and Correction | Supporting relationship | Visibility & Eligibility | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §§7.3–7.4 |
+| F05 | User Access Moderation Actions | Target Moderation and Correction | No Capability Architecture required | Not required under ADR-0007 | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §§7.3–7.4, 13 |
+| F06 | Request Correction and Re-Review | Target Moderation and Correction | Supporting relationship | Target-owned Capability by reference | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §8; `UX-0005-business-dashboard.md` §§11–12 |
+| F07 | Affiliate Destination Administration | Handoff and Representation Administration | Supporting relationship | Handoff Enablement | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §9 |
+| F08 | Category and Domain Management | Handoff and Representation Administration | Direct Frozen assignment | Representation | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §10 |
+| F09 | Attribute Definition Management | Handoff and Representation Administration | Direct Frozen assignment | Representation | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §11 |
+| F10 | Basic Analytics | Operational Visibility | No Capability Architecture required | Not required under ADR-0007 | `PRD-0006-platform.md` | `UX-0006-admin-dashboard.md` §12 |
 
-**As an** Admin
-**I want** the administration surface to guide me to actions
-**So that** I can act rather than only read reports.
+## 6. Generated Story Inventory
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Administration guides actions
-  Given an Admin using the administration surface
-  When they view what needs attention
-  Then it guides them to actions rather than only showing reports
-```
+| Feature | Generated Story | Candidate State |
+|---|---|---|
+| F01 | `US-PLT-F01-001` — Admin Panel Access and Baseline | In Review v0.1 |
+| F02 | `US-PLT-F02-001` — General Moderation Case Management | In Review v0.1 |
+| F03 | `US-PLT-F03-001` — Offering Moderation Actions | In Review v0.1 |
+| F04 | `US-PLT-F04-001` — Business Moderation Actions | In Review v0.1 |
+| F05 | `US-PLT-F05-001` — User Access Moderation Actions | In Review v0.1 |
+| F06 | `US-PLT-F06-001` — Request Correction and Re-Review | In Review v0.1 |
+| F07 | `US-PLT-F07-001` — Affiliate Destination Administration | In Review v0.1 |
+| F08 | `US-PLT-F08-001` — Category and Domain Management | In Review v0.1 |
+| F09 | `US-PLT-F09-001` — Attribute Definition Management | In Review v0.1 |
+| F10 | `US-PLT-F10-001` — Basic Analytics | In Review v0.1 |
 
-- **Priority:** Medium
-- **Dependencies:** US-0006.1
-- **Related PRDs:** `PRD-0006-platform.md`
-- **Related UX:** `UX-0006-admin-dashboard.md`
-- **Business Rules:** The administration surface guides actions, not only reports.
-- **Out of Scope:** —
+The candidate-state column is informative and by reference. This Parent advances no Generated Story lifecycle state.
 
-### US-0006.3 — Manage Categories
+## 7. Coverage and Readiness
 
-**As an** Admin
-**I want** to manage the Categories that organize Offerings
-**So that** Offerings stay well organized.
+| Check | Result |
+|---|---|
+| Authoritative F01–F10 consumed exactly | PASS |
+| Every Feature placed under exactly one Epic | PASS |
+| Ten first Generated Story candidates exist | PASS |
+| Embedded legacy Stories removed | PASS |
+| Parent embeds no Acceptance Criteria or BDD | PASS |
+| Relationship classifications and Capability references match the Frozen Registry | PASS |
+| Admin remains the existing User Account in explicit authorized context | PASS |
+| General Moderation remains seven actions with Open/Closed case workflow | PASS |
+| Offering, Business, User, and Affiliate results remain target-owned | PASS |
+| Request Correction creates no Messaging and closes no case automatically | PASS |
+| Category and Attribute management preserve Representation boundaries and mutation safety | PASS |
+| Basic Analytics is bounded, non-autonomous, and non-transactional | PASS |
+| No generic configuration, Admin provisioning, advanced analytics, Messaging, billing, CRM, or transaction expansion | PASS |
+| GitHub unchanged | PASS |
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Manage Categories
-  Given an Admin
-  When they manage Categories
-  Then those Categories organize Offerings
-```
+## 8. Reconciliation Boundary
 
-- **Priority:** High
-- **Dependencies:** —
-- **Related PRDs:** `PRD-0006-platform.md`, `PRD-0001-offering.md`
-- **Related UX:** `UX-0006-admin-dashboard.md`
-- **Business Rules:** Categories are metadata that organize Offerings.
-- **Out of Scope:** Specific Category management actions (TODO in `PRD-0006`).
+This Approved baseline does not:
 
-### US-0006.4 — Manage Attributes
+- Freeze this Parent;
+- approve or Freeze any Generated Story;
+- revise the Frozen Feature Registry;
+- create a Feature or Capability;
+- broaden PRD or UX scope;
+- start implementation;
+- update traceability, repository indexes, changelog, or GitHub automatically.
 
-**As an** Admin
-**I want** to manage the Attributes that describe Offerings
-**So that** discovery, filtering, and comparison work across many categories.
+## 9. References
 
-**Acceptance Criteria**
-```gherkin
-Scenario: Manage Attributes
-  Given an Admin
-  When they manage Attributes
-  Then those Attributes describe Offerings and power discovery, filtering, and comparison
-```
-
-- **Priority:** High
-- **Dependencies:** —
-- **Related PRDs:** `PRD-0006-platform.md`, `PRD-0001-offering.md`
-- **Related UX:** `UX-0006-admin-dashboard.md`
-- **Business Rules:** Many categories are supported through Attributes rather than hardcoded category logic.
-- **Out of Scope:** Specific Attribute management actions (TODO in `PRD-0006`).
-
-### US-0006.5 — Manage approved Platform configuration
-
-**As an** Admin
-**I want** to manage the Platform configuration that is already approved
-**So that** I can operate the platform within approved bounds.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Manage approved configuration
-  Given an Admin
-  When they adjust Platform configuration
-  Then only already-approved configuration is available
-```
-
-- **Priority:** Medium
-- **Dependencies:** —
-- **Related PRDs:** `PRD-0006-platform.md`
-- **Related UX:** `UX-0006-admin-dashboard.md`
-- **Business Rules:** Platform configuration is available only where already approved.
-- **Out of Scope:** Which configuration is approved for V1 (TODO in `PRD-0006`).
-
-### US-0006.6 — Restrict administration to Admin
-
-**As a** platform operator
-**I want** only the Admin role to have administration abilities
-**So that** Guests, Users, and Businesses cannot administer the platform.
-
-**Acceptance Criteria**
-```gherkin
-Scenario: Only Admin can administer
-  Given a Guest, User, or Business
-  When they attempt a platform-administration action
-  Then it is not available to them
-```
-
-- **Priority:** High
-- **Dependencies:** US-0003 (roles)
-- **Related PRDs:** `PRD-0006-platform.md`, `PRD-0003-identity.md`
-- **Related UX:** `UX-0006-admin-dashboard.md`
-- **Business Rules:** Only the Admin role has platform-administration abilities.
-- **Out of Scope:** How an Admin is provisioned (TODO in `PRD-0006`).
-
-### TODO — Specific moderation actions and Admin provisioning
-
-- TODO — Firm stories for specific moderation actions (Approve/Reject/Hide/Archive) and their statuses (Pending/Approved/Rejected) cannot be traced to a PRD, because `PRD-0006-platform.md` leaves moderation outcomes as TODO and `PRD-0001-offering.md` leaves Hidden/Archived as TODO. These appear in `UX-0006` as the approved UX brief and must be reconciled into the PRDs.
-- TODO — A story for provisioning an Admin cannot be traced, because Admin provisioning is undefined in `PRD-0006-platform.md`.
-- TODO — Ownership of "Basic analytics" is unresolved across `V1_SCOPE.md`, `PRD-0005`, and `PRD-0006`; no analytics story is written until it is settled.
+- `PLATFORM_FEATURE_REGISTRY.md` — F01–F10 identity, references, and Capability relationships.
+- `PRD-0006-platform.md` — Platform behaviour and ownership boundaries.
+- `UX-0006-admin-dashboard.md` — Admin context, moderation, administration, management, and Basic Analytics experience.
+- `UX-0008-authentication.md` — authorized Admin-context entry and Logout.
+- `UX-0005-business-dashboard.md` — bounded correction-owner response.
+- `PRD-0001` through `PRD-0005` — authoritative target states, metadata, occurrences, and Completion meaning.
+- `ADR-0006`, `ADR-0007`, `ADR-0008`, `ADR-0009`.
+- Owner Decisions D06, D07, D15/D16, D20, D21, D22, and D23.
+- `USER_STORY_HANDBOOK.md`, `REPOSITORY_GOVERNANCE.md`, `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`.
