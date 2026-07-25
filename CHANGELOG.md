@@ -14,6 +14,7 @@ This project follows the principles of:
 
 ### Corrected
 
+- Added the missing 2026-07-25 Owner Freeze evidence to the Frozen Platform Parent Story and ten Platform Generated Stories; aligned each Generated Story's `Freeze State`, date, and owner without changing behaviour or Delivery Status.
 - Corrected the Draft Offering Implementation Blueprint metadata path to
   `docs/blueprints/OFFERING_IMPLEMENTATION_BLUEPRINT.md` and fixed the direction
   stated in its existing v0.4 revision note.
@@ -25,11 +26,18 @@ This project follows the principles of:
 
 ### Planned
 
-- Full capability-level traceability validation
+- Traceability v0.8 Architecture Review, Final Review, Owner Approval, and separate Freeze
 - Marketplace Bible v1.0 freeze gate
 - Engineering Standards completion
 - Software Architecture
 - Development Phase
+
+### Validated
+
+- Completed Feature-level validation for all 50 authoritative Feature IDs across Offering, Discovery, Identity, Decision, Business, and Platform.
+- Confirmed one Parent placement and one first Generated Story for every Feature.
+- Confirmed all 50 Generated Stories remain Frozen with Delivery Status `Not Started`.
+- Resolved `UX-0007 Messaging` treatment for V1: retained as historical Draft v0.2 outside the Frozen V1 baseline and not used by any validated V1 Feature chain.
 
 ---
 

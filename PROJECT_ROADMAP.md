@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      3.1
+Version:      3.2
 Last Updated: 2026-07-25
 -->
 
@@ -14,7 +14,7 @@ This roadmap records execution order. It does not define product, UX, Story, or 
 
 ## Current Position
 
-The documentation source-recovery phase is complete locally. All six Story domains now have authoritative Frozen Parent and Generated Story files, and Offering Capability Architecture v2.0 authoritatively maps F06/F07 to Handoff Enablement. The next gate is GitHub upload followed by full traceability validation.
+The documentation source-recovery and GitHub synchronization phases are complete. All 50 Feature-level chains passed repository-wide validation. Traceability is In Review v0.8; its Architecture Review, Final Review, Owner Approval, and separate Freeze remain before the Marketplace Bible v1.0 freeze gate.
 
 ## Milestones
 
@@ -23,9 +23,9 @@ The documentation source-recovery phase is complete locally. All six Story domai
 | M1 — Governance and Foundation | Complete | Governing documents and Foundation baselines are authoritative |
 | M2 — PRD and UX | Complete for current V1 baseline | Six PRDs and the eight current V1 UX documents are Frozen |
 | M3 — Story architecture and generation | Complete | 6 Parent Story Documents and 50 Generated Stories are Frozen |
-| M4 — Repository reconciliation | Complete locally | Canonical files, indexes, registries, and ADRs are present in one repository tree |
-| M5 — GitHub synchronization | Next | Reconciled package is uploaded and verified on `main` |
-| M6 — Full traceability validation | Pending | Cross-tier chains are validated and traceability receives explicit lifecycle decisions |
+| M4 — Repository reconciliation | Complete | Canonical files, indexes, registries, and ADRs are present in one repository tree |
+| M5 — GitHub synchronization | Complete | Reconciled package and final corrections are verified on `main` |
+| M6 — Full traceability validation | Validation complete; lifecycle in progress | Cross-tier chains pass and traceability receives explicit lifecycle decisions |
 | M7 — Marketplace Bible v1.0 freeze gate | Pending | Repository-wide documentation readiness is approved and frozen where applicable |
 | M8 — Software architecture | Not Started | Backend, frontend, infrastructure, security, and data decisions are documented |
 | M9 — Development | Not Started | Prior gates pass and delivery planning begins |
@@ -33,12 +33,11 @@ The documentation source-recovery phase is complete locally. All six Story domai
 
 ## Immediate Sequence
 
-1. Upload the reconciled repository package to GitHub.
-2. Verify paths, filenames, links, and counts on GitHub.
-3. Complete capability-level traceability reconciliation.
-4. Review and lifecycle the updated repository management documents.
-5. Run the Marketplace Bible v1.0 final freeze gate.
-6. Prepare development prompts and implementation backlogs.
+1. Complete Architecture Review and Final Review for traceability v0.8.
+2. Obtain explicit Owner Approval and a separate Freeze decision.
+3. Close the Engineering Constitution open review record.
+4. Run the Marketplace Bible v1.0 final freeze gate.
+5. Prepare development prompts and implementation backlogs.
 
 ## Gate Rules
 
@@ -55,7 +54,7 @@ The documentation source-recovery phase is complete locally. All six Story domai
 | Uploading stale ZIP variants | Use only the reconciled repository ZIP and verify its checksum |
 | Treating audit evidence as canonical product content | Keep audit packages outside the repository baseline |
 | Silent modification of Frozen Stories | Compare canonical story hashes before packaging |
-| Treating `UX-0007` as current V1 behaviour | Preserve it as Draft until an explicit lifecycle decision is made |
+| Treating `UX-0007` as current V1 behaviour | Retain it as historical Draft outside V1; no validated V1 Feature chain may depend on it |
 | Beginning implementation before traceability closes | Enforce M6 and M7 gates |
 
 ## Revision History
@@ -64,3 +63,4 @@ The documentation source-recovery phase is complete locally. All six Story domai
 |---|---|---|
 | 3.0 | 2026-07-25 | Rebased the roadmap on completed six-domain Story recovery and local repository reconciliation. |
 | 3.1 | 2026-07-25 | Closed the Offering F06/F07 capability-home gap through Offering Capability Architecture Frozen v2.0. |
+| 3.2 | 2026-07-25 | Recorded completion of Feature-level validation and moved traceability into lifecycle review. |
