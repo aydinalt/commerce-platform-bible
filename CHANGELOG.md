@@ -26,7 +26,6 @@ This project follows the principles of:
 
 ### Planned
 
-- Traceability v0.8 Architecture Review, Final Review, Owner Approval, and separate Freeze
 - Marketplace Bible v1.0 freeze gate
 - Engineering Standards completion
 - Software Architecture
@@ -38,6 +37,12 @@ This project follows the principles of:
 - Confirmed one Parent placement and one first Generated Story for every Feature.
 - Confirmed all 50 Generated Stories remain Frozen with Delivery Status `Not Started`.
 - Resolved `UX-0007 Messaging` treatment for V1: retained as historical Draft v0.2 outside the Frozen V1 baseline and not used by any validated V1 Feature chain.
+
+### Traceability Lifecycle
+
+- Approved the exact reviewed traceability v0.8 candidate as v1.0 after Architecture Review and Final Review passed.
+- Separately froze traceability v1.0 as the authoritative current V1 cross-tier baseline.
+- Changed no product, UX, Feature, Story, Capability, Delivery Status, or implementation behaviour.
 
 ---
 

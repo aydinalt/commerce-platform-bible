@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.2
+Version:      1.3
 Last Updated: 2026-07-25
 -->
 
@@ -23,7 +23,7 @@ Last Updated: 2026-07-25
 |---|---|
 | `docs/repository/REPOSITORY_INDEX.md` | Canonical document inventory |
 | `docs/repository/DOCUMENT_DEPENDENCY_MAP.md` | Documentation dependency direction |
-| `docs/traceability.md` | Cross-tier coverage and open traceability work |
+| `docs/traceability.md` | Frozen v1.0 cross-tier traceability baseline |
 
 ## Governance and Standards
 
@@ -108,3 +108,4 @@ Last Updated: 2026-07-25
 |---|---|---|
 | 1.1 | 2026-07-25 | Reconciled the index to recovered Frozen PRD, UX, registry, ADR, and six-domain Story baselines. |
 | 1.2 | 2026-07-25 | Recorded Offering Capability Architecture Frozen v2.0 and authoritative F06/F07 → Handoff Enablement mappings. |
+| 1.3 | 2026-07-25 | Recorded traceability as Frozen v1.0 after completed validation, Owner Approval, and separate Freeze. |

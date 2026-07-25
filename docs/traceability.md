@@ -2,9 +2,15 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Document:** Cross-Tier Traceability
-- **Status:** In Review
-- **Version:** 0.8
+- **Status:** Frozen
+- **Version:** 1.0
 - **Last Updated:** 2026-07-25
+
+> **Approval Note (1.0).** Approved by explicit decision of the Product Owner / Architecture Owner on 2026-07-25 after repository-wide Feature-level validation, Formal Architecture Review, and Final Review completed with verdict `PASS — READY FOR OWNER APPROVAL`. This first approval advances the exact reviewed candidate from In Review v0.8 to Approved v1.0 and establishes it as the authoritative cross-tier traceability record for the current V1 baseline. The approval creates no product, UX, Feature, Story, Capability, delivery, or implementation behaviour and does not freeze the document.
+
+> **Freeze Note (1.0).** Frozen by separate explicit decision of the Product Owner / Architecture Owner on 2026-07-25 after approval as v1.0. This freeze locks the Approved v1.0 cross-tier traceability baseline. The Frozen document must not be edited in place; any future change requires a controlled superseding revision under `DOCUMENT_LIFECYCLE.md`. The freeze does not change any referenced source document or any Story Delivery Status.
+
+**Revision Note (1.0):** First approval and subsequent separate freeze of the exact v0.8 review candidate. All 50 authoritative Feature chains remain validated across six Story Domains; `UX-0007 Messaging` remains outside the Frozen V1 UX baseline; all 50 Generated Stories remain `Frozen v1.0` with Delivery Status `Not Started`.
 
 **Revision Note (0.7):** Records the Owner-approved and Frozen Offering Capability Architecture v2.0 baseline and closes the F06/F07 capability-home gap. This revision records existing authoritative relationships only and does not change the Draft lifecycle state of this traceability document.
 
