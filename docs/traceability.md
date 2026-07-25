@@ -49,6 +49,14 @@ The table confirms repository presence and lifecycle state. It does not assert t
 
 ## 5. Parent and Generated Story Counts
 
+The `Candidate State` values embedded in the six Frozen Parent Story Documents are
+historical snapshots of the candidates reviewed when each Parent was approved.
+They are not the current lifecycle authority for the referenced Generated Story
+files. The current repository state is the lifecycle metadata in each Generated
+Story file and the reconciliation table below: all 50 Generated Stories are
+`Frozen v1.0` with Delivery Status `Not Started`. The Frozen Parent files remain
+unchanged; any future change to their inventories requires a controlled revision.
+
 | Domain | Parent | Generated | Total |
 |---|---:|---:|---:|
 | Offering | 1 | 7 | 8 |

@@ -12,6 +12,17 @@ This project follows the principles of:
 
 ## [Unreleased]
 
+### Corrected
+
+- Corrected the Draft Offering Implementation Blueprint metadata path to
+  `docs/blueprints/OFFERING_IMPLEMENTATION_BLUEPRINT.md` and fixed the direction
+  stated in its existing v0.4 revision note.
+- Clarified in the living traceability record that Generated Story candidate
+  states embedded in Frozen Parent Story Documents are historical review
+  snapshots; the current lifecycle authority remains the 50 Generated Story
+  files, all `Frozen v1.0` with Delivery Status `Not Started`.
+- Preserved all six Frozen Parent Story baselines without editing them in place.
+
 ### Planned
 
 - Full capability-level traceability validation
