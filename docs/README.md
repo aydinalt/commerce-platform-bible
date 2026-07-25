@@ -40,6 +40,7 @@ ADRs record accepted architectural decisions and are referenced by the affected 
 | `adr/` | Accepted architecture decision records and ADR index |
 | `governance/` | Repository, lifecycle, review, and ADR-process rules |
 | `engineering/` | Engineering standards |
+| `software-architecture/` | Frozen V1 Software Architecture v1.0 baseline |
 | `repository/` | Repository index and dependency map |
 | `_templates/` | Document templates |
 

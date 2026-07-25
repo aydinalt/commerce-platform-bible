@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      3.6
+Version:      3.7
 Last Updated: 2026-07-25
 -->
 
@@ -27,15 +27,15 @@ The Marketplace Bible v1.0 documentation baseline passed the Final Freeze Gate a
 | M5 — GitHub synchronization | Complete | Reconciled package and final corrections are verified on `main` |
 | M6 — Full traceability validation | Complete | Cross-tier chains pass and traceability is Frozen v1.0 |
 | M7 — Marketplace Bible v1.0 freeze gate | Complete | Repository-wide documentation readiness is approved and the baseline manifest is Frozen |
-| M8 — Software architecture | In Progress — Owner Approval | ADR-0010–ADR-0014 are Accepted; exact architecture package awaits Owner Approval and separate Freeze |
+| M8 — Software architecture | Complete | ADR-0010–ADR-0014 are Accepted and the exact architecture package is Frozen v1.0 |
 | M9 — Development | Not Started | Prior gates pass and delivery planning begins |
 | M10 — Release | Not Started | Product meets approved release criteria |
 
 ## Immediate Sequence
 
-1. Approve exact V1 Software Architecture v0.2.
-2. Record a separate Freeze as V1 Software Architecture v1.0 and close M8.
-3. Prepare development prompts, implementation backlog and repository skeleton.
+1. Prepare the implementation backlog and delivery sequence.
+2. Create the application monorepo skeleton under the Frozen architecture.
+3. Implement the first vertical slice with tests and migration controls.
 
 ## Gate Rules
 

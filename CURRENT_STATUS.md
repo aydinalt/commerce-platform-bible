@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.5
+Version:      2.6
 Last Updated: 2026-07-25
 -->
 
@@ -14,7 +14,7 @@ Last Updated: 2026-07-25
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Marketplace Bible v1.0 documentation baseline Frozen |
-| Current phase | Software architecture Owner Approval gate |
+| Current phase | Development planning and repository skeleton preparation |
 | Development | Not Started |
 | Delivery Status of all Frozen Stories | Not Started |
 
@@ -33,7 +33,7 @@ Last Updated: 2026-07-25
 | User Stories | 6 Parent Story Documents and 50 Generated Stories are Frozen |
 | Traceability | Frozen v1.0; all 50 Feature-level chains validated with PASS |
 | Engineering | `ENGINEERING_CONSTITUTION.md` is Frozen v1.0 |
-| V1 Software Architecture | Final Review PASS; exact package is In Review v0.2 and ready for Owner Approval |
+| V1 Software Architecture | Owner Approved and Frozen v1.0 |
 
 ## Frozen User Story Inventory
 
@@ -58,8 +58,8 @@ Last Updated: 2026-07-25
 
 ## Remaining Work
 
-1. Record Owner Approval and separate Freeze of exact V1 Software Architecture v0.2 as v1.0.
-2. Prepare implementation backlogs, repository skeleton and development prompts after Architecture Freeze.
+1. Prepare the implementation backlog and delivery sequence under the Frozen architecture.
+2. Create the application monorepo skeleton and begin the first governed vertical slice.
 
 ## Known Boundaries
 
@@ -79,3 +79,4 @@ Last Updated: 2026-07-25
 | 2.3 | 2026-07-25 | Closed the Engineering Constitution review record and recorded explicit Owner Approval followed by a separate Freeze of v1.0. |
 | 2.4 | 2026-07-25 | Closed the Marketplace Bible v1.0 Final Freeze Gate, reconciled Foundation lifecycle metadata, and opened the Software Architecture phase. |
 | 2.5 | 2026-07-25 | Accepted ADR-0010–ADR-0014, recorded V1 Software Architecture Final Review PASS, and opened the Owner Approval gate. |
+| 2.6 | 2026-07-25 | Recorded Owner Approval and the separate V1 Software Architecture v1.0 Freeze; closed M8 and opened development planning. |

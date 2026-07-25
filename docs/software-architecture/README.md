@@ -1,8 +1,8 @@
 # V1 Software Architecture
 
 - **Owner:** Architecture Owner
-- **Status:** In Review
-- **Version:** 0.2
+- **Status:** Frozen
+- **Version:** 1.0
 - **Last Updated:** 2026-07-25
 - **Baseline:** Marketplace Bible v1.0 Frozen baseline
 
@@ -22,11 +22,11 @@ This directory translates the Frozen product baseline into an implementation-rea
 | `V1_INFRASTRUCTURE_ARCHITECTURE.md` | Environments, deployment units, CI/CD, observability and recovery |
 | `V1_ARCHITECTURE_ADR_ASSESSMENT.md` | Decisions requiring ADR acceptance before production implementation |
 
-**Revision Note (0.2):** ADR-0010 through ADR-0014 were accepted as v1.0. Formal Final Review passed with no blocker or major finding; this exact architecture package is ready for Owner Approval and remains non-Frozen until that separate lifecycle decision.
+**Freeze Note (1.0):** The Product Owner approved the exact Final Review v0.2 package on 2026-07-25 and separately authorized its freeze as the canonical V1 Software Architecture v1.0 baseline. No technical behavior changed during the lifecycle transition.
 
 ## Status Meaning
 
-This package is an In Review architecture baseline. Its governing decisions are authoritative through Accepted ADR-0010–ADR-0014, while the package itself awaits Owner Approval and a separate Freeze decision.
+This directory is the Frozen V1 Software Architecture v1.0 baseline. Changes require the governed lifecycle and an ADR where a qualifying architecture decision changes.
 
 ## Governing Principles
 

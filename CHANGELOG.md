@@ -10,6 +10,22 @@ This project follows the principles of:
 
 ---
 
+## [2.6.0] - 2026-07-25
+
+### Approved
+
+- The Product Owner approved the exact V1 Software Architecture Final Review v0.2 candidate.
+
+### Frozen
+
+- V1 Software Architecture v1.0, covering backend, frontend, data, security, infrastructure and system architecture.
+
+### Confirmed
+
+- The lifecycle transition introduced no technical-behavior or product-scope change.
+- ADR-0010 through ADR-0014 remain Accepted v1.0.
+- M8 Software Architecture is complete; development remains Not Started.
+
 ## [2.5.0] - 2026-07-25
 
 ### Accepted

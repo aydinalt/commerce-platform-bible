@@ -1,11 +1,11 @@
 # V1 Infrastructure Architecture
 
 - **Owner:** Architecture Owner
-- **Status:** In Review
-- **Version:** 0.2
+- **Status:** Frozen
+- **Version:** 1.0
 - **Last Updated:** 2026-07-25
 
-**Revision Note (0.2):** Governing ADR-0013 was accepted as v1.0; the exact document passed Final Review without behavior changes.
+**Freeze Note (1.0):** Owner Approved and separately Frozen on 2026-07-25 from the exact Final Review v0.2 candidate; no technical behavior changed.
 
 ## 1. Deployment Units
 

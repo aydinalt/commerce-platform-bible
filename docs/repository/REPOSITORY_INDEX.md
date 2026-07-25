@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.6
+Version:      1.7
 Last Updated: 2026-07-25
 -->
 
@@ -43,6 +43,9 @@ Last Updated: 2026-07-25
 | `docs/reviews/TRACEABILITY_ARCHITECTURE_AND_FINAL_REVIEW_2026-07-25.md` | Repository-wide Feature-level traceability validation |
 | `docs/reviews/ENGINEERING_CONSTITUTION_REVIEW_CLOSURE_2026-07-25.md` | Engineering Constitution repository-current closure validation and lifecycle evidence |
 | `docs/reviews/MARKETPLACE_BIBLE_V1_FINAL_FREEZE_GATE_2026-07-25.md` | Repository-wide Final Freeze Gate evidence |
+| `docs/reviews/V1_SOFTWARE_ARCHITECTURE_REVIEW_2026-07-25.md` | V1 Software Architecture formal Architecture Review evidence |
+| `docs/reviews/V1_SOFTWARE_ARCHITECTURE_FINAL_REVIEW_2026-07-25.md` | V1 Software Architecture Final Review and ADR acceptance evidence |
+| `docs/reviews/V1_SOFTWARE_ARCHITECTURE_OWNER_APPROVAL_AND_FREEZE_2026-07-25.md` | Exact v0.2 Owner Approval and separate V1 Software Architecture v1.0 Freeze evidence |
 | `docs/reviews/V1_SOFTWARE_ARCHITECTURE_REVIEW_2026-07-25.md` | Formal Architecture Review and ADR decision readiness |
 | `docs/reviews/V1_SOFTWARE_ARCHITECTURE_FINAL_REVIEW_2026-07-25.md` | ADR acceptance and Final Review evidence |
 
