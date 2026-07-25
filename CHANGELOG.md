@@ -10,6 +10,27 @@ This project follows the principles of:
 
 ---
 
+## [2.8.0] - 2026-07-25
+
+### Added
+
+- Prisma 7 PostgreSQL schema and controlled initial migration for the first
+  vertical-slice data boundary.
+- Database-owned typed-value, lifecycle, version, outbox, full-text, and
+  trigram invariants.
+- Reproducible OpenAPI 3.1 contract generation and contract test.
+- Enforced module dependency rules and CI PostgreSQL migration application.
+- First safe vertical-slice readiness record and negative authorization matrix.
+
+### Verified
+
+- Prisma validation, formatting, lint, boundary checks, strict TypeScript,
+  contract tests, non-Web builds, and dependency audit pass locally.
+- No Critical or High dependency vulnerability is reported.
+- PostgreSQL migration application and Next.js production build remain target
+  CI evidence; I0 is not yet closed.
+- All Frozen Generated Stories remain `Delivery Status: Not Started`.
+
 ## [2.7.0] - 2026-07-25
 
 ### Added

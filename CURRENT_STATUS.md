@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.7
+Version:      2.8
 Last Updated: 2026-07-25
 -->
 
@@ -13,8 +13,8 @@ Last Updated: 2026-07-25
 | Item | Current state |
 |---|---|
 | Repository | Commerce Platform Bible |
-| Repository health | Frozen documentation and architecture baselines; implementation foundation prepared |
-| Current phase | M9 Development — repository foundation |
+| Repository health | Frozen baselines; I0 database/API/boundary foundation prepared for target-CI evidence |
+| Current phase | M9 Development — I0 foundation validation |
 | Development | In Progress at foundation level; no product Story started |
 | Delivery Status of all Frozen Stories | Not Started |
 
@@ -58,7 +58,7 @@ Last Updated: 2026-07-25
 
 ## Remaining Work
 
-1. Complete I0 with CI, Prisma migration baseline, OpenAPI generation, boundary checks, and target-environment Next.js build evidence.
+1. Apply the initial Prisma migration and complete the full verification chain in target CI, including the Next.js production build.
 2. Begin the first governed vertical slice only after the I0 gate passes.
 
 ## Known Boundaries
@@ -68,6 +68,7 @@ Last Updated: 2026-07-25
 - Platform Parent and Generated Story lifecycle metadata now carries the missing Freeze evidence for the already-authorized 2026-07-25 Owner Freeze; Story behaviour and Delivery Status are unchanged.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
 - The restricted verification environment cannot expose the process-memory interface required by `next build`; the web production build must be rerun in target CI.
+- This environment has no Docker executable, so PostgreSQL migration application remains a target-CI gate even though Prisma schema validation passed.
 
 ## Revision History
 
@@ -82,3 +83,4 @@ Last Updated: 2026-07-25
 | 2.5 | 2026-07-25 | Accepted ADR-0010–ADR-0014, recorded V1 Software Architecture Final Review PASS, and opened the Owner Approval gate. |
 | 2.6 | 2026-07-25 | Recorded Owner Approval and the separate V1 Software Architecture v1.0 Freeze; closed M8 and opened development planning. |
 | 2.7 | 2026-07-25 | Added the 50-Story implementation backlog, delivery sequence, and executable TypeScript monorepo foundation; opened M9 without starting a product Story. |
+| 2.8 | 2026-07-25 | Prepared the initial Prisma/PostgreSQL migration, reproducible OpenAPI contract, module-boundary enforcement, security audit gate, and first vertical-slice entry evidence; I0 remains open pending target CI. |

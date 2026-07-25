@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum BusinessStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+  RETIRED
+}
+
+enum OfferingStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+enum AttributeValueKind {
+  TEXT
+  INTEGER
+  DECIMAL
+  BOOLEAN
+  DATE
+  OPTION
+}
+
+enum PublicationStatus {
+  PENDING
+  ELIGIBLE
+  INELIGIBLE
+  WITHDRAWN
+}
+
+model UserAccount {
+  id              String          @id @default(uuid()) @db.Uuid
+  email           String          @unique @db.VarChar(320)
+  emailVerifiedAt DateTime?       @map("email_verified_at") @db.Timestamptz(6)
+  status          AccountStatus   @default(PENDING_VERIFICATION)
+  version         Int             @default(1)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  businessOwners  BusinessOwner[]
+
+  @@map("user_account")
+}
+
+model Business {
+  id        String          @id @default(uuid()) @db.Uuid
+  slug      String          @unique @db.VarChar(120)
+  name      String          @db.VarChar(200)
+  status    BusinessStatus  @default(DRAFT)
+  version   Int             @default(1)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  owners    BusinessOwner[]
+  offerings Offering[]
+
+  @@map("business")
+}
+
+model BusinessOwner {
+  businessId String      @map("business_id") @db.Uuid
+  userId     String      @map("user_id") @db.Uuid
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  business   Business    @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  user       UserAccount @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([businessId, userId])
+  @@index([userId])
+  @@map("business_owner")
+}
+
+model Domain {
+  id         String     @id @default(uuid()) @db.Uuid
+  stableKey  String     @unique @map("stable_key") @db.VarChar(80)
+  slug       String     @unique @db.VarChar(120)
+  name       String     @db.VarChar(160)
+  active     Boolean    @default(true)
+  categories Category[]
+
+  @@map("domain")
+}
+
+model Category {
+  id         String              @id @default(uuid()) @db.Uuid
+  domainId   String              @map("domain_id") @db.Uuid
+  parentId   String?             @map("parent_id") @db.Uuid
+  stableKey  String              @unique @map("stable_key") @db.VarChar(100)
+  slug       String              @db.VarChar(120)
+  name       String              @db.VarChar(160)
+  active     Boolean             @default(true)
+  domain     Domain              @relation(fields: [domainId], references: [id], onDelete: Restrict)
+  parent     Category?           @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children   Category[]          @relation("CategoryTree")
+  attributes CategoryAttribute[]
+  offerings  Offering[]
+
+  @@unique([domainId, slug])
+  @@index([parentId])
+  @@map("category")
+}
+
+model AttributeDefinition {
+  id         String                   @id @default(uuid()) @db.Uuid
+  stableKey  String                   @unique @map("stable_key") @db.VarChar(100)
+  name       String                   @db.VarChar(160)
+  valueKind  AttributeValueKind       @map("value_kind")
+  searchable Boolean                  @default(false)
+  filterable Boolean                  @default(false)
+  active     Boolean                  @default(true)
+  options    AttributeOption[]
+  categories CategoryAttribute[]
+  values     OfferingAttributeValue[]
+
+  @@map("attribute_definition")
+}
+
+model AttributeOption {
+  id                    String                   @id @default(uuid()) @db.Uuid
+  attributeDefinitionId String                   @map("attribute_definition_id") @db.Uuid
+  stableKey             String                   @map("stable_key") @db.VarChar(100)
+  label                 String                   @db.VarChar(160)
+  sortOrder             Int                      @default(0) @map("sort_order")
+  active                Boolean                  @default(true)
+  attributeDefinition   AttributeDefinition      @relation(fields: [attributeDefinitionId], references: [id], onDelete: Restrict)
+  offeringValues        OfferingAttributeValue[]
+
+  @@unique([attributeDefinitionId, stableKey])
+  @@map("attribute_option")
+}
+
+model CategoryAttribute {
+  categoryId            String              @map("category_id") @db.Uuid
+  attributeDefinitionId String              @map("attribute_definition_id") @db.Uuid
+  required              Boolean             @default(false)
+  sortOrder             Int                 @default(0) @map("sort_order")
+  category              Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  attributeDefinition   AttributeDefinition @relation(fields: [attributeDefinitionId], references: [id], onDelete: Restrict)
+
+  @@id([categoryId, attributeDefinitionId])
+  @@map("category_attribute")
+}
+
+model Offering {
+  id           String                    @id @default(uuid()) @db.Uuid
+  businessId   String                    @map("business_id") @db.Uuid
+  categoryId   String                    @map("category_id") @db.Uuid
+  slug         String                    @db.VarChar(160)
+  title        String                    @db.VarChar(240)
+  summary      String?                   @db.VarChar(1000)
+  status       OfferingStatus            @default(DRAFT)
+  version      Int                       @default(1)
+  publishedAt  DateTime?                 @map("published_at") @db.Timestamptz(6)
+  retiredAt    DateTime?                 @map("retired_at") @db.Timestamptz(6)
+  createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  business     Business                  @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  category     Category                  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  attributes   OfferingAttributeValue[]
+  publications OfferingPublication[]
+  projection   OfferingSearchProjection?
+
+  @@unique([businessId, slug])
+  @@index([categoryId, status])
+  @@map("offering")
+}
+
+model OfferingAttributeValue {
+  offeringId            String              @map("offering_id") @db.Uuid
+  attributeDefinitionId String              @map("attribute_definition_id") @db.Uuid
+  textValue             String?             @map("text_value")
+  integerValue          BigInt?             @map("integer_value")
+  decimalValue          Decimal?            @map("decimal_value") @db.Decimal(24, 8)
+  booleanValue          Boolean?            @map("boolean_value")
+  dateValue             DateTime?           @map("date_value") @db.Date
+  optionId              String?             @map("option_id") @db.Uuid
+  offering              Offering            @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  attributeDefinition   AttributeDefinition @relation(fields: [attributeDefinitionId], references: [id], onDelete: Restrict)
+  option                AttributeOption?    @relation(fields: [optionId], references: [id], onDelete: Restrict)
+
+  @@id([offeringId, attributeDefinitionId])
+  @@index([attributeDefinitionId])
+  @@map("offering_attribute_value")
+}
+
+model OfferingPublication {
+  id                 String            @id @default(uuid()) @db.Uuid
+  offeringId         String            @map("offering_id") @db.Uuid
+  status             PublicationStatus @default(PENDING)
+  eligibilityVersion Int               @map("eligibility_version")
+  reasonCode         String?           @map("reason_code") @db.VarChar(100)
+  evaluatedAt        DateTime          @default(now()) @map("evaluated_at") @db.Timestamptz(6)
+  offering           Offering          @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+
+  @@unique([offeringId, eligibilityVersion])
+  @@index([status, evaluatedAt])
+  @@map("offering_publication")
+}
+
+model OfferingSearchProjection {
+  offeringId         String   @id @map("offering_id") @db.Uuid
+  businessId         String   @map("business_id") @db.Uuid
+  domainId           String   @map("domain_id") @db.Uuid
+  categoryId         String   @map("category_id") @db.Uuid
+  title              String   @db.VarChar(240)
+  summary            String?
+  businessName       String   @map("business_name") @db.VarChar(200)
+  searchableText     String   @map("searchable_text")
+  filterValues       Json     @map("filter_values")
+  publishedAt        DateTime @map("published_at") @db.Timestamptz(6)
+  eligibilityVersion Int      @map("eligibility_version")
+  projectedAt        DateTime @default(now()) @map("projected_at") @db.Timestamptz(6)
+  offering           Offering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  @@index([domainId, categoryId, publishedAt])
+  @@map("offering_search_projection")
+}
+
+model AuditRecord {
+  id                  String   @id @default(uuid()) @db.Uuid
+  actorUserId         String?  @map("actor_user_id") @db.Uuid
+  effectiveBusinessId String?  @map("effective_business_id") @db.Uuid
+  action              String   @db.VarChar(120)
+  targetType          String   @map("target_type") @db.VarChar(100)
+  targetId            String?  @map("target_id") @db.Uuid
+  result              String   @db.VarChar(40)
+  reason              String?
+  correlationId       String   @map("correlation_id") @db.Uuid
+  safeMetadata        Json?    @map("safe_metadata")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([targetType, targetId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@map("audit_record")
+}
+
+model OutboxEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  aggregateType String    @map("aggregate_type") @db.VarChar(100)
+  aggregateId   String    @map("aggregate_id") @db.Uuid
+  eventType     String    @map("event_type") @db.VarChar(160)
+  payload       Json
+  occurredAt    DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  availableAt   DateTime  @default(now()) @map("available_at") @db.Timestamptz(6)
+  processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
+  attempts      Int       @default(0)
+
+  @@index([processedAt, availableAt])
+  @@index([aggregateType, aggregateId])
+  @@map("outbox_event")
+}

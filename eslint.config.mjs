@@ -23,6 +23,7 @@ export default tseslint.config(
         projectService: {
           allowDefaultProject: [
             "*.mjs",
+            "prisma.config.ts",
             "apps/web/next.config.ts",
             "tests/*.ts"
           ]

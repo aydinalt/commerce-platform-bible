@@ -13,37 +13,48 @@
     "modules/*"
   ],
   "overrides": {
+    "@fastify/static": "10.1.2",
     "@nestjs/platform-fastify": {
       "find-my-way": "9.7.0"
     },
     "fastify": {
       "find-my-way": "9.7.0"
     },
+    "find-my-way": "9.7.0",
+    "js-yaml": "5.2.2",
     "next": {
       "postcss": "8.5.23",
       "sharp": "0.35.3"
-    }
+    },
+    "valibot": "1.4.2"
   },
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present && npm run build --workspace=@commerce/web",
     "dev": "npm run dev --workspace=@commerce/web",
     "dev:api": "npm run dev --workspace=@commerce/api",
     "dev:worker": "npm run dev --workspace=@commerce/worker",
-    "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,json}\" \"packages/**/*.{ts,json}\" \"modules/**/*.{ts,json}\" \"tests/**/*.ts\" \"*.{json,mjs,yaml}\"",
+    "db:deploy": "prisma migrate deploy",
+    "db:validate": "prisma validate",
+    "boundaries": "depcruise apps packages modules --config dependency-cruiser.config.mjs",
+    "openapi:generate": "npm run openapi:generate --workspace=@commerce/api",
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,json}\" \"packages/**/*.{ts,json}\" \"modules/**/*.{ts,json}\" \"tests/**/*.ts\" \"generated/**/*.json\" \"*.{json,mjs,ts,yaml}\"",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc -b --pretty false",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "security:audit": "npm audit --audit-level=high",
+    "verify": "npm run db:validate && npm run openapi:generate && npm run format:check && npm run lint && npm run boundaries && npm run typecheck && npm run test && npm run security:audit && npm run build"
   },
   "devDependencies": {
-    "@eslint/js": "^9.32.0",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^24.1.0",
-    "eslint": "^9.32.0",
+    "dependency-cruiser": "^18.1.0",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.3.0",
     "prettier": "^3.6.2",
+    "prisma": "^7.9.0",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.38.0",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.10"
   }
 }

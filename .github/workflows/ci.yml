@@ -16,6 +16,22 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: commerce
+          POSTGRES_PASSWORD: commerce
+          POSTGRES_USER: commerce
+        options: >-
+          --health-cmd "pg_isready -U commerce -d commerce"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgresql://commerce:commerce@localhost:5432/commerce
     steps:
       - uses: actions/checkout@v4
 
@@ -25,4 +41,6 @@ jobs:
           node-version-file: .nvmrc
 
       - run: npm ci
+      - run: npm run db:deploy
       - run: npm run verify
+      - run: git diff --exit-code -- generated/openapi.json
