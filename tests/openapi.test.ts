@@ -18,5 +18,14 @@ describe("generated OpenAPI contract", () => {
     expect(document.paths["/api/v1/health/ready"]?.get?.operationId).toBe(
       "getReadiness"
     );
+    expect(
+      document.paths["/api/v1/businesses/{businessId}/offerings"]?.post
+        ?.operationId
+    ).toBe("createDraftOffering");
+    expect(
+      document.paths[
+        "/api/v1/businesses/{businessId}/offerings/{offeringId}"
+      ]?.get?.operationId
+    ).toBe("getDraftOffering");
   });
 });

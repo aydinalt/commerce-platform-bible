@@ -21,6 +21,11 @@ enum BusinessStatus {
   RETIRED
 }
 
+enum BusinessModerationStatus {
+  UNRESTRICTED
+  RESTRICTED
+}
+
 enum OfferingStatus {
   DRAFT
   PUBLISHED
@@ -66,8 +71,19 @@ model Business {
   updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   owners    BusinessOwner[]
   offerings Offering[]
+  moderationState BusinessModerationState?
 
   @@map("business")
+}
+
+model BusinessModerationState {
+  businessId String                   @id @map("business_id") @db.Uuid
+  status     BusinessModerationStatus @default(UNRESTRICTED)
+  reasonCode String?                  @map("reason_code") @db.VarChar(100)
+  updatedAt  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  business   Business                 @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("business_moderation_state")
 }
 
 model BusinessOwner {
