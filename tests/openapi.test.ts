@@ -8,7 +8,13 @@ describe("generated OpenAPI contract", () => {
       await readFile("generated/openapi.json", "utf8")
     ) as {
       info: { version: string };
-      paths: Record<string, { get?: { operationId?: string } }>;
+      paths: Record<
+        string,
+        {
+          get?: { operationId?: string };
+          post?: { operationId?: string };
+        }
+      >;
     };
 
     expect(document.info.version).toBe("1.0.0");
@@ -23,9 +29,8 @@ describe("generated OpenAPI contract", () => {
         ?.operationId
     ).toBe("createDraftOffering");
     expect(
-      document.paths[
-        "/api/v1/businesses/{businessId}/offerings/{offeringId}"
-      ]?.get?.operationId
+      document.paths["/api/v1/businesses/{businessId}/offerings/{offeringId}"]
+        ?.get?.operationId
     ).toBe("getDraftOffering");
   });
 });

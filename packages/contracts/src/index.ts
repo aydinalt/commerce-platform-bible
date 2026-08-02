@@ -28,6 +28,7 @@ export const draftOfferingSchema = createDraftOfferingSchema.extend({
   createdAt: z.string().datetime(),
   id: z.string().uuid(),
   status: z.literal("DRAFT"),
+  summary: z.string().max(1000).nullable(),
   updatedAt: z.string().datetime(),
   version: z.number().int().positive()
 });

@@ -29,6 +29,7 @@ describe("Milestone 11 contracts", () => {
         id,
         slug: "safe-draft",
         status: "DRAFT",
+        summary: null,
         title: "Safe draft",
         updatedAt: now,
         version: 1

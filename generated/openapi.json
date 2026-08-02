@@ -26,6 +26,45 @@
         },
         "required": ["service", "status"],
         "type": "object"
+      },
+      "CreateDraftOffering": {
+        "additionalProperties": false,
+        "properties": {
+          "categoryId": { "format": "uuid", "type": "string" },
+          "slug": { "maxLength": 160, "minLength": 1, "type": "string" },
+          "summary": { "maxLength": 1000, "type": "string" },
+          "title": { "maxLength": 240, "minLength": 1, "type": "string" }
+        },
+        "required": ["categoryId", "slug", "title"],
+        "type": "object"
+      },
+      "DraftOffering": {
+        "additionalProperties": false,
+        "properties": {
+          "businessId": { "format": "uuid", "type": "string" },
+          "categoryId": { "format": "uuid", "type": "string" },
+          "createdAt": { "format": "date-time", "type": "string" },
+          "id": { "format": "uuid", "type": "string" },
+          "slug": { "type": "string" },
+          "status": { "enum": ["DRAFT"], "type": "string" },
+          "summary": { "type": ["string", "null"] },
+          "title": { "type": "string" },
+          "updatedAt": { "format": "date-time", "type": "string" },
+          "version": { "minimum": 1, "type": "integer" }
+        },
+        "required": [
+          "businessId",
+          "categoryId",
+          "createdAt",
+          "id",
+          "slug",
+          "status",
+          "summary",
+          "title",
+          "updatedAt",
+          "version"
+        ],
+        "type": "object"
       }
     }
   },
@@ -36,6 +75,72 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/businesses/{businessId}/offerings": {
+      "post": {
+        "operationId": "createDraftOffering",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateDraftOffering" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DraftOffering" }
+              }
+            },
+            "description": "Draft Offering created"
+          },
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Business or catalog resource not found" },
+          "409": { "description": "Offering slug conflict" }
+        },
+        "tags": ["Offering"]
+      }
+    },
+    "/api/v1/businesses/{businessId}/offerings/{offeringId}": {
+      "get": {
+        "operationId": "getDraftOffering",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DraftOffering" }
+              }
+            },
+            "description": "Owned Draft Offering"
+          },
+          "404": { "description": "Offering not found" }
+        },
+        "tags": ["Offering"]
+      }
+    },
     "/api/v1/health/live": {
       "get": {
         "operationId": "getLiveness",

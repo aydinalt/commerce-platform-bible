@@ -11,6 +11,11 @@
   "references": [
     { "path": "../../packages/config" },
     { "path": "../../packages/contracts" },
-    { "path": "../../packages/observability" }
+    { "path": "../../packages/observability" },
+    { "path": "../../modules/audit" },
+    { "path": "../../modules/business" },
+    { "path": "../../modules/catalog" },
+    { "path": "../../modules/identity" },
+    { "path": "../../modules/offering" }
   ]
 }
