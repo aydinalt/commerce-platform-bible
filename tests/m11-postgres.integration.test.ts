@@ -53,32 +53,44 @@ suite("Milestone 11 PostgreSQL integration", () => {
   });
 
   it("creates the offering and audit record atomically", async () => {
-    const offering = await repository.create({
+    const slug = `draft-${randomUUID()}`;
+    await repository.create({
       businessId,
       categoryId,
       correlationId: randomUUID(),
-      slug: `draft-${randomUUID()}`,
+      slug,
       title: "Safe draft",
       userId
     });
-    const audit = await pool.query(
-      `select 1 from audit_record where target_id = $1 and action = 'offering.draft.create'`,
-      [offering.id]
+    const audit = await pool.query<{ auditCount: number }>(
+      `select count(*)::int as "auditCount"
+       from audit_record a
+       join offering o on o.id = a.target_id
+       where o.slug = $1 and a.action = 'offering.draft.create'`,
+      [slug]
     );
-    expect(audit.rowCount).toBe(1);
+    expect(audit.rows[0]?.auditCount).toBe(1);
   });
 
   it("does not expose an offering through another business", async () => {
-    const offering = await repository.create({
+    const slug = `isolated-${randomUUID()}`;
+    await repository.create({
       businessId,
       categoryId,
       correlationId: randomUUID(),
-      slug: `isolated-${randomUUID()}`,
+      slug,
       title: "Tenant isolated draft",
       userId
     });
+    const created = await pool.query<{ id: string }>(
+      `select id from offering where slug = $1`,
+      [slug]
+    );
+    const offeringId = created.rows[0]?.id;
+    expect(offeringId).toBeDefined();
+    if (!offeringId) throw new Error("OFFERING_NOT_FOUND");
     await expect(
-      repository.findOwned(otherBusinessId, offering.id)
+      repository.findOwned(otherBusinessId, offeringId)
     ).resolves.toBeNull();
   });
 });
