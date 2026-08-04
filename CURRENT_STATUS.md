@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.8
-Last Updated: 2026-07-25
+Version:      2.10
+Last Updated: 2026-08-04
 -->
 
 # CURRENT STATUS
@@ -13,9 +13,9 @@ Last Updated: 2026-07-25
 | Item | Current state |
 |---|---|
 | Repository | Commerce Platform Bible |
-| Repository health | Frozen baselines; I0 database/API/boundary foundation prepared for target-CI evidence |
-| Current phase | M9 Development — I0 foundation validation |
-| Development | In Progress at foundation level; no product Story started |
+| Repository health | Frozen baselines; first safe vertical slice implemented and locally verified against PostgreSQL |
+| Current phase | M11 First Safe Vertical Slice — awaiting target-CI evidence |
+| Development | Draft Offering write and owned read path implemented; no product Story started |
 | Delivery Status of all Frozen Stories | Not Started |
 
 ## Canonical Layer Status
@@ -56,10 +56,29 @@ Last Updated: 2026-07-25
 - No Feature, Capability, PRD behaviour, UX behaviour, Story behaviour, or Delivery Status was created or changed by repository reconciliation.
 - Offering Capability Architecture v2.0 completed Owner Approval and separate Owner Freeze on 2026-07-25, closing the authoritative capability-home gap for F06 and F07.
 
+## Milestone 11 Slice State
+
+| Boundary | State |
+|---|---|
+| Draft Offering aggregate and audit record written atomically | Implemented |
+| Tenant-scoped authorization with `ALLOWED` and `DENIED` audit evidence | Implemented |
+| Owned read-back scoped by `business_id` | Implemented |
+| Published `ErrorEnvelope` on every failure response | Implemented |
+| Readiness probe gated on PostgreSQL reachability | Implemented |
+| Untrusted identifiers rejected at the edge rather than in the driver | Implemented |
+| Business creation, publication, Discovery projection, outbox | Deferred — see `docs/implementation/M11_SLICE_SCOPE_RECONCILIATION.md` |
+
+Prisma's `@default(uuid())` and `@updatedAt` are Prisma Client behaviours and were
+never emitted as database defaults, so every raw-SQL insert violated a NOT NULL
+constraint. Migration `20260804000100_updated_at_defaults` moves both
+responsibilities into PostgreSQL, where the raw-SQL persistence layer can rely on
+them.
+
 ## Remaining Work
 
-1. Apply the initial Prisma migration and complete the full verification chain in target CI, including the Next.js production build.
-2. Begin the first governed vertical slice only after the I0 gate passes.
+1. Complete the full verification chain in target CI, including the Next.js production build and the new schema-drift gate.
+2. Select the Frozen Stories this slice implements and record implementation links without changing Story intent.
+3. Begin the publication and Discovery projection increment, which introduces the first outbox event with a real consumer.
 
 ## Known Boundaries
 
@@ -67,8 +86,9 @@ Last Updated: 2026-07-25
 - `UX-0007 Messaging` is retained as historical Draft v0.2 outside the Frozen V1 baseline and is not required by any validated V1 Feature chain.
 - Platform Parent and Generated Story lifecycle metadata now carries the missing Freeze evidence for the already-authorized 2026-07-25 Owner Freeze; Story behaviour and Delivery Status are unchanged.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
-- The restricted verification environment cannot expose the process-memory interface required by `next build`; the web production build must be rerun in target CI.
-- This environment has no Docker executable, so PostgreSQL migration application remains a target-CI gate even though Prisma schema validation passed.
+- Migrations, the full test suite and the Next.js production build were verified locally against PostgreSQL 18; target CI runs PostgreSQL 17 and remains the authoritative evidence.
+- `prisma validate` and `prisma migrate diff` could not be executed in the verification environment because the Prisma engine host is unreachable there. The schema-drift gate therefore runs for the first time in target CI.
+- Authentication is still the `TestPrincipalAdapter` stub. It refuses to construct when `NODE_ENV=production` and `ENABLE_TEST_PRINCIPAL=true`, and every authenticated route answers 401 while the flag is unset. Real authentication belongs to the Identity baseline increment.
 
 ## Revision History
 
@@ -84,3 +104,5 @@ Last Updated: 2026-07-25
 | 2.6 | 2026-07-25 | Recorded Owner Approval and the separate V1 Software Architecture v1.0 Freeze; closed M8 and opened development planning. |
 | 2.7 | 2026-07-25 | Added the 50-Story implementation backlog, delivery sequence, and executable TypeScript monorepo foundation; opened M9 without starting a product Story. |
 | 2.8 | 2026-07-25 | Prepared the initial Prisma/PostgreSQL migration, reproducible OpenAPI contract, module-boundary enforcement, security audit gate, and first vertical-slice entry evidence; I0 remains open pending target CI. |
+| 2.9 | 2026-08-04 | Implemented the first safe vertical slice: database-level identifier and timestamp defaults, tenant-scoped authorization with DENIED audit evidence, published error envelope, conflict reporting, dependency-gated readiness, negative authorization coverage, and a schema-drift gate. Recorded the outbox descope. Delivery Status unchanged. |
+| 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |

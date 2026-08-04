@@ -11,6 +11,19 @@ export interface DraftOfferingRecord {
   version: number;
 }
 
+/**
+ * Raised when the tenant-scoped `(business_id, slug)` uniqueness rule is
+ * violated. The persistence adapter translates the driver-level constraint
+ * error into this domain error so the interface layer never inspects
+ * PostgreSQL error codes.
+ */
+export class OfferingSlugConflictError extends Error {
+  constructor(readonly slug: string) {
+    super("OFFERING_SLUG_CONFLICT");
+    this.name = "OfferingSlugConflictError";
+  }
+}
+
 export interface DraftOfferingRepository {
   create(input: {
     businessId: string;

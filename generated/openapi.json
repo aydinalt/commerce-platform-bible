@@ -45,9 +45,9 @@
           "categoryId": { "format": "uuid", "type": "string" },
           "createdAt": { "format": "date-time", "type": "string" },
           "id": { "format": "uuid", "type": "string" },
-          "slug": { "type": "string" },
+          "slug": { "maxLength": 160, "minLength": 1, "type": "string" },
           "status": { "enum": ["DRAFT"], "type": "string" },
-          "summary": { "type": ["string", "null"] },
+          "summary": { "maxLength": 1000, "type": ["string", "null"] },
           "title": { "type": "string" },
           "updatedAt": { "format": "date-time", "type": "string" },
           "version": { "minimum": 1, "type": "integer" }
@@ -103,9 +103,46 @@
             },
             "description": "Draft Offering created"
           },
-          "400": { "description": "Invalid request" },
-          "404": { "description": "Business or catalog resource not found" },
-          "409": { "description": "Offering slug conflict" }
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Business cannot author offerings"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Business or catalog resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Offering slug conflict"
+          }
         },
         "tags": ["Offering"]
       }
@@ -136,7 +173,38 @@
             },
             "description": "Owned Draft Offering"
           },
-          "404": { "description": "Offering not found" }
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Account is not active"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Offering not found"
+          }
         },
         "tags": ["Offering"]
       }
@@ -168,6 +236,14 @@
               }
             },
             "description": "Service is healthy"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Health"]

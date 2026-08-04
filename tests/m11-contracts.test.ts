@@ -42,4 +42,21 @@ describe("Milestone 11 contracts", () => {
       "TEST_PRINCIPAL_FORBIDDEN_IN_PRODUCTION"
     );
   });
+
+  it("refuses a principal whose identifiers are not well formed", () => {
+    const adapter = new TestPrincipalAdapter("test", true);
+    const headers = {
+      "x-correlation-id": id,
+      "x-test-session-id": id,
+      "x-test-user-id": id
+    };
+
+    expect(adapter.resolve(headers)).toMatchObject({ userId: id });
+
+    for (const header of Object.keys(headers)) {
+      expect(() =>
+        adapter.resolve({ ...headers, [header]: "'; drop table x; --" })
+      ).toThrow("TEST_PRINCIPAL_MALFORMED");
+    }
+  });
 });

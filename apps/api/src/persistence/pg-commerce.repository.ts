@@ -8,12 +8,24 @@ import type {
 } from "@commerce/business";
 import type { CatalogReader } from "@commerce/catalog";
 import type { IdentityReader } from "@commerce/identity";
-import type {
-  DraftOfferingRecord,
-  DraftOfferingRepository
+import {
+  OfferingSlugConflictError,
+  type DraftOfferingRecord,
+  type DraftOfferingRepository
 } from "@commerce/offering";
 
 type OfferingInput = Parameters<DraftOfferingRepository["create"]>[0];
+
+const UNIQUE_VIOLATION = "23505";
+const OFFERING_SLUG_CONSTRAINT = "offering_business_id_slug_key";
+
+function isUniqueViolation(error: unknown, constraint: string): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const candidate = error as { code?: unknown; constraint?: unknown };
+  return (
+    candidate.code === UNIQUE_VIOLATION && candidate.constraint === constraint
+  );
+}
 
 @Injectable()
 export class PgCommerceRepository
@@ -31,6 +43,20 @@ export class PgCommerceRepository
 
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();
+  }
+
+  /**
+   * Readiness must reflect the dependency the process cannot serve without.
+   * A probe that answers from process memory reports healthy while every
+   * request fails.
+   */
+  async isDatabaseReachable(): Promise<boolean> {
+    try {
+      await this.pool.query("select 1");
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async isEnabled(userId: string): Promise<boolean> {
@@ -107,6 +133,8 @@ export class PgCommerceRepository
       return offering;
     } catch (error) {
       await client.query("rollback");
+      if (isUniqueViolation(error, OFFERING_SLUG_CONSTRAINT))
+        throw new OfferingSlugConflictError(input.slug);
       throw error;
     } finally {
       client.release();

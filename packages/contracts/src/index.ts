@@ -16,12 +16,17 @@ export const errorEnvelopeSchema = z.object({
 
 export type ErrorEnvelope = z.infer<typeof errorEnvelopeSchema>;
 
-export const createDraftOfferingSchema = z.object({
-  categoryId: z.string().uuid(),
-  slug: z.string().min(1).max(160),
-  summary: z.string().max(1000).optional(),
-  title: z.string().min(1).max(240)
-});
+// `.strict()` keeps the runtime honest about the published
+// `additionalProperties: false`. Silently dropping unknown keys would let a
+// caller believe a field was accepted when it was ignored.
+export const createDraftOfferingSchema = z
+  .object({
+    categoryId: z.string().uuid(),
+    slug: z.string().min(1).max(160),
+    summary: z.string().max(1000).optional(),
+    title: z.string().min(1).max(240)
+  })
+  .strict();
 
 export const draftOfferingSchema = createDraftOfferingSchema.extend({
   businessId: z.string().uuid(),

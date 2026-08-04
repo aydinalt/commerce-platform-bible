@@ -3,7 +3,16 @@ import { resolve } from "node:path";
 
 import { format } from "prettier";
 
-const healthOperation = (operationId: string) => ({
+const errorResponse = (description: string) => ({
+  content: {
+    "application/json": {
+      schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    }
+  },
+  description
+});
+
+const healthOperation = (operationId: string, unavailable?: string) => ({
   operationId,
   responses: {
     "200": {
@@ -13,7 +22,8 @@ const healthOperation = (operationId: string) => ({
         }
       },
       description: "Service is healthy"
-    }
+    },
+    ...(unavailable === undefined ? {} : { "503": errorResponse(unavailable) })
   },
   tags: ["Health"]
 });
@@ -65,9 +75,9 @@ const document = {
           categoryId: { format: "uuid", type: "string" },
           createdAt: { format: "date-time", type: "string" },
           id: { format: "uuid", type: "string" },
-          slug: { type: "string" },
+          slug: { maxLength: 160, minLength: 1, type: "string" },
           status: { enum: ["DRAFT"], type: "string" },
-          summary: { type: ["string", "null"] },
+          summary: { maxLength: 1000, type: ["string", "null"] },
           title: { type: "string" },
           updatedAt: { format: "date-time", type: "string" },
           version: { minimum: 1, type: "integer" }
@@ -123,9 +133,11 @@ const document = {
             },
             description: "Draft Offering created"
           },
-          "400": { description: "Invalid request" },
-          "404": { description: "Business or catalog resource not found" },
-          "409": { description: "Offering slug conflict" }
+          "400": errorResponse("Invalid request"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Business cannot author offerings"),
+          "404": errorResponse("Business or catalog resource not found"),
+          "409": errorResponse("Offering slug conflict")
         },
         tags: ["Offering"]
       }
@@ -156,13 +168,21 @@ const document = {
             },
             description: "Owned Draft Offering"
           },
-          "404": { description: "Offering not found" }
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Account is not active"),
+          "404": errorResponse("Offering not found")
         },
         tags: ["Offering"]
       }
     },
     "/api/v1/health/live": { get: healthOperation("getLiveness") },
-    "/api/v1/health/ready": { get: healthOperation("getReadiness") }
+    "/api/v1/health/ready": {
+      get: healthOperation(
+        "getReadiness",
+        "A required dependency is unavailable"
+      )
+    }
   }
 };
 const destination = resolve(process.cwd(), "../../generated/openapi.json");

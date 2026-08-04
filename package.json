@@ -34,6 +34,7 @@
     "dev:api": "npm run dev --workspace=@commerce/api",
     "dev:worker": "npm run dev --workspace=@commerce/worker",
     "db:deploy": "prisma migrate deploy",
+    "db:drift": "prisma migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel packages/database/prisma/schema.prisma --exit-code",
     "db:validate": "prisma validate",
     "boundaries": "depcruise apps packages modules --config dependency-cruiser.config.mjs",
     "openapi:generate": "npm run openapi:generate --workspace=@commerce/api",

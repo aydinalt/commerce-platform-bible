@@ -4,15 +4,33 @@ import {
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Req
 } from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 
+import { z } from "zod";
+
 import { createDraftOfferingSchema } from "@commerce/contracts";
 
 import { PrincipalResolver } from "../security/principal-resolver.js";
 import { OfferingService } from "./offering.service.js";
+
+/**
+ * Path identifiers reach PostgreSQL `uuid` columns, so they are rejected at the
+ * edge. Letting the driver reject them would turn a malformed request into a
+ * server error.
+ */
+const uuidParam = (name: string) =>
+  new ParseUUIDPipe({
+    exceptionFactory: () =>
+      new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: { [name]: ["Expected a UUID"] },
+        message: `Invalid ${name}`
+      })
+  });
 
 @Controller("businesses/:businessId/offerings")
 export class OfferingController {
@@ -23,13 +41,17 @@ export class OfferingController {
 
   @Post()
   create(
-    @Param("businessId") businessId: string,
+    @Param("businessId", uuidParam("businessId")) businessId: string,
     @Body() body: unknown,
     @Req() request: FastifyRequest
   ) {
     const parsed = createDraftOfferingSchema.safeParse(body);
     if (!parsed.success)
-      throw new BadRequestException("Invalid offering input");
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Invalid offering input"
+      });
     return this.offerings.create(
       businessId,
       parsed.data,
@@ -39,8 +61,8 @@ export class OfferingController {
 
   @Get(":offeringId")
   get(
-    @Param("businessId") businessId: string,
-    @Param("offeringId") offeringId: string,
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
     @Req() request: FastifyRequest
   ) {
     return this.offerings.get(

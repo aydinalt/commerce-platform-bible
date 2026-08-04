@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "noEmit": true,
+    "paths": {
+      "@commerce/*": ["modules/*/src/index.ts", "packages/*/src/index.ts"]
+    }
+  },
+  "include": ["**/*.ts"]
+}

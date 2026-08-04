@@ -24,8 +24,8 @@ export default tseslint.config(
           allowDefaultProject: [
             "*.mjs",
             "prisma.config.ts",
-            "apps/web/next.config.ts",
-            "tests/*.ts"
+            "vitest.config.ts",
+            "apps/web/next.config.ts"
           ]
         },
         tsconfigRootDir: import.meta.dirname

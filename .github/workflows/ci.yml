@@ -44,3 +44,9 @@ jobs:
       - run: npm run db:deploy
       - run: npm run verify
       - run: git diff --exit-code -- generated/openapi.json
+
+      # Entry gate: the migrated database must match the datamodel exactly.
+      # Without this, a hand-written migration and schema.prisma can diverge
+      # silently and the divergence only surfaces on the next `migrate dev`.
+      - name: Verify no schema drift
+        run: npm run db:drift
