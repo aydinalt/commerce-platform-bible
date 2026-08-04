@@ -2,6 +2,12 @@ import { randomUUID } from "node:crypto";
 
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { Pool } from "pg";
+
+import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import type {
+  EmailDispatcher,
+  EmailMessage
+} from "../modules/notification/src/index.js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -16,6 +22,16 @@ const suite = enabled ? describe : describe.skip;
 const ORIGIN = "http://localhost:3000";
 const PASSWORD = "correct horse battery staple";
 
+/** Captures the registration link the worker would have emailed. */
+class RecordingDispatcher implements EmailDispatcher {
+  readonly delivered: EmailMessage[] = [];
+
+  deliver(message: EmailMessage): Promise<void> {
+    this.delivered.push(message);
+    return Promise.resolve();
+  }
+}
+
 /**
  * `US-IDN-F07-001` Business Context Access. The Story's governing rule is that
  * no Business is ever chosen silently, so most of these cases are about what
@@ -23,7 +39,9 @@ const PASSWORD = "correct horse battery staple";
  */
 suite("Milestone 12 Business context", () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const dispatcher = new RecordingDispatcher();
   let app: NestFastifyApplication;
+  let processor: OutboxProcessor;
 
   const ownedId = randomUUID();
   const secondId = randomUUID();
@@ -51,12 +69,17 @@ suite("Milestone 12 Business context", () => {
   /** Registers a person and returns their session cookie and account id. */
   const signUp = async () => {
     const email = address();
-    const begun = await send("POST", "/auth/registrations", {
+    await send("POST", "/auth/registrations", {
       body: { email, password: PASSWORD }
     });
-    const { registrationToken } = begun.json<{ registrationToken: string }>();
+    await processor.processBatch();
+    const message = dispatcher.delivered.find((m) => m.recipient === email);
+    if (!message) throw new Error("NO_MESSAGE_DELIVERED");
+    const link = /https?:\/\/\S+/u.exec(message.body)?.[0];
+    if (!link) throw new Error("NO_LINK_IN_MESSAGE");
+    const token = new URL(link).searchParams.get("token");
     const confirmed = await send("POST", "/auth/registrations/confirmations", {
-      body: { token: registrationToken }
+      body: { token }
     });
     const cookies = confirmed.cookies as { name: string; value: string }[];
     const found = cookies.find((c) => c.name === "commerce_session");
@@ -102,14 +125,20 @@ suite("Milestone 12 Business context", () => {
 
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
+    processor = new OutboxProcessor({
+      dispatcher,
+      publicWebUrl: ORIGIN
+    });
   });
 
   beforeEach(async () => {
     await pool.query("delete from auth_throttle");
+    dispatcher.delivered.length = 0;
   });
 
   afterAll(async () => {
     await app.close();
+    await processor.close();
     await pool.end();
   });
 

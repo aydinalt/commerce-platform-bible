@@ -10,9 +10,13 @@
   },
   "dependencies": {
     "@commerce/config": "0.0.0",
-    "@commerce/observability": "0.0.0"
+    "@commerce/notification": "0.0.0",
+    "@commerce/observability": "0.0.0",
+    "pg": "^8.16.3",
+    "pino": "^9.7.0"
   },
   "devDependencies": {
+    "@types/pg": "^8.15.5",
     "tsx": "^4.20.3"
   }
 }

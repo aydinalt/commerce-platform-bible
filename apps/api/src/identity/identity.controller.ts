@@ -72,7 +72,7 @@ export class IdentityController {
   async beginRegistration(
     @Body() body: unknown,
     @Req() request: FastifyRequest
-  ): Promise<{ registrationToken?: string }> {
+  ): Promise<void> {
     const input = parse(beginRegistrationSchema, body);
     const outcome = await this.identity.beginRegistration({
       correlationId: correlationId(request),
@@ -86,10 +86,6 @@ export class IdentityController {
         { code: "RATE_LIMITED", message: "Too many registration attempts" },
         HttpStatus.TOO_MANY_REQUESTS
       );
-
-    return outcome.disclosedToken === undefined
-      ? {}
-      : { registrationToken: outcome.disclosedToken };
   }
 
   /** Proves email control, creates the account and signs the person in. */

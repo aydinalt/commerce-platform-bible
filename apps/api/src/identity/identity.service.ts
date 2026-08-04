@@ -22,8 +22,6 @@ const ATTEMPT_LIMIT = 10;
 const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 
 export interface RegistrationOutcome {
-  /** Present only outside production, so tests can complete the flow. */
-  disclosedToken?: string;
   throttled: boolean;
 }
 
@@ -73,12 +71,12 @@ export class IdentityService {
       return { throttled: false };
     }
 
-    const token = issueSecret();
-    await this.repository.upsertPendingRegistration({
+    // The record and its delivery event are written together; the proof token
+    // is minted by the dispatcher, not here.
+    await this.repository.recordPendingRegistration({
       email: input.email,
       expiresAt: new Date(Date.now() + REGISTRATION_TTL_MS),
-      passwordHash,
-      tokenHash: digest(token)
+      passwordHash
     });
     await this.record({
       action: "identity.registration.begin",
@@ -86,7 +84,7 @@ export class IdentityService {
       result: "ALLOWED"
     });
 
-    return this.disclose(token);
+    return { throttled: false };
   }
 
   /** Proves control of the email address and creates the account (AC-2, AC-3). */
@@ -282,15 +280,6 @@ export class IdentityService {
   private async decoyHash(): Promise<string> {
     this.decoy ??= this.passwords.hash(issueSecret());
     return this.decoy;
-  }
-
-  private disclose(token: string): RegistrationOutcome {
-    // Until an email transport is selected, non-production environments return
-    // the proof token so the flow is completable and testable. Production never
-    // discloses it.
-    return process.env.NODE_ENV === "production"
-      ? { throttled: false }
-      : { disclosedToken: token, throttled: false };
   }
 
   private async record(entry: {

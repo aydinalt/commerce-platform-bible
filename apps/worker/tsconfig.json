@@ -7,7 +7,14 @@
   },
   "include": ["src/**/*.ts"],
   "references": [
-    { "path": "../../packages/config" },
-    { "path": "../../packages/observability" }
+    {
+      "path": "../../packages/config"
+    },
+    {
+      "path": "../../packages/observability"
+    },
+    {
+      "path": "../../modules/notification"
+    }
   ]
 }

@@ -2,6 +2,12 @@ import { randomUUID } from "node:crypto";
 
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { Pool } from "pg";
+
+import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import type {
+  EmailDispatcher,
+  EmailMessage
+} from "../modules/notification/src/index.js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -15,6 +21,16 @@ const suite = enabled ? describe : describe.skip;
 const ORIGIN = "http://localhost:3000";
 const PASSWORD = "correct horse battery staple";
 
+/** Captures the registration link the worker would have emailed. */
+class RecordingDispatcher implements EmailDispatcher {
+  readonly delivered: EmailMessage[] = [];
+
+  deliver(message: EmailMessage): Promise<void> {
+    this.delivered.push(message);
+    return Promise.resolve();
+  }
+}
+
 /**
  * Identity and Access baseline, exercised over HTTP. Each case names the
  * Acceptance Criterion it holds, so a regression points at the Frozen Story it
@@ -22,7 +38,19 @@ const PASSWORD = "correct horse battery staple";
  */
 suite("Milestone 12 identity baseline", () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const dispatcher = new RecordingDispatcher();
   let app: NestFastifyApplication;
+  let processor: OutboxProcessor;
+
+  /** Drains the outbox and returns the token from the delivered link. */
+  const deliveredToken = async (email: string) => {
+    await processor.processBatch();
+    const message = dispatcher.delivered.find((m) => m.recipient === email);
+    if (!message) throw new Error("NO_MESSAGE_DELIVERED");
+    const link = /https?:\/\/\S+/u.exec(message.body)?.[0];
+    if (!link) throw new Error("NO_LINK_IN_MESSAGE");
+    return new URL(link).searchParams.get("token");
+  };
 
   const address = () => `m12-${randomUUID()}@example.test`;
 
@@ -34,14 +62,9 @@ suite("Milestone 12 identity baseline", () => {
 
   /** Completes registration and returns the address and its session cookie. */
   const register = async (email = address()) => {
-    const begun = await post("/auth/registrations", {
-      email,
-      password: PASSWORD
-    });
-    const { registrationToken } = begun.json<{ registrationToken?: string }>();
-    if (!registrationToken) throw new Error("NO_TOKEN_DISCLOSED");
+    await post("/auth/registrations", { email, password: PASSWORD });
     const confirmed = await post("/auth/registrations/confirmations", {
-      token: registrationToken
+      token: await deliveredToken(email)
     });
     return { confirmed, cookie: sessionCookie(confirmed), email };
   };
@@ -57,6 +80,10 @@ suite("Milestone 12 identity baseline", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
+    processor = new OutboxProcessor({
+      dispatcher,
+      publicWebUrl: "http://localhost:3000"
+    });
   });
 
   // Throttling is keyed by client address, and every injected request shares
@@ -64,10 +91,12 @@ suite("Milestone 12 identity baseline", () => {
   // case that is about it builds its own.
   beforeEach(async () => {
     await pool.query("delete from auth_throttle");
+    dispatcher.delivered.length = 0;
   });
 
   afterAll(async () => {
     await app.close();
+    await processor.close();
     await pool.end();
   });
 
@@ -130,18 +159,11 @@ suite("Milestone 12 identity baseline", () => {
 
   it("refuses a registration link that has already been spent", async () => {
     const email = address();
-    const begun = await post("/auth/registrations", {
-      email,
-      password: PASSWORD
-    });
-    const { registrationToken } = begun.json<{ registrationToken: string }>();
+    await post("/auth/registrations", { email, password: PASSWORD });
+    const token = await deliveredToken(email);
 
-    const first = await post("/auth/registrations/confirmations", {
-      token: registrationToken
-    });
-    const second = await post("/auth/registrations/confirmations", {
-      token: registrationToken
-    });
+    const first = await post("/auth/registrations/confirmations", { token });
+    const second = await post("/auth/registrations/confirmations", { token });
 
     expect(first.statusCode).toBe(201);
     expect(second.statusCode).toBe(400);

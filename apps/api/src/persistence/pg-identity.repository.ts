@@ -6,6 +6,7 @@ import type {
   AuthorizedBusiness,
   ResolvedSession
 } from "@commerce/identity";
+import { REGISTRATION_REQUESTED } from "@commerce/notification";
 
 export interface PendingRegistrationRow {
   email: string;
@@ -43,25 +44,49 @@ export class PgIdentityRepository implements OnModuleDestroy {
   }
 
   /**
-   * One live registration per address. A repeated attempt replaces the previous
-   * one so an abandoned link cannot be resurrected later.
+   * One live registration per address, recorded together with the event that
+   * will deliver its message. Writing both in one transaction is what makes the
+   * outbox trustworthy: a registration can never exist without its delivery
+   * having been scheduled, and no message is scheduled for a registration that
+   * was rolled back.
+   *
+   * No token is minted here. A repeated attempt replaces the previous record,
+   * so an abandoned link cannot be resurrected later.
    */
-  async upsertPendingRegistration(input: {
+  async recordPendingRegistration(input: {
     email: string;
     expiresAt: Date;
     passwordHash: string;
-    tokenHash: string;
   }): Promise<void> {
-    await this.pool.query(
-      `insert into pending_registration (email, password_hash, token_hash, expires_at)
-       values ($1,$2,$3,$4)
-       on conflict (email) do update
-         set password_hash = excluded.password_hash,
-             token_hash    = excluded.token_hash,
-             expires_at    = excluded.expires_at,
-             created_at    = now()`,
-      [input.email, input.passwordHash, input.tokenHash, input.expiresAt]
-    );
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const pending = await client.query<{ id: string }>(
+        `insert into pending_registration (email, password_hash, expires_at)
+         values ($1,$2,$3)
+         on conflict (email) do update
+           set password_hash = excluded.password_hash,
+               expires_at    = excluded.expires_at,
+               token_hash    = null,
+               dispatched_at = null,
+               created_at    = now()
+         returning id`,
+        [input.email, input.passwordHash, input.expiresAt]
+      );
+      const id = pending.rows[0]?.id;
+      if (!id) throw new Error("PENDING_REGISTRATION_FAILED");
+      await client.query(
+        `insert into outbox_event (aggregate_type, aggregate_id, event_type, payload)
+         values ('PendingRegistration', $1, $2, '{}'::jsonb)`,
+        [id, REGISTRATION_REQUESTED]
+      );
+      await client.query("commit");
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async takePendingRegistration(

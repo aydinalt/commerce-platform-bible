@@ -168,7 +168,7 @@ const document = {
     "/api/v1/auth/registrations": {
       post: {
         description:
-          "Answers identically whether or not the address is already registered.",
+          "Answers identically whether or not the address is already registered. The proof is delivered by email; the response carries nothing that could complete a registration.",
         operationId: "beginRegistration",
         requestBody: {
           content: {

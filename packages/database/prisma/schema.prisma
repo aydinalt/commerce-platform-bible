@@ -80,12 +80,15 @@ model UserCredential {
 /// `US-IDN-F02-001` AC-7 forbids representing this as an account state, so it is
 /// deliberately a separate record that becomes a `UserAccount` only on proof.
 model PendingRegistration {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email        String   @unique @db.VarChar(320)
-  passwordHash String   @map("password_hash")
-  tokenHash    String   @unique @map("token_hash") @db.Char(64)
-  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String    @unique @db.VarChar(320)
+  passwordHash String    @map("password_hash")
+  /// Absent until the message is dispatched. The token is minted at delivery so
+  /// that no replayable secret is ever written to the database.
+  tokenHash    String?   @unique @map("token_hash") @db.Char(64)
+  dispatchedAt DateTime? @map("dispatched_at") @db.Timestamptz(6)
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([expiresAt])
   @@map("pending_registration")

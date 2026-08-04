@@ -70,6 +70,23 @@ than as a `user_account` row. `CLOSED` is removed because no Frozen Story
 defines closure behaviour for V1; it can return through a controlled change when
 one does.
 
+## Delivery of the registration proof
+
+The proof token is **minted at delivery, not at registration**. Registration
+writes `pending_registration` and its outbox event in one transaction and mints
+nothing; the worker generates the token when it produces the message and stores
+only the digest.
+
+The alternative — minting in the API and carrying the token in the outbox
+payload — was rejected because it would place a replayable secret in the
+database and undo the property that only digests are stored. Minting at delivery
+also makes retries safe: each attempt issues a fresh token and invalidates the
+previous one.
+
+`LoggingEmailDispatcher` is the development adapter and refuses to construct when
+`NODE_ENV=production`, so an unconfigured deployment fails loudly instead of
+silently accepting registrations nobody can complete.
+
 ## Scope of the first increment
 
 Session foundation, registration with email-control proof, login and logout —
@@ -84,5 +101,5 @@ increments. No Delivery Status advances through this record.
 
 | Item | Reason |
 |---|---|
-| Outbound email transport | The architecture names an email provider but selects none. The increment implements the port and records proof tokens; the adapter is selected when recovery lands. |
+| Outbound email vendor | The architecture names an email provider but selects none. The port, the outbox and the worker are implemented; only the vendor adapter is left, and it is the single remaining deployment decision. |
 | Distributed throttling state | Throttling is persisted in PostgreSQL. A shared cache belongs with the infrastructure increment that introduces one. |
