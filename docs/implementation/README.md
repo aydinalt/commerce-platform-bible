@@ -11,9 +11,10 @@ architecture baselines.
   a product Story.
 - `M11_SLICE_SCOPE_RECONCILIATION.md` records what the first slice implements,
   what it defers, and why, where the roadmap and the readiness record differ.
-- `M11_STORY_LINK_PROPOSAL.md` proposes which Frozen Stories the first slice
-  touches, with per-Acceptance-Criterion coverage. It is a proposal: it edits no
-  Story file and advances no Delivery Status.
+- `M11_STORY_LINK_PROPOSAL.md` records which Frozen Stories the first slice
+  touches, with per-Acceptance-Criterion coverage and the code and tests behind
+  each. It edits no Story file and advances no Delivery Status, and it does not
+  amend the Frozen cross-tier traceability baseline.
 - Code under `apps/`, `packages/`, and `modules/` is the implementation
   repository skeleton.
 

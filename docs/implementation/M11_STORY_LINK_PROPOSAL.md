@@ -1,33 +1,52 @@
-# Milestone 11 Story Link Proposal
+# Milestone 11 Story Implementation Links
 
 - **Owner:** Product Owner / Architecture Owner
-- **Status:** Draft — proposal awaiting Owner decision
+- **Status:** Accepted
 - **Maintenance Mode:** Living
-- **Version:** 0.1
+- **Version:** 1.0
 - **Last Updated:** 2026-08-04
-- **Scope:** Proposal only. No Frozen Story file is edited and no Delivery Status changes.
+- **Scope:** Implementation links only. No Frozen Story file is edited and no Delivery Status changes.
+
+> **Acceptance Note (1.0):** Accepted by the Product Owner / Architecture Owner
+> on 2026-08-04, after CI run 9 closed the I0 Repository Foundation gate. The
+> three Stories below are recorded as **linked but not started**. This
+> acceptance changes no Story behaviour, no Acceptance Criterion and no Delivery
+> Status; all 50 Generated Stories remain `Not Started`.
 
 ## Purpose
 
 The roadmap requires the first slice to "record implementation links without
-modifying Story intent". Selecting which Frozen Stories a change claims is an
-Owner decision, so this record proposes the links and states, per Acceptance
-Criterion, exactly what the implementation does and does not cover.
+modifying Story intent". This record names the Stories the slice touches and
+states, per Acceptance Criterion, exactly what the implementation does and does
+not cover.
 
 **No Story reaches `In Progress` or `Done` on the strength of this document.**
-Every Story below stays `Delivery Status: Not Started` until the Owner accepts a
-link and target CI is green.
 
-## Proposed candidate Stories
+## Relationship to the Frozen traceability baseline
+
+`docs/traceability.md` is Frozen v1.0 and must not be edited in place. This
+record therefore sits alongside it and does not amend the cross-tier baseline.
+Folding these links into that baseline requires a controlled superseding
+revision under `DOCUMENT_LIFECYCLE.md`, which remains an open Owner action.
+
+## Linked Stories
 
 Derived from `IMPLEMENTATION_BACKLOG.md`. The slice touches three Stories, all
 partially.
 
-| Story | Backlog increment | Proposed claim |
+| Story | Backlog increment | Claim |
 |---|---|---|
 | `US-OFR-F01-001` Offering Creation | I2 | Partial — write path only |
 | `US-IDN-F07-001` Business Context Access | I1 | Partial — authorization rule only |
 | `US-IDN-F06-001` User Account Access Status | I1 | Partial — enforcement only |
+
+## Implementation locations
+
+| Story | Implementation | Evidence |
+|---|---|---|
+| `US-OFR-F01-001` | `apps/api/src/offering/offering.controller.ts`, `offering.service.ts`, `apps/api/src/persistence/pg-commerce.repository.ts` (`create`, `findOwned`) | `tests/m11-http.integration.test.ts`, `tests/m11-authorization.integration.test.ts`, `tests/m11-postgres.integration.test.ts` |
+| `US-IDN-F07-001` | `PgCommerceRepository.canAuthorOfferings`, `modules/business/src/index.ts` | `tests/m11-authorization.integration.test.ts` |
+| `US-IDN-F06-001` | `PgCommerceRepository.isEnabled`, `modules/identity/src/index.ts` | `tests/m11-authorization.integration.test.ts`, `tests/m11-contracts.test.ts` |
 
 ## `US-OFR-F01-001` — Offering Creation
 
@@ -66,13 +85,18 @@ The slice enforces the authorization *rule* but implements none of the context
 | AC-1, AC-2, AC-3, AC-5, AC-7, AC-8, AC-9, AC-10, AC-11 | Status vocabulary, suspend and reinstate actions, Guest preservation, Admin rules | **Not covered** | No suspend/reinstate action, no Admin authorization model |
 | AC-6 | Suspension alone changes no Business or Offering state | Covered by construction | The status check is read-only |
 
-## Recommended Owner decision
+## Conditions for advancing any Delivery Status
 
-1. Accept these three Stories as **linked but not started**, so the traceability
-   chain records where the code lives without asserting delivery.
-2. Keep all 50 Delivery Statuses at `Not Started`.
-3. Revisit `US-OFR-F01-001` at the end of the publication increment, when AC-4
-   becomes implementable, and after an inventory endpoint satisfies AC-5.
+None of the three Stories may move while the gaps above remain. Concretely:
+
+1. `US-OFR-F01-001` needs AC-4 (an `offering_publication` row producing
+   Ineligible) and AC-5 (a Business inventory listing endpoint).
+2. `US-IDN-F07-001` needs the context-selection surface and the Admin boundary.
+3. `US-IDN-F06-001` needs the suspend and reinstate actions and the Admin
+   authorization model.
+
+Advancing any of them additionally requires a separate change carrying code,
+tests, traceability evidence and Product Owner review.
 
 ## Open engineering items referenced above
 

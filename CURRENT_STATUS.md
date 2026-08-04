@@ -91,8 +91,8 @@ stay outside what Prisma models.
 
 ## Remaining Work
 
-1. Select the Frozen Stories this slice implements and record implementation links without changing Story intent.
-2. Begin the publication and Discovery projection increment, which introduces the first outbox event with a real consumer.
+1. Begin the publication and Discovery projection increment, which introduces the first outbox event with a real consumer.
+2. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
 
 ## Known Boundaries
 
