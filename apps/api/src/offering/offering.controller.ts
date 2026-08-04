@@ -40,7 +40,7 @@ export class OfferingController {
   ) {}
 
   @Post()
-  create(
+  async create(
     @Param("businessId", uuidParam("businessId")) businessId: string,
     @Body() body: unknown,
     @Req() request: FastifyRequest
@@ -52,23 +52,23 @@ export class OfferingController {
         fieldErrors: z.flattenError(parsed.error).fieldErrors,
         message: "Invalid offering input"
       });
-    return this.offerings.create(
+    return await this.offerings.create(
       businessId,
       parsed.data,
-      this.principals.resolve(request)
+      await this.principals.resolve(request)
     );
   }
 
   @Get(":offeringId")
-  get(
+  async get(
     @Param("businessId", uuidParam("businessId")) businessId: string,
     @Param("offeringId", uuidParam("offeringId")) offeringId: string,
     @Req() request: FastifyRequest
   ) {
-    return this.offerings.get(
+    return await this.offerings.get(
       businessId,
       offeringId,
-      this.principals.resolve(request)
+      await this.principals.resolve(request)
     );
   }
 }

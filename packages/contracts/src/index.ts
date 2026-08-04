@@ -19,6 +19,46 @@ export type ErrorEnvelope = z.infer<typeof errorEnvelopeSchema>;
 // `.strict()` keeps the runtime honest about the published
 // `additionalProperties: false`. Silently dropping unknown keys would let a
 // caller believe a field was accepted when it was ignored.
+// `US-IDN-F02-001` AC-1 requires an email address and a password. The minimum
+// length is an implementation choice recorded in
+// `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`; no Frozen Story
+// fixes a password policy for V1.
+export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MAX_LENGTH = 256;
+
+const emailSchema = z.string().trim().toLowerCase().email().max(320);
+const passwordSchema = z
+  .string()
+  .min(PASSWORD_MIN_LENGTH)
+  .max(PASSWORD_MAX_LENGTH);
+
+export const beginRegistrationSchema = z
+  .object({ email: emailSchema, password: passwordSchema })
+  .strict();
+
+export const confirmRegistrationSchema = z
+  .object({ token: z.string().min(1).max(200) })
+  .strict();
+
+export const loginSchema = z
+  .object({
+    email: emailSchema,
+    password: z.string().min(1).max(PASSWORD_MAX_LENGTH)
+  })
+  .strict();
+
+export const sessionSchema = z
+  .object({
+    status: z.enum(["ENABLED", "SUSPENDED"]),
+    userId: z.string().uuid()
+  })
+  .strict();
+
+export type BeginRegistration = z.infer<typeof beginRegistrationSchema>;
+export type ConfirmRegistration = z.infer<typeof confirmRegistrationSchema>;
+export type Login = z.infer<typeof loginSchema>;
+export type Session = z.infer<typeof sessionSchema>;
+
 export const createDraftOfferingSchema = z
   .object({
     categoryId: z.string().uuid(),

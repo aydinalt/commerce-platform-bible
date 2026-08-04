@@ -1,3 +1,6 @@
+/// `US-IDN-F06-001` AC-1 fixes the V1 vocabulary at exactly these two values.
+export type AccountStatus = "ENABLED" | "SUSPENDED";
+
 export interface Principal {
   correlationId: string;
   sessionId: string;
@@ -6,6 +9,26 @@ export interface Principal {
 
 export interface IdentityReader {
   isEnabled(userId: string): Promise<boolean>;
+}
+
+/**
+ * A registration that has proven control of its email address, or the reason it
+ * has not. Callers must not be able to tell an unknown token from an expired
+ * one, so both collapse to a single failure.
+ */
+export type RegistrationProof =
+  { accepted: true; userId: string } | { accepted: false };
+
+export interface ResolvedSession {
+  sessionId: string;
+  status: AccountStatus;
+  userId: string;
+}
+
+export interface SessionIssue {
+  expiresAt: Date;
+  sessionId: string;
+  token: string;
 }
 
 /**

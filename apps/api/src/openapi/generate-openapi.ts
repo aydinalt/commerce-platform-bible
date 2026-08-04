@@ -57,6 +57,39 @@ const document = {
         required: ["service", "status"],
         type: "object"
       },
+      BeginRegistration: {
+        additionalProperties: false,
+        properties: {
+          email: { format: "email", maxLength: 320, type: "string" },
+          password: { maxLength: 256, minLength: 12, type: "string" }
+        },
+        required: ["email", "password"],
+        type: "object"
+      },
+      ConfirmRegistration: {
+        additionalProperties: false,
+        properties: { token: { maxLength: 200, minLength: 1, type: "string" } },
+        required: ["token"],
+        type: "object"
+      },
+      Login: {
+        additionalProperties: false,
+        properties: {
+          email: { format: "email", maxLength: 320, type: "string" },
+          password: { maxLength: 256, minLength: 1, type: "string" }
+        },
+        required: ["email", "password"],
+        type: "object"
+      },
+      Session: {
+        additionalProperties: false,
+        properties: {
+          status: { enum: ["ENABLED", "SUSPENDED"], type: "string" },
+          userId: { format: "uuid", type: "string" }
+        },
+        required: ["status", "userId"],
+        type: "object"
+      },
       CreateDraftOffering: {
         additionalProperties: false,
         properties: {
@@ -105,6 +138,105 @@ const document = {
   },
   openapi: "3.1.0",
   paths: {
+    "/api/v1/auth/registrations": {
+      post: {
+        description:
+          "Answers identically whether or not the address is already registered.",
+        operationId: "beginRegistration",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/BeginRegistration" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "202": {
+            description: "Registration accepted for email-control proof"
+          },
+          "400": errorResponse("Invalid registration input"),
+          "429": errorResponse("Too many registration attempts")
+        },
+        tags: ["Identity"]
+      }
+    },
+    "/api/v1/auth/registrations/confirmations": {
+      post: {
+        operationId: "confirmRegistration",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ConfirmRegistration" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Session" }
+              }
+            },
+            description: "Account created and session established"
+          },
+          "400": errorResponse("Registration link is invalid or has expired")
+        },
+        tags: ["Identity"]
+      }
+    },
+    "/api/v1/auth/sessions": {
+      post: {
+        operationId: "login",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/Login" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Session" }
+              }
+            },
+            description: "Session established"
+          },
+          "400": errorResponse("Invalid credentials input"),
+          "401": errorResponse("Credentials rejected")
+        },
+        tags: ["Identity"]
+      }
+    },
+    "/api/v1/auth/sessions/current": {
+      delete: {
+        operationId: "logout",
+        responses: {
+          "204": { description: "Session ended" },
+          "403": errorResponse("Request origin is missing or not allowed")
+        },
+        tags: ["Identity"]
+      },
+      get: {
+        operationId: "getCurrentSession",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Session" }
+              }
+            },
+            description: "Current authenticated session"
+          },
+          "401": errorResponse("No authenticated session")
+        },
+        tags: ["Identity"]
+      }
+    },
     "/api/v1/businesses/{businessId}/offerings": {
       post: {
         operationId: "createDraftOffering",

@@ -28,7 +28,7 @@ suite("Milestone 11 negative authorization", () => {
 
   const ownerId = randomUUID();
   const strangerId = randomUUID();
-  const pendingUserId = randomUUID();
+  const suspendedUserId = randomUUID();
   const activeBusinessId = randomUUID();
   const suspendedBusinessId = randomUUID();
   const restrictedBusinessId = randomUUID();
@@ -56,15 +56,15 @@ suite("Milestone 11 negative authorization", () => {
 
   beforeAll(async () => {
     await pool.query(
-      `insert into user_account (id,email,status)
-       values ($1,$2,'ACTIVE'),($3,$4,'ACTIVE'),($5,$6,'PENDING_VERIFICATION')`,
+      `insert into user_account (id,email,status,email_verified_at)
+       values ($1,$2,'ENABLED',now()),($3,$4,'ENABLED',now()),($5,$6,'SUSPENDED',now())`,
       [
         ownerId,
         `owner-${ownerId}@example.test`,
         strangerId,
         `stranger-${strangerId}@example.test`,
-        pendingUserId,
-        `pending-${pendingUserId}@example.test`
+        suspendedUserId,
+        `suspended-${suspendedUserId}@example.test`
       ]
     );
     await pool.query(
@@ -122,8 +122,8 @@ suite("Milestone 11 negative authorization", () => {
     await pool.end();
   });
 
-  it("refuses an account that is not yet verified", async () => {
-    const actor = principal(pendingUserId);
+  it("refuses a suspended account holder", async () => {
+    const actor = principal(suspendedUserId);
     await expect(
       service.create(activeBusinessId, draft(`p-${randomUUID()}`), actor)
     ).rejects.toBeInstanceOf(ForbiddenException);

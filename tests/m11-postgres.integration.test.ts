@@ -19,7 +19,8 @@ suite("Milestone 11 PostgreSQL integration", () => {
 
   beforeAll(async () => {
     await pool.query(
-      `insert into user_account (id,email,status) values ($1,$2,'ACTIVE')`,
+      `insert into user_account (id,email,status,email_verified_at)
+       values ($1,$2,'ENABLED',now())`,
       [userId, `m11-${userId}@example.test`]
     );
     await pool.query(

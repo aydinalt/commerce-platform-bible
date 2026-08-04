@@ -43,7 +43,8 @@ suite("Milestone 11 HTTP surface", () => {
     process.env.NODE_ENV = "test";
 
     await pool.query(
-      `insert into user_account (id,email,status) values ($1,$2,'ACTIVE')`,
+      `insert into user_account (id,email,status,email_verified_at)
+       values ($1,$2,'ENABLED',now())`,
       [userId, `http-${userId}@example.test`]
     );
     await pool.query(

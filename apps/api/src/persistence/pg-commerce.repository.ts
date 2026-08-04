@@ -61,7 +61,7 @@ export class PgCommerceRepository
 
   async isEnabled(userId: string): Promise<boolean> {
     const result = await this.pool.query<{ enabled: boolean }>(
-      `select (status = 'ACTIVE') as enabled from user_account where id = $1`,
+      `select (status = 'ENABLED') as enabled from user_account where id = $1`,
       [userId]
     );
     return result.rows[0]?.enabled ?? false;
