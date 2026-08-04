@@ -24,6 +24,14 @@ function workspaceAliases(): Record<string, string> {
 export default defineConfig({
   resolve: { alias: workspaceAliases() },
   test: {
+    /**
+     * Suites share one PostgreSQL instance, and some of them own global rows:
+     * a suite draining the outbox would consume another's event, and clearing
+     * the throttle counters would reset another's in mid-assertion. Running
+     * files one at a time is the honest fix — the shared database is the real
+     * constraint, not the test code.
+     */
+    fileParallelism: false,
     include: ["tests/**/*.test.ts"],
     testTimeout: 20_000
   }
