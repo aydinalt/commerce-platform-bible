@@ -2,9 +2,25 @@
 export type AccountStatus = "ENABLED" | "SUSPENDED";
 
 export interface Principal {
+  /**
+   * Three distinct states, and the difference matters:
+   *
+   * - a Business identifier — that context was explicitly selected;
+   * - `null` — a real session that is in the authenticated User baseline, so
+   *   acting in any Business must be refused (`US-IDN-F07-001` AC-3);
+   * - absent — the principal came from the header adapter, which has no session
+   *   to hold a selection and exists only outside production.
+   */
+  businessId?: string | null;
   correlationId: string;
   sessionId: string;
   userId: string;
+}
+
+export interface AuthorizedBusiness {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 export interface IdentityReader {
@@ -20,6 +36,12 @@ export type RegistrationProof =
   { accepted: true; userId: string } | { accepted: false };
 
 export interface ResolvedSession {
+  /**
+   * Present only while the selection is still authorized. Ownership is
+   * re-checked on every resolution, so a revoked relationship drops the context
+   * rather than surviving in the session (`US-IDN-F07-001` AC-8).
+   */
+  selectedBusinessId?: string;
   sessionId: string;
   status: AccountStatus;
   userId: string;

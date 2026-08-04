@@ -49,10 +49,31 @@ export const loginSchema = z
 
 export const sessionSchema = z
   .object({
+    // Absent while the person is in the authenticated User baseline.
+    selectedBusinessId: z.string().uuid().nullable(),
     status: z.enum(["ENABLED", "SUSPENDED"]),
     userId: z.string().uuid()
   })
   .strict();
+
+export const selectBusinessContextSchema = z
+  .object({ businessId: z.string().uuid() })
+  .strict();
+
+export const authorizedBusinessSchema = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    slug: z.string()
+  })
+  .strict();
+
+export const authorizedBusinessesSchema = z
+  .object({ businesses: z.array(authorizedBusinessSchema) })
+  .strict();
+
+export type SelectBusinessContext = z.infer<typeof selectBusinessContextSchema>;
+export type AuthorizedBusinesses = z.infer<typeof authorizedBusinessesSchema>;
 
 export type BeginRegistration = z.infer<typeof beginRegistrationSchema>;
 export type ConfirmRegistration = z.infer<typeof confirmRegistrationSchema>;

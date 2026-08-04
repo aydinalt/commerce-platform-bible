@@ -18,6 +18,17 @@ const CREATE_ACTION = "offering.draft.create";
 const READ_ACTION = "offering.draft.read";
 const TARGET_TYPE = "Offering";
 
+/**
+ * `US-IDN-F07-001` AC-3 forbids choosing a Business silently, so a session must
+ * have selected the Business it acts in. An absent field means the principal
+ * came from the header adapter, which has no session to hold a selection and is
+ * unreachable in production; ownership is still checked downstream either way.
+ */
+function actsFor(principal: Principal, businessId: string): boolean {
+  if (principal.businessId === undefined) return true;
+  return principal.businessId === businessId;
+}
+
 @Injectable()
 export class OfferingService {
   constructor(private readonly repository: PgCommerceRepository) {}
@@ -29,6 +40,14 @@ export class OfferingService {
   ): Promise<DraftOfferingRecord> {
     const deny = (reason: string) =>
       this.denied(CREATE_ACTION, businessId, principal, reason);
+
+    if (!actsFor(principal, businessId)) {
+      await deny("BUSINESS_CONTEXT_NOT_SELECTED");
+      throw new ForbiddenException({
+        code: "BUSINESS_CONTEXT_REQUIRED",
+        message: "Select this Business context before acting in it"
+      });
+    }
 
     if (!(await this.repository.isEnabled(principal.userId))) {
       await deny("ACCOUNT_NOT_ACTIVE");
@@ -79,6 +98,11 @@ export class OfferingService {
   ): Promise<DraftOfferingRecord> {
     const deny = (reason: string) =>
       this.denied(READ_ACTION, businessId, principal, reason, offeringId);
+
+    if (!actsFor(principal, businessId)) {
+      await deny("BUSINESS_CONTEXT_NOT_SELECTED");
+      throw new NotFoundException();
+    }
 
     if (!(await this.repository.isEnabled(principal.userId))) {
       await deny("ACCOUNT_NOT_ACTIVE");

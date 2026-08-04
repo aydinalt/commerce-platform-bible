@@ -47,7 +47,10 @@ export class PrincipalResolver {
       return {
         correlationId: correlationId(request),
         sessionId: session.sessionId,
-        userId: session.userId
+        userId: session.userId,
+        // Always declared for a session, `null` included: the baseline is a
+        // real state, distinct from having no session at all.
+        businessId: session.selectedBusinessId ?? null
       };
     }
 

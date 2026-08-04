@@ -7,7 +7,9 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
+  NotFoundException,
   Post,
+  Put,
   Req,
   Res,
   UnauthorizedException
@@ -16,10 +18,13 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import {
+  authorizedBusinessesSchema,
   beginRegistrationSchema,
   confirmRegistrationSchema,
   loginSchema,
+  selectBusinessContextSchema,
   sessionSchema,
+  type AuthorizedBusinesses,
   type Session
 } from "@commerce/contracts";
 
@@ -107,7 +112,13 @@ export class IdentityController {
       });
 
     await this.attachSession(reply, proof.userId);
-    return sessionSchema.parse({ status: "ENABLED", userId: proof.userId });
+    // A newly created account is in the User baseline: no Business is chosen
+    // silently (`US-IDN-F07-001` AC-3).
+    return sessionSchema.parse({
+      selectedBusinessId: null,
+      status: "ENABLED",
+      userId: proof.userId
+    });
   }
 
   @Post("sessions")
@@ -140,7 +151,9 @@ export class IdentityController {
     );
     const session = await this.identity.resolveSession(issued.token);
     if (!session) throw new UnauthorizedException();
+    // Direct Login enters no Business context (`US-IDN-F03-001` AC-6).
     return sessionSchema.parse({
+      selectedBusinessId: null,
       status: session.status,
       userId: session.userId
     });
@@ -156,6 +169,74 @@ export class IdentityController {
         message: "No authenticated session"
       });
     return sessionSchema.parse({
+      selectedBusinessId: session.selectedBusinessId ?? null,
+      status: session.status,
+      userId: session.userId
+    });
+  }
+
+  /** The choices available, so one can be made explicitly rather than guessed. */
+  @Get("me/businesses")
+  async authorizedBusinesses(
+    @Req() request: FastifyRequest
+  ): Promise<AuthorizedBusinesses> {
+    const session = await this.requireSession(request);
+    return authorizedBusinessesSchema.parse({
+      businesses: await this.identity.listAuthorizedBusinesses(session.userId)
+    });
+  }
+
+  /**
+   * Enters an explicitly chosen Business context. Accepted only for a
+   * relationship that exists right now (AC-2); entry adds no authority over any
+   * other Business (AC-6).
+   */
+  @Put("me/business-context")
+  async selectBusinessContext(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ): Promise<Session> {
+    const token = readSessionCookie(request);
+    this.origins.assertAcceptable(request, token !== undefined);
+    const session = await this.requireSession(request);
+    const input = parse(selectBusinessContextSchema, body);
+
+    const accepted = await this.identity.selectBusinessContext({
+      businessId: input.businessId,
+      correlationId: correlationId(request),
+      sessionId: session.sessionId,
+      userId: session.userId
+    });
+    if (!accepted)
+      throw new NotFoundException({
+        code: "BUSINESS_NOT_AUTHORIZED",
+        message: "No authorized Business matches that identifier"
+      });
+
+    return sessionSchema.parse({
+      selectedBusinessId: input.businessId,
+      status: session.status,
+      userId: session.userId
+    });
+  }
+
+  /**
+   * Leaves the Business context and returns to the authenticated User
+   * baseline. The session itself survives (`US-IDN-F07-001` AC-9).
+   */
+  @Delete("me/business-context")
+  async leaveBusinessContext(@Req() request: FastifyRequest): Promise<Session> {
+    const token = readSessionCookie(request);
+    this.origins.assertAcceptable(request, token !== undefined);
+    const session = await this.requireSession(request);
+
+    await this.identity.clearBusinessContext({
+      correlationId: correlationId(request),
+      sessionId: session.sessionId,
+      userId: session.userId
+    });
+    return sessionSchema.parse({
+      selectedBusinessId: null,
       status: session.status,
       userId: session.userId
     });
@@ -186,6 +267,17 @@ export class IdentityController {
 
     const environment = process.env.NODE_ENV ?? "development";
     reply.clearCookie(SESSION_COOKIE, clearedCookieOptions(environment));
+  }
+
+  private async requireSession(request: FastifyRequest) {
+    const token = readSessionCookie(request);
+    const session = token ? await this.identity.resolveSession(token) : null;
+    if (!session || session.status !== "ENABLED")
+      throw new UnauthorizedException({
+        code: "UNAUTHENTICATED",
+        message: "No authenticated session"
+      });
+    return session;
   }
 
   private async attachSession(

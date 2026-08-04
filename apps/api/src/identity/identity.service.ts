@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 
 import type { AuditWriter } from "@commerce/audit";
 import type {
+  AuthorizedBusiness,
   RegistrationProof,
   ResolvedSession,
   SessionIssue
@@ -208,6 +209,51 @@ export class IdentityService {
 
   resolveSession(token: string): Promise<ResolvedSession | null> {
     return this.repository.resolveSession(digest(token));
+  }
+
+  listAuthorizedBusinesses(userId: string): Promise<AuthorizedBusiness[]> {
+    return this.repository.listAuthorizedBusinesses(userId);
+  }
+
+  /**
+   * Entering a Business context changes what the person is acting as, so it is
+   * recorded as audit evidence like any other authorization decision.
+   */
+  async selectBusinessContext(input: {
+    businessId: string;
+    correlationId: string;
+    sessionId: string;
+    userId: string;
+  }): Promise<boolean> {
+    const accepted = await this.repository.selectBusinessContext({
+      businessId: input.businessId,
+      sessionId: input.sessionId,
+      userId: input.userId
+    });
+    await this.record({
+      action: "identity.business-context.enter",
+      actorUserId: input.userId,
+      correlationId: input.correlationId,
+      result: accepted ? "ALLOWED" : "DENIED",
+      ...(accepted ? {} : { reason: "NOT_AUTHORIZED_FOR_BUSINESS" }),
+      targetId: input.businessId
+    });
+    return accepted;
+  }
+
+  async clearBusinessContext(input: {
+    correlationId: string;
+    sessionId: string;
+    userId: string;
+  }): Promise<void> {
+    await this.repository.clearBusinessContext(input.sessionId);
+    await this.record({
+      action: "identity.business-context.leave",
+      actorUserId: input.userId,
+      correlationId: input.correlationId,
+      result: "ALLOWED",
+      targetId: input.userId
+    });
   }
 
   async logout(input: {

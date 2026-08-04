@@ -1,7 +1,11 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool } from "pg";
 
-import type { AccountStatus, ResolvedSession } from "@commerce/identity";
+import type {
+  AccountStatus,
+  AuthorizedBusiness,
+  ResolvedSession
+} from "@commerce/identity";
 
 export interface PendingRegistrationRow {
   email: string;
@@ -136,9 +140,19 @@ export class PgIdentityRepository implements OnModuleDestroy {
    * Resolves against current server state on every request, so a suspension or
    * revocation takes effect immediately rather than at the next login
    * (ADR-0012 §2).
+   *
+   * The selected Business is returned only while the ownership relationship
+   * still holds. A stored selection whose authorization has since been removed
+   * resolves to no context at all, which is what `US-IDN-F07-001` AC-8 requires
+   * of re-evaluation.
    */
   async resolveSession(tokenHash: string): Promise<ResolvedSession | null> {
-    const result = await this.pool.query<ResolvedSession>(
+    const result = await this.pool.query<{
+      selectedBusinessId: string | null;
+      sessionId: string;
+      status: ResolvedSession["status"];
+      userId: string;
+    }>(
       `update user_session s
          set last_seen_at = now()
        from user_account u
@@ -146,10 +160,70 @@ export class PgIdentityRepository implements OnModuleDestroy {
          and s.token_hash = $1
          and s.revoked_at is null
          and s.expires_at > now()
-       returning s.id as "sessionId", u.id as "userId", u.status`,
+       returning s.id as "sessionId", u.id as "userId", u.status,
+         (
+           select bo.business_id from business_owner bo
+           where bo.business_id = s.selected_business_id and bo.user_id = u.id
+         ) as "selectedBusinessId"`,
       [tokenHash]
     );
-    return result.rows[0] ?? null;
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      sessionId: row.sessionId,
+      status: row.status,
+      userId: row.userId,
+      ...(row.selectedBusinessId === null
+        ? {}
+        : { selectedBusinessId: row.selectedBusinessId })
+    };
+  }
+
+  /** Businesses the person may enter, so a choice can be made explicitly. */
+  async listAuthorizedBusinesses(
+    userId: string
+  ): Promise<AuthorizedBusiness[]> {
+    const result = await this.pool.query<AuthorizedBusiness>(
+      `select b.id, b.slug, b.name
+       from business b
+       join business_owner bo on bo.business_id = b.id and bo.user_id = $1
+       order by b.name`,
+      [userId]
+    );
+    return result.rows;
+  }
+
+  /**
+   * Records the selection only when the relationship exists right now
+   * (`US-IDN-F07-001` AC-2), and reports whether it was accepted rather than
+   * assuming it was.
+   */
+  async selectBusinessContext(input: {
+    businessId: string;
+    sessionId: string;
+    userId: string;
+  }): Promise<boolean> {
+    const result = await this.pool.query(
+      `update user_session s
+         set selected_business_id = $1
+       where s.id = $2
+         and s.revoked_at is null
+         and s.expires_at > now()
+         and exists (
+           select 1 from business_owner bo
+           where bo.business_id = $1 and bo.user_id = $3
+         )`,
+      [input.businessId, input.sessionId, input.userId]
+    );
+    return result.rowCount === 1;
+  }
+
+  /** Returns to the authenticated User baseline without ending the session. */
+  async clearBusinessContext(sessionId: string): Promise<void> {
+    await this.pool.query(
+      `update user_session set selected_business_id = null where id = $1`,
+      [sessionId]
+    );
   }
 
   async revokeSession(tokenHash: string): Promise<void> {

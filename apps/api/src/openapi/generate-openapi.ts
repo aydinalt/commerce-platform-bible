@@ -84,10 +84,37 @@ const document = {
       Session: {
         additionalProperties: false,
         properties: {
+          selectedBusinessId: { format: "uuid", type: ["string", "null"] },
           status: { enum: ["ENABLED", "SUSPENDED"], type: "string" },
           userId: { format: "uuid", type: "string" }
         },
-        required: ["status", "userId"],
+        required: ["selectedBusinessId", "status", "userId"],
+        type: "object"
+      },
+      SelectBusinessContext: {
+        additionalProperties: false,
+        properties: { businessId: { format: "uuid", type: "string" } },
+        required: ["businessId"],
+        type: "object"
+      },
+      AuthorizedBusinesses: {
+        additionalProperties: false,
+        properties: {
+          businesses: {
+            items: {
+              additionalProperties: false,
+              properties: {
+                id: { format: "uuid", type: "string" },
+                name: { type: "string" },
+                slug: { type: "string" }
+              },
+              required: ["id", "name", "slug"],
+              type: "object"
+            },
+            type: "array"
+          }
+        },
+        required: ["businesses"],
         type: "object"
       },
       CreateDraftOffering: {
@@ -237,6 +264,69 @@ const document = {
         tags: ["Identity"]
       }
     },
+    "/api/v1/auth/me/businesses": {
+      get: {
+        description:
+          "The Businesses a choice may be made from; none is chosen silently.",
+        operationId: "listAuthorizedBusinesses",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AuthorizedBusinesses" }
+              }
+            },
+            description: "Businesses the person is authorized for"
+          },
+          "401": errorResponse("No authenticated session")
+        },
+        tags: ["Identity"]
+      }
+    },
+    "/api/v1/auth/me/business-context": {
+      delete: {
+        operationId: "leaveBusinessContext",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Session" }
+              }
+            },
+            description: "Returned to the authenticated User baseline"
+          },
+          "401": errorResponse("No authenticated session"),
+          "403": errorResponse("Request origin is missing or not allowed")
+        },
+        tags: ["Identity"]
+      },
+      put: {
+        operationId: "selectBusinessContext",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/SelectBusinessContext" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Session" }
+              }
+            },
+            description: "Business context entered"
+          },
+          "400": errorResponse("Invalid context selection"),
+          "401": errorResponse("No authenticated session"),
+          "403": errorResponse("Request origin is missing or not allowed"),
+          "404": errorResponse("No authorized Business matches that identifier")
+        },
+        tags: ["Identity"]
+      }
+    },
     "/api/v1/businesses/{businessId}/offerings": {
       post: {
         operationId: "createDraftOffering",
@@ -267,7 +357,9 @@ const document = {
           },
           "400": errorResponse("Invalid request"),
           "401": errorResponse("Authentication required"),
-          "403": errorResponse("Business cannot author offerings"),
+          "403": errorResponse(
+            "Business cannot author offerings, or its context is not selected"
+          ),
           "404": errorResponse("Business or catalog resource not found"),
           "409": errorResponse("Offering slug conflict")
         },
