@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.10
+Version:      2.11
 Last Updated: 2026-08-04
 -->
 
@@ -13,8 +13,8 @@ Last Updated: 2026-08-04
 | Item | Current state |
 |---|---|
 | Repository | Commerce Platform Bible |
-| Repository health | Frozen baselines; first safe vertical slice implemented and locally verified against PostgreSQL |
-| Current phase | M11 First Safe Vertical Slice — awaiting target-CI evidence |
+| Repository health | Frozen baselines; first safe vertical slice implemented and proven green in target CI |
+| Current phase | M11 First Safe Vertical Slice complete; I0 Repository Foundation gate closed |
 | Development | Draft Offering write and owned read path implemented; no product Story started |
 | Delivery Status of all Frozen Stories | Not Started |
 
@@ -74,11 +74,25 @@ constraint. Migration `20260804000100_updated_at_defaults` moves both
 responsibilities into PostgreSQL, where the raw-SQL persistence layer can rely on
 them.
 
+## I0 Closure Evidence
+
+CI run 9 (`2781f02`) passed the full chain on `ubuntu-latest` against PostgreSQL
+17 in 1m39s: `npm ci`, `prisma migrate deploy`, `npm run verify`
+(schema validation, OpenAPI generation, formatting, linting, module boundaries,
+type checking, 38 tests, dependency audit, Next.js production build), the
+committed-OpenAPI drift check, and the schema-drift gate.
+
+The drift gate earned its place on its first working run by catching a
+pre-existing mismatch: `20260725000100_initial_platform` creates a trigram index
+on `offering_search_projection(title)` that the datamodel never declared. Prisma
+can see column indexes, so the omission read as drift. It is now declared. The
+sibling full-text and partial indexes in that migration are expression-based and
+stay outside what Prisma models.
+
 ## Remaining Work
 
-1. Complete the full verification chain in target CI, including the Next.js production build and the new schema-drift gate.
-2. Select the Frozen Stories this slice implements and record implementation links without changing Story intent.
-3. Begin the publication and Discovery projection increment, which introduces the first outbox event with a real consumer.
+1. Select the Frozen Stories this slice implements and record implementation links without changing Story intent.
+2. Begin the publication and Discovery projection increment, which introduces the first outbox event with a real consumer.
 
 ## Known Boundaries
 
@@ -86,8 +100,7 @@ them.
 - `UX-0007 Messaging` is retained as historical Draft v0.2 outside the Frozen V1 baseline and is not required by any validated V1 Feature chain.
 - Platform Parent and Generated Story lifecycle metadata now carries the missing Freeze evidence for the already-authorized 2026-07-25 Owner Freeze; Story behaviour and Delivery Status are unchanged.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
-- Migrations, the full test suite and the Next.js production build were verified locally against PostgreSQL 18; target CI runs PostgreSQL 17 and remains the authoritative evidence.
-- `prisma validate` and `prisma migrate diff` could not be executed in the verification environment because the Prisma engine host is unreachable there. The schema-drift gate therefore runs for the first time in target CI.
+- `prisma validate` and `prisma migrate diff` cannot run in the local verification environment because the Prisma engine host is unreachable there. Schema syntax is checked locally through `@prisma/prisma-schema-wasm`, but drift itself is only provable in target CI.
 - Authentication is still the `TestPrincipalAdapter` stub. It refuses to construct when `NODE_ENV=production` and `ENABLE_TEST_PRINCIPAL=true`, and every authenticated route answers 401 while the flag is unset. Real authentication belongs to the Identity baseline increment.
 
 ## Revision History
@@ -106,3 +119,4 @@ them.
 | 2.8 | 2026-07-25 | Prepared the initial Prisma/PostgreSQL migration, reproducible OpenAPI contract, module-boundary enforcement, security audit gate, and first vertical-slice entry evidence; I0 remains open pending target CI. |
 | 2.9 | 2026-08-04 | Implemented the first safe vertical slice: database-level identifier and timestamp defaults, tenant-scoped authorization with DENIED audit evidence, published error envelope, conflict reporting, dependency-gated readiness, negative authorization coverage, and a schema-drift gate. Recorded the outbox descope. Delivery Status unchanged. |
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
+| 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
