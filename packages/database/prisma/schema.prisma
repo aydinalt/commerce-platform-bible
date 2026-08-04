@@ -241,6 +241,11 @@ model OfferingSearchProjection {
   offering           Offering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
 
   @@index([domainId, categoryId, publishedAt])
+  // Declared so the datamodel matches the trigram index created by
+  // `20260725000100_initial_platform`. Prisma can see this index, so leaving it
+  // undeclared reads as drift. The sibling full-text and partial indexes in that
+  // migration are expression-based and remain outside what Prisma models.
+  @@index([title(ops: raw("gin_trgm_ops"))], map: "offering_search_projection_title_trgm_idx", type: Gin)
   @@map("offering_search_projection")
 }
 
