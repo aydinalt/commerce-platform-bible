@@ -148,6 +148,27 @@ suite("Milestone 12 password recovery", () => {
     expect(after.rows[0]?.owned).toBe(1);
   });
 
+  it("leaves Admin authorization untouched", async () => {
+    const { email, userId } = await account();
+    await pool.query(
+      `insert into admin_authorization (user_id, granted_by)
+       values ($1,'Product Owner')`,
+      [userId]
+    );
+
+    await post("/auth/password-resets/completions", {
+      password: NEW_PASSWORD,
+      token: await recoveryToken(email)
+    });
+
+    // AC-8: recovery is a credential change, not an authorization change.
+    const authorization = await pool.query(
+      `select 1 from admin_authorization where user_id = $1`,
+      [userId]
+    );
+    expect(authorization.rowCount).toBe(1);
+  });
+
   it("leaves a Suspended account suspended and still unable to sign in", async () => {
     const { email } = await account();
     await pool.query(

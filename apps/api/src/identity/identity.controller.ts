@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpException,
@@ -113,6 +114,8 @@ export class IdentityController {
     // A newly created account is in the User baseline: no Business is chosen
     // silently (`US-IDN-F07-001` AC-3).
     return sessionSchema.parse({
+      adminAuthorized: false,
+      adminContext: false,
       selectedBusinessId: null,
       status: "ENABLED",
       userId: proof.userId
@@ -197,8 +200,11 @@ export class IdentityController {
     );
     const session = await this.identity.resolveSession(issued.token);
     if (!session) throw new UnauthorizedException();
-    // Direct Login enters no Business context (`US-IDN-F03-001` AC-6).
+    // Direct Login enters neither a Business nor the Admin context
+    // (`US-IDN-F03-001` AC-6, `US-IDN-F08-001` AC-5).
     return sessionSchema.parse({
+      adminAuthorized: session.adminAuthorized,
+      adminContext: false,
       selectedBusinessId: null,
       status: session.status,
       userId: session.userId
@@ -215,6 +221,8 @@ export class IdentityController {
         message: "No authenticated session"
       });
     return sessionSchema.parse({
+      adminAuthorized: session.adminAuthorized,
+      adminContext: session.adminContext,
       selectedBusinessId: session.selectedBusinessId ?? null,
       status: session.status,
       userId: session.userId
@@ -260,6 +268,10 @@ export class IdentityController {
       });
 
     return sessionSchema.parse({
+      adminAuthorized: session.adminAuthorized,
+      // Entering a Business leaves the Admin surface: they are different
+      // contexts and neither confers the other (`US-IDN-F08-001` AC-7).
+      adminContext: false,
       selectedBusinessId: input.businessId,
       status: session.status,
       userId: session.userId
@@ -282,7 +294,63 @@ export class IdentityController {
       userId: session.userId
     });
     return sessionSchema.parse({
+      adminAuthorized: session.adminAuthorized,
+      adminContext: session.adminContext,
       selectedBusinessId: null,
+      status: session.status,
+      userId: session.userId
+    });
+  }
+
+  /**
+   * Enters the Admin surface. Requires an Enabled account, authorization that
+   * exists right now, and this explicit request (`US-IDN-F08-001` AC-5). There
+   * is deliberately no endpoint to grant or remove authorization: AC-3 and AC-4
+   * place provisioning outside the product layer.
+   */
+  @Put("me/admin-context")
+  async enterAdminContext(@Req() request: FastifyRequest): Promise<Session> {
+    const token = readSessionCookie(request);
+    this.origins.assertAcceptable(request, token !== undefined);
+    const session = await this.requireSession(request);
+
+    const accepted = await this.identity.enterAdminContext({
+      correlationId: correlationId(request),
+      sessionId: session.sessionId,
+      userId: session.userId
+    });
+    if (!accepted)
+      throw new ForbiddenException({
+        code: "ADMIN_NOT_AUTHORIZED",
+        message: "Admin context is unavailable for this account"
+      });
+
+    return sessionSchema.parse({
+      adminAuthorized: true,
+      adminContext: true,
+      // AC-6: the Admin surface is routed without Business ownership.
+      selectedBusinessId: null,
+      status: session.status,
+      userId: session.userId
+    });
+  }
+
+  /** Leaves the Admin surface, keeping ordinary User behaviour (AC-10). */
+  @Delete("me/admin-context")
+  async leaveAdminContext(@Req() request: FastifyRequest): Promise<Session> {
+    const token = readSessionCookie(request);
+    this.origins.assertAcceptable(request, token !== undefined);
+    const session = await this.requireSession(request);
+
+    await this.identity.leaveAdminContext({
+      correlationId: correlationId(request),
+      sessionId: session.sessionId,
+      userId: session.userId
+    });
+    return sessionSchema.parse({
+      adminAuthorized: session.adminAuthorized,
+      adminContext: false,
+      selectedBusinessId: session.selectedBusinessId ?? null,
       status: session.status,
       userId: session.userId
     });

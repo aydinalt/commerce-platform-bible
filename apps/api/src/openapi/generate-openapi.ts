@@ -101,11 +101,19 @@ const document = {
       Session: {
         additionalProperties: false,
         properties: {
+          adminAuthorized: { type: "boolean" },
+          adminContext: { type: "boolean" },
           selectedBusinessId: { format: "uuid", type: ["string", "null"] },
           status: { enum: ["ENABLED", "SUSPENDED"], type: "string" },
           userId: { format: "uuid", type: "string" }
         },
-        required: ["selectedBusinessId", "status", "userId"],
+        required: [
+          "adminAuthorized",
+          "adminContext",
+          "selectedBusinessId",
+          "status",
+          "userId"
+        ],
         type: "object"
       },
       SelectBusinessContext: {
@@ -318,6 +326,44 @@ const document = {
             description: "Current authenticated session"
           },
           "401": errorResponse("No authenticated session")
+        },
+        tags: ["Identity"]
+      }
+    },
+    "/api/v1/auth/me/admin-context": {
+      delete: {
+        operationId: "leaveAdminContext",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Session" }
+              }
+            },
+            description: "Returned to the authenticated User baseline"
+          },
+          "401": errorResponse("No authenticated session"),
+          "403": errorResponse("Request origin is missing or not allowed")
+        },
+        tags: ["Identity"]
+      },
+      put: {
+        description:
+          "Enters the Admin surface. Authorization itself is provisioned operationally and has no product API.",
+        operationId: "enterAdminContext",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Session" }
+              }
+            },
+            description: "Admin context entered"
+          },
+          "401": errorResponse("No authenticated session"),
+          "403": errorResponse(
+            "Admin context is unavailable, or the request origin is not allowed"
+          )
         },
         tags: ["Identity"]
       }

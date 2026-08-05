@@ -60,6 +60,10 @@ export const loginSchema = z
 
 export const sessionSchema = z
   .object({
+    // Whether Admin authorization exists, and whether Admin context was
+    // entered. Separate facts: authorization alone enters nothing.
+    adminAuthorized: z.boolean(),
+    adminContext: z.boolean(),
     // Absent while the person is in the authenticated User baseline.
     selectedBusinessId: z.string().uuid().nullable(),
     status: z.enum(["ENABLED", "SUSPENDED"]),

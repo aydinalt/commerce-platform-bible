@@ -25,6 +25,7 @@ export default tseslint.config(
             "*.mjs",
             "prisma.config.ts",
             "vitest.config.ts",
+            "scripts/*.mjs",
             "apps/web/next.config.ts"
           ]
         },

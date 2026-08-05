@@ -11,6 +11,10 @@ architecture baselines.
   a product Story.
 - `M11_SLICE_SCOPE_RECONCILIATION.md` records what the first slice implements,
   what it defers, and why, where the roadmap and the readiness record differ.
+- `IDENTITY_IMPLEMENTATION_DECISION.md` closes the ADR-0012 §7 precondition and
+  records the account-status correction and the registration-delivery design.
+- `I1_IDENTITY_BASELINE_CLOSURE.md` records what the Identity increment covered
+  per Story, and why `US-IDN-F09-001` moves to I5.
 - `M11_STORY_LINK_PROPOSAL.md` records which Frozen Stories the first slice
   touches, with per-Acceptance-Criterion coverage and the code and tests behind
   each. It edits no Story file and advances no Delivery Status, and it does not

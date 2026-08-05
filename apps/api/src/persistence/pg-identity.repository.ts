@@ -266,6 +266,8 @@ export class PgIdentityRepository implements OnModuleDestroy {
    */
   async resolveSession(tokenHash: string): Promise<ResolvedSession | null> {
     const result = await this.pool.query<{
+      adminAuthorized: boolean;
+      adminContext: boolean;
       selectedBusinessId: string | null;
       sessionId: string;
       status: ResolvedSession["status"];
@@ -282,12 +284,23 @@ export class PgIdentityRepository implements OnModuleDestroy {
          (
            select bo.business_id from business_owner bo
            where bo.business_id = s.selected_business_id and bo.user_id = u.id
-         ) as "selectedBusinessId"`,
+         ) as "selectedBusinessId",
+         exists (
+           select 1 from admin_authorization a where a.user_id = u.id
+         ) as "adminAuthorized",
+         (
+           s.admin_context and exists (
+             select 1 from admin_authorization a where a.user_id = u.id
+           )
+         ) as "adminContext"`,
       [tokenHash]
     );
     const row = result.rows[0];
     if (!row) return null;
     return {
+      // Admin context cannot outlive the authorization it depends on (AC-9).
+      adminAuthorized: row.adminAuthorized,
+      adminContext: row.adminContext,
       sessionId: row.sessionId,
       status: row.status,
       userId: row.userId,
@@ -323,7 +336,7 @@ export class PgIdentityRepository implements OnModuleDestroy {
   }): Promise<boolean> {
     const result = await this.pool.query(
       `update user_session s
-         set selected_business_id = $1
+         set selected_business_id = $1, admin_context = false
        where s.id = $2
          and s.revoked_at is null
          and s.expires_at > now()
@@ -334,6 +347,36 @@ export class PgIdentityRepository implements OnModuleDestroy {
       [input.businessId, input.sessionId, input.userId]
     );
     return result.rowCount === 1;
+  }
+
+  /**
+   * Enters Admin context only while authorization exists right now (AC-5, AC-11).
+   * The selected Business is cleared: AC-6 routes the Admin surface without
+   * Business ownership, and AC-7 grants none through Admin.
+   */
+  async enterAdminContext(input: {
+    sessionId: string;
+    userId: string;
+  }): Promise<boolean> {
+    const result = await this.pool.query(
+      `update user_session s
+         set admin_context = true, selected_business_id = null
+       where s.id = $1
+         and s.revoked_at is null
+         and s.expires_at > now()
+         and exists (
+           select 1 from admin_authorization a where a.user_id = $2
+         )`,
+      [input.sessionId, input.userId]
+    );
+    return result.rowCount === 1;
+  }
+
+  async leaveAdminContext(sessionId: string): Promise<void> {
+    await this.pool.query(
+      `update user_session set admin_context = false where id = $1`,
+      [sessionId]
+    );
   }
 
   /** Returns to the authenticated User baseline without ending the session. */

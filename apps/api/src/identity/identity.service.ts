@@ -295,6 +295,45 @@ export class IdentityService {
     return accepted;
   }
 
+  /**
+   * Entering the Admin surface is an authorization decision like any other, so
+   * it is audited whether or not it is granted.
+   */
+  async enterAdminContext(input: {
+    correlationId: string;
+    sessionId: string;
+    userId: string;
+  }): Promise<boolean> {
+    const accepted = await this.repository.enterAdminContext({
+      sessionId: input.sessionId,
+      userId: input.userId
+    });
+    await this.record({
+      action: "identity.admin-context.enter",
+      actorUserId: input.userId,
+      correlationId: input.correlationId,
+      result: accepted ? "ALLOWED" : "DENIED",
+      ...(accepted ? {} : { reason: "ADMIN_NOT_AUTHORIZED" }),
+      targetId: input.userId
+    });
+    return accepted;
+  }
+
+  async leaveAdminContext(input: {
+    correlationId: string;
+    sessionId: string;
+    userId: string;
+  }): Promise<void> {
+    await this.repository.leaveAdminContext(input.sessionId);
+    await this.record({
+      action: "identity.admin-context.leave",
+      actorUserId: input.userId,
+      correlationId: input.correlationId,
+      result: "ALLOWED",
+      targetId: input.userId
+    });
+  }
+
   async clearBusinessContext(input: {
     correlationId: string;
     sessionId: string;

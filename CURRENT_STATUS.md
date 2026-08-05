@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.11
-Last Updated: 2026-08-04
+Version:      2.12
+Last Updated: 2026-08-05
 -->
 
 # CURRENT STATUS
@@ -14,8 +14,8 @@ Last Updated: 2026-08-04
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; first safe vertical slice implemented and proven green in target CI |
-| Current phase | M11 First Safe Vertical Slice complete; I0 Repository Foundation gate closed |
-| Development | Draft Offering write and owned read path implemented; no product Story started |
+| Current phase | M12 Increment I1 Identity and Access Baseline |
+| Development | Identity baseline and Draft Offering write path implemented; no product Story started |
 | Delivery Status of all Frozen Stories | Not Started |
 
 ## Canonical Layer Status
@@ -91,8 +91,9 @@ stay outside what Prisma models.
 
 ## Remaining Work
 
-1. Begin the publication and Discovery projection increment, which introduces the first outbox event with a real consumer.
-2. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
+1. Begin I2 Catalog, Business and Offering Write Model, or I3 Publication and Discovery Projection.
+2. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
+3. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
 
 ## Known Boundaries
 
@@ -101,7 +102,8 @@ stay outside what Prisma models.
 - Platform Parent and Generated Story lifecycle metadata now carries the missing Freeze evidence for the already-authorized 2026-07-25 Owner Freeze; Story behaviour and Delivery Status are unchanged.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
 - `prisma validate` and `prisma migrate diff` cannot run in the local verification environment because the Prisma engine host is unreachable there. Schema syntax is checked locally through `@prisma/prisma-schema-wasm`, but drift itself is only provable in target CI.
-- Authentication is still the `TestPrincipalAdapter` stub. It refuses to construct when `NODE_ENV=production` and `ENABLE_TEST_PRINCIPAL=true`, and every authenticated route answers 401 while the flag is unset. Real authentication belongs to the Identity baseline increment.
+- Authentication is application-owned: Argon2id credentials and server-managed opaque sessions, per `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`. The `TestPrincipalAdapter` survives only as a development affordance that refuses to construct in production, and should be removed once no local workflow depends on it.
+- Outbound email has a port, an outbox and a worker, but no vendor adapter. `LoggingEmailDispatcher` refuses to construct in production, so a deployment without an adapter fails loudly rather than accepting registrations nobody can complete.
 
 ## Revision History
 
@@ -119,4 +121,5 @@ stay outside what Prisma models.
 | 2.8 | 2026-07-25 | Prepared the initial Prisma/PostgreSQL migration, reproducible OpenAPI contract, module-boundary enforcement, security audit gate, and first vertical-slice entry evidence; I0 remains open pending target CI. |
 | 2.9 | 2026-08-04 | Implemented the first safe vertical slice: database-level identifier and timestamp defaults, tenant-scoped authorization with DENIED audit evidence, published error envelope, conflict reporting, dependency-gated readiness, negative authorization coverage, and a schema-drift gate. Recorded the outbox descope. Delivery Status unchanged. |
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
+| 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |

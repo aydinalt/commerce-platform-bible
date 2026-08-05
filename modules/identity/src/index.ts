@@ -2,6 +2,8 @@
 export type AccountStatus = "ENABLED" | "SUSPENDED";
 
 export interface Principal {
+  /** Admin context, entered explicitly and never inferred. */
+  adminContext?: boolean;
   /**
    * Three distinct states, and the difference matters:
    *
@@ -36,6 +38,13 @@ export type RegistrationProof =
   { accepted: true; userId: string } | { accepted: false };
 
 export interface ResolvedSession {
+  /**
+   * Whether Admin authorization exists right now, and whether Admin context was
+   * explicitly entered. Both are re-derived per request, so a removal takes
+   * effect immediately (`US-IDN-F08-001` AC-9, AC-11).
+   */
+  adminAuthorized: boolean;
+  adminContext: boolean;
   /**
    * Present only while the selection is still authorized. Ownership is
    * re-checked on every resolution, so a revoked relationship drops the context
