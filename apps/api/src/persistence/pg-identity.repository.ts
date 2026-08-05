@@ -6,7 +6,10 @@ import type {
   AuthorizedBusiness,
   ResolvedSession
 } from "@commerce/identity";
-import { REGISTRATION_REQUESTED } from "@commerce/notification";
+import {
+  PASSWORD_RESET_REQUESTED,
+  REGISTRATION_REQUESTED
+} from "@commerce/notification";
 
 export interface PendingRegistrationRow {
   email: string;
@@ -124,6 +127,96 @@ export class PgIdentityRepository implements OnModuleDestroy {
       await client.query(
         `insert into user_credential (user_id, password_hash) values ($1,$2)`,
         [userId, input.passwordHash]
+      );
+      await client.query("commit");
+      return userId;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Schedules a recovery for an existing account, together with the event that
+   * will deliver its message. Reports whether an account was found so the
+   * caller can audit the outcome — the caller must not let that difference
+   * reach the response.
+   *
+   * Access status is deliberately not consulted: `US-IDN-F05-001` AC-9 requires
+   * a Suspended account to be able to complete a reset and stay Suspended.
+   */
+  async recordPasswordReset(input: {
+    email: string;
+    expiresAt: Date;
+  }): Promise<boolean> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const reset = await client.query<{ id: string }>(
+        `insert into password_reset (user_id, expires_at)
+         select u.id, $2 from user_account u where u.email = $1
+         on conflict (user_id) do update
+           set expires_at    = excluded.expires_at,
+               token_hash    = null,
+               dispatched_at = null,
+               created_at    = now()
+         returning id`,
+        [input.email, input.expiresAt]
+      );
+      const id = reset.rows[0]?.id;
+      if (id !== undefined) {
+        await client.query(
+          `insert into outbox_event (aggregate_type, aggregate_id, event_type, payload)
+           values ('PasswordReset', $1, $2, '{}'::jsonb)`,
+          [id, PASSWORD_RESET_REQUESTED]
+        );
+      }
+      await client.query("commit");
+      return id !== undefined;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Consumes the proof and sets the new credential in one transaction, then
+   * revokes every session for that account: whoever asked for the reset may not
+   * be who was signed in.
+   *
+   * Nothing here touches access status, Business ownership or Admin
+   * authorization (`US-IDN-F05-001` AC-6 through AC-9).
+   */
+  async completePasswordReset(input: {
+    passwordHash: string;
+    tokenHash: string;
+  }): Promise<string | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const consumed = await client.query<{ userId: string }>(
+        `delete from password_reset
+         where token_hash = $1 and expires_at > now()
+         returning user_id as "userId"`,
+        [input.tokenHash]
+      );
+      const userId = consumed.rows[0]?.userId;
+      if (userId === undefined) {
+        await client.query("rollback");
+        return null;
+      }
+      await client.query(
+        `update user_credential set password_hash = $2 where user_id = $1`,
+        [userId, input.passwordHash]
+      );
+      await client.query(
+        `update user_session set revoked_at = now()
+         where user_id = $1 and revoked_at is null`,
+        [userId]
       );
       await client.query("commit");
       return userId;

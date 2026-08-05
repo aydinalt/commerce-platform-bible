@@ -72,6 +72,23 @@ const document = {
         required: ["token"],
         type: "object"
       },
+      BeginPasswordReset: {
+        additionalProperties: false,
+        properties: {
+          email: { format: "email", maxLength: 320, type: "string" }
+        },
+        required: ["email"],
+        type: "object"
+      },
+      CompletePasswordReset: {
+        additionalProperties: false,
+        properties: {
+          password: { maxLength: 256, minLength: 12, type: "string" },
+          token: { maxLength: 200, minLength: 1, type: "string" }
+        },
+        required: ["password", "token"],
+        type: "object"
+      },
       Login: {
         additionalProperties: false,
         properties: {
@@ -209,6 +226,47 @@ const document = {
             description: "Account created and session established"
           },
           "400": errorResponse("Registration link is invalid or has expired")
+        },
+        tags: ["Identity"]
+      }
+    },
+    "/api/v1/auth/password-resets": {
+      post: {
+        description:
+          "Answers identically whether or not the address has an account.",
+        operationId: "beginPasswordReset",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/BeginPasswordReset" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "202": { description: "Recovery accepted for email-control proof" },
+          "400": errorResponse("Invalid recovery input"),
+          "429": errorResponse("Too many recovery attempts")
+        },
+        tags: ["Identity"]
+      }
+    },
+    "/api/v1/auth/password-resets/completions": {
+      post: {
+        description:
+          "Sets the new password. No session is established; the person may then attempt Login.",
+        operationId: "completePasswordReset",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CompletePasswordReset" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "204": { description: "Password set" },
+          "400": errorResponse("Recovery link is invalid or has expired")
         },
         tags: ["Identity"]
       }

@@ -15,6 +15,7 @@ export interface EmailDispatcher {
 
 /** Event types the worker knows how to turn into a message. */
 export const REGISTRATION_REQUESTED = "identity.registration.requested";
+export const PASSWORD_RESET_REQUESTED = "identity.password-reset.requested";
 
 export interface OutboxEvent {
   aggregateId: string;

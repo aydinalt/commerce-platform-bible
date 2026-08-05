@@ -18,6 +18,9 @@ export const AUDIT_WRITER = Symbol("AuditWriter");
 
 const LOGIN_SCOPE = "login";
 const REGISTRATION_SCOPE = "registration";
+const RECOVERY_SCOPE = "recovery";
+/** A recovery link must expire quickly enough to limit mailbox exposure. */
+const RECOVERY_TTL_MS = 30 * 60 * 1000;
 const ATTEMPT_LIMIT = 10;
 const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -191,6 +194,59 @@ export class IdentityService {
       targetId: credential.userId
     });
     return session;
+  }
+
+  /**
+   * Begins recovery for an unauthenticated caller (`US-IDN-F05-001` AC-1). The
+   * outcome is audited but never signalled: an unknown address and a known one
+   * are indistinguishable from outside, and a Suspended account is accepted
+   * because AC-9 requires it to be able to complete a reset.
+   */
+  async beginPasswordReset(input: {
+    correlationId: string;
+    email: string;
+    subject: string;
+  }): Promise<{ throttled: boolean }> {
+    const throttled = await this.repository.registerAttempt({
+      limit: ATTEMPT_LIMIT,
+      scope: RECOVERY_SCOPE,
+      subjectHash: digest(input.subject),
+      windowMs: ATTEMPT_WINDOW_MS
+    });
+    if (throttled) return { throttled: true };
+
+    const scheduled = await this.repository.recordPasswordReset({
+      email: input.email,
+      expiresAt: new Date(Date.now() + RECOVERY_TTL_MS)
+    });
+    await this.record({
+      action: "identity.password-reset.begin",
+      correlationId: input.correlationId,
+      result: scheduled ? "ALLOWED" : "DENIED",
+      ...(scheduled ? {} : { reason: "UNKNOWN_ACCOUNT" })
+    });
+    return { throttled: false };
+  }
+
+  /** Sets the new password once the one-time proof is presented (AC-3). */
+  async completePasswordReset(input: {
+    correlationId: string;
+    password: string;
+    token: string;
+  }): Promise<boolean> {
+    const passwordHash = await this.passwords.hash(input.password);
+    const userId = await this.repository.completePasswordReset({
+      passwordHash,
+      tokenHash: digest(input.token)
+    });
+    await this.record({
+      action: "identity.password-reset.complete",
+      ...(userId === null ? {} : { actorUserId: userId, targetId: userId }),
+      correlationId: input.correlationId,
+      result: userId === null ? "DENIED" : "ALLOWED",
+      ...(userId === null ? { reason: "TOKEN_INVALID_OR_EXPIRED" } : {})
+    });
+    return userId !== null;
   }
 
   /** Session rotation after authentication, required by the security baseline. */

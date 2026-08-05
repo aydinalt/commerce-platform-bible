@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { Pool } from "pg";
 
 import {
+  PASSWORD_RESET_REQUESTED,
   REGISTRATION_REQUESTED,
   type EmailDispatcher
 } from "@commerce/notification";
@@ -46,6 +47,8 @@ export class OutboxProcessor {
       try {
         if (event.eventType === REGISTRATION_REQUESTED) {
           await this.deliverRegistration(event.aggregateId);
+        } else if (event.eventType === PASSWORD_RESET_REQUESTED) {
+          await this.deliverPasswordReset(event.aggregateId);
         }
         await this.markProcessed(event.id);
         handled += 1;
@@ -109,6 +112,28 @@ export class OutboxProcessor {
       body: `Confirm your email address to finish creating your account:\n\n${link}\n\nThe link expires shortly. If you did not request it, ignore this message.`,
       recipient: email,
       subject: "Confirm your email address"
+    });
+  }
+
+  private async deliverPasswordReset(resetId: string): Promise<void> {
+    const token = randomBytes(32).toString("base64url");
+    const claimed = await this.pool.query<{ email: string }>(
+      `update password_reset r
+         set token_hash = $1, dispatched_at = now()
+       from user_account u
+       where r.user_id = u.id and r.id = $2 and r.expires_at > now()
+       returning u.email`,
+      [digest(token), resetId]
+    );
+
+    const email = claimed.rows[0]?.email;
+    if (email === undefined) return;
+
+    const link = `${this.options.publicWebUrl}/recover/reset?token=${token}`;
+    await this.options.dispatcher.deliver({
+      body: `Set a new password for your account:\n\n${link}\n\nThe link expires shortly. If you did not request it, ignore this message and your password stays unchanged.`,
+      recipient: email,
+      subject: "Reset your password"
     });
   }
 

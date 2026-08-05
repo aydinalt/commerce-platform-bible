@@ -40,6 +40,17 @@ export const confirmRegistrationSchema = z
   .object({ token: z.string().min(1).max(200) })
   .strict();
 
+export const beginPasswordResetSchema = z
+  .object({ email: emailSchema })
+  .strict();
+
+export const completePasswordResetSchema = z
+  .object({ password: passwordSchema, token: z.string().min(1).max(200) })
+  .strict();
+
+export type BeginPasswordReset = z.infer<typeof beginPasswordResetSchema>;
+export type CompletePasswordReset = z.infer<typeof completePasswordResetSchema>;
+
 export const loginSchema = z
   .object({
     email: emailSchema,

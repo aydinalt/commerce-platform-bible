@@ -19,7 +19,9 @@ import { z } from "zod";
 
 import {
   authorizedBusinessesSchema,
+  beginPasswordResetSchema,
   beginRegistrationSchema,
+  completePasswordResetSchema,
   confirmRegistrationSchema,
   loginSchema,
   selectBusinessContextSchema,
@@ -115,6 +117,54 @@ export class IdentityController {
       status: "ENABLED",
       userId: proof.userId
     });
+  }
+
+  /**
+   * Begins recovery for an unauthenticated caller. Answers the same whether or
+   * not the address is registered, so recovery cannot be used to enumerate
+   * accounts.
+   */
+  @Post("password-resets")
+  @HttpCode(202)
+  async beginPasswordReset(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ): Promise<void> {
+    const input = parse(beginPasswordResetSchema, body);
+    const outcome = await this.identity.beginPasswordReset({
+      correlationId: correlationId(request),
+      email: input.email,
+      subject: subjectOf(request)
+    });
+    if (outcome.throttled)
+      throw new HttpException(
+        { code: "RATE_LIMITED", message: "Too many recovery attempts" },
+        HttpStatus.TOO_MANY_REQUESTS
+      );
+  }
+
+  /**
+   * Sets the new password against a one-time proof. No session is established:
+   * `US-IDN-F05-001` AC-5 says the person may then *attempt* Login, which for a
+   * Suspended account still fails.
+   */
+  @Post("password-resets/completions")
+  @HttpCode(204)
+  async completePasswordReset(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ): Promise<void> {
+    const input = parse(completePasswordResetSchema, body);
+    const accepted = await this.identity.completePasswordReset({
+      correlationId: correlationId(request),
+      password: input.password,
+      token: input.token
+    });
+    if (!accepted)
+      throw new BadRequestException({
+        code: "RESET_TOKEN_INVALID",
+        message: "Recovery link is invalid or has expired"
+      });
   }
 
   @Post("sessions")
