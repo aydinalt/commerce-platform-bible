@@ -95,6 +95,41 @@ export type ConfirmRegistration = z.infer<typeof confirmRegistrationSchema>;
 export type Login = z.infer<typeof loginSchema>;
 export type Session = z.infer<typeof sessionSchema>;
 
+// `US-BUS-F01-001` AC-2 requires an owning account and a non-empty display
+// name. The slug is the public identifier the Business is reachable by.
+export const createBusinessSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    slug: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(1)
+      .max(120)
+      .regex(
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/u,
+        "Use lowercase words separated by hyphens"
+      )
+  })
+  .strict();
+
+export const ownedBusinessSchema = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    publicExposure: z.enum(["ELIGIBLE", "INELIGIBLE"]),
+    slug: z.string(),
+    status: z.string()
+  })
+  .strict();
+
+export const ownedBusinessesSchema = z
+  .object({ businesses: z.array(ownedBusinessSchema) })
+  .strict();
+
+export type CreateBusiness = z.infer<typeof createBusinessSchema>;
+export type OwnedBusinesses = z.infer<typeof ownedBusinessesSchema>;
+
 export const createDraftOfferingSchema = z
   .object({
     categoryId: z.string().uuid(),

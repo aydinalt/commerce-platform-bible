@@ -17,6 +17,12 @@ import { digest, issueSecret } from "./secret.js";
 export const AUDIT_WRITER = Symbol("AuditWriter");
 
 const LOGIN_SCOPE = "login";
+const LOGIN_CALLER_SCOPE = "login-caller";
+/**
+ * Higher than the per-account limit: one address may legitimately carry several
+ * people behind a shared network, but not an unbounded sweep of accounts.
+ */
+const CALLER_ATTEMPT_LIMIT = 50;
 const REGISTRATION_SCOPE = "registration";
 const RECOVERY_SCOPE = "recovery";
 /** A recovery link must expire quickly enough to limit mailbox exposure. */
@@ -145,14 +151,27 @@ export class IdentityService {
     password: string;
     subject: string;
   }): Promise<SessionIssue | null> {
+    // Two counters, because they stop different attacks. The per-account one
+    // stops guessing a single password list against one address; the per-caller
+    // one stops trying a single common password against many addresses, which
+    // the per-account counter never sees because each address starts fresh.
     const subjectHash = digest(`${input.subject}|${input.email}`);
-    const throttled = await this.repository.registerAttempt({
-      limit: ATTEMPT_LIMIT,
-      scope: LOGIN_SCOPE,
-      subjectHash,
-      windowMs: ATTEMPT_WINDOW_MS
-    });
-    if (throttled) {
+    const callerHash = digest(input.subject);
+    const [accountThrottled, callerThrottled] = await Promise.all([
+      this.repository.registerAttempt({
+        limit: ATTEMPT_LIMIT,
+        scope: LOGIN_SCOPE,
+        subjectHash,
+        windowMs: ATTEMPT_WINDOW_MS
+      }),
+      this.repository.registerAttempt({
+        limit: CALLER_ATTEMPT_LIMIT,
+        scope: LOGIN_CALLER_SCOPE,
+        subjectHash: callerHash,
+        windowMs: ATTEMPT_WINDOW_MS
+      })
+    ]);
+    if (accountThrottled || callerThrottled) {
       await this.record({
         action: "identity.login",
         correlationId: input.correlationId,
@@ -184,6 +203,8 @@ export class IdentityService {
       return null;
     }
 
+    // Only the per-account counter is forgiven. Clearing the per-caller one too
+    // would let a sweep reset itself by signing into an account it owns.
     await this.repository.clearAttempts(LOGIN_SCOPE, subjectHash);
     const session = await this.issueSession(credential.userId);
     await this.record({

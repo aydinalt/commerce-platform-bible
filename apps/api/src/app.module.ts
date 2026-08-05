@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 
+import { BusinessController } from "./business/business.controller.js";
+import { BusinessService } from "./business/business.service.js";
 import { HealthController } from "./health.controller.js";
 import { ErrorEnvelopeFilter } from "./http/error-envelope.filter.js";
 import { IdentityController } from "./identity/identity.controller.js";
@@ -8,32 +10,46 @@ import { AUDIT_WRITER, IdentityService } from "./identity/identity.service.js";
 import { PasswordHasher } from "./identity/password.hasher.js";
 import { OfferingController } from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
+import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
 import { PgCommerceRepository } from "./persistence/pg-commerce.repository.js";
 import { PgIdentityRepository } from "./persistence/pg-identity.repository.js";
 import { OriginValidator } from "./security/origin.guard.js";
 import { PrincipalResolver } from "./security/principal-resolver.js";
 
 /**
- * Origins permitted to make cookie-authenticated mutations. Configured rather
- * than hard-coded, but with a development default so the local web app works
- * without setup.
+ * Origins permitted to establish or use a cookie session.
+ *
+ * Getting this wrong is silent and total: every login would be refused and the
+ * product would look broken for no visible reason. So production refuses to
+ * start without it rather than falling back to a development default that could
+ * never be correct there.
  */
 function allowedOrigins(): readonly string[] {
-  const configured = process.env.ALLOWED_ORIGINS;
-  return configured
-    ? configured
-        .split(",")
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-    : ["http://localhost:3000"];
+  const configured = (process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  if (configured.length > 0) return configured;
+  if ((process.env.NODE_ENV ?? "development") === "production") {
+    throw new Error("ALLOWED_ORIGINS_REQUIRED_IN_PRODUCTION");
+  }
+  return ["http://localhost:3000"];
 }
 
 @Module({
-  controllers: [HealthController, IdentityController, OfferingController],
+  controllers: [
+    BusinessController,
+    HealthController,
+    IdentityController,
+    OfferingController
+  ],
   providers: [
+    BusinessService,
     IdentityService,
     OfferingService,
     PasswordHasher,
+    PgBusinessRepository,
     PgCommerceRepository,
     PgIdentityRepository,
     PrincipalResolver,

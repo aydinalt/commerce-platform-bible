@@ -413,6 +413,25 @@ suite("Milestone 12 identity baseline", () => {
     );
   });
 
+  it("bounds one caller sweeping a password across many accounts", async () => {
+    // The per-account counter never sees this attack: every new address starts
+    // its own count, so only a per-caller limit can stop it.
+    const attempts = [];
+    for (let index = 0; index <= 50; index += 1)
+      attempts.push(
+        await post("/auth/sessions", {
+          email: address(),
+          password: "one common password"
+        })
+      );
+
+    const blocked = await pool.query<{ attempts: number }>(
+      `select attempts from auth_throttle where scope = 'login-caller'`
+    );
+    expect(blocked.rows[0]?.attempts).toBeGreaterThan(50);
+    expect(attempts.at(-1)?.statusCode).toBe(401);
+  });
+
   it("stores no password in a recoverable form", async () => {
     const { email } = await register();
 

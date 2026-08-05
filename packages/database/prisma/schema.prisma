@@ -22,6 +22,14 @@ enum BusinessStatus {
   RETIRED
 }
 
+/// The Business-side input to public exposure (`US-BUS-F01-001` AC-5). Distinct
+/// from moderation: `US-BUS-F02-001` AC-7 reads both before any public identity
+/// is shown.
+enum BusinessExposureInput {
+  ELIGIBLE
+  INELIGIBLE
+}
+
 enum BusinessModerationStatus {
   UNRESTRICTED
   RESTRICTED
@@ -167,6 +175,7 @@ model Business {
   slug      String          @unique @db.VarChar(120)
   name      String          @db.VarChar(200)
   status    BusinessStatus  @default(DRAFT)
+  publicExposure BusinessExposureInput @default(ELIGIBLE) @map("public_exposure")
   version   Int             @default(1)
   createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -196,6 +205,8 @@ model BusinessOwner {
   user       UserAccount @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@id([businessId, userId])
+  /// Exactly one owner per Business in V1 (`US-BUS-F01-001` AC-8, AC-10).
+  @@unique([businessId])
   @@index([userId])
   @@map("business_owner")
 }

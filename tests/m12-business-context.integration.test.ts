@@ -43,8 +43,6 @@ suite("Milestone 12 Business context", () => {
   let app: NestFastifyApplication;
   let processor: OutboxProcessor;
 
-  const ownedId = randomUUID();
-  const secondId = randomUUID();
   const foreignId = randomUUID();
   const domainId = randomUUID();
   const categoryId = randomUUID();
@@ -89,12 +87,23 @@ suite("Milestone 12 Business context", () => {
     };
   };
 
-  const own = (userId: string, businessId: string) =>
-    pool.query(
-      `insert into business_owner (business_id,user_id) values ($1,$2)
-       on conflict do nothing`,
-      [businessId, userId]
+  /**
+   * A Business owned by exactly one person (`US-BUS-F01-001` AC-8), so each
+   * case creates its own rather than sharing one that could only ever belong to
+   * whoever claimed it first.
+   */
+  const ownedBusiness = async (userId: string, name = "Owned") => {
+    const id = randomUUID();
+    await pool.query(
+      `insert into business (id,slug,name,status) values ($1,$2,$3,'ACTIVE')`,
+      [id, `ctx-${id}`, name]
     );
+    await pool.query(
+      `insert into business_owner (business_id,user_id) values ($1,$2)`,
+      [id, userId]
+    );
+    return id;
+  };
 
   beforeAll(async () => {
     process.env.ENABLE_TEST_PRINCIPAL = "false";
@@ -102,16 +111,8 @@ suite("Milestone 12 Business context", () => {
 
     await pool.query(
       `insert into business (id,slug,name,status)
-       values ($1,$2,'Owned One','ACTIVE'),($3,$4,'Owned Two','ACTIVE'),
-              ($5,$6,'Foreign','ACTIVE')`,
-      [
-        ownedId,
-        `ctx-owned-${ownedId}`,
-        secondId,
-        `ctx-second-${secondId}`,
-        foreignId,
-        `ctx-foreign-${foreignId}`
-      ]
+       values ($1,$2,'Foreign','ACTIVE')`,
+      [foreignId, `ctx-foreign-${foreignId}`]
     );
     await pool.query(
       `insert into domain (id,stable_key,slug,name) values ($1,$2,$3,'Domain')`,
@@ -153,8 +154,8 @@ suite("Milestone 12 Business context", () => {
 
   it("offers only the Businesses the person is authorized for", async () => {
     const { cookie, userId } = await signUp();
-    await own(userId, ownedId);
-    await own(userId, secondId);
+    const ownedId = await ownedBusiness(userId, "Owned One");
+    const secondId = await ownedBusiness(userId, "Owned Two");
 
     const listed = await send("GET", "/auth/me/businesses", { cookie });
 
@@ -166,7 +167,7 @@ suite("Milestone 12 Business context", () => {
 
   it("enters an explicitly chosen Business context", async () => {
     const { cookie, userId } = await signUp();
-    await own(userId, ownedId);
+    const ownedId = await ownedBusiness(userId);
 
     const entered = await send("PUT", "/auth/me/business-context", {
       body: { businessId: ownedId },
@@ -197,7 +198,7 @@ suite("Milestone 12 Business context", () => {
 
   it("refuses to act in an owned Business that was never selected", async () => {
     const { cookie, userId } = await signUp();
-    await own(userId, ownedId);
+    const ownedId = await ownedBusiness(userId);
 
     const created = await send("POST", `/businesses/${ownedId}/offerings`, {
       body: { categoryId, slug: `unselected-${randomUUID()}`, title: "No" },
@@ -214,8 +215,8 @@ suite("Milestone 12 Business context", () => {
 
   it("acts only in the selected Business, not in another owned one", async () => {
     const { cookie, userId } = await signUp();
-    await own(userId, ownedId);
-    await own(userId, secondId);
+    const ownedId = await ownedBusiness(userId, "Owned One");
+    const secondId = await ownedBusiness(userId, "Owned Two");
     await send("PUT", "/auth/me/business-context", {
       body: { businessId: ownedId },
       cookie
@@ -237,7 +238,7 @@ suite("Milestone 12 Business context", () => {
 
   it("drops the context when the ownership relationship is removed", async () => {
     const { cookie, userId } = await signUp();
-    await own(userId, ownedId);
+    const ownedId = await ownedBusiness(userId);
     await send("PUT", "/auth/me/business-context", {
       body: { businessId: ownedId },
       cookie
@@ -257,7 +258,7 @@ suite("Milestone 12 Business context", () => {
 
   it("returns to the User baseline on leaving, keeping the session", async () => {
     const { cookie, userId } = await signUp();
-    await own(userId, ownedId);
+    const ownedId = await ownedBusiness(userId);
     await send("PUT", "/auth/me/business-context", {
       body: { businessId: ownedId },
       cookie
@@ -274,7 +275,7 @@ suite("Milestone 12 Business context", () => {
 
   it("requires an authenticated session to choose a context at all", async () => {
     const entered = await send("PUT", "/auth/me/business-context", {
-      body: { businessId: ownedId }
+      body: { businessId: foreignId }
     });
 
     // AC-1: Business context is unavailable without an Enabled account.
@@ -283,7 +284,7 @@ suite("Milestone 12 Business context", () => {
 
   it("refuses a context switch from an unrecognised origin", async () => {
     const { cookie, userId } = await signUp();
-    await own(userId, ownedId);
+    const ownedId = await ownedBusiness(userId);
 
     const foreign = await app.inject({
       body: { businessId: ownedId },

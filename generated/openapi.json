@@ -117,6 +117,46 @@
         "required": ["businesses"],
         "type": "object"
       },
+      "CreateBusiness": {
+        "additionalProperties": false,
+        "properties": {
+          "name": { "maxLength": 200, "minLength": 1, "type": "string" },
+          "slug": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          }
+        },
+        "required": ["name", "slug"],
+        "type": "object"
+      },
+      "OwnedBusiness": {
+        "additionalProperties": false,
+        "properties": {
+          "id": { "format": "uuid", "type": "string" },
+          "name": { "type": "string" },
+          "publicExposure": {
+            "enum": ["ELIGIBLE", "INELIGIBLE"],
+            "type": "string"
+          },
+          "slug": { "type": "string" },
+          "status": { "type": "string" }
+        },
+        "required": ["id", "name", "publicExposure", "slug", "status"],
+        "type": "object"
+      },
+      "OwnedBusinesses": {
+        "additionalProperties": false,
+        "properties": {
+          "businesses": {
+            "items": { "$ref": "#/components/schemas/OwnedBusiness" },
+            "type": "array"
+          }
+        },
+        "required": ["businesses"],
+        "type": "object"
+      },
       "CreateDraftOffering": {
         "additionalProperties": false,
         "properties": {
@@ -563,6 +603,85 @@
           }
         },
         "tags": ["Identity"]
+      }
+    },
+    "/api/v1/businesses": {
+      "get": {
+        "operationId": "listOwnedBusinesses",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OwnedBusinesses" }
+              }
+            },
+            "description": "Businesses owned by the acting person"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          }
+        },
+        "tags": ["Business"]
+      },
+      "post": {
+        "description": "Creates a Business owned by the acting person. No Admin approval precedes it.",
+        "operationId": "createBusiness",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateBusiness" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OwnedBusiness" }
+              }
+            },
+            "description": "Business created, Unrestricted and Eligible"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Business input"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Account is not active, or the request origin is not allowed"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Business slug conflict"
+          }
+        },
+        "tags": ["Business"]
       }
     },
     "/api/v1/businesses/{businessId}/offerings": {
