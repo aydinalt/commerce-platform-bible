@@ -87,6 +87,25 @@ previous one.
 `NODE_ENV=production`, so an unconfigured deployment fails loudly instead of
 silently accepting registrations nobody can complete.
 
+## Origin validation covers session establishment
+
+A review of this increment found that origin validation was applied only to
+requests that **carried** a session, not to those that **established** one. That
+left login CSRF open: a cross-site form post signs a person into an account they
+did not choose, and everything they then do accumulates in someone else's
+account. `SameSite=Strict` does not close it, because it governs sending a
+cookie rather than setting one.
+
+`POST /auth/sessions` and `POST /auth/registrations/confirmations` therefore now
+require a recognised `Origin` or `Referer`. The consequence is deliberate: a
+client that establishes a cookie session must declare where it is calling from,
+which suits the browser product ADR-0012 describes. A non-browser client would
+need a different credential mechanism rather than a cookie.
+
+`POST /auth/registrations` and `POST /auth/password-resets` remain open to an
+undeclared origin: they establish nothing and reveal nothing, and throttling
+covers abuse.
+
 ## Scope of the first increment
 
 Session foundation, registration with email-control proof, login and logout —

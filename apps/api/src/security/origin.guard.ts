@@ -9,8 +9,12 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
  * state-changing request whose declared origin is not one we serve, covering
  * clients that ignore or mishandle SameSite.
  *
- * Requests that carry no session cookie need no protection: there is nothing to
- * ride along on, and rejecting them would break ordinary API clients.
+ * `sessionInvolved` must be true for a request that **carries** a session and
+ * for one that **establishes** one. Protecting only the former leaves login
+ * CSRF open: a cross-site form post can sign a person into an account they did
+ * not choose, and everything they then do lands in someone else's account.
+ * Since `SameSite` governs sending rather than setting, it does not close that
+ * on its own.
  */
 @Injectable()
 export class OriginValidator {
@@ -20,8 +24,8 @@ export class OriginValidator {
     this.allowed = new Set(allowedOrigins);
   }
 
-  assertAcceptable(request: FastifyRequest, cookiePresent: boolean): void {
-    if (SAFE_METHODS.has(request.method) || !cookiePresent) return;
+  assertAcceptable(request: FastifyRequest, sessionInvolved: boolean): void {
+    if (SAFE_METHODS.has(request.method) || !sessionInvolved) return;
 
     const declared = this.declaredOrigin(request);
     if (declared === null) {

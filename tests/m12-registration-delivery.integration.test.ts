@@ -41,7 +41,12 @@ suite("Milestone 12 registration delivery", () => {
   const address = () => `mail-${randomUUID()}@example.test`;
 
   const post = (url: string, body: unknown) =>
-    app.inject({ body, method: "POST", url: `/api/v1${url}` });
+    app.inject({
+      body,
+      headers: { origin: WEB_URL },
+      method: "POST",
+      url: `/api/v1${url}`
+    });
 
   const tokenFrom = (message: EmailMessage) => {
     const link = /https?:\/\/\S+/u.exec(message.body)?.[0];

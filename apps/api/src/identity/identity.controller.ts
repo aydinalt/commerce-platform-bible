@@ -99,6 +99,9 @@ export class IdentityController {
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply
   ): Promise<Session> {
+    // This request establishes a session, so it needs the same origin proof as
+    // one that carries a session.
+    this.origins.assertAcceptable(request, true);
     const input = parse(confirmRegistrationSchema, body);
     const proof = await this.identity.confirmRegistration({
       correlationId: correlationId(request),
@@ -177,6 +180,9 @@ export class IdentityController {
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply
   ): Promise<Session> {
+    // Establishing a session is exactly what login CSRF abuses, so the origin
+    // is required here even though no cookie is presented yet.
+    this.origins.assertAcceptable(request, true);
     const input = parse(loginSchema, body);
     const issued = await this.identity.login({
       correlationId: correlationId(request),

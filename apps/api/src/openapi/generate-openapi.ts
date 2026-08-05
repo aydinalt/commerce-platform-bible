@@ -233,7 +233,8 @@ const document = {
             },
             description: "Account created and session established"
           },
-          "400": errorResponse("Registration link is invalid or has expired")
+          "400": errorResponse("Registration link is invalid or has expired"),
+          "403": errorResponse("Request origin is missing or not allowed")
         },
         tags: ["Identity"]
       }
@@ -281,6 +282,8 @@ const document = {
     },
     "/api/v1/auth/sessions": {
       post: {
+        description:
+          "Establishes a session, so a recognised request origin is required.",
         operationId: "login",
         requestBody: {
           content: {
@@ -300,7 +303,8 @@ const document = {
             description: "Session established"
           },
           "400": errorResponse("Invalid credentials input"),
-          "401": errorResponse("Credentials rejected")
+          "401": errorResponse("Credentials rejected"),
+          "403": errorResponse("Request origin is missing or not allowed")
         },
         tags: ["Identity"]
       }

@@ -40,7 +40,12 @@ suite("Milestone 12 password recovery", () => {
   const address = () => `rec-${randomUUID()}@example.test`;
 
   const post = (url: string, body: unknown) =>
-    app.inject({ body, method: "POST", url: `/api/v1${url}` });
+    app.inject({
+      body,
+      headers: { origin: WEB_URL },
+      method: "POST",
+      url: `/api/v1${url}`
+    });
 
   const linkToken = (recipient: string, subject: string) => {
     const message = dispatcher.delivered.find(

@@ -58,7 +58,13 @@ suite("Milestone 12 identity baseline", () => {
     url: string,
     body: unknown,
     headers: Record<string, string> = {}
-  ) => app.inject({ body, headers, method: "POST", url: `/api/v1${url}` });
+  ) =>
+    app.inject({
+      body,
+      headers: { origin: ORIGIN, ...headers },
+      method: "POST",
+      url: `/api/v1${url}`
+    });
 
   /** Completes registration and returns the address and its session cookie. */
   const register = async (email = address()) => {
@@ -247,6 +253,52 @@ suite("Milestone 12 identity baseline", () => {
     // ADR-0012: the principal is rebuilt from current server state, so a
     // suspension takes effect without waiting for the session to expire.
     expect(after.statusCode).toBe(401);
+  });
+
+  it("refuses a login driven from another site", async () => {
+    const { email } = await register();
+
+    const forced = await app.inject({
+      body: { email, password: PASSWORD },
+      headers: { origin: "https://attacker.example" },
+      method: "POST",
+      url: "/api/v1/auth/sessions"
+    });
+    const originless = await app.inject({
+      body: { email, password: PASSWORD },
+      method: "POST",
+      url: "/api/v1/auth/sessions"
+    });
+
+    // Login CSRF: a cross-site post must not be able to sign a person into an
+    // account they did not choose. `SameSite` governs sending a cookie, not
+    // setting one, so it does not close this on its own.
+    expect(forced.statusCode).toBe(403);
+    expect(errorEnvelopeSchema.parse(forced.json()).code).toBe(
+      "ORIGIN_REJECTED"
+    );
+    expect(originless.statusCode).toBe(403);
+    expect(
+      (forced.cookies as { name: string }[]).some(
+        (c) => c.name === "commerce_session"
+      )
+    ).toBe(false);
+  });
+
+  it("refuses a registration confirmation driven from another site", async () => {
+    const email = address();
+    await post("/auth/registrations", { email, password: PASSWORD });
+    const token = await deliveredToken(email);
+
+    const forced = await app.inject({
+      body: { token },
+      headers: { origin: "https://attacker.example" },
+      method: "POST",
+      url: "/api/v1/auth/registrations/confirmations"
+    });
+
+    // Confirmation also establishes a session, so it carries the same risk.
+    expect(forced.statusCode).toBe(403);
   });
 
   it("issues an HTTP-only, SameSite session cookie carrying no account data", async () => {

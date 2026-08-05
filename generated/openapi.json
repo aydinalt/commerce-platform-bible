@@ -228,6 +228,14 @@
               }
             },
             "description": "Registration link is invalid or has expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Request origin is missing or not allowed"
           }
         },
         "tags": ["Identity"]
@@ -295,6 +303,7 @@
     },
     "/api/v1/auth/sessions": {
       "post": {
+        "description": "Establishes a session, so a recognised request origin is required.",
         "operationId": "login",
         "requestBody": {
           "content": {
@@ -328,6 +337,14 @@
               }
             },
             "description": "Credentials rejected"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Request origin is missing or not allowed"
           }
         },
         "tags": ["Identity"]
