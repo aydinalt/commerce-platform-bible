@@ -1,12 +1,17 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
-import type {
-  BrowseCategory,
-  BrowseView,
-  ListingCard,
-  SearchResult,
-  SearchView
+import {
+  FILTERABLE_VALUE_KINDS,
+  FilterContextMissingError,
+  FilterNotAvailableError,
+  type AppliedFilter,
+  type AvailableFilter,
+  type BrowseCategory,
+  type BrowseView,
+  type ListingCard,
+  type SearchResult,
+  type SearchView
 } from "@commerce/discovery";
 
 /**
@@ -19,6 +24,73 @@ const BROWSE_CATEGORY = `c.id, c.name, c.slug,
      select 1 from category child
      where child.parent_id = c.id and child.active = true
    ) as leaf`;
+
+/**
+ * Turns applied Filters into one SQL predicate and its parameters.
+ *
+ * PRD-0002 §10.3 gives two combination rules and they are both here: values
+ * within one Select Filter are OR'd by `?|`, and different Filters are AND'd by
+ * the join below. Nothing about that is per-call policy — it is the same
+ * sentence written in SQL.
+ *
+ * Every predicate begins by requiring the key to be present, because AC-9 makes
+ * an Offering with no value for an applied Filter fail it. Without that, a
+ * missing value would compare as unknown and quietly disappear from the
+ * question.
+ */
+function filterPredicate(
+  filters: AppliedFilter[],
+  firstParameter: number
+): { parameters: unknown[]; sql: string } {
+  const parameters: unknown[] = [];
+  const clauses: string[] = [];
+  let next = firstParameter;
+
+  for (const filter of filters) {
+    const key = `$${next++}`;
+    parameters.push(filter.attributeId);
+
+    if (filter.kind === "NUMBER") {
+      const bounds: string[] = [];
+      if (filter.min !== null) {
+        bounds.push(`(p.filter_values->>${key})::numeric >= $${next++}`);
+        parameters.push(filter.min);
+      }
+      if (filter.max !== null) {
+        bounds.push(`(p.filter_values->>${key})::numeric <= $${next++}`);
+        parameters.push(filter.max);
+      }
+      // Inclusive bounds (AC-3). A Filter with neither bound still requires a
+      // value: it asks for Offerings that have this Attribute at all.
+      clauses.push([`p.filter_values ? ${key}`, ...bounds].join(" and "));
+      continue;
+    }
+
+    if (filter.kind === "BOOLEAN") {
+      // The exact selected value, never a coercion (AC-4).
+      clauses.push(
+        `p.filter_values ? ${key} and p.filter_values->${key} = to_jsonb($${next++}::boolean)`
+      );
+      parameters.push(filter.value);
+      continue;
+    }
+
+    // AC-5 and AC-6 are one operator: `?|` is true when the Offering's stored
+    // option set contains any of the selected values. A Single Select stores
+    // one, a Multi Select several, and "intersects at least one" covers both.
+    clauses.push(
+      `p.filter_values ? ${key} and p.filter_values->${key} ?| $${next++}::text[]`
+    );
+    parameters.push(filter.optionIds);
+  }
+
+  return {
+    parameters,
+    // AC-7 and AC-8: different Filters, the Category and the Search match are
+    // all conjoined.
+    sql: clauses.map((clause) => `and (${clause})`).join(" ")
+  };
+}
 
 @Injectable()
 export class PgDiscoveryRepository implements OnModuleDestroy {
@@ -66,6 +138,7 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
    */
   async browse(input: {
     categoryId: string;
+    filters: AppliedFilter[];
     pathId: string;
   }): Promise<BrowseView | null> {
     const client = await this.pool.connect();
@@ -126,11 +199,21 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
             );
       const ancestors = await this.ancestors(client, input.categoryId);
 
-      // AC-5, AC-6 and AC-7. A branch withholds Results rather than showing an
-      // empty set or gathering its descendants' — `null` says "not shown", and
-      // an empty array would say "none here".
+      // `US-DSC-F05-001` AC-1. A branch is not a leaf, so it offers no Filters
+      // for the same reason it withholds Results.
+      const filters = category.leaf
+        ? await this.availableFilters(client, input.categoryId)
+        : [];
+      if (input.filters.length > 0) {
+        if (!category.leaf) throw new FilterContextMissingError();
+        this.assertApplicable(filters, input.filters);
+      }
+
+      // AC-5, AC-6 and AC-7 of `US-DSC-F03-001`. A branch withholds Results
+      // rather than showing an empty set or gathering its descendants' —
+      // `null` says "not shown", and an empty array would say "none here".
       const results = category.leaf
-        ? await this.results(client, input.categoryId)
+        ? await this.results(client, input.categoryId, input.filters)
         : null;
 
       await client.query("commit");
@@ -140,6 +223,7 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
         children,
         discoveryPathId: input.pathId,
         domain,
+        filters,
         results,
         siblings
       };
@@ -168,6 +252,7 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
    */
   async search(input: {
     categoryId: string | null;
+    filters: AppliedFilter[];
     pathId: string;
     query: string;
     terms: string[];
@@ -216,8 +301,22 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
           [input.pathId, narrowedTo.domainId]
         );
 
+      // `US-DSC-F05-001` AC-1: Filters exist only inside one active leaf
+      // Category. A Search that still spans several has nothing to filter on.
+      const filters =
+        input.categoryId === null
+          ? []
+          : await this.availableFilters(client, input.categoryId);
+      if (input.filters.length > 0) {
+        if (input.categoryId === null) throw new FilterContextMissingError();
+        this.assertApplicable(filters, input.filters);
+      }
+
       const all = input.terms.join(" & ");
       const any = input.terms.join(" | ");
+      // AC-8. The Search match, the Category and every Filter are conjoined in
+      // one `where`; PRD-0002 §12.4 keeps Best Match ordering across them.
+      const applied = filterPredicate(input.filters, 4);
       const found = await client.query<
         Omit<SearchResult, "publishedAt"> & { publishedAt: Date }
       >(
@@ -239,8 +338,9 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
          where to_tsvector('simple', p.searchable_text)
            @@ to_tsquery('simple', $1)
            and ($3::uuid is null or p.category_id = $3)
+           ${applied.sql}
          order by p.published_at desc, p.offering_id`,
-        [all, any, input.categoryId]
+        [all, any, input.categoryId, ...applied.parameters]
       );
 
       // AC-1. Computed from the *unnarrowed* set, so choosing one leaf never
@@ -261,7 +361,8 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
         categoryId: input.categoryId,
         discoveryPathId: input.pathId,
         domain: narrowedTo?.domain ?? null,
-        // AC-6. The gate, not the Filters: `US-DSC-F05-001` owns those.
+        filters,
+        // `US-DSC-F04-001` AC-6's gate, now with something behind it.
         filtersAvailable: narrowedTo !== null,
         narrowing: reachable.rows.length > 1 ? reachable.rows : [],
         query: input.query,
@@ -290,8 +391,12 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
    */
   private async results(
     client: PoolClient,
-    categoryId: string
+    categoryId: string,
+    filters: AppliedFilter[]
   ): Promise<ListingCard[]> {
+    // PRD-0002 §12.4: a filtered Browse keeps Browse's ordering. Filters narrow
+    // the set; they do not change how it is arranged.
+    const applied = filterPredicate(filters, 2);
     const result = await client.query<
       Omit<ListingCard, "publishedAt"> & { publishedAt: Date }
     >(
@@ -300,14 +405,73 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
        from offering_search_projection p
        join offering o on o.id = p.offering_id
        join category c on c.id = p.category_id
-       where p.category_id = $1
+       where p.category_id = $1 ${applied.sql}
        order by p.published_at desc, p.offering_id`,
-      [categoryId]
+      [categoryId, ...applied.parameters]
     );
     return result.rows.map((row) => ({
       ...row,
       publishedAt: row.publishedAt.toISOString()
     }));
+  }
+
+  /**
+   * The Filters offered for one active leaf Category (AC-1).
+   *
+   * Three conditions, all in the `where`: the Attribute applies to this
+   * Category, it is filterable, and its kind is one that can be filtered. Text
+   * cannot satisfy the third even in principle — `US-PLT-F09-001` refuses to
+   * mark a Text definition filterable — so AC-2 holds twice over.
+   */
+  private async availableFilters(
+    client: PoolClient,
+    categoryId: string
+  ): Promise<AvailableFilter[]> {
+    const result = await client.query<AvailableFilter>(
+      `select d.id as "attributeId", d.name, d.unit,
+         d.value_kind::text as "valueKind",
+         coalesce(
+           (select json_agg(json_build_object('id', o.id, 'label', o.label)
+                            order by o.sort_order, o.label)
+            from attribute_option o
+            where o.attribute_definition_id = d.id and o.active = true),
+           '[]'
+         ) as options
+       from category_attribute ca
+       join attribute_definition d on d.id = ca.attribute_definition_id
+       where ca.category_id = $1 and d.active = true and d.filterable = true
+         and d.value_kind::text = any($2::text[])
+       order by d.name`,
+      [categoryId, FILTERABLE_VALUE_KINDS]
+    );
+    return result.rows;
+  }
+
+  /**
+   * Checks each applied Filter against what is actually offered here.
+   *
+   * A Filter that is not available is refused rather than dropped: PRD-0002
+   * forbids Discovery from silently removing or changing criteria, and a
+   * quietly ignored Filter would answer a different question from the one that
+   * was asked.
+   */
+  private assertApplicable(
+    available: AvailableFilter[],
+    applied: AppliedFilter[]
+  ): void {
+    const offered = new Map(available.map((f) => [f.attributeId, f]));
+    for (const filter of applied) {
+      const definition = offered.get(filter.attributeId);
+      if (!definition) throw new FilterNotAvailableError(filter.attributeId);
+      const matches =
+        filter.kind === "NUMBER"
+          ? definition.valueKind === "NUMBER"
+          : filter.kind === "BOOLEAN"
+            ? definition.valueKind === "BOOLEAN"
+            : definition.valueKind === "SINGLE_SELECT" ||
+              definition.valueKind === "MULTI_SELECT";
+      if (!matches) throw new FilterNotAvailableError(filter.attributeId);
+    }
   }
 
   private async categories(

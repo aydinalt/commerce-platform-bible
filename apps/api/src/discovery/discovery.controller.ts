@@ -9,7 +9,8 @@ import {
   NotFoundException,
   Param,
   ParseUUIDPipe,
-  Post
+  Post,
+  UnprocessableEntityException
 } from "@nestjs/common";
 import { z } from "zod";
 
@@ -21,7 +22,11 @@ import {
   searchViewSchema,
   type BrowseRoots
 } from "@commerce/contracts";
-import { searchTerms } from "@commerce/discovery";
+import {
+  FilterContextMissingError,
+  FilterNotAvailableError,
+  searchTerms
+} from "@commerce/discovery";
 
 import { PgDiscoveryRepository } from "../persistence/pg-discovery.repository.js";
 
@@ -101,18 +106,22 @@ export class DiscoveryController {
         categoryId: null,
         discoveryPathId: pathId,
         domain: null,
+        filters: [],
         filtersAvailable: false,
         narrowing: [],
         query: parsed.data.query,
         results: []
       });
 
-    const view = await this.discovery.search({
-      categoryId: parsed.data.categoryId,
-      pathId,
-      query: parsed.data.query,
-      terms
-    });
+    const view = await this.attempt(() =>
+      this.discovery.search({
+        categoryId: parsed.data.categoryId,
+        filters: parsed.data.filters,
+        pathId,
+        query: parsed.data.query,
+        terms
+      })
+    );
     // `US-DSC-F04-001` AC-3 narrows to an active leaf. A branch, a retired
     // Category or one that never existed all answer the same way.
     if (!view)
@@ -148,10 +157,13 @@ export class DiscoveryController {
         message: "Invalid Browse selection"
       });
 
-    const view = await this.discovery.browse({
-      categoryId,
-      pathId: parsed.data.discoveryPathId ?? randomUUID()
-    });
+    const view = await this.attempt(() =>
+      this.discovery.browse({
+        categoryId,
+        filters: parsed.data.filters,
+        pathId: parsed.data.discoveryPathId ?? randomUUID()
+      })
+    );
     // AC-4. A retired Category is absent rather than refused, so it answers the
     // same way as one that was never there.
     if (!view)
@@ -160,5 +172,32 @@ export class DiscoveryController {
         message: "No active Category matches that identifier"
       });
     return browseViewSchema.parse(view);
+  }
+
+  /**
+   * Filter refusals, reported rather than swallowed.
+   *
+   * PRD-0002 forbids Discovery from silently removing or changing criteria, so
+   * a Filter that is not offered here cannot be quietly dropped — the request
+   * asked a question this context cannot answer, and says so.
+   */
+  private async attempt<T>(work: () => Promise<T>): Promise<T> {
+    try {
+      return await work();
+    } catch (error) {
+      if (error instanceof FilterContextMissingError)
+        throw new UnprocessableEntityException({
+          code: "FILTER_CONTEXT_MISSING",
+          message:
+            "Attribute Filters apply only within one active leaf Category"
+        });
+      if (error instanceof FilterNotAvailableError)
+        throw new UnprocessableEntityException({
+          code: "FILTER_NOT_AVAILABLE",
+          fieldErrors: { filters: [error.attributeId] },
+          message: "That Attribute is not a Filter in this Category"
+        });
+      throw error;
+    }
   }
 }

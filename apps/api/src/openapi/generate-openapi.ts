@@ -397,6 +397,83 @@ const document = {
         required: ["label"],
         type: "object"
       },
+      AvailableFilter: {
+        additionalProperties: false,
+        description:
+          "A Filter that may be applied here. Offered only once one active leaf Category is selected, and only for an Attribute that applies to it and is filterable. Text Attributes can never appear.",
+        properties: {
+          attributeId: { format: "uuid", type: "string" },
+          name: { type: "string" },
+          options: {
+            description: "Active allowed values, for the two Select kinds.",
+            items: {
+              additionalProperties: false,
+              properties: {
+                id: { format: "uuid", type: "string" },
+                label: { type: "string" }
+              },
+              required: ["id", "label"],
+              type: "object"
+            },
+            type: "array"
+          },
+          unit: { type: ["string", "null"] },
+          valueKind: {
+            enum: ["NUMBER", "BOOLEAN", "SINGLE_SELECT", "MULTI_SELECT"],
+            type: "string"
+          }
+        },
+        required: ["attributeId", "name", "options", "unit", "valueKind"],
+        type: "object"
+      },
+      AppliedFilter: {
+        description:
+          "Selected values within one Select Filter combine with OR; different Filters combine with AND. An Offering with no value for an applied Filter does not satisfy it.",
+        oneOf: [
+          {
+            additionalProperties: false,
+            properties: {
+              attributeId: { format: "uuid", type: "string" },
+              kind: { enum: ["NUMBER"], type: "string" },
+              max: {
+                description: "Inclusive upper bound.",
+                type: ["number", "null"]
+              },
+              min: {
+                description: "Inclusive lower bound.",
+                type: ["number", "null"]
+              }
+            },
+            required: ["attributeId", "kind"],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: {
+              attributeId: { format: "uuid", type: "string" },
+              kind: { enum: ["BOOLEAN"], type: "string" },
+              value: { type: "boolean" }
+            },
+            required: ["attributeId", "kind", "value"],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: {
+              attributeId: { format: "uuid", type: "string" },
+              kind: { enum: ["SELECT"], type: "string" },
+              optionIds: {
+                items: { format: "uuid", type: "string" },
+                maxItems: 100,
+                minItems: 1,
+                type: "array"
+              }
+            },
+            required: ["attributeId", "kind", "optionIds"],
+            type: "object"
+          }
+        ]
+      },
       BrowseCategory: {
         additionalProperties: false,
         properties: {
@@ -444,6 +521,13 @@ const document = {
             type: ["string", "null"]
           },
           discoveryPathId: { format: "uuid", type: "string" },
+          filters: {
+            description:
+              "Applicable only inside one active leaf Category, so supplying these without categoryId is a contradiction rather than a default.",
+            items: { $ref: "#/components/schemas/AppliedFilter" },
+            maxItems: 50,
+            type: "array"
+          },
           query: { maxLength: 400, minLength: 1, type: "string" }
         },
         required: ["query"],
@@ -496,6 +580,12 @@ const document = {
             enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY", null],
             type: ["string", "null"]
           },
+          filters: {
+            description:
+              "The Filters that may be applied here. Empty until a leaf is selected.",
+            items: { $ref: "#/components/schemas/AvailableFilter" },
+            type: "array"
+          },
           filtersAvailable: {
             description:
               "Whether category-specific Attribute Filters may be offered. True only once one active leaf Category is selected.",
@@ -521,6 +611,7 @@ const document = {
           "categoryId",
           "discoveryPathId",
           "domain",
+          "filters",
           "filtersAvailable",
           "narrowing",
           "query",
@@ -557,7 +648,14 @@ const document = {
         additionalProperties: false,
         description:
           "A path already being followed. Absent on the first selection, which is what makes that selection the start of a new path.",
-        properties: { discoveryPathId: { format: "uuid", type: "string" } },
+        properties: {
+          discoveryPathId: { format: "uuid", type: "string" },
+          filters: {
+            items: { $ref: "#/components/schemas/AppliedFilter" },
+            maxItems: 50,
+            type: "array"
+          }
+        },
         type: "object"
       },
       BrowseView: {
@@ -577,6 +675,12 @@ const document = {
             enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
             type: "string"
           },
+          filters: {
+            description:
+              "Offered on a leaf; empty on a branch, where no active leaf Category is selected.",
+            items: { $ref: "#/components/schemas/AvailableFilter" },
+            type: "array"
+          },
           results: {
             description:
               "Null for a non-leaf Category: Results are withheld, which is a different statement from there being none. A parent never aggregates its descendants' Offerings.",
@@ -594,6 +698,7 @@ const document = {
           "children",
           "discoveryPathId",
           "domain",
+          "filters",
           "results",
           "siblings"
         ],
@@ -2460,6 +2565,9 @@ const document = {
           "400": errorResponse("Invalid Search submission"),
           "404": errorResponse(
             "No active leaf Category matches the narrowing identifier"
+          ),
+          "422": errorResponse(
+            "A Filter was applied outside an active leaf Category, or names an Attribute that is not a Filter here"
           )
         },
         tags: ["Discovery"]
@@ -2496,7 +2604,10 @@ const document = {
             description: "The current point in the Browse path"
           },
           "400": errorResponse("Invalid identifier or Browse selection"),
-          "404": errorResponse("No active Category matches that identifier")
+          "404": errorResponse("No active Category matches that identifier"),
+          "422": errorResponse(
+            "A Filter was applied to a non-leaf Category, or names an Attribute that is not a Filter here"
+          )
         },
         tags: ["Discovery"]
       }

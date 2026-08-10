@@ -42,6 +42,9 @@ export interface BrowseView {
   children: BrowseCategory[];
   discoveryPathId: string;
   domain: string;
+  /// Offered on a leaf, where an active leaf Category is by definition
+  /// selected. Empty on a branch, for the same reason Results are withheld.
+  filters: AvailableFilter[];
   results: ListingCard[] | null;
   /// The other active branches at this level, so a person can change their mind
   /// without walking back up first (AC-3).
@@ -85,6 +88,8 @@ export interface SearchView {
    * here so it exists before the thing it gates.
    */
   filtersAvailable: boolean;
+  /// The Filters that may be applied here, empty until a leaf is selected.
+  filters: AvailableFilter[];
   /**
    * The active leaf Categories the current query reaches, offered when it
    * reaches more than one (AC-1). Computed from the unnarrowed candidate set,
@@ -112,6 +117,76 @@ export function searchTerms(query: string): string[] {
     .split(/[^\p{L}\p{N}]+/u)
     .filter((term) => term.length > 0)
     .slice(0, 24);
+}
+
+/**
+ * The value kinds that can be a Filter.
+ *
+ * `TEXT` is absent, which is `US-DSC-F05-001` AC-2 and PRD-0002 §10.1: Text
+ * Attributes are not filterable in V1. `US-PLT-F09-001` already refuses to mark
+ * a Text definition filterable, so this list and that constraint say the same
+ * thing from opposite ends.
+ */
+export const FILTERABLE_VALUE_KINDS = [
+  "NUMBER",
+  "BOOLEAN",
+  "SINGLE_SELECT",
+  "MULTI_SELECT"
+] as const;
+
+export type FilterableValueKind = (typeof FILTERABLE_VALUE_KINDS)[number];
+
+/// A Filter a person may apply here, offered only once one active leaf Category
+/// is selected (AC-1).
+export interface AvailableFilter {
+  attributeId: string;
+  name: string;
+  /// The active allowed values, for the two Select kinds only.
+  options: { id: string; label: string }[];
+  unit: string | null;
+  valueKind: FilterableValueKind;
+}
+
+/**
+ * One applied Filter.
+ *
+ * The two Select kinds share a shape because PRD-0002 §10.2 gives them the same
+ * matching rule from the Filter's side: one or more selected values combined
+ * with OR. What differs is how many values an *Offering* may hold, which is the
+ * definition's business, not the Filter's.
+ */
+export type AppliedFilter =
+  | { attributeId: string; kind: "BOOLEAN"; value: boolean }
+  | {
+      attributeId: string;
+      kind: "NUMBER";
+      max: number | null;
+      min: number | null;
+    }
+  | { attributeId: string; kind: "SELECT"; optionIds: string[] };
+
+/**
+ * Raised when an applied Filter names an Attribute that is not offered here —
+ * not applicable to the selected Category, not filterable, or of a different
+ * kind than the request claims.
+ *
+ * Refused rather than ignored: silently dropping a Filter would answer a
+ * different question from the one that was asked, and PRD-0002 forbids
+ * Discovery from silently removing or changing criteria.
+ */
+export class FilterNotAvailableError extends Error {
+  constructor(readonly attributeId: string) {
+    super("FILTER_NOT_AVAILABLE");
+    this.name = "FilterNotAvailableError";
+  }
+}
+
+/// Raised when Filters are applied with no active leaf Category selected (AC-1).
+export class FilterContextMissingError extends Error {
+  constructor() {
+    super("FILTER_CONTEXT_MISSING");
+    this.name = "FilterContextMissingError";
+  }
 }
 
 export const discoveryModule = { name: "discovery" } as const;

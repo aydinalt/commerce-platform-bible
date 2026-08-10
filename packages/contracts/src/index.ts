@@ -629,6 +629,75 @@ export type RelabelAttributeOption = z.infer<
 export type AttributeResponse = z.infer<typeof attributeSchema>;
 export type Attributes = z.infer<typeof attributesSchema>;
 
+/**
+ * The value kinds that can be a Filter. `TEXT` is absent — PRD-0002 §10.1 makes
+ * Text Attributes unfilterable in V1, and `US-PLT-F09-001` already refuses to
+ * mark one filterable.
+ */
+export const FILTERABLE_VALUE_KINDS = [
+  "NUMBER",
+  "BOOLEAN",
+  "SINGLE_SELECT",
+  "MULTI_SELECT"
+] as const;
+
+export const availableFilterSchema = z
+  .object({
+    attributeId: z.string().uuid(),
+    name: z.string(),
+    /// Active allowed values, for the two Select kinds only.
+    options: z.array(
+      z.object({ id: z.string().uuid(), label: z.string() }).strict()
+    ),
+    unit: z.string().nullable(),
+    valueKind: z.enum(FILTERABLE_VALUE_KINDS)
+  })
+  .strict();
+
+/**
+ * One applied Filter.
+ *
+ * The two Select kinds share one shape because PRD-0002 §10.2 gives them the
+ * same rule from the Filter's side: selected values combine with OR. What
+ * differs is how many values an *Offering* may hold, which the definition
+ * decides, not the Filter.
+ */
+export const appliedFilterSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      attributeId: z.string().uuid(),
+      kind: z.literal("NUMBER"),
+      max: z
+        .number()
+        .finite()
+        .nullish()
+        .transform((v) => v ?? null),
+      min: z
+        .number()
+        .finite()
+        .nullish()
+        .transform((v) => v ?? null)
+    })
+    .strict(),
+  z
+    .object({
+      attributeId: z.string().uuid(),
+      kind: z.literal("BOOLEAN"),
+      value: z.boolean()
+    })
+    .strict(),
+  z
+    .object({
+      attributeId: z.string().uuid(),
+      kind: z.literal("SELECT"),
+      optionIds: z.array(z.string().uuid()).min(1).max(100)
+    })
+    .strict()
+]);
+
+export type AvailableFilterResponse = z.infer<typeof availableFilterSchema>;
+export type AppliedFilterInput = z.infer<typeof appliedFilterSchema>;
+
 const browseCategorySchema = z
   .object({
     id: z.string().uuid(),
@@ -681,6 +750,9 @@ export const browseViewSchema = z
     children: z.array(browseCategorySchema),
     discoveryPathId: z.string().uuid(),
     domain: z.enum(V1_DOMAINS),
+    /// Offered on a leaf; empty on a branch, where no active leaf Category is
+    /// selected.
+    filters: z.array(availableFilterSchema),
     results: z.array(listingCardSchema).nullable(),
     siblings: z.array(browseCategorySchema)
   })
@@ -689,7 +761,10 @@ export const browseViewSchema = z
 /// A path a person is already following. Absent on the first selection, which
 /// is what makes that selection the start of a new one.
 export const browseSelectionSchema = z
-  .object({ discoveryPathId: z.string().uuid().optional() })
+  .object({
+    discoveryPathId: z.string().uuid().optional(),
+    filters: z.array(appliedFilterSchema).max(50).default([])
+  })
   .strict();
 
 /**
@@ -716,6 +791,9 @@ export const searchSubmissionSchema = z
       .nullish()
       .transform((value) => value ?? null),
     discoveryPathId: z.string().uuid().optional(),
+    /// Applicable only inside one active leaf Category, so supplying these
+    /// without `categoryId` is a contradiction rather than a default.
+    filters: z.array(appliedFilterSchema).max(50).default([]),
     query: z.string().trim().min(1).max(400)
   })
   .strict();
@@ -731,8 +809,10 @@ export const searchViewSchema = z
     /// Available once one active leaf Category is selected. A Search that spans
     /// Domains has none.
     domain: z.enum(V1_DOMAINS).nullable(),
+    /// The Filters that may be applied here. Empty until a leaf is selected.
+    filters: z.array(availableFilterSchema),
     /// Whether category-specific Attribute Filters may be offered. The gate of
-    /// `US-DSC-F04-001` AC-6; `US-DSC-F05-001` owns what it gates.
+    /// `US-DSC-F04-001` AC-6; `US-DSC-F05-001` fills what it gates.
     filtersAvailable: z.boolean(),
     /// The active leaf Categories this query reaches, offered when it reaches
     /// more than one.
