@@ -474,6 +474,74 @@ const document = {
           }
         ]
       },
+      ZeroResults: {
+        additionalProperties: false,
+        description:
+          "Present only when nothing matched. The criteria are echoed rather than cleared, and the recovery list is closed — no Recommendations, sponsored alternatives, Saved Search, History, Notifications, Favorites or Messaging.",
+        properties: {
+          criteria: {
+            additionalProperties: false,
+            properties: {
+              categoryName: { type: ["string", "null"] },
+              filters: {
+                description:
+                  "Structured rather than phrased: the exact copy belongs to UX.",
+                items: {
+                  additionalProperties: false,
+                  properties: {
+                    attributeId: { format: "uuid", type: "string" },
+                    kind: {
+                      enum: [
+                        "NUMBER",
+                        "BOOLEAN",
+                        "SINGLE_SELECT",
+                        "MULTI_SELECT"
+                      ],
+                      type: "string"
+                    },
+                    max: { type: ["number", "null"] },
+                    min: { type: ["number", "null"] },
+                    name: { type: "string" },
+                    optionLabels: { items: { type: "string" }, type: "array" },
+                    value: { type: ["boolean", "null"] }
+                  },
+                  required: [
+                    "attributeId",
+                    "kind",
+                    "max",
+                    "min",
+                    "name",
+                    "optionLabels",
+                    "value"
+                  ],
+                  type: "object"
+                },
+                type: "array"
+              },
+              query: { type: ["string", "null"] }
+            },
+            required: ["categoryName", "filters", "query"],
+            type: "object"
+          },
+          recovery: {
+            items: {
+              enum: [
+                "REMOVE_FILTER",
+                "CLEAR_FILTERS",
+                "CHANGE_QUERY",
+                "CLEAR_QUERY",
+                "MOVE_TO_PARENT_CATEGORY",
+                "CHOOSE_ANOTHER_CATEGORY",
+                "RETURN_TO_HOMEPAGE"
+              ],
+              type: "string"
+            },
+            type: "array"
+          }
+        },
+        required: ["criteria", "recovery"],
+        type: "object"
+      },
       BrowseCategory: {
         additionalProperties: false,
         properties: {
@@ -605,6 +673,13 @@ const document = {
           results: {
             items: { $ref: "#/components/schemas/SearchResult" },
             type: "array"
+          },
+          zeroResults: {
+            description: "Present only when nothing matched.",
+            oneOf: [
+              { $ref: "#/components/schemas/ZeroResults" },
+              { type: "null" }
+            ]
           }
         },
         required: [
@@ -615,7 +690,8 @@ const document = {
           "filtersAvailable",
           "narrowing",
           "query",
-          "results"
+          "results",
+          "zeroResults"
         ],
         type: "object"
       },
@@ -690,6 +766,13 @@ const document = {
           siblings: {
             items: { $ref: "#/components/schemas/BrowseCategory" },
             type: "array"
+          },
+          zeroResults: {
+            description: "Present only when a leaf matched nothing.",
+            oneOf: [
+              { $ref: "#/components/schemas/ZeroResults" },
+              { type: "null" }
+            ]
           }
         },
         required: [
@@ -700,7 +783,8 @@ const document = {
           "domain",
           "filters",
           "results",
-          "siblings"
+          "siblings",
+          "zeroResults"
         ],
         type: "object"
       },

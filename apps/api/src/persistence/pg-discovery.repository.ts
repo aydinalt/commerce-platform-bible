@@ -6,13 +6,15 @@ import {
   FilterContextMissingError,
   FilterNotAvailableError,
   SEARCH_MATCH_LEVELS,
+  zeroResultRecovery,
   type AppliedFilter,
   type AvailableFilter,
   type BrowseCategory,
   type BrowseView,
   type ListingCard,
   type SearchResult,
-  type SearchView
+  type SearchView,
+  type ZeroResults
 } from "@commerce/discovery";
 
 /**
@@ -90,6 +92,54 @@ function filterPredicate(
     // AC-7 and AC-8: different Filters, the Category and the Search match are
     // all conjoined.
     sql: clauses.map((clause) => `and (${clause})`).join(" ")
+  };
+}
+
+/**
+ * Zero Results, assembled from criteria that are already in hand.
+ *
+ * Nothing here is recomputed and nothing is dropped: `US-DSC-F08-001` AC-2
+ * requires the query, Category and Filters to survive, and AC-7 forbids
+ * removing any of them silently. Handing back what was asked is what lets a
+ * person decide which part to change.
+ */
+function zeroResults(input: {
+  applied: AppliedFilter[];
+  available: AvailableFilter[];
+  categoryName: string | null;
+  hasParentCategory: boolean;
+  query: string | null;
+}): ZeroResults {
+  const offered = new Map(input.available.map((f) => [f.attributeId, f]));
+  return {
+    criteria: {
+      categoryName: input.categoryName,
+      filters: input.applied.map((filter) => {
+        const definition = offered.get(filter.attributeId);
+        const labels =
+          filter.kind === "SELECT"
+            ? filter.optionIds.map(
+                (id) =>
+                  definition?.options.find((o) => o.id === id)?.label ?? id
+              )
+            : [];
+        return {
+          attributeId: filter.attributeId,
+          kind: definition?.valueKind ?? "NUMBER",
+          max: filter.kind === "NUMBER" ? filter.max : null,
+          min: filter.kind === "NUMBER" ? filter.min : null,
+          name: definition?.name ?? "",
+          optionLabels: labels,
+          value: filter.kind === "BOOLEAN" ? filter.value : null
+        };
+      }),
+      query: input.query
+    },
+    recovery: zeroResultRecovery({
+      filterCount: input.applied.length,
+      hasParentCategory: input.hasParentCategory,
+      hasQuery: input.query !== null
+    })
   };
 }
 
@@ -226,7 +276,19 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
         domain,
         filters,
         results,
-        siblings
+        siblings,
+        // AC-1. A branch has withheld Results rather than found none, so it is
+        // not a Zero Results state — there was no question to answer.
+        zeroResults:
+          results !== null && results.length === 0
+            ? zeroResults({
+                applied: input.filters,
+                available: filters,
+                categoryName: category.name,
+                hasParentCategory: parentId !== null,
+                query: null
+              })
+            : null
       };
     } catch (error) {
       await client.query("rollback");
@@ -264,10 +326,21 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
 
       // `US-DSC-F04-001` AC-3 narrows to an *active leaf*. A branch or a
       // retired Category is not a narrowing target, so it reads as absent.
-      let narrowedTo: { domain: string; domainId: string } | null = null;
+      let narrowedTo: {
+        categoryName: string;
+        domain: string;
+        domainId: string;
+        hasParent: boolean;
+      } | null = null;
       if (input.categoryId !== null) {
-        const leaf = await client.query<{ domain: string; domainId: string }>(
-          `select d.stable_key as domain, c.domain_id as "domainId"
+        const leaf = await client.query<{
+          categoryName: string;
+          domain: string;
+          domainId: string;
+          hasParent: boolean;
+        }>(
+          `select d.stable_key as domain, c.domain_id as "domainId",
+             c.name as "categoryName", c.parent_id is not null as "hasParent"
            from category c join domain d on d.id = c.domain_id
            where c.id = $1 and c.active = true and not exists (
              select 1 from category child
@@ -383,7 +456,18 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
         results: found.rows.map((row) => ({
           ...row,
           publishedAt: row.publishedAt.toISOString()
-        }))
+        })),
+        // AC-1. The query stays visible beside the emptiness it produced.
+        zeroResults:
+          found.rows.length === 0
+            ? zeroResults({
+                applied: input.filters,
+                available: filters,
+                categoryName: narrowedTo?.categoryName ?? null,
+                hasParentCategory: narrowedTo?.hasParent ?? false,
+                query: input.query
+              })
+            : null
       };
     } catch (error) {
       await client.query("rollback");

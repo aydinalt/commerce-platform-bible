@@ -49,6 +49,8 @@ export interface BrowseView {
   /// The other active branches at this level, so a person can change their mind
   /// without walking back up first (AC-3).
   siblings: BrowseCategory[];
+  /// Present only when a leaf matched nothing (`US-DSC-F08-001` AC-1).
+  zeroResults: ZeroResults | null;
 }
 
 /**
@@ -99,6 +101,8 @@ export interface SearchView {
   /// The exact submitted query, kept as visible Discovery criteria (AC-2).
   query: string;
   results: SearchResult[];
+  /// Present only when nothing matched (`US-DSC-F08-001` AC-1).
+  zeroResults: ZeroResults | null;
 }
 
 /**
@@ -187,6 +191,81 @@ export class FilterContextMissingError extends Error {
     super("FILTER_CONTEXT_MISSING");
     this.name = "FilterContextMissingError";
   }
+}
+
+/**
+ * The bounded recovery actions of PRD-0002 §13.
+ *
+ * A closed list, because `US-DSC-F08-001` AC-8 forbids inventing anything
+ * beyond it — no Recommendations, no sponsored alternatives, no Saved Search.
+ * Naming what is allowed is the only way to make "nothing else" checkable.
+ */
+export const ZERO_RESULT_RECOVERIES = [
+  "REMOVE_FILTER",
+  "CLEAR_FILTERS",
+  "CHANGE_QUERY",
+  "CLEAR_QUERY",
+  "MOVE_TO_PARENT_CATEGORY",
+  "CHOOSE_ANOTHER_CATEGORY",
+  "RETURN_TO_HOMEPAGE"
+] as const;
+
+export type ZeroResultRecovery = (typeof ZERO_RESULT_RECOVERIES)[number];
+
+/**
+ * One applied Filter as the person should see it back.
+ *
+ * Structured rather than phrased: PRD-0002 §13 requires an understandable
+ * summary and leaves the exact copy to UX. A rendered sentence here would be
+ * this layer writing UX's words.
+ */
+export interface AppliedFilterSummary {
+  attributeId: string;
+  kind: FilterableValueKind;
+  max: number | null;
+  min: number | null;
+  name: string;
+  optionLabels: string[];
+  value: boolean | null;
+}
+
+/**
+ * Zero Results (`US-DSC-F08-001`).
+ *
+ * Present only when nothing matched. The criteria are echoed rather than
+ * cleared, because AC-7 forbids removing them silently — a person needs to see
+ * what they asked for in order to decide what to change.
+ */
+export interface ZeroResults {
+  criteria: {
+    categoryName: string | null;
+    filters: AppliedFilterSummary[];
+    query: string | null;
+  };
+  recovery: ZeroResultRecovery[];
+}
+
+/**
+ * Which of the bounded recovery actions apply here.
+ *
+ * Each is offered only when it would do something: clearing Filters that were
+ * never applied is not a recovery, and moving to a parent Category is not one
+ * when there is no parent. Returning to the Homepage always applies, which is
+ * what stops this list from ever being empty.
+ */
+export function zeroResultRecovery(input: {
+  filterCount: number;
+  hasParentCategory: boolean;
+  hasQuery: boolean;
+}): ZeroResultRecovery[] {
+  return ZERO_RESULT_RECOVERIES.filter((action) => {
+    if (action === "REMOVE_FILTER") return input.filterCount > 1;
+    if (action === "CLEAR_FILTERS") return input.filterCount > 0;
+    if (action === "CHANGE_QUERY" || action === "CLEAR_QUERY")
+      return input.hasQuery;
+    if (action === "MOVE_TO_PARENT_CATEGORY") return input.hasParentCategory;
+    return true;
+  });
 }
 
 export const discoveryModule = { name: "discovery" } as const;

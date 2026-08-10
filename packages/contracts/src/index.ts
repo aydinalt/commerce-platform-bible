@@ -698,6 +698,54 @@ export const appliedFilterSchema = z.discriminatedUnion("kind", [
 export type AvailableFilterResponse = z.infer<typeof availableFilterSchema>;
 export type AppliedFilterInput = z.infer<typeof appliedFilterSchema>;
 
+/**
+ * The bounded recovery actions of PRD-0002 §13. A closed list, because
+ * `US-DSC-F08-001` AC-8 forbids inventing anything beyond it.
+ */
+export const ZERO_RESULT_RECOVERIES = [
+  "REMOVE_FILTER",
+  "CLEAR_FILTERS",
+  "CHANGE_QUERY",
+  "CLEAR_QUERY",
+  "MOVE_TO_PARENT_CATEGORY",
+  "CHOOSE_ANOTHER_CATEGORY",
+  "RETURN_TO_HOMEPAGE"
+] as const;
+
+/**
+ * Zero Results. Present only when nothing matched.
+ *
+ * The criteria come back structured rather than phrased: PRD-0002 §13 asks for
+ * an understandable summary and leaves the copy to UX, so a rendered sentence
+ * here would be the API writing UX's words.
+ */
+export const zeroResultsSchema = z
+  .object({
+    criteria: z
+      .object({
+        categoryName: z.string().nullable(),
+        filters: z.array(
+          z
+            .object({
+              attributeId: z.string().uuid(),
+              kind: z.enum(FILTERABLE_VALUE_KINDS),
+              max: z.number().nullable(),
+              min: z.number().nullable(),
+              name: z.string(),
+              optionLabels: z.array(z.string()),
+              value: z.boolean().nullable()
+            })
+            .strict()
+        ),
+        query: z.string().nullable()
+      })
+      .strict(),
+    recovery: z.array(z.enum(ZERO_RESULT_RECOVERIES))
+  })
+  .strict();
+
+export type ZeroResultsResponse = z.infer<typeof zeroResultsSchema>;
+
 const browseCategorySchema = z
   .object({
     id: z.string().uuid(),
@@ -754,7 +802,9 @@ export const browseViewSchema = z
     /// selected.
     filters: z.array(availableFilterSchema),
     results: z.array(listingCardSchema).nullable(),
-    siblings: z.array(browseCategorySchema)
+    siblings: z.array(browseCategorySchema),
+    /// Present only when a leaf matched nothing.
+    zeroResults: zeroResultsSchema.nullable()
   })
   .strict();
 
@@ -819,7 +869,9 @@ export const searchViewSchema = z
     narrowing: z.array(browseCategorySchema),
     /// The exact submitted query, kept as visible Discovery criteria.
     query: z.string(),
-    results: z.array(searchResultSchema)
+    results: z.array(searchResultSchema),
+    /// Present only when nothing matched.
+    zeroResults: zeroResultsSchema.nullable()
   })
   .strict();
 

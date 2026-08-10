@@ -25,7 +25,8 @@ import {
 import {
   FilterContextMissingError,
   FilterNotAvailableError,
-  searchTerms
+  searchTerms,
+  zeroResultRecovery
 } from "@commerce/discovery";
 
 import { PgDiscoveryRepository } from "../persistence/pg-discovery.repository.js";
@@ -110,7 +111,22 @@ export class DiscoveryController {
         filtersAvailable: false,
         narrowing: [],
         query: parsed.data.query,
-        results: []
+        results: [],
+        // A query that reaches no searchable information is a Zero Results
+        // state like any other: the person still sees what they asked and what
+        // they may do about it.
+        zeroResults: {
+          criteria: {
+            categoryName: null,
+            filters: [],
+            query: parsed.data.query
+          },
+          recovery: zeroResultRecovery({
+            filterCount: 0,
+            hasParentCategory: false,
+            hasQuery: true
+          })
+        }
       });
 
     const view = await this.attempt(() =>
