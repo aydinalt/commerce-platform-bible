@@ -437,6 +437,12 @@ const document = {
       SearchSubmission: {
         additionalProperties: false,
         properties: {
+          categoryId: {
+            description:
+              "Narrows the current Search to one active leaf Category. Part of the same Search, not a new path — no Browse Discovery Start is created.",
+            format: "uuid",
+            type: ["string", "null"]
+          },
           discoveryPathId: { format: "uuid", type: "string" },
           query: { maxLength: 400, minLength: 1, type: "string" }
         },
@@ -478,7 +484,29 @@ const document = {
       SearchView: {
         additionalProperties: false,
         properties: {
+          categoryId: {
+            description: "The active leaf Category the Search is narrowed to.",
+            format: "uuid",
+            type: ["string", "null"]
+          },
           discoveryPathId: { format: "uuid", type: "string" },
+          domain: {
+            description:
+              "Available once one active leaf Category is selected. A Search that spans Domains has none.",
+            enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY", null],
+            type: ["string", "null"]
+          },
+          filtersAvailable: {
+            description:
+              "Whether category-specific Attribute Filters may be offered. True only once one active leaf Category is selected.",
+            type: "boolean"
+          },
+          narrowing: {
+            description:
+              "The active leaf Categories this query reaches, offered when it reaches more than one. Computed from the unnarrowed candidate set, so narrowing never hides the alternatives.",
+            items: { $ref: "#/components/schemas/BrowseCategory" },
+            type: "array"
+          },
           query: {
             description:
               "The exact submitted query, retained as visible Discovery criteria.",
@@ -489,7 +517,15 @@ const document = {
             type: "array"
           }
         },
-        required: ["discoveryPathId", "query", "results"],
+        required: [
+          "categoryId",
+          "discoveryPathId",
+          "domain",
+          "filtersAvailable",
+          "narrowing",
+          "query",
+          "results"
+        ],
         type: "object"
       },
       BrowseRoots: {
@@ -2421,7 +2457,10 @@ const document = {
             },
             description: "Matched Offerings with their highest match level"
           },
-          "400": errorResponse("Invalid Search submission")
+          "400": errorResponse("Invalid Search submission"),
+          "404": errorResponse(
+            "No active leaf Category matches the narrowing identifier"
+          )
         },
         tags: ["Discovery"]
       }

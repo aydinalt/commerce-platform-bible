@@ -167,23 +167,54 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
    * never in the set being matched.
    */
   async search(input: {
+    categoryId: string | null;
     pathId: string;
     query: string;
     terms: string[];
-  }): Promise<SearchView> {
+  }): Promise<SearchView | null> {
     const client = await this.pool.connect();
     try {
       await client.query("begin");
 
-      // AC-1. A Search Start carries no Domain: PRD-0002 §5.10 gives it one
-      // only once the criteria include a selected active leaf Category, which
-      // `US-DSC-F04-001` owns.
+      // `US-DSC-F04-001` AC-3 narrows to an *active leaf*. A branch or a
+      // retired Category is not a narrowing target, so it reads as absent.
+      let narrowedTo: { domain: string; domainId: string } | null = null;
+      if (input.categoryId !== null) {
+        const leaf = await client.query<{ domain: string; domainId: string }>(
+          `select d.stable_key as domain, c.domain_id as "domainId"
+           from category c join domain d on d.id = c.domain_id
+           where c.id = $1 and c.active = true and not exists (
+             select 1 from category child
+             where child.parent_id = c.id and child.active = true
+           )`,
+          [input.categoryId]
+        );
+        narrowedTo = leaf.rows[0] ?? null;
+        if (!narrowedTo) {
+          await client.query("rollback");
+          return null;
+        }
+      }
+
+      // AC-1 of `US-DSC-F02-001`, and AC-4 of this Story: the path is Search
+      // and stays Search. No Browse Start is created here or anywhere on this
+      // route.
       await client.query(
         `insert into discovery_start (path_id, kind, domain_id)
          values ($1, 'SEARCH', null)
          on conflict (path_id) do nothing`,
         [input.pathId]
       );
+
+      // AC-5. The Start it already has gains the Domain, rather than a second
+      // Start being created to carry it. `domain_id is null` keeps the first
+      // association: the Start records where the looking began.
+      if (narrowedTo !== null)
+        await client.query(
+          `update discovery_start set domain_id = $2
+           where path_id = $1 and kind = 'SEARCH' and domain_id is null`,
+          [input.pathId, narrowedTo.domainId]
+        );
 
       const all = input.terms.join(" & ");
       const any = input.terms.join(" | ");
@@ -207,13 +238,32 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
          join category c on c.id = p.category_id
          where to_tsvector('simple', p.searchable_text)
            @@ to_tsquery('simple', $1)
+           and ($3::uuid is null or p.category_id = $3)
          order by p.published_at desc, p.offering_id`,
-        [all, any]
+        [all, any, input.categoryId]
+      );
+
+      // AC-1. Computed from the *unnarrowed* set, so choosing one leaf never
+      // hides the others a person might have meant.
+      const reachable = await client.query<BrowseCategory>(
+        `select c.id, c.name, c.slug, true as leaf
+         from offering_search_projection p
+         join category c on c.id = p.category_id
+         where to_tsvector('simple', p.searchable_text)
+           @@ to_tsquery('simple', $1)
+         group by c.id, c.name, c.slug
+         order by c.name`,
+        [all]
       );
 
       await client.query("commit");
       return {
+        categoryId: input.categoryId,
         discoveryPathId: input.pathId,
+        domain: narrowedTo?.domain ?? null,
+        // AC-6. The gate, not the Filters: `US-DSC-F05-001` owns those.
+        filtersAvailable: narrowedTo !== null,
+        narrowing: reachable.rows.length > 1 ? reachable.rows : [],
         query: input.query,
         results: found.rows.map((row) => ({
           ...row,

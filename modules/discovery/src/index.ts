@@ -70,8 +70,28 @@ export interface SearchResult extends ListingCard {
 }
 
 export interface SearchView {
+  /// The active leaf Category the Search is narrowed to, if any
+  /// (`US-DSC-F04-001` AC-3).
+  categoryId: string | null;
   discoveryPathId: string;
-  /// The exact submitted query, kept as visible Discovery criteria (AC-6).
+  /// Available once one active leaf Category is selected (AC-5). Until then a
+  /// Search spans Domains and has none.
+  domain: string | null;
+  /**
+   * Whether category-specific Attribute Filters may be offered.
+   *
+   * `US-DSC-F04-001` AC-6 gates them on one selected active leaf Category, and
+   * `US-DSC-F05-001` owns what they are and how they match. The gate is stated
+   * here so it exists before the thing it gates.
+   */
+  filtersAvailable: boolean;
+  /**
+   * The active leaf Categories the current query reaches, offered when it
+   * reaches more than one (AC-1). Computed from the unnarrowed candidate set,
+   * so narrowing never hides the alternatives a person might switch to.
+   */
+  narrowing: BrowseCategory[];
+  /// The exact submitted query, kept as visible Discovery criteria (AC-2).
   query: string;
   results: SearchResult[];
 }

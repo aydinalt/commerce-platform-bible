@@ -708,6 +708,13 @@ export const SEARCH_MATCH_LEVELS = [
 /// is a person's sentence, not a payload.
 export const searchSubmissionSchema = z
   .object({
+    /// Narrows the current Search to one active leaf Category
+    /// (`US-DSC-F04-001` AC-3). It is part of the same Search, not a new path.
+    categoryId: z
+      .string()
+      .uuid()
+      .nullish()
+      .transform((value) => value ?? null),
     discoveryPathId: z.string().uuid().optional(),
     query: z.string().trim().min(1).max(400)
   })
@@ -719,8 +726,18 @@ export const searchResultSchema = listingCardSchema.extend({
 
 export const searchViewSchema = z
   .object({
+    categoryId: z.string().uuid().nullable(),
     discoveryPathId: z.string().uuid(),
-    /// The exact submitted query, kept as visible Discovery criteria (AC-6).
+    /// Available once one active leaf Category is selected. A Search that spans
+    /// Domains has none.
+    domain: z.enum(V1_DOMAINS).nullable(),
+    /// Whether category-specific Attribute Filters may be offered. The gate of
+    /// `US-DSC-F04-001` AC-6; `US-DSC-F05-001` owns what it gates.
+    filtersAvailable: z.boolean(),
+    /// The active leaf Categories this query reaches, offered when it reaches
+    /// more than one.
+    narrowing: z.array(browseCategorySchema),
+    /// The exact submitted query, kept as visible Discovery criteria.
     query: z.string(),
     results: z.array(searchResultSchema)
   })

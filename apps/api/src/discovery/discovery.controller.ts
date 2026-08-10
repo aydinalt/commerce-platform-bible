@@ -98,18 +98,29 @@ export class DiscoveryController {
     const pathId = parsed.data.discoveryPathId ?? randomUUID();
     if (terms.length === 0)
       return searchViewSchema.parse({
+        categoryId: null,
         discoveryPathId: pathId,
+        domain: null,
+        filtersAvailable: false,
+        narrowing: [],
         query: parsed.data.query,
         results: []
       });
 
-    return searchViewSchema.parse(
-      await this.discovery.search({
-        pathId,
-        query: parsed.data.query,
-        terms
-      })
-    );
+    const view = await this.discovery.search({
+      categoryId: parsed.data.categoryId,
+      pathId,
+      query: parsed.data.query,
+      terms
+    });
+    // `US-DSC-F04-001` AC-3 narrows to an active leaf. A branch, a retired
+    // Category or one that never existed all answer the same way.
+    if (!view)
+      throw new NotFoundException({
+        code: "CATEGORY_NOT_FOUND",
+        message: "No active leaf Category matches that identifier"
+      });
+    return searchViewSchema.parse(view);
   }
 
   /**
