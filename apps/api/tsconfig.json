@@ -28,6 +28,9 @@
       "path": "../../modules/catalog"
     },
     {
+      "path": "../../modules/discovery"
+    },
+    {
       "path": "../../modules/identity"
     },
     {

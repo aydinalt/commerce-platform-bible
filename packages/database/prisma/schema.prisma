@@ -257,8 +257,30 @@ model Domain {
   name       String     @db.VarChar(160)
   active     Boolean    @default(true)
   categories Category[]
+  discoveryStarts DiscoveryStart[]
 
   @@map("domain")
+}
+
+enum DiscoveryPathKind {
+  BROWSE
+  SEARCH
+}
+
+/// A bounded occurrence: a person began looking (PRD-0002 §5.10). One per path,
+/// so a descendant Category selection inside the same Browse path adds none
+/// (`US-DSC-F03-001` AC-8). PRD-0006 Basic Analytics is its only consumer.
+model DiscoveryStart {
+  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pathId    String            @unique @map("path_id") @db.Uuid
+  kind      DiscoveryPathKind
+  /// Inherited from the selected Category for a Browse Start (AC-2).
+  domainId  String?           @map("domain_id") @db.Uuid
+  startedAt DateTime          @default(now()) @map("started_at") @db.Timestamptz(6)
+  domain    Domain?           @relation(fields: [domainId], references: [id], onDelete: Restrict)
+
+  @@index([kind, startedAt])
+  @@map("discovery_start")
 }
 
 model Category {

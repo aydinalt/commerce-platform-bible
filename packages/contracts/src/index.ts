@@ -629,6 +629,74 @@ export type RelabelAttributeOption = z.infer<
 export type AttributeResponse = z.infer<typeof attributeSchema>;
 export type Attributes = z.infer<typeof attributesSchema>;
 
+const browseCategorySchema = z
+  .object({
+    id: z.string().uuid(),
+    leaf: z.boolean(),
+    name: z.string(),
+    slug: z.string()
+  })
+  .strict();
+
+/**
+ * The PRD-0002 §11 Listing Card product minimum, and nothing beyond it.
+ *
+ * The absences are the specification: no telephone, no email, no external
+ * contact URL, no Affiliate Destination. A public shape that cannot express
+ * them cannot leak them.
+ */
+export const listingCardSchema = z
+  .object({
+    businessName: z.string(),
+    categoryName: z.string(),
+    offeringId: z.string().uuid(),
+    publishedAt: z.string().datetime(),
+    slug: z.string(),
+    title: z.string()
+  })
+  .strict();
+
+export const browseRootsSchema = z
+  .object({
+    domains: z.array(
+      z
+        .object({
+          categories: z.array(browseCategorySchema),
+          domain: z.enum(V1_DOMAINS)
+        })
+        .strict()
+    )
+  })
+  .strict();
+
+/**
+ * One point in a Browse path. `results` is `null` for a branch rather than an
+ * empty list: `US-DSC-F03-001` AC-5 withholds Results, which is a different
+ * statement from "there are none".
+ */
+export const browseViewSchema = z
+  .object({
+    ancestors: z.array(browseCategorySchema),
+    category: browseCategorySchema,
+    children: z.array(browseCategorySchema),
+    discoveryPathId: z.string().uuid(),
+    domain: z.enum(V1_DOMAINS),
+    results: z.array(listingCardSchema).nullable(),
+    siblings: z.array(browseCategorySchema)
+  })
+  .strict();
+
+/// A path a person is already following. Absent on the first selection, which
+/// is what makes that selection the start of a new one.
+export const browseSelectionSchema = z
+  .object({ discoveryPathId: z.string().uuid().optional() })
+  .strict();
+
+export type BrowseRoots = z.infer<typeof browseRootsSchema>;
+export type BrowseViewResponse = z.infer<typeof browseViewSchema>;
+export type BrowseSelection = z.infer<typeof browseSelectionSchema>;
+export type ListingCardResponse = z.infer<typeof listingCardSchema>;
+
 export type CreateCategory = z.infer<typeof createCategorySchema>;
 export type RenameCategory = z.infer<typeof renameCategorySchema>;
 export type ReparentCategory = z.infer<typeof reparentCategorySchema>;

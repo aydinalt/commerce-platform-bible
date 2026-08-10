@@ -356,6 +356,112 @@
         "required": ["label"],
         "type": "object"
       },
+      "BrowseCategory": {
+        "additionalProperties": false,
+        "properties": {
+          "id": { "format": "uuid", "type": "string" },
+          "leaf": {
+            "description": "A leaf carries Results; a branch carries only navigation.",
+            "type": "boolean"
+          },
+          "name": { "type": "string" },
+          "slug": { "type": "string" }
+        },
+        "required": ["id", "leaf", "name", "slug"],
+        "type": "object"
+      },
+      "ListingCard": {
+        "additionalProperties": false,
+        "description": "The Listing Card product minimum. It carries no telephone, email, external contact URL or Affiliate Destination information — those have no representation here at all.",
+        "properties": {
+          "businessName": { "type": "string" },
+          "categoryName": { "type": "string" },
+          "offeringId": { "format": "uuid", "type": "string" },
+          "publishedAt": { "format": "date-time", "type": "string" },
+          "slug": { "type": "string" },
+          "title": { "type": "string" }
+        },
+        "required": [
+          "businessName",
+          "categoryName",
+          "offeringId",
+          "publishedAt",
+          "slug",
+          "title"
+        ],
+        "type": "object"
+      },
+      "BrowseRoots": {
+        "additionalProperties": false,
+        "properties": {
+          "domains": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "categories": {
+                  "items": { "$ref": "#/components/schemas/BrowseCategory" },
+                  "type": "array"
+                },
+                "domain": {
+                  "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+                  "type": "string"
+                }
+              },
+              "required": ["categories", "domain"],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["domains"],
+        "type": "object"
+      },
+      "BrowseSelection": {
+        "additionalProperties": false,
+        "description": "A path already being followed. Absent on the first selection, which is what makes that selection the start of a new path.",
+        "properties": {
+          "discoveryPathId": { "format": "uuid", "type": "string" }
+        },
+        "type": "object"
+      },
+      "BrowseView": {
+        "additionalProperties": false,
+        "properties": {
+          "ancestors": {
+            "items": { "$ref": "#/components/schemas/BrowseCategory" },
+            "type": "array"
+          },
+          "category": { "$ref": "#/components/schemas/BrowseCategory" },
+          "children": {
+            "items": { "$ref": "#/components/schemas/BrowseCategory" },
+            "type": "array"
+          },
+          "discoveryPathId": { "format": "uuid", "type": "string" },
+          "domain": {
+            "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+            "type": "string"
+          },
+          "results": {
+            "description": "Null for a non-leaf Category: Results are withheld, which is a different statement from there being none. A parent never aggregates its descendants' Offerings.",
+            "items": { "$ref": "#/components/schemas/ListingCard" },
+            "type": ["array", "null"]
+          },
+          "siblings": {
+            "items": { "$ref": "#/components/schemas/BrowseCategory" },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ancestors",
+          "category",
+          "children",
+          "discoveryPathId",
+          "domain",
+          "results",
+          "siblings"
+        ],
+        "type": "object"
+      },
       "Category": {
         "additionalProperties": false,
         "properties": {
@@ -3338,6 +3444,72 @@
           }
         },
         "tags": ["Platform"]
+      }
+    },
+    "/api/v1/discovery/browse": {
+      "get": {
+        "description": "The active root Categories by Domain. Public and unauthenticated. Choosing one begins a Browse path, so nothing is recorded here.",
+        "operationId": "browseRoots",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BrowseRoots" }
+              }
+            },
+            "description": "Active root Categories"
+          }
+        },
+        "tags": ["Discovery"]
+      }
+    },
+    "/api/v1/discovery/browse/categories/{categoryId}": {
+      "post": {
+        "description": "Selects an active Category. The first selection of a path creates a Discovery Start carrying the Category's Domain; a request that carries a path identifier continues that path and creates none. Results appear only for an active leaf. Retired Categories are absent rather than refused.",
+        "operationId": "browseCategory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "categoryId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BrowseSelection" }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BrowseView" }
+              }
+            },
+            "description": "The current point in the Browse path"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier or Browse selection"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No active Category matches that identifier"
+          }
+        },
+        "tags": ["Discovery"]
       }
     },
     "/api/v1/health/live": {
