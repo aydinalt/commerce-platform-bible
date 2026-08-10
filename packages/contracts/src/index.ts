@@ -302,6 +302,140 @@ export const categoriesSchema = z
   .object({ categories: z.array(categorySchema) })
   .strict();
 
+/**
+ * The wire spelling of the five V1 Attribute value kinds. Owned by the Catalog
+ * module and restated here for the same reason as the Domain list, with a test
+ * keeping the two honest.
+ */
+export const ATTRIBUTE_VALUE_KINDS = [
+  "TEXT",
+  "NUMBER",
+  "BOOLEAN",
+  "SINGLE_SELECT",
+  "MULTI_SELECT"
+] as const;
+
+const attributeOptionInputSchema = z.object({
+  label: z.string().trim().min(1).max(160),
+  stableKey: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .min(1)
+    .max(100)
+    .regex(/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/u, "Use upper snake case")
+});
+
+/**
+ * `US-PLT-F09-001` AC-1 makes the property set complete rather than optional:
+ * filterable and comparable are required booleans, not absences to be guessed
+ * at. `unit` and `options` are the two properties that only some kinds may
+ * carry, and the datamodel refuses the combinations the Story forbids.
+ */
+export const createAttributeSchema = z
+  .object({
+    categoryIds: z.array(z.string().uuid()),
+    comparable: z.boolean(),
+    filterable: z.boolean(),
+    name: z.string().trim().min(1).max(160),
+    options: z.array(attributeOptionInputSchema).max(200).default([]),
+    stableKey: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .min(1)
+      .max(100)
+      .regex(/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/u, "Use upper snake case"),
+    unit: z
+      .string()
+      .trim()
+      .max(40)
+      .nullish()
+      .transform((v) => v ?? null),
+    valueKind: z.enum(ATTRIBUTE_VALUE_KINDS)
+  })
+  .strict();
+
+/// AC-13: the properties an edit may change without touching any Offering.
+export const updateAttributePropertiesSchema = z
+  .object({
+    comparable: z.boolean(),
+    filterable: z.boolean(),
+    name: z.string().trim().min(1).max(160),
+    unit: z
+      .string()
+      .trim()
+      .max(40)
+      .nullish()
+      .transform((v) => v ?? null)
+  })
+  .strict();
+
+export const changeAttributeValueKindSchema = z
+  .object({ valueKind: z.enum(ATTRIBUTE_VALUE_KINDS) })
+  .strict();
+
+export const setAttributeCategoriesSchema = z
+  .object({ categoryIds: z.array(z.string().uuid()) })
+  .strict();
+
+export const setAttributeRequiredSchema = z
+  .object({ requiredForPublication: z.boolean() })
+  .strict();
+
+export const addAttributeOptionSchema = attributeOptionInputSchema.strict();
+
+export const relabelAttributeOptionSchema = z
+  .object({ label: z.string().trim().min(1).max(160) })
+  .strict();
+
+export const attributeOptionSchema = z
+  .object({
+    active: z.boolean(),
+    id: z.string().uuid(),
+    label: z.string(),
+    stableKey: z.string()
+  })
+  .strict();
+
+export const attributeSchema = z
+  .object({
+    active: z.boolean(),
+    categoryIds: z.array(z.string().uuid()),
+    comparable: z.boolean(),
+    filterable: z.boolean(),
+    id: z.string().uuid(),
+    name: z.string(),
+    options: z.array(attributeOptionSchema),
+    requiredForPublication: z.boolean(),
+    stableKey: z.string(),
+    unit: z.string().nullable(),
+    valueKind: z.enum(ATTRIBUTE_VALUE_KINDS)
+  })
+  .strict();
+
+export const attributesSchema = z
+  .object({ attributes: z.array(attributeSchema) })
+  .strict();
+
+export type CreateAttribute = z.infer<typeof createAttributeSchema>;
+export type UpdateAttributeProperties = z.infer<
+  typeof updateAttributePropertiesSchema
+>;
+export type ChangeAttributeValueKind = z.infer<
+  typeof changeAttributeValueKindSchema
+>;
+export type SetAttributeCategories = z.infer<
+  typeof setAttributeCategoriesSchema
+>;
+export type SetAttributeRequired = z.infer<typeof setAttributeRequiredSchema>;
+export type AddAttributeOption = z.infer<typeof addAttributeOptionSchema>;
+export type RelabelAttributeOption = z.infer<
+  typeof relabelAttributeOptionSchema
+>;
+export type AttributeResponse = z.infer<typeof attributeSchema>;
+export type Attributes = z.infer<typeof attributesSchema>;
+
 export type CreateCategory = z.infer<typeof createCategorySchema>;
 export type RenameCategory = z.infer<typeof renameCategorySchema>;
 export type ReparentCategory = z.infer<typeof reparentCategorySchema>;

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { V1_DOMAINS as CATALOG_DOMAINS } from "../modules/catalog/src/index.js";
 import {
+  ATTRIBUTE_VALUE_KINDS as CATALOG_KINDS,
+  V1_DOMAINS as CATALOG_DOMAINS
+} from "../modules/catalog/src/index.js";
+import {
+  ATTRIBUTE_VALUE_KINDS as CONTRACT_KINDS,
   V1_DOMAINS as CONTRACT_DOMAINS,
   createCategorySchema
 } from "../packages/contracts/src/index.js";
@@ -22,6 +26,24 @@ describe("V1 Domain list", () => {
       "MOBILITY",
       "REAL_ESTATE",
       "TECHNOLOGY"
+    ]);
+  });
+});
+
+describe("Attribute value kinds", () => {
+  it("agree between the Catalog module and the published contract", () => {
+    expect([...CONTRACT_KINDS]).toEqual([...CATALOG_KINDS]);
+  });
+
+  it("are exactly the five kinds of the Story", () => {
+    // `US-PLT-F09-001` AC-2. Asserting the whole list rather than membership is
+    // what makes a sixth kind fail here instead of quietly becoming selectable.
+    expect([...CATALOG_KINDS]).toEqual([
+      "TEXT",
+      "NUMBER",
+      "BOOLEAN",
+      "SINGLE_SELECT",
+      "MULTI_SELECT"
     ]);
   });
 });

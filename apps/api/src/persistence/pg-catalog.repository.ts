@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import {
+  ACTIVE_LIFECYCLE_STATES,
   CategoryCycleError,
   CategoryDomainMismatchError,
   CategoryKeyConflictError,
@@ -27,7 +28,7 @@ const STABLE_KEY_CONSTRAINT = "category_stable_key_key";
  * retirement. The list is written out rather than expressed as "not archived"
  * so that a fifth lifecycle state could not join it silently.
  */
-const BLOCKING_OFFERING_STATES = ["DRAFT", "PUBLISHED", "HIDDEN"] as const;
+const BLOCKING_OFFERING_STATES = ACTIVE_LIFECYCLE_STATES;
 
 const CATEGORY_COLUMNS = `c.id, c.name, c.slug, c.stable_key as "stableKey",
    c.parent_id as "parentId", c.active, d.stable_key as domain`;

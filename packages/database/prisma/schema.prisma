@@ -45,13 +45,15 @@ enum OfferingStatus {
   ARCHIVED
 }
 
+/// The five V1 Attribute value kinds (`US-PLT-F09-001` AC-2). `Number` covers
+/// what were separate integer and decimal kinds; the two Select kinds differ
+/// only in how many allowed values one Offering may hold.
 enum AttributeValueKind {
   TEXT
-  INTEGER
-  DECIMAL
+  NUMBER
   BOOLEAN
-  DATE
-  OPTION
+  SINGLE_SELECT
+  MULTI_SELECT
 }
 
 enum PublicationStatus {
@@ -264,8 +266,14 @@ model AttributeDefinition {
   stableKey  String                   @unique @map("stable_key") @db.VarChar(100)
   name       String                   @db.VarChar(160)
   valueKind  AttributeValueKind       @map("value_kind")
+  /// A governed label, and only for `NUMBER` (AC-3).
+  unit       String?                  @db.VarChar(40)
   searchable Boolean                  @default(false)
   filterable Boolean                  @default(false)
+  comparable Boolean                  @default(false)
+  /// Owned by the definition rather than by each applicability link: AC-7
+  /// evaluates it across every applicable Category at once.
+  requiredForPublication Boolean      @default(false) @map("required_for_publication")
   active     Boolean                  @default(true)
   options    AttributeOption[]
   categories CategoryAttribute[]
@@ -291,7 +299,6 @@ model AttributeOption {
 model CategoryAttribute {
   categoryId            String              @map("category_id") @db.Uuid
   attributeDefinitionId String              @map("attribute_definition_id") @db.Uuid
-  required              Boolean             @default(false)
   sortOrder             Int                 @default(0) @map("sort_order")
   category              Category            @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   attributeDefinition   AttributeDefinition @relation(fields: [attributeDefinitionId], references: [id], onDelete: Restrict)
@@ -328,10 +335,8 @@ model OfferingAttributeValue {
   offeringId            String              @map("offering_id") @db.Uuid
   attributeDefinitionId String              @map("attribute_definition_id") @db.Uuid
   textValue             String?             @map("text_value")
-  integerValue          BigInt?             @map("integer_value")
-  decimalValue          Decimal?            @map("decimal_value") @db.Decimal(24, 8)
+  numberValue           Decimal?            @map("number_value") @db.Decimal(24, 8)
   booleanValue          Boolean?            @map("boolean_value")
-  dateValue             DateTime?           @map("date_value") @db.Date
   optionId              String?             @map("option_id") @db.Uuid
   offering              Offering            @relation(fields: [offeringId], references: [id], onDelete: Cascade)
   attributeDefinition   AttributeDefinition @relation(fields: [attributeDefinitionId], references: [id], onDelete: Restrict)

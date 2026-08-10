@@ -3,6 +3,8 @@ import { APP_FILTER } from "@nestjs/core";
 
 import { BusinessController } from "./business/business.controller.js";
 import { BusinessService } from "./business/business.service.js";
+import { AttributeController } from "./catalog/attribute.controller.js";
+import { AttributeService } from "./catalog/attribute.service.js";
 import { CatalogController } from "./catalog/catalog.controller.js";
 import { CatalogService } from "./catalog/catalog.service.js";
 import { HealthController } from "./health.controller.js";
@@ -12,6 +14,7 @@ import { AUDIT_WRITER, IdentityService } from "./identity/identity.service.js";
 import { PasswordHasher } from "./identity/password.hasher.js";
 import { OfferingController } from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
+import { PgAttributeRepository } from "./persistence/pg-attribute.repository.js";
 import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
 import { PgCatalogRepository } from "./persistence/pg-catalog.repository.js";
 import { PgCommerceRepository } from "./persistence/pg-commerce.repository.js";
@@ -42,6 +45,7 @@ function allowedOrigins(): readonly string[] {
 
 @Module({
   controllers: [
+    AttributeController,
     BusinessController,
     CatalogController,
     HealthController,
@@ -49,11 +53,13 @@ function allowedOrigins(): readonly string[] {
     OfferingController
   ],
   providers: [
+    AttributeService,
     BusinessService,
     CatalogService,
     IdentityService,
     OfferingService,
     PasswordHasher,
+    PgAttributeRepository,
     PgBusinessRepository,
     PgCatalogRepository,
     PgCommerceRepository,

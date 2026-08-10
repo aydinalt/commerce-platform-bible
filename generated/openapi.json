@@ -201,6 +201,161 @@
         ],
         "type": "object"
       },
+      "AttributeOption": {
+        "additionalProperties": false,
+        "properties": {
+          "active": { "type": "boolean" },
+          "id": { "format": "uuid", "type": "string" },
+          "label": { "type": "string" },
+          "stableKey": { "type": "string" }
+        },
+        "required": ["active", "id", "label", "stableKey"],
+        "type": "object"
+      },
+      "Attribute": {
+        "additionalProperties": false,
+        "properties": {
+          "active": { "type": "boolean" },
+          "categoryIds": {
+            "items": { "format": "uuid", "type": "string" },
+            "type": "array"
+          },
+          "comparable": { "type": "boolean" },
+          "filterable": { "type": "boolean" },
+          "id": { "format": "uuid", "type": "string" },
+          "name": { "type": "string" },
+          "options": {
+            "items": { "$ref": "#/components/schemas/AttributeOption" },
+            "type": "array"
+          },
+          "requiredForPublication": { "type": "boolean" },
+          "stableKey": { "type": "string" },
+          "unit": { "maxLength": 40, "type": ["string", "null"] },
+          "valueKind": { "$ref": "#/components/schemas/AttributeValueKind" }
+        },
+        "required": [
+          "active",
+          "categoryIds",
+          "comparable",
+          "filterable",
+          "id",
+          "name",
+          "options",
+          "requiredForPublication",
+          "stableKey",
+          "unit",
+          "valueKind"
+        ],
+        "type": "object"
+      },
+      "Attributes": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "items": { "$ref": "#/components/schemas/Attribute" },
+            "type": "array"
+          }
+        },
+        "required": ["attributes"],
+        "type": "object"
+      },
+      "AttributeValueKind": {
+        "description": "The five V1 value kinds. Text cannot be filterable, only Number may carry a unit, and the two Select kinds require at least one allowed value.",
+        "enum": ["TEXT", "NUMBER", "BOOLEAN", "SINGLE_SELECT", "MULTI_SELECT"],
+        "type": "string"
+      },
+      "AttributeOptionInput": {
+        "additionalProperties": false,
+        "properties": {
+          "label": { "maxLength": 160, "minLength": 1, "type": "string" },
+          "stableKey": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
+            "type": "string"
+          }
+        },
+        "required": ["label", "stableKey"],
+        "type": "object"
+      },
+      "CreateAttribute": {
+        "additionalProperties": false,
+        "properties": {
+          "categoryIds": {
+            "items": { "format": "uuid", "type": "string" },
+            "type": "array"
+          },
+          "comparable": { "type": "boolean" },
+          "filterable": { "type": "boolean" },
+          "name": { "maxLength": 160, "minLength": 1, "type": "string" },
+          "options": {
+            "items": { "$ref": "#/components/schemas/AttributeOptionInput" },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "stableKey": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
+            "type": "string"
+          },
+          "unit": { "maxLength": 40, "type": ["string", "null"] },
+          "valueKind": { "$ref": "#/components/schemas/AttributeValueKind" }
+        },
+        "required": [
+          "categoryIds",
+          "comparable",
+          "filterable",
+          "name",
+          "stableKey",
+          "valueKind"
+        ],
+        "type": "object"
+      },
+      "UpdateAttributeProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "comparable": { "type": "boolean" },
+          "filterable": { "type": "boolean" },
+          "name": { "maxLength": 160, "minLength": 1, "type": "string" },
+          "unit": { "maxLength": 40, "type": ["string", "null"] }
+        },
+        "required": ["comparable", "filterable", "name"],
+        "type": "object"
+      },
+      "ChangeAttributeValueKind": {
+        "additionalProperties": false,
+        "properties": {
+          "valueKind": { "$ref": "#/components/schemas/AttributeValueKind" }
+        },
+        "required": ["valueKind"],
+        "type": "object"
+      },
+      "SetAttributeCategories": {
+        "additionalProperties": false,
+        "properties": {
+          "categoryIds": {
+            "items": { "format": "uuid", "type": "string" },
+            "type": "array"
+          }
+        },
+        "required": ["categoryIds"],
+        "type": "object"
+      },
+      "SetAttributeRequired": {
+        "additionalProperties": false,
+        "properties": { "requiredForPublication": { "type": "boolean" } },
+        "required": ["requiredForPublication"],
+        "type": "object"
+      },
+      "RelabelAttributeOption": {
+        "additionalProperties": false,
+        "properties": {
+          "label": { "maxLength": 160, "minLength": 1, "type": "string" }
+        },
+        "required": ["label"],
+        "type": "object"
+      },
       "Category": {
         "additionalProperties": false,
         "properties": {
@@ -828,6 +983,657 @@
           }
         },
         "tags": ["Business"]
+      }
+    },
+    "/api/v1/admin/attributes": {
+      "get": {
+        "description": "Every Attribute definition with its applicability and allowed values, retired values included.",
+        "operationId": "listAttributes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attributes" }
+              }
+            },
+            "description": "Attribute definitions"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required"
+          }
+        },
+        "tags": ["Platform"]
+      },
+      "post": {
+        "description": "Creates a definition with its complete property set, its applicable Categories and, for a Select kind, its allowed values.",
+        "operationId": "createAttribute",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateAttribute" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attribute" }
+              }
+            },
+            "description": "Attribute definition created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Attribute definition"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An applicable Category does not exist"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The stable key is taken"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The properties contradict the value kind: filterable Text, a unit outside Number, or a Select with no allowed value"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/attributes/{attributeId}/properties": {
+      "put": {
+        "description": "Changes display name, unit, filterable and comparable. Affects future Discovery and Compare presentation only; no Offering lifecycle moves.",
+        "operationId": "updateAttributeProperties",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attributeId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAttributeProperties"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attribute" }
+              }
+            },
+            "description": "Properties saved"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Attribute properties"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Attribute definition matches"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The properties contradict the value kind"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/attributes/{attributeId}/value-kind": {
+      "put": {
+        "description": "Changes the value kind. Refused while any Draft, Published or Hidden Offering holds a value, which would otherwise be silently reinterpreted.",
+        "operationId": "changeAttributeValueKind",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attributeId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAttributeValueKind"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attribute" }
+              }
+            },
+            "description": "Value kind changed"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid value kind"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Attribute definition matches"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An Offering still holds a value"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The value kind contradicts other properties"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/attributes/{attributeId}/categories": {
+      "put": {
+        "description": "Replaces the applicable Category set. Additions are unconditional; a removal is refused while an Offering in that Category holds a value.",
+        "operationId": "setAttributeCategories",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attributeId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAttributeCategories"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attribute" }
+              }
+            },
+            "description": "Applicability saved"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid applicability"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Attribute definition or Category matches"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An Offering in a removed Category holds a value"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/attributes/{attributeId}/required-for-publication": {
+      "put": {
+        "description": "Sets the required-for-publication flag. Enabling it is refused unless every Published and Hidden Offering in every applicable Category already has a value.",
+        "operationId": "setAttributeRequiredForPublication",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attributeId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SetAttributeRequired" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attribute" }
+              }
+            },
+            "description": "Required flag saved"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid required flag"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Attribute definition matches"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An existing Offering has no value yet"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/attributes/{attributeId}/options": {
+      "post": {
+        "description": "Adds an allowed value to a Select definition. Adding takes nothing away, so it is unguarded.",
+        "operationId": "addAttributeOption",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attributeId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AttributeOptionInput" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attribute" }
+              }
+            },
+            "description": "Allowed value added"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid allowed value"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Attribute definition matches"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The allowed-value stable key is taken"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The definition is not a Select kind"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/attributes/{attributeId}/options/{optionId}/label": {
+      "put": {
+        "description": "Relabels an allowed value. Refused while an Offering uses it, since the change would alter what that Offering appears to say.",
+        "operationId": "relabelAttributeOption",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attributeId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "optionId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelabelAttributeOption"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attribute" }
+              }
+            },
+            "description": "Allowed value relabelled"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid label"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Attribute definition or allowed value matches"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An Offering still uses this allowed value"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/attributes/{attributeId}/options/{optionId}/retirement": {
+      "post": {
+        "description": "Retires an allowed value. Refused while an Offering uses it, and refused if it is the last one a Select definition has. Nothing is deleted.",
+        "operationId": "retireAttributeOption",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attributeId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "optionId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Attribute" }
+              }
+            },
+            "description": "Allowed value retired"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Attribute definition or allowed value matches"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An Offering still uses this allowed value"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "It is the last allowed value"
+          }
+        },
+        "tags": ["Platform"]
       }
     },
     "/api/v1/admin/categories": {
