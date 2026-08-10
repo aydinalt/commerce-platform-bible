@@ -9,12 +9,31 @@ import type {
 import { CategoryNotAssignableError } from "@commerce/catalog";
 import type { IdentityReader } from "@commerce/identity";
 import {
+  composePublicEligibility,
   OfferingSlugConflictError,
   type DraftOfferingRecord,
   type DraftOfferingRepository
 } from "@commerce/offering";
 
 type OfferingInput = Parameters<DraftOfferingRepository["create"]>[0];
+
+/**
+ * One row of the owning Business management inventory.
+ *
+ * The timestamps are ISO strings rather than `Date`s: the published contract
+ * says `date-time`, and the response is validated against it before anything
+ * gets a chance to serialise a `Date` into something else.
+ */
+export interface InventoryEntry {
+  categoryId: string;
+  createdAt: string;
+  id: string;
+  publicEligibility: string;
+  slug: string;
+  status: string;
+  title: string;
+  updatedAt: string;
+}
 
 const UNIQUE_VIOLATION = "23505";
 const OFFERING_SLUG_CONSTRAINT = "offering_business_id_slug_key";
@@ -139,6 +158,31 @@ export class PgCommerceRepository
       );
       const offering = result.rows[0];
       if (!offering) throw new Error("OFFERING_INSERT_FAILED");
+
+      // `US-OFR-F01-001` AC-4. The result is recorded rather than left to be
+      // derived later, because PRD-0001 §7.1 forbids consumers from
+      // recalculating it — and a consumer cannot read an answer that was never
+      // written. It is written in the same transaction as the Offering, so no
+      // Draft ever exists without one.
+      const exposure = await client.query<{ publicExposure: string }>(
+        `select public_exposure::text as "publicExposure" from business
+         where id = $1`,
+        [input.businessId]
+      );
+      const eligibility = composePublicEligibility({
+        businessExposure:
+          exposure.rows[0]?.publicExposure === "ELIGIBLE"
+            ? "ELIGIBLE"
+            : "INELIGIBLE",
+        lifecycle: "DRAFT"
+      });
+      await client.query(
+        `insert into offering_publication
+           (offering_id, status, eligibility_version, reason_code)
+         values ($1, $2::"PublicationStatus", 1, $3)`,
+        [offering.id, eligibility.status, eligibility.reason]
+      );
+
       await this.writeAudit(client, {
         action: "offering.draft.create",
         actorUserId: input.userId,
@@ -158,6 +202,44 @@ export class PgCommerceRepository
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * The owning Business management inventory (`US-OFR-F01-001` AC-5).
+   *
+   * It carries the recorded eligibility result rather than deriving one, and it
+   * lists every lifecycle state: management visibility is not public exposure,
+   * so an Ineligible Offering is exactly what its owner most needs to see.
+   */
+  async listInventory(businessId: string): Promise<InventoryEntry[]> {
+    const result = await this.pool.query<
+      Omit<InventoryEntry, "createdAt" | "updatedAt"> & {
+        createdAt: Date;
+        updatedAt: Date;
+      }
+    >(
+      `select o.id, o.slug, o.title, o.status::text as status,
+         o.category_id as "categoryId",
+         o.created_at as "createdAt", o.updated_at as "updatedAt",
+         coalesce(p.status::text, 'PENDING') as "publicEligibility"
+       from offering o
+       left join lateral (
+         select status from offering_publication
+         where offering_id = o.id
+         order by eligibility_version desc limit 1
+       ) p on true
+       where o.business_id = $1
+       order by o.created_at desc, o.id`,
+      [businessId]
+    );
+    // The driver hands back `Date`s in the server's zone; the contract publishes
+    // UTC `date-time`. Converting here keeps that promise in one place instead
+    // of depending on how something downstream happens to serialise a `Date`.
+    return result.rows.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString()
+    }));
   }
 
   async findOwned(

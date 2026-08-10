@@ -12,7 +12,11 @@ import type { FastifyRequest } from "fastify";
 
 import { z } from "zod";
 
-import { createDraftOfferingSchema } from "@commerce/contracts";
+import {
+  createDraftOfferingSchema,
+  offeringInventorySchema,
+  type OfferingInventory
+} from "@commerce/contracts";
 
 import { PrincipalResolver } from "../security/principal-resolver.js";
 import { OfferingService } from "./offering.service.js";
@@ -57,6 +61,24 @@ export class OfferingController {
       parsed.data,
       await this.principals.resolve(request)
     );
+  }
+
+  /**
+   * The owning Business management inventory (`US-OFR-F01-001` AC-5). A newly
+   * created Draft is reachable here without its owner having kept hold of the
+   * identifier the creation response returned.
+   */
+  @Get()
+  async inventory(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Req() request: FastifyRequest
+  ): Promise<OfferingInventory> {
+    return offeringInventorySchema.parse({
+      offerings: await this.offerings.inventory(
+        businessId,
+        await this.principals.resolve(request)
+      )
+    });
   }
 
   @Get(":offeringId")

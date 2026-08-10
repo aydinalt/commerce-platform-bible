@@ -44,7 +44,7 @@ suite("Milestone 12 Business context", () => {
   let processor: OutboxProcessor;
 
   const foreignId = randomUUID();
-  const domainId = randomUUID();
+  let domainId: string;
   const categoryId = randomUUID();
 
   const address = () => `ctx-${randomUUID()}@example.test`;
@@ -114,10 +114,13 @@ suite("Milestone 12 Business context", () => {
        values ($1,$2,'Foreign','ACTIVE')`,
       [foreignId, `ctx-foreign-${foreignId}`]
     );
-    await pool.query(
-      `insert into domain (id,stable_key,slug,name) values ($1,$2,$3,'Domain')`,
-      [domainId, `ctx-d-${domainId}`, `ctx-d-${domainId}`]
-    );
+    // The V1 Domains are seeded by `20260810000200_category_management`; this
+    // suite predates that and used to invent one of its own.
+    domainId = (
+      await pool.query<{ id: string }>(
+        `select id from domain where stable_key = 'MOBILITY'`
+      )
+    ).rows[0]!.id;
     await pool.query(
       `insert into category (id,domain_id,stable_key,slug,name)
        values ($1,$2,$3,$4,'Category')`,

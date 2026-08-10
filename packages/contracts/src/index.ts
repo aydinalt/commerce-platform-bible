@@ -222,8 +222,37 @@ export const draftOfferingSchema = createDraftOfferingSchema.extend({
   version: z.number().int().positive()
 });
 
+/**
+ * One entry of the owning Business management inventory (`US-OFR-F01-001`
+ * AC-5). It reports the recorded final Offering Public Eligibility rather than
+ * anything a caller could derive: PRD-0001 §7.1 makes that result something
+ * consumers read, never recompute.
+ */
+export const offeringInventoryEntrySchema = z
+  .object({
+    categoryId: z.string().uuid(),
+    createdAt: z.string().datetime(),
+    id: z.string().uuid(),
+    publicEligibility: z.enum([
+      "PENDING",
+      "ELIGIBLE",
+      "INELIGIBLE",
+      "WITHDRAWN"
+    ]),
+    slug: z.string(),
+    status: z.enum(["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"]),
+    title: z.string(),
+    updatedAt: z.string().datetime()
+  })
+  .strict();
+
+export const offeringInventorySchema = z
+  .object({ offerings: z.array(offeringInventoryEntrySchema) })
+  .strict();
+
 export type CreateDraftOffering = z.infer<typeof createDraftOfferingSchema>;
 export type DraftOffering = z.infer<typeof draftOfferingSchema>;
+export type OfferingInventory = z.infer<typeof offeringInventorySchema>;
 
 /**
  * The wire spelling of the three V1 Domains. The Catalog module owns the

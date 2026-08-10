@@ -16,6 +16,7 @@ import {
 import { PgCommerceRepository } from "../persistence/pg-commerce.repository.js";
 
 const CREATE_ACTION = "offering.draft.create";
+const INVENTORY_ACTION = "offering.inventory.read";
 const READ_ACTION = "offering.draft.read";
 const TARGET_TYPE = "Offering";
 
@@ -95,6 +96,36 @@ export class OfferingService {
       }
       throw error;
     }
+  }
+
+  /**
+   * The owning Business management inventory (`US-OFR-F01-001` AC-5).
+   *
+   * A Restricted Business is refused *creation* by AC-6, but its owner may
+   * still see what it already has: `US-BUS-F02-001` AC-13 keeps management
+   * visibility separate from public exposure. So restriction is read here as a
+   * reason to allow the read, not a reason to refuse it — the only refusal is
+   * not owning the Business at all.
+   */
+  async inventory(businessId: string, principal: Principal) {
+    const deny = (reason: string) =>
+      this.denied(INVENTORY_ACTION, businessId, principal, reason);
+
+    if (!actsFor(principal, businessId)) {
+      await deny("BUSINESS_CONTEXT_NOT_SELECTED");
+      throw new NotFoundException();
+    }
+
+    const access = await this.repository.canAuthorOfferings(
+      businessId,
+      principal.userId
+    );
+    if (!access.allowed && access.reason !== "RESTRICTED") {
+      await deny(access.reason);
+      throw new NotFoundException();
+    }
+
+    return await this.repository.listInventory(businessId);
   }
 
   async get(

@@ -458,6 +458,48 @@
         "required": ["parentId"],
         "type": "object"
       },
+      "OfferingInventoryEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "categoryId": { "format": "uuid", "type": "string" },
+          "createdAt": { "format": "date-time", "type": "string" },
+          "id": { "format": "uuid", "type": "string" },
+          "publicEligibility": {
+            "description": "The recorded final Offering Public Eligibility. PRD-0001 owns this result; consumers read it and do not recalculate it.",
+            "enum": ["PENDING", "ELIGIBLE", "INELIGIBLE", "WITHDRAWN"],
+            "type": "string"
+          },
+          "slug": { "type": "string" },
+          "status": {
+            "enum": ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"],
+            "type": "string"
+          },
+          "title": { "type": "string" },
+          "updatedAt": { "format": "date-time", "type": "string" }
+        },
+        "required": [
+          "categoryId",
+          "createdAt",
+          "id",
+          "publicEligibility",
+          "slug",
+          "status",
+          "title",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "OfferingInventory": {
+        "additionalProperties": false,
+        "properties": {
+          "offerings": {
+            "items": { "$ref": "#/components/schemas/OfferingInventoryEntry" },
+            "type": "array"
+          }
+        },
+        "required": ["offerings"],
+        "type": "object"
+      },
       "CreateDraftOffering": {
         "additionalProperties": false,
         "properties": {
@@ -2050,6 +2092,53 @@
       }
     },
     "/api/v1/businesses/{businessId}/offerings": {
+      "get": {
+        "description": "The owning Business management inventory. Every lifecycle state is listed: management visibility is not public exposure, so an Ineligible Offering is exactly what its owner needs to see. A Restricted Business may not create, but its owner may still read this.",
+        "operationId": "listBusinessOfferings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OfferingInventory" }
+              }
+            },
+            "description": "Offerings owned by this Business"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Business matches that identifier"
+          }
+        },
+        "tags": ["Offering"]
+      },
       "post": {
         "operationId": "createDraftOffering",
         "parameters": [

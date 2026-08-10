@@ -20,7 +20,7 @@ suite("Milestone 11 HTTP surface", () => {
   const userId = randomUUID();
   const businessId = randomUUID();
   const otherBusinessId = randomUUID();
-  const domainId = randomUUID();
+  let domainId: string;
   const categoryId = randomUUID();
 
   let app: NestFastifyApplication;
@@ -61,10 +61,13 @@ suite("Milestone 11 HTTP surface", () => {
       `insert into business_owner (business_id,user_id) values ($1,$2),($3,$2)`,
       [businessId, userId, otherBusinessId]
     );
-    await pool.query(
-      `insert into domain (id,stable_key,slug,name) values ($1,$2,$3,'Domain')`,
-      [domainId, `http-d-${domainId}`, `http-d-${domainId}`]
-    );
+    // The V1 Domains are seeded by `20260810000200_category_management`; this
+    // suite predates that and used to invent one of its own.
+    domainId = (
+      await pool.query<{ id: string }>(
+        `select id from domain where stable_key = 'MOBILITY'`
+      )
+    ).rows[0]!.id;
     await pool.query(
       `insert into category (id,domain_id,stable_key,slug,name)
        values ($1,$2,$3,$4,'Category')`,

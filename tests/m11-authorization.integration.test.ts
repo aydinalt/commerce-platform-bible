@@ -33,7 +33,7 @@ suite("Milestone 11 negative authorization", () => {
   const suspendedBusinessId = randomUUID();
   const restrictedBusinessId = randomUUID();
   const otherBusinessId = randomUUID();
-  const domainId = randomUUID();
+  let domainId: string;
   const categoryId = randomUUID();
   const inactiveCategoryId = randomUUID();
 
@@ -98,10 +98,14 @@ suite("Milestone 11 negative authorization", () => {
        values ($1,'RESTRICTED',now())`,
       [restrictedBusinessId]
     );
-    await pool.query(
-      `insert into domain (id,stable_key,slug,name) values ($1,$2,$3,'Domain')`,
-      [domainId, `domain-${domainId}`, `domain-${domainId}`]
-    );
+    // The three V1 Domains are seeded by `20260810000200_category_management`
+    // (`US-PLT-F08-001` AC-1). This suite predates that and used to invent one;
+    // inventing a fourth would now contradict the Story it belongs to.
+    domainId = (
+      await pool.query<{ id: string }>(
+        `select id from domain where stable_key = 'MOBILITY'`
+      )
+    ).rows[0]!.id;
     await pool.query(
       `insert into category (id,domain_id,stable_key,slug,name,active)
        values ($1,$2,$3,$4,'Active',true),($5,$2,$6,$7,'Inactive',false)`,
