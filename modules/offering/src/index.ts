@@ -172,6 +172,36 @@ export const RETIREABLE_LIFECYCLES: readonly OfferingLifecycle[] = [
   "HIDDEN"
 ];
 
+/**
+ * Raised when publication names an Offering that is not a Draft
+ * (`US-OFR-F04-001` AC-1).
+ *
+ * It doubles as AC-8's guarantee: Published and Hidden are not publication
+ * targets, and no route offers a transition back to Draft, so there is nothing
+ * that could make one.
+ */
+export class OfferingNotPublishableError extends Error {
+  constructor(readonly lifecycle: OfferingLifecycle) {
+    super("OFFERING_NOT_PUBLISHABLE");
+    this.name = "OfferingNotPublishableError";
+  }
+}
+
+/**
+ * Raised when the acting Business is Restricted (`US-OFR-F04-001` AC-2).
+ *
+ * Separate from the publication minimum on purpose: PRD-0001 §6.1.1 keeps
+ * moderation outside the minimum so that "your Business is restricted" and
+ * "your Offering is incomplete" stay two different answers with two different
+ * remedies.
+ */
+export class BusinessRestrictedError extends Error {
+  constructor() {
+    super("BUSINESS_RESTRICTED");
+    this.name = "BusinessRestrictedError";
+  }
+}
+
 /// Raised when retirement names an Offering that is already Archived (AC-9).
 export class OfferingAlreadyArchivedError extends Error {
   constructor() {

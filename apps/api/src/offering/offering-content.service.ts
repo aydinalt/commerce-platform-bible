@@ -10,8 +10,10 @@ import type { EditOffering } from "@commerce/contracts";
 import type { Principal } from "@commerce/identity";
 import {
   AttributeValueMismatchError,
+  BusinessRestrictedError,
   OfferingAlreadyArchivedError,
   OfferingNotEditableError,
+  OfferingNotPublishableError,
   PublicationMinimumError
 } from "@commerce/offering";
 
@@ -22,6 +24,7 @@ import {
 import { PgCommerceRepository } from "../persistence/pg-commerce.repository.js";
 
 const EDIT_ACTION = "offering.content.edit";
+const PUBLISH_ACTION = "offering.publish";
 const TARGET_TYPE = "Offering";
 
 /**
@@ -175,6 +178,87 @@ export class OfferingContentService {
     }
   }
 
+  /**
+   * Draft → Published (`US-OFR-F04-001`).
+   *
+   * The Restricted case is refused here as itself rather than being folded into
+   * the ownership check: AC-2 is a gate a Business can clear later, and telling
+   * someone their Offering was not found when their Business is restricted
+   * would send them looking for the wrong problem.
+   */
+  async publish(
+    businessId: string,
+    offeringId: string,
+    principal: Principal
+  ): Promise<OfferingContentRecord> {
+    const deny = (reason: string) =>
+      this.denied(businessId, principal, reason, PUBLISH_ACTION);
+
+    if (
+      principal.businessId !== undefined &&
+      principal.businessId !== businessId
+    ) {
+      await deny("BUSINESS_CONTEXT_NOT_SELECTED");
+      throw new NotFoundException();
+    }
+    if (!(await this.commerce.isEnabled(principal.userId))) {
+      await deny("ACCOUNT_NOT_ACTIVE");
+      throw new ForbiddenException("Account is not active");
+    }
+
+    const access = await this.commerce.canAuthorOfferings(
+      businessId,
+      principal.userId
+    );
+    if (!access.allowed && access.reason !== "RESTRICTED") {
+      await deny(access.reason);
+      throw new NotFoundException();
+    }
+
+    try {
+      const published = await this.content.publish({
+        businessId,
+        correlationId: principal.correlationId,
+        offeringId,
+        userId: principal.userId
+      });
+      if (!published) {
+        await deny("OFFERING_NOT_OWNED");
+        throw new NotFoundException();
+      }
+      return published;
+    } catch (error) {
+      if (error instanceof BusinessRestrictedError) {
+        await deny("BUSINESS_RESTRICTED");
+        throw new ForbiddenException({
+          code: "BUSINESS_RESTRICTED",
+          message: "A Restricted Business may not publish an Offering"
+        });
+      }
+      if (error instanceof OfferingNotPublishableError) {
+        await deny("OFFERING_NOT_DRAFT");
+        // AC-1, and AC-8 from the other side: Published and Hidden are not
+        // publication targets, and nothing offers a way back to Draft.
+        throw new ConflictException({
+          code: "OFFERING_NOT_DRAFT",
+          message: "Only a Draft Offering may be published"
+        });
+      }
+      if (error instanceof PublicationMinimumError) {
+        await deny("PUBLICATION_MINIMUM");
+        // AC-3 and AC-7. The Offering is still a Draft, because the whole
+        // transaction was refused rather than partly applied.
+        throw new UnprocessableEntityException({
+          code: "PUBLICATION_MINIMUM_NOT_SATISFIED",
+          fieldErrors: { publicationMinimum: error.shortfalls },
+          message:
+            "The Offering does not satisfy the Universal Publication Minimum"
+        });
+      }
+      throw error;
+    }
+  }
+
   /// AC-6. An Admin reads the historical record without owning it.
   async forAdmin(offeringId: string): Promise<OfferingContentRecord> {
     const offering = await this.content.findForAdmin(offeringId);
@@ -246,10 +330,11 @@ export class OfferingContentService {
   private async denied(
     businessId: string,
     principal: Principal,
-    reason: string
+    reason: string,
+    action: string = EDIT_ACTION
   ): Promise<void> {
     await this.commerce.record({
-      action: EDIT_ACTION,
+      action,
       actorUserId: principal.userId,
       correlationId: principal.correlationId,
       effectiveBusinessId: businessId,

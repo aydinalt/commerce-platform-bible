@@ -2591,6 +2591,85 @@
         "tags": ["Offering"]
       }
     },
+    "/api/v1/businesses/{businessId}/offerings/{offeringId}/publication": {
+      "post": {
+        "description": "Publishes an owned Draft. Requires an Unrestricted Business and the Universal Publication Minimum; any gate failing leaves the Offering Draft. The first success creates the immutable Initial Published At. Published does not by itself make the Offering public — final Offering Public Eligibility is evaluated separately.",
+        "operationId": "publishOffering",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OfferingContent" }
+              }
+            },
+            "description": "Offering published"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The Business is Restricted, the account is not active, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Offering matches that identifier"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The Offering is not a Draft"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The Offering does not satisfy the Universal Publication Minimum"
+          }
+        },
+        "tags": ["Offering"]
+      }
+    },
     "/api/v1/businesses/{businessId}/offerings/{offeringId}/retirement": {
       "post": {
         "description": "Owner retirement to Archived, the only V1 transition out of Draft, Published or Hidden. It is not deletion: the Category, derived Domain and Attribute values are kept as history. An Archived Offering cannot be retired again, edited or restored.",

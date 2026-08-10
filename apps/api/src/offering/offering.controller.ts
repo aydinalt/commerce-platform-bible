@@ -160,6 +160,31 @@ export class OfferingController {
   }
 
   /**
+   * Draft → Published (`US-OFR-F04-001`). Its own sub-resource, like
+   * retirement, and for the same reason: a transition is an action a person
+   * takes, not a field they set.
+   *
+   * There is no matching route back. AC-8 denies Published → Draft and Hidden →
+   * Draft, and the way to deny a transition is to offer no way to ask for it.
+   */
+  @Post(":offeringId/publication")
+  @HttpCode(200)
+  async publish(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    return offeringContentSchema.parse(
+      await this.content.publish(
+        businessId,
+        offeringId,
+        await this.principals.resolve(request)
+      )
+    );
+  }
+
+  /**
    * Owner retirement (`US-OFR-F03-001`). Its own sub-resource rather than a
    * `DELETE`, and rather than a lifecycle field on the edit: retirement is not
    * deletion, and it is the one transition an owner may make.

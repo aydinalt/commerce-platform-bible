@@ -4,10 +4,12 @@ import { Pool, type PoolClient } from "pg";
 import type { OfferingAttributeValueInput } from "@commerce/contracts";
 import {
   AttributeValueMismatchError,
+  BusinessRestrictedError,
   composePublicEligibility,
   evaluatePublicationMinimum,
   OfferingAlreadyArchivedError,
   OfferingNotEditableError,
+  OfferingNotPublishableError,
   OfferingSlugConflictError,
   PublicationMinimumError,
   RETIREABLE_LIFECYCLES,
@@ -155,6 +157,183 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * Draft → Published (`US-OFR-F04-001`).
+   *
+   * Every gate is checked inside the transaction that would perform the
+   * transition, in the order the Story lists them: an owned Draft (AC-1), an
+   * Unrestricted Business (AC-2), and the Universal Publication Minimum (AC-3).
+   * Any of them failing leaves the Offering exactly where it was (AC-7), which
+   * the rollback guarantees rather than the code remembering to undo.
+   */
+  async publish(input: {
+    businessId: string;
+    correlationId: string;
+    offeringId: string;
+    userId: string;
+  }): Promise<OfferingContentRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+
+      const locked = await client.query<{
+        moderation: string;
+        publicExposure: string;
+        status: OfferingLifecycle;
+      }>(
+        `select o.status::text as status,
+           b.public_exposure::text as "publicExposure",
+           coalesce(m.status::text, 'UNRESTRICTED') as moderation
+         from offering o
+         join business b on b.id = o.business_id
+         left join business_moderation_state m on m.business_id = b.id
+         where o.id = $1 and o.business_id = $2 for update of o`,
+        [input.offeringId, input.businessId]
+      );
+      const current = locked.rows[0];
+      if (!current) {
+        await client.query("rollback");
+        return null;
+      }
+      // AC-1. Publication acts on a Draft; anything else is not a publication
+      // target, whatever else is true of it.
+      if (current.status !== "DRAFT")
+        throw new OfferingNotPublishableError(current.status);
+      // AC-2, which PRD-0001 §6.1.1 keeps outside the publication minimum
+      // precisely so it can be reported as its own refusal.
+      if (current.moderation !== "UNRESTRICTED")
+        throw new BusinessRestrictedError();
+
+      // AC-3, evaluated before the transition rather than after: publication is
+      // the moment the minimum starts to matter.
+      await this.assertPublicationMinimum(client, input.offeringId);
+
+      // AC-4 and AC-5. `coalesce` makes Initial Published At write-once: a
+      // value that is already there survives, so no later transition can move
+      // it.
+      await client.query(
+        `update offering
+           set status = 'PUBLISHED', published_at = coalesce(published_at, now())
+         where id = $1 and business_id = $2`,
+        [input.offeringId, input.businessId]
+      );
+
+      // AC-6. The result is evaluated, not assumed: Published is one of two
+      // inputs, and the composition is what decides.
+      const eligibility = composePublicEligibility({
+        businessExposure:
+          current.publicExposure === "ELIGIBLE" ? "ELIGIBLE" : "INELIGIBLE",
+        lifecycle: "PUBLISHED"
+      });
+      const version = await client.query<{ version: number }>(
+        `insert into offering_publication
+           (offering_id, status, eligibility_version, reason_code)
+         values ($1, $2::"PublicationStatus",
+           coalesce((select max(eligibility_version) + 1
+                     from offering_publication where offering_id = $1), 1),
+           $3)
+         returning eligibility_version as version`,
+        [input.offeringId, eligibility.status, eligibility.reason]
+      );
+
+      if (eligibility.status === "ELIGIBLE")
+        await this.project(
+          client,
+          input.offeringId,
+          version.rows[0]?.version ?? 1
+        );
+
+      await client.query(
+        `insert into audit_record
+          (actor_user_id, effective_business_id, action, target_type, target_id,
+           result, correlation_id)
+         values ($1,$2,'offering.publish','Offering',$3,'ALLOWED',$4)`,
+        [input.userId, input.businessId, input.offeringId, input.correlationId]
+      );
+
+      const published = await this.read(
+        client,
+        input.businessId,
+        input.offeringId
+      );
+      await client.query("commit");
+      return published;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * The Discovery read model, written only for an Offering whose evaluated
+   * eligibility is `ELIGIBLE`.
+   *
+   * It is a denormalisation of rows that already exist — the derived Domain,
+   * the Business display name, the Attribute values — assembled here so that
+   * Discovery reads one table instead of joining six. `US-OFR-F03-001` already
+   * deletes this row on retirement, so the pair is complete: this writes it,
+   * that removes it, and nothing else touches it.
+   *
+   * `filter_values` maps each Attribute to what an Offering holds for it —
+   * a scalar, or the list of chosen options. Building half of it now would
+   * guarantee rewriting it when `US-DSC-F05-001` arrives.
+   */
+  private async project(
+    client: PoolClient,
+    offeringId: string,
+    eligibilityVersion: number
+  ): Promise<void> {
+    await client.query(
+      `insert into offering_search_projection
+         (offering_id, business_id, domain_id, category_id, title, summary,
+          business_name, searchable_text, filter_values, published_at,
+          eligibility_version, projected_at)
+       select o.id, o.business_id, c.domain_id, o.category_id, o.title,
+         o.summary, b.name,
+         concat_ws(' ', o.title, o.summary, b.name, c.name),
+         coalesce(
+           (select jsonb_object_agg(v."attributeId", v.value)
+            from (
+              select av.attribute_definition_id::text as "attributeId",
+                case
+                  when count(av.option_id) > 0
+                    then to_jsonb(array_remove(
+                      array_agg(av.option_id::text order by av.option_id), null))
+                  else coalesce(
+                    to_jsonb(max(av.text_value)),
+                    to_jsonb(max(av.number_value)),
+                    to_jsonb(bool_or(av.boolean_value))
+                  )
+                end as value
+              from offering_attribute_value av
+              where av.offering_id = o.id
+              group by av.attribute_definition_id
+            ) v),
+           '{}'::jsonb
+         ),
+         o.published_at, $2, now()
+       from offering o
+       join business b on b.id = o.business_id
+       join category c on c.id = o.category_id
+       where o.id = $1
+       on conflict (offering_id) do update set
+         business_id = excluded.business_id,
+         domain_id = excluded.domain_id,
+         category_id = excluded.category_id,
+         title = excluded.title,
+         summary = excluded.summary,
+         business_name = excluded.business_name,
+         searchable_text = excluded.searchable_text,
+         filter_values = excluded.filter_values,
+         published_at = excluded.published_at,
+         eligibility_version = excluded.eligibility_version,
+         projected_at = excluded.projected_at`,
+      [offeringId, eligibilityVersion]
+    );
   }
 
   /**

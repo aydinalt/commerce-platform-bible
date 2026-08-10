@@ -1851,6 +1851,48 @@ const document = {
         tags: ["Offering"]
       }
     },
+    "/api/v1/businesses/{businessId}/offerings/{offeringId}/publication": {
+      post: {
+        description:
+          "Publishes an owned Draft. Requires an Unrestricted Business and the Universal Publication Minimum; any gate failing leaves the Offering Draft. The first success creates the immutable Initial Published At. Published does not by itself make the Offering public — final Offering Public Eligibility is evaluated separately.",
+        operationId: "publishOffering",
+        parameters: [
+          {
+            in: "path",
+            name: "businessId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          },
+          {
+            in: "path",
+            name: "offeringId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OfferingContent" }
+              }
+            },
+            description: "Offering published"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "The Business is Restricted, the account is not active, or the request origin is not allowed"
+          ),
+          "404": errorResponse("No owned Offering matches that identifier"),
+          "409": errorResponse("The Offering is not a Draft"),
+          "422": errorResponse(
+            "The Offering does not satisfy the Universal Publication Minimum"
+          )
+        },
+        tags: ["Offering"]
+      }
+    },
     "/api/v1/businesses/{businessId}/offerings/{offeringId}/retirement": {
       post: {
         description:
