@@ -5,6 +5,7 @@ import {
   FILTERABLE_VALUE_KINDS,
   FilterContextMissingError,
   FilterNotAvailableError,
+  SEARCH_MATCH_LEVELS,
   type AppliedFilter,
   type AvailableFilter,
   type BrowseCategory,
@@ -314,33 +315,46 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
 
       const all = input.terms.join(" & ");
       const any = input.terms.join(" | ");
-      // AC-8. The Search match, the Category and every Filter are conjoined in
-      // one `where`; PRD-0002 §12.4 keeps Best Match ordering across them.
-      const applied = filterPredicate(input.filters, 4);
+      // `US-DSC-F05-001` AC-8. The Search match, the Category and every Filter
+      // are conjoined in one `where`; PRD-0002 §12.4 keeps Best Match ordering
+      // across them, which is why the `order by` below does not consult them.
+      const applied = filterPredicate(input.filters, 5);
       const found = await client.query<
         Omit<SearchResult, "publishedAt"> & { publishedAt: Date }
       >(
-        `select p.offering_id as "offeringId", p.title,
-           p.business_name as "businessName", c.name as "categoryName",
-           o.slug, p.published_at as "publishedAt",
-           case
-             when to_tsvector('simple', p.title) @@ to_tsquery('simple', $2)
-               then 'TITLE'
-             when to_tsvector('simple', p.category_path) @@ to_tsquery('simple', $2)
-               then 'CATEGORY_PATH'
-             when to_tsvector('simple', p.business_name) @@ to_tsquery('simple', $2)
-               then 'BUSINESS_NAME'
-             else 'DESCRIPTION_OR_ATTRIBUTE'
-           end as "matchLevel"
-         from offering_search_projection p
-         join offering o on o.id = p.offering_id
-         join category c on c.id = p.category_id
-         where to_tsvector('simple', p.searchable_text)
-           @@ to_tsquery('simple', $1)
-           and ($3::uuid is null or p.category_id = $3)
-           ${applied.sql}
-         order by p.published_at desc, p.offering_id`,
-        [all, any, input.categoryId, ...applied.parameters]
+        // The match level is computed in an inner query so the ordering can
+        // name it. PostgreSQL only accepts an output column in `order by` as a
+        // bare name, not inside an expression, and the level is the input to
+        // one.
+        `select "offeringId", title, "businessName", "categoryName", slug,
+           "publishedAt", "matchLevel"
+         from (
+           select p.offering_id as "offeringId", p.title,
+             p.business_name as "businessName", c.name as "categoryName",
+             o.slug, p.published_at as "publishedAt",
+             case
+               when to_tsvector('simple', p.title) @@ to_tsquery('simple', $2)
+                 then 'TITLE'
+               when to_tsvector('simple', p.category_path) @@ to_tsquery('simple', $2)
+                 then 'CATEGORY_PATH'
+               when to_tsvector('simple', p.business_name) @@ to_tsquery('simple', $2)
+                 then 'BUSINESS_NAME'
+               else 'DESCRIPTION_OR_ATTRIBUTE'
+             end as "matchLevel"
+           from offering_search_projection p
+           join offering o on o.id = p.offering_id
+           join category c on c.id = p.category_id
+           where to_tsvector('simple', p.searchable_text)
+             @@ to_tsquery('simple', $1)
+             and ($3::uuid is null or p.category_id = $3)
+             ${applied.sql}
+         ) matched
+         -- US-DSC-F07-001 AC-1 to AC-3, in that order. The priority is not
+         -- written out again here: array_position reads it from the module's
+         -- list, so PRD-0002 12.2 is stated once and consulted twice.
+         order by array_position($4::text[], "matchLevel"),
+           "publishedAt" desc, "offeringId"`,
+        [all, any, input.categoryId, SEARCH_MATCH_LEVELS, ...applied.parameters]
       );
 
       // AC-1. Computed from the *unnarrowed* set, so choosing one leaf never
