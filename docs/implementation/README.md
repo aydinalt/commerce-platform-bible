@@ -15,6 +15,10 @@ architecture baselines.
   records the account-status correction and the registration-delivery design.
 - `I1_IDENTITY_BASELINE_CLOSURE.md` records what the Identity increment covered
   per Story, and why `US-IDN-F09-001` moves to I5.
+- `I2_CATALOG_AND_WRITE_MODEL_CLOSURE.md` records what the Catalog, Business and
+  Offering write-model increment covered per Story, the three places where the
+  datamodel was aligned to a Frozen Story, and why `US-OFR-F02-001` AC-9 waits
+  for `US-PLT-F06-001`.
 - `M11_STORY_LINK_PROPOSAL.md` records which Frozen Stories the first slice
   touches, with per-Acceptance-Criterion coverage and the code and tests behind
   each. It edits no Story file and advances no Delivery Status, and it does not
