@@ -160,6 +160,27 @@ export class OfferingNotEditableError extends Error {
 }
 
 /**
+ * The lifecycle states an owner may retire from (`US-OFR-F03-001` AC-1).
+ *
+ * `ARCHIVED` is absent, and that absence is AC-9's second half: retirement is a
+ * transition *to* Archived, so there is no second one to make. PRD-0001 §6.4
+ * allows no transition out of Archived either, which is AC-7's other half.
+ */
+export const RETIREABLE_LIFECYCLES: readonly OfferingLifecycle[] = [
+  "DRAFT",
+  "PUBLISHED",
+  "HIDDEN"
+];
+
+/// Raised when retirement names an Offering that is already Archived (AC-9).
+export class OfferingAlreadyArchivedError extends Error {
+  constructor() {
+    super("OFFERING_ALREADY_ARCHIVED");
+    this.name = "OfferingAlreadyArchivedError";
+  }
+}
+
+/**
  * Raised when a submitted value does not match the kind its Attribute
  * definition declares — a number sent for a Text, several options for a Single
  * Select, an option belonging to another definition.

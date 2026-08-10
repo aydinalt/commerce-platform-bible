@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Post,
@@ -151,5 +152,53 @@ export class OfferingController {
     return offeringContentSchema.parse(
       await this.content.edit(businessId, offeringId, parsed.data, principal)
     );
+  }
+
+  /**
+   * Owner retirement (`US-OFR-F03-001`). Its own sub-resource rather than a
+   * `DELETE`, and rather than a lifecycle field on the edit: retirement is not
+   * deletion, and it is the one transition an owner may make.
+   */
+  @Post(":offeringId/retirement")
+  @HttpCode(200)
+  async retire(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    return offeringContentSchema.parse(
+      await this.content.retire(
+        businessId,
+        offeringId,
+        await this.principals.resolve(request)
+      )
+    );
+  }
+}
+
+/**
+ * The Admin's historical read (`US-OFR-F03-001` AC-6).
+ *
+ * It sits on its own route rather than beside the owner's because it answers a
+ * different question: the owner asks about an Offering of theirs, an Admin asks
+ * about an Offering. There is deliberately nothing here but a read — AC-9
+ * denies Admin-initiated archiving, and the surest way to deny it is to offer
+ * no route that could perform it.
+ */
+@Controller("admin/offerings")
+export class AdminOfferingController {
+  constructor(
+    private readonly content: OfferingContentService,
+    private readonly principals: PrincipalResolver
+  ) {}
+
+  @Get(":offeringId")
+  async get(
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    await this.principals.resolveAdmin(request);
+    return offeringContentSchema.parse(await this.content.forAdmin(offeringId));
   }
 }

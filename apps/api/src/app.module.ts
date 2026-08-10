@@ -13,7 +13,10 @@ import { IdentityController } from "./identity/identity.controller.js";
 import { AUDIT_WRITER, IdentityService } from "./identity/identity.service.js";
 import { PasswordHasher } from "./identity/password.hasher.js";
 import { OfferingContentService } from "./offering/offering-content.service.js";
-import { OfferingController } from "./offering/offering.controller.js";
+import {
+  AdminOfferingController,
+  OfferingController
+} from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
 import { PgAttributeRepository } from "./persistence/pg-attribute.repository.js";
 import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
@@ -47,6 +50,7 @@ function allowedOrigins(): readonly string[] {
 
 @Module({
   controllers: [
+    AdminOfferingController,
     AttributeController,
     BusinessController,
     CatalogController,

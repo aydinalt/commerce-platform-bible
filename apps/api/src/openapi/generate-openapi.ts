@@ -1770,6 +1770,75 @@ const document = {
         tags: ["Offering"]
       }
     },
+    "/api/v1/businesses/{businessId}/offerings/{offeringId}/retirement": {
+      post: {
+        description:
+          "Owner retirement to Archived, the only V1 transition out of Draft, Published or Hidden. It is not deletion: the Category, derived Domain and Attribute values are kept as history. An Archived Offering cannot be retired again, edited or restored.",
+        operationId: "retireOffering",
+        parameters: [
+          {
+            in: "path",
+            name: "businessId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          },
+          {
+            in: "path",
+            name: "offeringId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OfferingContent" }
+              }
+            },
+            description: "Offering archived"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Account is not active, or the request origin is not allowed"
+          ),
+          "404": errorResponse("No owned Offering matches that identifier"),
+          "409": errorResponse("The Offering is already Archived")
+        },
+        tags: ["Offering"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}": {
+      get: {
+        description:
+          "An authorized Admin's read of an Offering as a historical record. There is no Admin write here: an Admin cannot archive an Offering in V1.",
+        operationId: "getOfferingForAdmin",
+        parameters: [
+          {
+            in: "path",
+            name: "offeringId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OfferingContent" }
+              }
+            },
+            description: "Offering content"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("An entered Admin context is required"),
+          "404": errorResponse("No Offering matches that identifier")
+        },
+        tags: ["Offering"]
+      }
+    },
     "/api/v1/health/live": { get: healthOperation("getLiveness") },
     "/api/v1/health/ready": {
       get: healthOperation(

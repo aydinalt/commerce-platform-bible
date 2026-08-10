@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -9,6 +10,7 @@ import type { EditOffering } from "@commerce/contracts";
 import type { Principal } from "@commerce/identity";
 import {
   AttributeValueMismatchError,
+  OfferingAlreadyArchivedError,
   OfferingNotEditableError,
   PublicationMinimumError
 } from "@commerce/offering";
@@ -109,6 +111,79 @@ export class OfferingContentService {
     } catch (error) {
       throw await this.reported(error, businessId, principal);
     }
+  }
+
+  /**
+   * Owner retirement (`US-OFR-F03-001` AC-1).
+   *
+   * A Restricted Business may still retire: PRD-0005's restriction gate governs
+   * publication and normal editing, and nothing in this Story or in §6.4 makes
+   * withdrawing your own Offering from circulation something a restriction
+   * should prevent.
+   */
+  async retire(
+    businessId: string,
+    offeringId: string,
+    principal: Principal
+  ): Promise<OfferingContentRecord> {
+    const deny = (reason: string) => this.denied(businessId, principal, reason);
+
+    if (
+      principal.businessId !== undefined &&
+      principal.businessId !== businessId
+    ) {
+      await deny("BUSINESS_CONTEXT_NOT_SELECTED");
+      throw new NotFoundException();
+    }
+    if (!(await this.commerce.isEnabled(principal.userId))) {
+      await deny("ACCOUNT_NOT_ACTIVE");
+      throw new ForbiddenException("Account is not active");
+    }
+
+    const access = await this.commerce.canAuthorOfferings(
+      businessId,
+      principal.userId
+    );
+    if (!access.allowed && access.reason !== "RESTRICTED") {
+      await deny(access.reason);
+      throw new NotFoundException();
+    }
+
+    try {
+      const retired = await this.content.retire({
+        businessId,
+        correlationId: principal.correlationId,
+        offeringId,
+        userId: principal.userId
+      });
+      if (!retired) {
+        await deny("OFFERING_NOT_OWNED");
+        throw new NotFoundException();
+      }
+      return retired;
+    } catch (error) {
+      if (error instanceof OfferingAlreadyArchivedError) {
+        await deny("OFFERING_ALREADY_ARCHIVED");
+        // AC-9. Retirement is a transition *to* Archived, so there is no
+        // second one to make — and PRD-0001 §6.4 allows none out of it either.
+        throw new ConflictException({
+          code: "OFFERING_ALREADY_ARCHIVED",
+          message: "This Offering is already Archived"
+        });
+      }
+      throw error;
+    }
+  }
+
+  /// AC-6. An Admin reads the historical record without owning it.
+  async forAdmin(offeringId: string): Promise<OfferingContentRecord> {
+    const offering = await this.content.findForAdmin(offeringId);
+    if (!offering)
+      throw new NotFoundException({
+        code: "OFFERING_NOT_FOUND",
+        message: "No Offering matches that identifier"
+      });
+    return offering;
   }
 
   async get(

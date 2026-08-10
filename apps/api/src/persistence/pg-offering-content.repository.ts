@@ -4,10 +4,13 @@ import { Pool, type PoolClient } from "pg";
 import type { OfferingAttributeValueInput } from "@commerce/contracts";
 import {
   AttributeValueMismatchError,
+  composePublicEligibility,
   evaluatePublicationMinimum,
+  OfferingAlreadyArchivedError,
   OfferingNotEditableError,
   OfferingSlugConflictError,
   PublicationMinimumError,
+  RETIREABLE_LIFECYCLES,
   type OfferingLifecycle
 } from "@commerce/offering";
 
@@ -155,6 +158,107 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
   }
 
   /**
+   * Owner retirement (`US-OFR-F03-001`).
+   *
+   * Everything that makes the Offering non-public happens in the transaction
+   * that archives it: the lifecycle moves, a fresh evaluation records the new
+   * Ineligible result (AC-3), and any Discovery projection is removed (AC-4).
+   * Nothing that constitutes the record itself is touched — the Category,
+   * Attribute values and their history survive intact (AC-5), which is what
+   * separates retirement from deletion.
+   */
+  async retire(input: {
+    businessId: string;
+    correlationId: string;
+    offeringId: string;
+    userId: string;
+  }): Promise<OfferingContentRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+
+      const locked = await client.query<{ status: OfferingLifecycle }>(
+        `select o.status::text as status from offering o
+         where o.id = $1 and o.business_id = $2 for update`,
+        [input.offeringId, input.businessId]
+      );
+      const current = locked.rows[0];
+      if (!current) {
+        await client.query("rollback");
+        return null;
+      }
+      if (!RETIREABLE_LIFECYCLES.includes(current.status))
+        throw new OfferingAlreadyArchivedError();
+
+      await client.query(
+        `update offering set status = 'ARCHIVED', archived_at = now()
+         where id = $1 and business_id = $2`,
+        [input.offeringId, input.businessId]
+      );
+
+      // AC-3. A new evaluation rather than an amended one: the earlier result
+      // was true of the state it was recorded against, and PRD-0001 keeps the
+      // sequence rather than overwriting it.
+      const eligibility = composePublicEligibility({
+        businessExposure: "ELIGIBLE",
+        lifecycle: "ARCHIVED"
+      });
+      await client.query(
+        `insert into offering_publication
+           (offering_id, status, eligibility_version, reason_code)
+         values ($1, $2::"PublicationStatus",
+           coalesce((select max(eligibility_version) + 1
+                     from offering_publication where offering_id = $1), 1),
+           $3)`,
+        [input.offeringId, eligibility.status, eligibility.reason]
+      );
+
+      // AC-4. Nothing writes this projection yet — `US-OFR-F04-001` will — but
+      // removing it here is what keeps the promise once something does, rather
+      // than leaving a future Story to remember it.
+      await client.query(
+        `delete from offering_search_projection where offering_id = $1`,
+        [input.offeringId]
+      );
+
+      await client.query(
+        `insert into audit_record
+          (actor_user_id, effective_business_id, action, target_type, target_id,
+           result, correlation_id)
+         values ($1,$2,'offering.retire','Offering',$3,'ALLOWED',$4)`,
+        [input.userId, input.businessId, input.offeringId, input.correlationId]
+      );
+
+      const retired = await this.read(
+        client,
+        input.businessId,
+        input.offeringId
+      );
+      await client.query("commit");
+      return retired;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /// The historical record as an authorized Admin sees it (AC-6). Ownership is
+  /// not part of the lookup: an Admin is not the owner and still must be able
+  /// to read it.
+  async findForAdmin(
+    offeringId: string
+  ): Promise<OfferingContentRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      return await this.read(client, null, offeringId);
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * The submitted set replaces the stored one, so what is absent is removed.
    * Each value is checked against the kind its definition declares: a request
    * that says `TEXT` for a Number definition is a mistake worth naming, not a
@@ -289,9 +393,11 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
       throw new PublicationMinimumError(minimum.shortfalls);
   }
 
+  /// `businessId` is `null` for the Admin read, where ownership is not the
+  /// question being asked.
   private async read(
     client: PoolClient,
-    businessId: string,
+    businessId: string | null,
     offeringId: string
   ): Promise<OfferingContentRecord | null> {
     const result = await client.query<
@@ -318,7 +424,7 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
            '[]'
          ) as attributes
        from offering o
-       where o.id = $1 and o.business_id = $2`,
+       where o.id = $1 and ($2::uuid is null or o.business_id = $2)`,
       [offeringId, businessId]
     );
     const row = result.rows[0];
