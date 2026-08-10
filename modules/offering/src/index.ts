@@ -93,4 +93,82 @@ export function composePublicEligibility(input: {
   return { reason: null, status: "ELIGIBLE" };
 }
 
+/**
+ * Why the Universal Publication Minimum is not satisfied (PRD-0001 §6.1.1).
+ *
+ * Business authorization and Business Moderation Status are deliberately absent
+ * — §6.1.1 says in as many words that they are separate gates and not part of
+ * the minimum. Folding them in here would make a Restricted Business look like
+ * an incomplete Offering, which is a different problem with a different remedy.
+ */
+export type PublicationShortfall =
+  | "BUSINESS_DISPLAY_NAME_MISSING"
+  | "CATEGORY_NOT_ACTIVE_LEAF"
+  | "REQUIRED_ATTRIBUTE_MISSING"
+  | "TITLE_MISSING";
+
+export interface PublicationMinimum {
+  satisfied: boolean;
+  shortfalls: PublicationShortfall[];
+}
+
+/**
+ * The Universal Publication Minimum, evaluated once.
+ *
+ * PRD-0001 §6.1.1 defines it as a list of conditions rather than a single test,
+ * and `US-OFR-F02-001` AC-5 needs to say *which* one failed, so every condition
+ * is checked rather than short-circuiting on the first.
+ *
+ * The owning Business is not checked for existence: an Offering reaches this
+ * function through its Business, and the database has no way to hold one
+ * without exactly one owner.
+ */
+export function evaluatePublicationMinimum(input: {
+  businessDisplayName: string;
+  categoryActiveLeaf: boolean;
+  missingRequiredAttributes: number;
+  title: string;
+}): PublicationMinimum {
+  const shortfalls: PublicationShortfall[] = [];
+  if (input.title.trim() === "") shortfalls.push("TITLE_MISSING");
+  if (!input.categoryActiveLeaf) shortfalls.push("CATEGORY_NOT_ACTIVE_LEAF");
+  if (input.missingRequiredAttributes > 0)
+    shortfalls.push("REQUIRED_ATTRIBUTE_MISSING");
+  if (input.businessDisplayName.trim() === "")
+    shortfalls.push("BUSINESS_DISPLAY_NAME_MISSING");
+  return { satisfied: shortfalls.length === 0, shortfalls };
+}
+
+/**
+ * Raised when a Published or Hidden edit would leave the Offering below the
+ * Universal Publication Minimum (AC-5). A Draft never raises it: a Draft is
+ * allowed to be incomplete, which is what makes it a Draft.
+ */
+export class PublicationMinimumError extends Error {
+  constructor(readonly shortfalls: PublicationShortfall[]) {
+    super("PUBLICATION_MINIMUM_NOT_SATISFIED");
+    this.name = "PublicationMinimumError";
+  }
+}
+
+/// Raised when an edit names an Archived Offering (AC-7).
+export class OfferingNotEditableError extends Error {
+  constructor(readonly lifecycle: OfferingLifecycle) {
+    super("OFFERING_NOT_EDITABLE");
+    this.name = "OfferingNotEditableError";
+  }
+}
+
+/**
+ * Raised when a submitted value does not match the kind its Attribute
+ * definition declares — a number sent for a Text, several options for a Single
+ * Select, an option belonging to another definition.
+ */
+export class AttributeValueMismatchError extends Error {
+  constructor(readonly attributeId: string) {
+    super("ATTRIBUTE_VALUE_MISMATCH");
+    this.name = "AttributeValueMismatchError";
+  }
+}
+
 export const offeringModule = { name: "offering" } as const;

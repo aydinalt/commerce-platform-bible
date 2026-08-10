@@ -1,0 +1,186 @@
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException
+} from "@nestjs/common";
+
+import type { EditOffering } from "@commerce/contracts";
+import type { Principal } from "@commerce/identity";
+import {
+  AttributeValueMismatchError,
+  OfferingNotEditableError,
+  PublicationMinimumError
+} from "@commerce/offering";
+
+import {
+  PgOfferingContentRepository,
+  type OfferingContentRecord
+} from "../persistence/pg-offering-content.repository.js";
+import { PgCommerceRepository } from "../persistence/pg-commerce.repository.js";
+
+const EDIT_ACTION = "offering.content.edit";
+const TARGET_TYPE = "Offering";
+
+/**
+ * The lifecycle states a Restricted Business may still edit.
+ *
+ * `US-OFR-F02-001` AC-8 removes normal Published and Hidden editing from a
+ * Restricted Business but §5 keeps its Draft management. AC-9 allows one
+ * exception — the bounded correction-edit path — which requires an Open
+ * Offering-content correction case owned by `US-PLT-F06-001`. No such case can
+ * exist yet, so the exception has no way to be exercised and is not offered.
+ */
+const RESTRICTED_EDITABLE = ["DRAFT"];
+
+@Injectable()
+export class OfferingContentService {
+  constructor(
+    private readonly content: PgOfferingContentRepository,
+    private readonly commerce: PgCommerceRepository
+  ) {}
+
+  async edit(
+    businessId: string,
+    offeringId: string,
+    input: EditOffering,
+    principal: Principal
+  ): Promise<OfferingContentRecord> {
+    const deny = (reason: string) => this.denied(businessId, principal, reason);
+
+    // Acting for a Business is explicit (`US-IDN-F07-001` AC-3), so an edit
+    // aimed at a Business whose context is not selected is not an edit at all.
+    if (
+      principal.businessId !== undefined &&
+      principal.businessId !== businessId
+    ) {
+      await deny("BUSINESS_CONTEXT_NOT_SELECTED");
+      throw new NotFoundException();
+    }
+    if (!(await this.commerce.isEnabled(principal.userId))) {
+      await deny("ACCOUNT_NOT_ACTIVE");
+      throw new ForbiddenException("Account is not active");
+    }
+
+    const access = await this.commerce.canAuthorOfferings(
+      businessId,
+      principal.userId
+    );
+    // Restriction is a separate gate from ownership: it narrows what may be
+    // edited (AC-8) rather than hiding the Offering.
+    const restricted = !access.allowed && access.reason === "RESTRICTED";
+    if (!access.allowed && !restricted) {
+      await deny(access.reason);
+      throw new NotFoundException();
+    }
+
+    const existing = await this.content.findOwned(businessId, offeringId);
+    if (!existing) {
+      await deny("OFFERING_NOT_OWNED");
+      throw new NotFoundException();
+    }
+
+    // AC-8, read before the write so the refusal names the real reason rather
+    // than surfacing as a publication-minimum failure later.
+    if (restricted && !RESTRICTED_EDITABLE.includes(existing.status)) {
+      await deny("BUSINESS_RESTRICTED");
+      throw new ForbiddenException({
+        code: "BUSINESS_RESTRICTED",
+        message: "A Restricted Business may edit only its Draft Offerings"
+      });
+    }
+
+    try {
+      const edited = await this.content.edit({
+        attributes: input.attributes,
+        businessId,
+        categoryId: input.categoryId,
+        correlationId: principal.correlationId,
+        offeringId,
+        summary: input.summary,
+        title: input.title,
+        userId: principal.userId
+      });
+      if (!edited) {
+        await deny("OFFERING_NOT_OWNED");
+        throw new NotFoundException();
+      }
+      return edited;
+    } catch (error) {
+      throw await this.reported(error, businessId, principal);
+    }
+  }
+
+  async get(
+    businessId: string,
+    offeringId: string,
+    principal: Principal
+  ): Promise<OfferingContentRecord> {
+    if (
+      principal.businessId !== undefined &&
+      principal.businessId !== businessId
+    )
+      throw new NotFoundException();
+    const access = await this.commerce.canAuthorOfferings(
+      businessId,
+      principal.userId
+    );
+    if (!access.allowed && access.reason !== "RESTRICTED")
+      throw new NotFoundException();
+
+    const offering = await this.content.findOwned(businessId, offeringId);
+    if (!offering) throw new NotFoundException();
+    return offering;
+  }
+
+  private async reported(
+    error: unknown,
+    businessId: string,
+    principal: Principal
+  ): Promise<unknown> {
+    if (error instanceof OfferingNotEditableError) {
+      await this.denied(businessId, principal, "OFFERING_ARCHIVED");
+      // AC-7. Archived is historical: the Offering is there to be read, and
+      // there is no edit that could apply to it.
+      return new ForbiddenException({
+        code: "OFFERING_ARCHIVED",
+        message: "An Archived Offering is historical and cannot be edited"
+      });
+    }
+    if (error instanceof PublicationMinimumError) {
+      await this.denied(businessId, principal, "PUBLICATION_MINIMUM");
+      // AC-5. The whole edit is refused, so the Offering keeps the content it
+      // had — a Published Offering never becomes quietly incomplete.
+      return new UnprocessableEntityException({
+        code: "PUBLICATION_MINIMUM_NOT_SATISFIED",
+        fieldErrors: { publicationMinimum: error.shortfalls },
+        message:
+          "The edit would leave the Offering below the Universal Publication Minimum"
+      });
+    }
+    if (error instanceof AttributeValueMismatchError)
+      return new UnprocessableEntityException({
+        code: "ATTRIBUTE_VALUE_MISMATCH",
+        fieldErrors: { attributes: [error.attributeId] },
+        message:
+          "A submitted value does not match the kind its Attribute declares"
+      });
+    return error;
+  }
+
+  private async denied(
+    businessId: string,
+    principal: Principal,
+    reason: string
+  ): Promise<void> {
+    await this.commerce.record({
+      action: EDIT_ACTION,
+      actorUserId: principal.userId,
+      correlationId: principal.correlationId,
+      effectiveBusinessId: businessId,
+      reason,
+      result: "DENIED",
+      targetType: TARGET_TYPE
+    });
+  }
+}

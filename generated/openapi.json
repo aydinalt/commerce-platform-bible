@@ -458,6 +458,132 @@
         "required": ["parentId"],
         "type": "object"
       },
+      "OfferingAttributeValueInput": {
+        "description": "Discriminated by kind so a request states what it means and the server can check it against what the Attribute declares. SELECT carries a list because a Multi Select is several choices.",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "attributeId": { "format": "uuid", "type": "string" },
+              "kind": { "enum": ["TEXT"], "type": "string" },
+              "text": { "maxLength": 4000, "minLength": 1, "type": "string" }
+            },
+            "required": ["attributeId", "kind", "text"],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "attributeId": { "format": "uuid", "type": "string" },
+              "kind": { "enum": ["NUMBER"], "type": "string" },
+              "number": { "type": "number" }
+            },
+            "required": ["attributeId", "kind", "number"],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "attributeId": { "format": "uuid", "type": "string" },
+              "boolean": { "type": "boolean" },
+              "kind": { "enum": ["BOOLEAN"], "type": "string" }
+            },
+            "required": ["attributeId", "boolean", "kind"],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "attributeId": { "format": "uuid", "type": "string" },
+              "kind": { "enum": ["SELECT"], "type": "string" },
+              "optionIds": {
+                "items": { "format": "uuid", "type": "string" },
+                "maxItems": 100,
+                "minItems": 1,
+                "type": "array"
+              }
+            },
+            "required": ["attributeId", "kind", "optionIds"],
+            "type": "object"
+          }
+        ]
+      },
+      "EditOffering": {
+        "additionalProperties": false,
+        "description": "Replaces the Offering's content. An Attribute left out is one the Offering no longer holds a value for. There is no lifecycle field: a saved edit publishes, retires, hides and restores nothing.",
+        "properties": {
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/OfferingAttributeValueInput"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "categoryId": { "format": "uuid", "type": "string" },
+          "summary": { "maxLength": 1000, "type": ["string", "null"] },
+          "title": { "maxLength": 240, "minLength": 1, "type": "string" }
+        },
+        "required": ["categoryId", "title"],
+        "type": "object"
+      },
+      "OfferingContent": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "attributeId": { "format": "uuid", "type": "string" },
+                "booleanValue": { "type": ["boolean", "null"] },
+                "numberValue": { "type": ["number", "null"] },
+                "optionIds": {
+                  "items": { "format": "uuid", "type": "string" },
+                  "type": "array"
+                },
+                "textValue": { "type": ["string", "null"] }
+              },
+              "required": [
+                "attributeId",
+                "booleanValue",
+                "numberValue",
+                "optionIds",
+                "textValue"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "businessId": { "format": "uuid", "type": "string" },
+          "categoryId": { "format": "uuid", "type": "string" },
+          "id": { "format": "uuid", "type": "string" },
+          "publishedAt": {
+            "description": "Initial Published At. Immutable once set; an edit never changes it.",
+            "format": "date-time",
+            "type": ["string", "null"]
+          },
+          "slug": { "type": "string" },
+          "status": {
+            "enum": ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"],
+            "type": "string"
+          },
+          "summary": { "type": ["string", "null"] },
+          "title": { "type": "string" },
+          "version": { "minimum": 1, "type": "integer" }
+        },
+        "required": [
+          "attributes",
+          "businessId",
+          "categoryId",
+          "id",
+          "publishedAt",
+          "slug",
+          "status",
+          "summary",
+          "title",
+          "version"
+        ],
+        "type": "object"
+      },
       "OfferingInventoryEntry": {
         "additionalProperties": false,
         "properties": {
@@ -2267,6 +2393,138 @@
               }
             },
             "description": "Offering not found"
+          }
+        },
+        "tags": ["Offering"]
+      }
+    },
+    "/api/v1/businesses/{businessId}/offerings/{offeringId}/content": {
+      "get": {
+        "description": "The Offering's complete content, Attribute values included. Every lifecycle state is readable, Archived among them.",
+        "operationId": "getOfferingContent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OfferingContent" }
+              }
+            },
+            "description": "Offering content"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Offering matches that identifier"
+          }
+        },
+        "tags": ["Offering"]
+      },
+      "put": {
+        "description": "Replaces the Offering's content. A Draft may be saved freely; a Published or Hidden Offering only while the Universal Publication Minimum remains satisfied. An Archived Offering cannot be edited, and a Restricted Business may edit only its Drafts.",
+        "operationId": "editOfferingContent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EditOffering" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OfferingContent" }
+              }
+            },
+            "description": "Offering content saved"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Offering content"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The Offering is Archived, the Business is Restricted beyond Draft, the account is not active, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Offering matches that identifier"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The edit would leave a Published or Hidden Offering below the Universal Publication Minimum, or a value does not match its Attribute kind"
           }
         },
         "tags": ["Offering"]

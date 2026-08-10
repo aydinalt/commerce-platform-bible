@@ -12,6 +12,7 @@ import { ErrorEnvelopeFilter } from "./http/error-envelope.filter.js";
 import { IdentityController } from "./identity/identity.controller.js";
 import { AUDIT_WRITER, IdentityService } from "./identity/identity.service.js";
 import { PasswordHasher } from "./identity/password.hasher.js";
+import { OfferingContentService } from "./offering/offering-content.service.js";
 import { OfferingController } from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
 import { PgAttributeRepository } from "./persistence/pg-attribute.repository.js";
@@ -19,6 +20,7 @@ import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
 import { PgCatalogRepository } from "./persistence/pg-catalog.repository.js";
 import { PgCommerceRepository } from "./persistence/pg-commerce.repository.js";
 import { PgIdentityRepository } from "./persistence/pg-identity.repository.js";
+import { PgOfferingContentRepository } from "./persistence/pg-offering-content.repository.js";
 import { OriginValidator } from "./security/origin.guard.js";
 import { PrincipalResolver } from "./security/principal-resolver.js";
 
@@ -57,6 +59,7 @@ function allowedOrigins(): readonly string[] {
     BusinessService,
     CatalogService,
     IdentityService,
+    OfferingContentService,
     OfferingService,
     PasswordHasher,
     PgAttributeRepository,
@@ -64,6 +67,7 @@ function allowedOrigins(): readonly string[] {
     PgCatalogRepository,
     PgCommerceRepository,
     PgIdentityRepository,
+    PgOfferingContentRepository,
     PrincipalResolver,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
     {

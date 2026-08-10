@@ -223,6 +223,100 @@ export const draftOfferingSchema = createDraftOfferingSchema.extend({
 });
 
 /**
+ * One Attribute value on an Offering.
+ *
+ * The shape is discriminated by kind rather than being a bag of nullable
+ * fields, so a request says what it means and the server can check that against
+ * what the definition declares instead of guessing from which field arrived.
+ * `SELECT` carries a list because a Multi Select is several choices; a Single
+ * Select is the same shape holding one.
+ */
+export const offeringAttributeValueSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      attributeId: z.string().uuid(),
+      kind: z.literal("TEXT"),
+      text: z.string().trim().min(1).max(4000)
+    })
+    .strict(),
+  z
+    .object({
+      attributeId: z.string().uuid(),
+      kind: z.literal("NUMBER"),
+      number: z.number().finite()
+    })
+    .strict(),
+  z
+    .object({
+      attributeId: z.string().uuid(),
+      boolean: z.boolean(),
+      kind: z.literal("BOOLEAN")
+    })
+    .strict(),
+  z
+    .object({
+      attributeId: z.string().uuid(),
+      kind: z.literal("SELECT"),
+      optionIds: z.array(z.string().uuid()).min(1).max(100)
+    })
+    .strict()
+]);
+
+/**
+ * `US-OFR-F02-001` edits the Offering's content as a whole. It is a
+ * replacement, like the Business Information edit: an Attribute left out of
+ * `attributes` is one the Offering no longer holds a value for. Anything that
+ * would move the lifecycle is absent by construction (AC-10) — there is no
+ * status here to send.
+ */
+export const editOfferingSchema = z
+  .object({
+    attributes: z.array(offeringAttributeValueSchema).max(200).default([]),
+    categoryId: z.string().uuid(),
+    summary: z
+      .string()
+      .trim()
+      .max(1000)
+      .nullish()
+      .transform((value) =>
+        value === undefined || value === "" ? null : value
+      ),
+    title: z.string().trim().min(1).max(240)
+  })
+  .strict();
+
+export const offeringContentSchema = z
+  .object({
+    attributes: z.array(
+      z
+        .object({
+          attributeId: z.string().uuid(),
+          booleanValue: z.boolean().nullable(),
+          numberValue: z.number().nullable(),
+          optionIds: z.array(z.string().uuid()),
+          textValue: z.string().nullable()
+        })
+        .strict()
+    ),
+    businessId: z.string().uuid(),
+    categoryId: z.string().uuid(),
+    id: z.string().uuid(),
+    publishedAt: z.string().datetime().nullable(),
+    slug: z.string(),
+    status: z.enum(["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"]),
+    summary: z.string().nullable(),
+    title: z.string(),
+    version: z.number().int().positive()
+  })
+  .strict();
+
+export type EditOffering = z.infer<typeof editOfferingSchema>;
+export type OfferingAttributeValueInput = z.infer<
+  typeof offeringAttributeValueSchema
+>;
+export type OfferingContent = z.infer<typeof offeringContentSchema>;
+
+/**
  * One entry of the owning Business management inventory (`US-OFR-F01-001`
  * AC-5). It reports the recorded final Offering Public Eligibility rather than
  * anything a caller could derive: PRD-0001 §7.1 makes that result something

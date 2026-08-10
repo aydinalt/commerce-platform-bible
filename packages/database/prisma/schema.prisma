@@ -331,7 +331,11 @@ model Offering {
   @@map("offering")
 }
 
+/// One value an Offering holds for one Attribute definition. A `MULTI_SELECT`
+/// definition is several of these rows; every other kind is exactly one
+/// (`US-OFR-F02-001`).
 model OfferingAttributeValue {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   offeringId            String              @map("offering_id") @db.Uuid
   attributeDefinitionId String              @map("attribute_definition_id") @db.Uuid
   textValue             String?             @map("text_value")
@@ -342,7 +346,6 @@ model OfferingAttributeValue {
   attributeDefinition   AttributeDefinition @relation(fields: [attributeDefinitionId], references: [id], onDelete: Restrict)
   option                AttributeOption?    @relation(fields: [optionId], references: [id], onDelete: Restrict)
 
-  @@id([offeringId, attributeDefinitionId])
   @@index([attributeDefinitionId])
   @@map("offering_attribute_value")
 }
