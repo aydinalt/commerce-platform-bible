@@ -182,6 +182,47 @@ const document = {
         required: ["businesses"],
         type: "object"
       },
+      UpdateBusinessInformation: {
+        additionalProperties: false,
+        properties: {
+          contactEmail: { maxLength: 320, type: ["string", "null"] },
+          contactTelephone: { maxLength: 40, type: ["string", "null"] },
+          contactUrl: { maxLength: 2048, type: ["string", "null"] },
+          logoUrl: { maxLength: 2048, type: ["string", "null"] },
+          name: { maxLength: 200, minLength: 1, type: "string" },
+          shortDescription: { maxLength: 500, type: ["string", "null"] }
+        },
+        required: ["name"],
+        type: "object"
+      },
+      BusinessInformation: {
+        additionalProperties: false,
+        properties: {
+          contactEmail: { type: ["string", "null"] },
+          contactTelephone: { type: ["string", "null"] },
+          contactUrl: { type: ["string", "null"] },
+          id: { format: "uuid", type: "string" },
+          logoUrl: { type: ["string", "null"] },
+          name: { type: "string" },
+          publicExposure: { enum: ["ELIGIBLE", "INELIGIBLE"], type: "string" },
+          shortDescription: { type: ["string", "null"] },
+          slug: { type: "string" },
+          status: { type: "string" }
+        },
+        required: [
+          "contactEmail",
+          "contactTelephone",
+          "contactUrl",
+          "id",
+          "logoUrl",
+          "name",
+          "publicExposure",
+          "shortDescription",
+          "slug",
+          "status"
+        ],
+        type: "object"
+      },
       CreateDraftOffering: {
         additionalProperties: false,
         properties: {
@@ -518,6 +559,75 @@ const document = {
             "Account is not active, or the request origin is not allowed"
           ),
           "409": errorResponse("Business slug conflict")
+        },
+        tags: ["Business"]
+      }
+    },
+    "/api/v1/businesses/{businessId}/information": {
+      get: {
+        description:
+          "Every Business Information field for the owner, including protected Direct Contact channels. Never available to a Guest.",
+        operationId: "getBusinessInformation",
+        parameters: [
+          {
+            in: "path",
+            name: "businessId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/BusinessInformation" }
+              }
+            },
+            description: "Complete Business Information for the owner"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "404": errorResponse("No owned Business matches that identifier")
+        },
+        tags: ["Business"]
+      },
+      put: {
+        description:
+          "Replaces the complete Business Information set. An omitted optional field is a removal. Changes no moderation status, exposure input or Offering state by itself.",
+        operationId: "updateBusinessInformation",
+        parameters: [
+          {
+            in: "path",
+            name: "businessId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateBusinessInformation"
+              }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/BusinessInformation" }
+              }
+            },
+            description: "Business Information saved"
+          },
+          "400": errorResponse("Invalid Business Information"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Account is not active, or the request origin is not allowed"
+          ),
+          "404": errorResponse("No owned Business matches that identifier")
         },
         tags: ["Business"]
       }

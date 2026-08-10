@@ -130,6 +130,79 @@ export const ownedBusinessesSchema = z
 export type CreateBusiness = z.infer<typeof createBusinessSchema>;
 export type OwnedBusinesses = z.infer<typeof ownedBusinessesSchema>;
 
+/**
+ * An optional Business Information field. `US-BUS-F02-001` AC-4 requires that
+ * every optional field can be added, changed or removed, so absent, `null` and
+ * blank all resolve to the same thing: not supplied. Out of Scope §11 excludes
+ * technical telephone, email and URL validation, so only length is bounded
+ * here.
+ */
+const optionalInformation = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullish()
+    .transform((value) => (value === undefined || value === "" ? null : value));
+
+/**
+ * The complete edit is a replacement, not a patch: the owner sees every field
+ * (AC-1) and saves every field (AC-2), so an omitted optional field is a
+ * removal rather than an ambiguity. The display name is the one field that
+ * cannot be emptied (AC-3).
+ */
+export const updateBusinessInformationSchema = z
+  .object({
+    contactEmail: optionalInformation(320),
+    contactTelephone: optionalInformation(40),
+    contactUrl: optionalInformation(2048),
+    logoUrl: optionalInformation(2048),
+    name: z.string().trim().min(1).max(200),
+    shortDescription: optionalInformation(500)
+  })
+  .strict();
+
+/**
+ * The owner's view of the Business. It carries protected Direct Contact
+ * alongside public identity because AC-13 keeps management visibility separate
+ * from public exposure — but it must never be served on a public path.
+ */
+export const businessInformationSchema = z
+  .object({
+    contactEmail: z.string().nullable(),
+    contactTelephone: z.string().nullable(),
+    contactUrl: z.string().nullable(),
+    id: z.string().uuid(),
+    logoUrl: z.string().nullable(),
+    name: z.string(),
+    publicExposure: z.enum(["ELIGIBLE", "INELIGIBLE"]),
+    shortDescription: z.string().nullable(),
+    slug: z.string(),
+    status: z.string()
+  })
+  .strict();
+
+/**
+ * The public Business identity set is exactly display name, supplied logo and
+ * supplied short description (AC-6). Telephone, email and contact URL have no
+ * representation here at all, which is what keeps AC-9 true by construction
+ * rather than by remembering to omit them.
+ */
+export const publicBusinessIdentitySchema = z
+  .object({
+    logoUrl: z.string().nullable(),
+    name: z.string(),
+    shortDescription: z.string().nullable()
+  })
+  .strict();
+
+export type UpdateBusinessInformation = z.infer<
+  typeof updateBusinessInformationSchema
+>;
+export type BusinessInformationResponse = z.infer<
+  typeof businessInformationSchema
+>;
+
 export const createDraftOfferingSchema = z
   .object({
     categoryId: z.string().uuid(),

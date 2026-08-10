@@ -13,6 +13,7 @@ describe("generated OpenAPI contract", () => {
         {
           get?: { operationId?: string };
           post?: { operationId?: string };
+          put?: { operationId?: string };
         }
       >;
     };
@@ -32,5 +33,13 @@ describe("generated OpenAPI contract", () => {
       document.paths["/api/v1/businesses/{businessId}/offerings/{offeringId}"]
         ?.get?.operationId
     ).toBe("getDraftOffering");
+    expect(
+      document.paths["/api/v1/businesses/{businessId}/information"]?.get
+        ?.operationId
+    ).toBe("getBusinessInformation");
+    expect(
+      document.paths["/api/v1/businesses/{businessId}/information"]?.put
+        ?.operationId
+    ).toBe("updateBusinessInformation");
   });
 });

@@ -1,13 +1,18 @@
 import {
   ConflictException,
   ForbiddenException,
-  Injectable
+  Injectable,
+  NotFoundException
 } from "@nestjs/common";
 
-import type { CreateBusiness } from "@commerce/contracts";
+import type {
+  CreateBusiness,
+  UpdateBusinessInformation
+} from "@commerce/contracts";
 import type { Principal } from "@commerce/identity";
 import {
   BusinessSlugConflictError,
+  type BusinessInformation,
   type OwnedBusiness
 } from "@commerce/business";
 
@@ -15,6 +20,7 @@ import { PgBusinessRepository } from "../persistence/pg-business.repository.js";
 import { PgCommerceRepository } from "../persistence/pg-commerce.repository.js";
 
 const CREATE_ACTION = "business.create";
+const UPDATE_ACTION = "business.information.update";
 const TARGET_TYPE = "Business";
 
 @Injectable()
@@ -63,9 +69,72 @@ export class BusinessService {
     return this.repository.listOwned(principal.userId);
   }
 
-  private async denied(principal: Principal, reason: string): Promise<void> {
+  /**
+   * Every Business Information field for the exact selected owned Business
+   * (`US-BUS-F02-001` AC-1). Management visibility is deliberately wider than
+   * public exposure (AC-13): an `Ineligible` Business is still fully visible to
+   * the person who owns it.
+   */
+  async information(
+    businessId: string,
+    principal: Principal
+  ): Promise<BusinessInformation> {
+    const business = await this.repository.findOwnedInformation(
+      businessId,
+      principal.userId
+    );
+    if (!business) throw this.absent();
+    return business;
+  }
+
+  /**
+   * Saves the complete information set (AC-2). An inactive account is refused
+   * before the write, and a Business this person does not own is reported as
+   * absent rather than forbidden — the acting person has no standing to learn
+   * that it exists.
+   */
+  async updateInformation(
+    businessId: string,
+    input: UpdateBusinessInformation,
+    principal: Principal
+  ): Promise<BusinessInformation> {
+    if (!(await this.repository.isEnabled(principal.userId))) {
+      await this.denied(principal, "ACCOUNT_NOT_ACTIVE", UPDATE_ACTION);
+      throw new ForbiddenException("Account is not active");
+    }
+
+    const business = await this.repository.updateInformation({
+      businessId,
+      contactEmail: input.contactEmail,
+      contactTelephone: input.contactTelephone,
+      contactUrl: input.contactUrl,
+      correlationId: principal.correlationId,
+      logoUrl: input.logoUrl,
+      name: input.name,
+      shortDescription: input.shortDescription,
+      userId: principal.userId
+    });
+    if (!business) {
+      await this.denied(principal, "NOT_OWNED", UPDATE_ACTION);
+      throw this.absent();
+    }
+    return business;
+  }
+
+  private absent(): NotFoundException {
+    return new NotFoundException({
+      code: "BUSINESS_NOT_FOUND",
+      message: "No owned Business matches that identifier"
+    });
+  }
+
+  private async denied(
+    principal: Principal,
+    reason: string,
+    action: string = CREATE_ACTION
+  ): Promise<void> {
     await this.audit.record({
-      action: CREATE_ACTION,
+      action,
       actorUserId: principal.userId,
       correlationId: principal.correlationId,
       reason,

@@ -176,6 +176,15 @@ model Business {
   name      String          @db.VarChar(200)
   status    BusinessStatus  @default(DRAFT)
   publicExposure BusinessExposureInput @default(ELIGIBLE) @map("public_exposure")
+  /// Public Business identity set — display name plus these two only
+  /// (`US-BUS-F02-001` AC-6).
+  logoUrl          String? @map("logo_url") @db.VarChar(2048)
+  shortDescription String? @map("short_description") @db.VarChar(500)
+  /// Protected Direct Contact channels. Never public (AC-9); released only
+  /// through PRD-0004 to an Enabled authenticated User (AC-10).
+  contactTelephone String? @map("contact_telephone") @db.VarChar(40)
+  contactEmail     String? @map("contact_email") @db.VarChar(320)
+  contactUrl       String? @map("contact_url") @db.VarChar(2048)
   version   Int             @default(1)
   createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
