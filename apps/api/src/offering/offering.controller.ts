@@ -21,6 +21,8 @@ import {
   editOfferingSchema,
   offeringContentSchema,
   offeringInventorySchema,
+  reviewAffiliateDestinationSchema,
+  validateAffiliateDestinationSchema,
   type OfferingInventory
 } from "@commerce/contracts";
 
@@ -282,6 +284,8 @@ export class AffiliateDestinationController {
 export class AdminOfferingController {
   constructor(
     private readonly content: OfferingContentService,
+    private readonly destinations: AffiliateService,
+    private readonly origins: OriginValidator,
     private readonly principals: PrincipalResolver
   ) {}
 
@@ -292,5 +296,108 @@ export class AdminOfferingController {
   ) {
     await this.principals.resolveAdmin(request);
     return offeringContentSchema.parse(await this.content.forAdmin(offeringId));
+  }
+
+  @Get(":offeringId/affiliate-destination")
+  async destination(
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    await this.principals.resolveAdmin(request);
+    return affiliateDestinationSchema.parse(
+      await this.destinations.forAdmin(offeringId)
+    );
+  }
+
+  /**
+   * Review (`US-OFR-F07-001` AC-2). It leaves every result where it is and
+   * records that it happened — PRD-0001 §9.4 makes an approved review one of
+   * the conditions a `Valid` result rests on, so it cannot be a private act.
+   */
+  @Post(":offeringId/affiliate-destination/review")
+  @HttpCode(200)
+  async review(
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ) {
+    const principal = await this.adminGuard(request);
+    return affiliateDestinationSchema.parse(
+      await this.destinations.administer(
+        offeringId,
+        "review",
+        this.parse(reviewAffiliateDestinationSchema, body, "Invalid review"),
+        principal
+      )
+    );
+  }
+
+  /// Validate (AC-3, AC-4, AC-5). One current result; the status stays put.
+  @Post(":offeringId/affiliate-destination/validation")
+  @HttpCode(200)
+  async validate(
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ) {
+    const principal = await this.adminGuard(request);
+    return affiliateDestinationSchema.parse(
+      await this.destinations.administer(
+        offeringId,
+        "validate",
+        this.parse(
+          validateAffiliateDestinationSchema,
+          body,
+          "Invalid validation result"
+        ),
+        principal
+      )
+    );
+  }
+
+  /// Enable (AC-6, AC-7).
+  @Post(":offeringId/affiliate-destination/enablement")
+  @HttpCode(200)
+  async enable(
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    const principal = await this.adminGuard(request);
+    return affiliateDestinationSchema.parse(
+      await this.destinations.administer(offeringId, "enable", null, principal)
+    );
+  }
+
+  /// Disable (AC-8, AC-9).
+  @Post(":offeringId/affiliate-destination/disablement")
+  @HttpCode(200)
+  async disable(
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    const principal = await this.adminGuard(request);
+    return affiliateDestinationSchema.parse(
+      await this.destinations.administer(offeringId, "disable", null, principal)
+    );
+  }
+
+  private async adminGuard(request: FastifyRequest) {
+    this.origins.assertAcceptable(request, true);
+    return await this.principals.resolveAdmin(request);
+  }
+
+  private parse<T>(
+    schema: { safeParse: (value: unknown) => z.ZodSafeParseResult<T> },
+    body: unknown,
+    message: string
+  ): T {
+    const parsed = schema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message
+      });
+    return parsed.data;
   }
 }

@@ -5,11 +5,17 @@ import {
   NotFoundException
 } from "@nestjs/common";
 
-import type { AuthorAffiliateDestination } from "@commerce/contracts";
+import type {
+  AuthorAffiliateDestination,
+  ReviewAffiliateDestination,
+  ValidateAffiliateDestination
+} from "@commerce/contracts";
 import type { Principal } from "@commerce/identity";
 import {
   AffiliateDestinationExistsError,
   AffiliateDestinationReadOnlyError,
+  AffiliateNotEnabledError,
+  AffiliateNotValidatedError,
   type AffiliateDestinationRecord
 } from "@commerce/offering";
 
@@ -166,6 +172,83 @@ export class AffiliateService {
       }
       throw error;
     }
+  }
+
+  /**
+   * The four Platform administration actions (`US-OFR-F07-001`).
+   *
+   * They share one entry point because they share one authorization rule —
+   * AC-1 admits only an authorized Admin — and one absence: none of them can
+   * reach an Offering, a Business or an account, which is AC-12.
+   */
+  async administer(
+    offeringId: string,
+    action: "review" | "validate" | "enable" | "disable",
+    input: ReviewAffiliateDestination | ValidateAffiliateDestination | null,
+    principal: Principal
+  ): Promise<AffiliateDestinationRecord> {
+    try {
+      const destination = await this.run(offeringId, action, input, principal);
+      if (!destination)
+        throw new NotFoundException({
+          code: "AFFILIATE_DESTINATION_NOT_FOUND",
+          message: "No Affiliate Destination matches that Offering"
+        });
+      return destination;
+    } catch (error) {
+      if (error instanceof AffiliateNotValidatedError)
+        // AC-6. Enabling an unvalidated destination would make it publicly
+        // reachable on the strength of a check nobody performed.
+        throw new ConflictException({
+          code: "AFFILIATE_NOT_VALIDATED",
+          message: "Only a Valid Affiliate Destination may be enabled"
+        });
+      if (error instanceof AffiliateNotEnabledError)
+        throw new ConflictException({
+          code: "AFFILIATE_NOT_ENABLED",
+          message: "Only an Enabled Affiliate Destination may be disabled"
+        });
+      throw error;
+    }
+  }
+
+  /// The Admin's read, which owns no Business and needs none.
+  async forAdmin(offeringId: string): Promise<AffiliateDestinationRecord> {
+    const destination = await this.destinations.findForAdmin(offeringId);
+    if (!destination)
+      throw new NotFoundException({
+        code: "AFFILIATE_DESTINATION_NOT_FOUND",
+        message: "No Affiliate Destination matches that Offering"
+      });
+    return destination;
+  }
+
+  private run(
+    offeringId: string,
+    action: "review" | "validate" | "enable" | "disable",
+    input: ReviewAffiliateDestination | ValidateAffiliateDestination | null,
+    principal: Principal
+  ): Promise<AffiliateDestinationRecord | null> {
+    const common = {
+      correlationId: principal.correlationId,
+      offeringId,
+      userId: principal.userId
+    };
+    if (action === "review")
+      return this.destinations.review({
+        ...common,
+        note: (input as ReviewAffiliateDestination).note
+      });
+    if (action === "validate") {
+      const verdict = input as ValidateAffiliateDestination;
+      return this.destinations.validate({
+        ...common,
+        reason: verdict.reason,
+        result: verdict.result
+      });
+    }
+    if (action === "enable") return this.destinations.enable(common);
+    return this.destinations.disable(common);
   }
 
   private absent(): NotFoundException {

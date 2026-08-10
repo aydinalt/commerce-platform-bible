@@ -131,7 +131,14 @@ suite("Increment I2 Affiliate Destination", () => {
       cookie: business.cookie
     });
 
-  /** The state PRD-0006 will one day produce, and which this Story cannot. */
+  /**
+   * The state Platform administration produces, set up directly because
+   * `US-OFR-F07-001` owns the actions that reach it.
+   *
+   * Handoff Eligibility is composed from the pair rather than asserted:
+   * `US-OFR-F07-001` AC-10 makes `ELIGIBLE` mean exactly Enabled and Valid, and
+   * the database now refuses any other combination.
+   */
   const administer = (
     offeringId: string,
     status: "ENABLED" | "DISABLED",
@@ -141,9 +148,18 @@ suite("Increment I2 Affiliate Destination", () => {
       `update affiliate_destination
          set status = $2::"AffiliateDestinationStatus",
              validation_result = $3::"AffiliateValidationResult",
-             handoff_eligibility = 'ELIGIBLE'
+             validated_at = now(), validated_by = $4,
+             handoff_eligibility = $5::"HandoffEligibility"
        where offering_id = $1`,
-      [offeringId, status, validation]
+      [
+        offeringId,
+        status,
+        validation,
+        admin.userId,
+        status === "ENABLED" && validation === "VALID"
+          ? "ELIGIBLE"
+          : "INELIGIBLE"
+      ]
     );
 
   beforeAll(async () => {

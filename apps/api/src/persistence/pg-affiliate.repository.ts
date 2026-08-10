@@ -4,9 +4,13 @@ import { Pool, type PoolClient } from "pg";
 import {
   AffiliateDestinationExistsError,
   AffiliateDestinationReadOnlyError,
+  AffiliateNotEnabledError,
+  AffiliateNotValidatedError,
   AUTHORED_DESTINATION_STATE,
+  composeHandoffEligibility,
   DESTINATION_AUTHORABLE,
   type AffiliateDestinationRecord,
+  type AffiliateValidationResult,
   type OfferingLifecycle
 } from "@commerce/offering";
 
@@ -16,6 +20,7 @@ const OFFERING_KEY_CONSTRAINT = "affiliate_destination_offering_id_key";
 const DESTINATION_COLUMNS = `d.id, d.offering_id as "offeringId", d.reference,
    d.status::text as status,
    d.validation_result::text as "validationResult",
+   d.validation_reason as "validationReason",
    d.handoff_eligibility::text as "handoffEligibility",
    d.version`;
 
@@ -146,6 +151,217 @@ export class PgAffiliateRepository implements OnModuleDestroy {
   }
 
   /**
+   * The Admin's view of a destination. Ownership is not part of the lookup: an
+   * Admin administers destinations, and is the owner of none of them.
+   */
+  async findForAdmin(
+    offeringId: string
+  ): Promise<AffiliateDestinationRecord | null> {
+    const result = await this.pool.query<AffiliateDestinationRecord>(
+      `select ${DESTINATION_COLUMNS} from affiliate_destination d
+       where d.offering_id = $1`,
+      [offeringId]
+    );
+    return result.rows[0] ?? null;
+  }
+
+  /**
+   * Review (`US-OFR-F07-001` AC-2).
+   *
+   * It writes a review row and touches no result column. That is the whole
+   * action: PRD-0001 §9.6 says Review changes no status, no validation result
+   * and no Handoff Eligibility by itself, and §9.4 makes it a condition a
+   * `Valid` result depends on — so it has to leave a trace without leaving a
+   * change.
+   */
+  async review(input: {
+    correlationId: string;
+    note: string | null;
+    offeringId: string;
+    userId: string;
+  }): Promise<AffiliateDestinationRecord | null> {
+    return this.administer(input.offeringId, async (client, current) => {
+      await client.query(
+        `insert into affiliate_destination_review
+           (destination_id, reviewed_by, note) values ($1,$2,$3)`,
+        [current.id, input.userId, input.note]
+      );
+      await this.audit(client, {
+        action: "affiliate.review",
+        correlationId: input.correlationId,
+        destinationId: current.id,
+        userId: input.userId
+      });
+    });
+  }
+
+  /**
+   * Validate (AC-3, AC-4, AC-5).
+   *
+   * One current result, and the status left exactly where it was. Handoff
+   * Eligibility is recomposed rather than assigned, which is what makes AC-5
+   * fall out for free: a `VALID` result on a `DRAFT` destination composes to
+   * `INELIGIBLE` because it is not Enabled, not because anyone remembered to
+   * hold it back.
+   */
+  async validate(input: {
+    correlationId: string;
+    offeringId: string;
+    reason: string | null;
+    result: AffiliateValidationResult;
+    userId: string;
+  }): Promise<AffiliateDestinationRecord | null> {
+    return this.administer(input.offeringId, async (client, current) => {
+      await client.query(
+        `update affiliate_destination
+           set validation_result = $2::"AffiliateValidationResult",
+               validation_reason = $3,
+               validated_at = now(),
+               validated_by = $4,
+               handoff_eligibility = $5::"HandoffEligibility",
+               version = version + 1,
+               updated_at = now()
+         where id = $1`,
+        [
+          current.id,
+          input.result,
+          input.reason,
+          input.userId,
+          composeHandoffEligibility({
+            status: current.status,
+            validationResult: input.result
+          })
+        ]
+      );
+      await this.audit(client, {
+        action: "affiliate.validate",
+        correlationId: input.correlationId,
+        destinationId: current.id,
+        userId: input.userId
+      });
+    });
+  }
+
+  /// Enable (AC-6, AC-7). Available only on a `VALID` destination.
+  async enable(input: {
+    correlationId: string;
+    offeringId: string;
+    userId: string;
+  }): Promise<AffiliateDestinationRecord | null> {
+    return this.administer(input.offeringId, async (client, current) => {
+      if (current.validationResult !== "VALID")
+        throw new AffiliateNotValidatedError(current.validationResult);
+
+      await client.query(
+        `update affiliate_destination
+           set status = 'ENABLED',
+               handoff_eligibility = $2::"HandoffEligibility",
+               version = version + 1, updated_at = now()
+         where id = $1`,
+        [
+          current.id,
+          composeHandoffEligibility({
+            status: "ENABLED",
+            validationResult: current.validationResult
+          })
+        ]
+      );
+      await this.audit(client, {
+        action: "affiliate.enable",
+        correlationId: input.correlationId,
+        destinationId: current.id,
+        userId: input.userId
+      });
+    });
+  }
+
+  /**
+   * Disable (AC-8, AC-9).
+   *
+   * The statement names status and eligibility and cannot name the validation
+   * result, which is how AC-9 preserves it: a disabled destination keeps the
+   * verdict it earned, so re-enabling it later does not need re-validating.
+   */
+  async disable(input: {
+    correlationId: string;
+    offeringId: string;
+    userId: string;
+  }): Promise<AffiliateDestinationRecord | null> {
+    return this.administer(input.offeringId, async (client, current) => {
+      if (current.status !== "ENABLED")
+        throw new AffiliateNotEnabledError(current.status);
+
+      await client.query(
+        `update affiliate_destination
+           set status = 'DISABLED',
+               handoff_eligibility = $2::"HandoffEligibility",
+               version = version + 1, updated_at = now()
+         where id = $1`,
+        [
+          current.id,
+          composeHandoffEligibility({
+            status: "DISABLED",
+            validationResult: current.validationResult
+          })
+        ]
+      );
+      await this.audit(client, {
+        action: "affiliate.disable",
+        correlationId: input.correlationId,
+        destinationId: current.id,
+        userId: input.userId
+      });
+    });
+  }
+
+  /**
+   * One shape for all four actions: lock the destination, do the work, read it
+   * back.
+   *
+   * The lock is on the destination rather than the Offering, because AC-12 puts
+   * the Offering out of reach — administration changes no Offering lifecycle,
+   * no Business Moderation Status and no account status, and nothing in here
+   * can reach a table that holds any of them.
+   */
+  private async administer(
+    offeringId: string,
+    work: (
+      client: PoolClient,
+      current: AffiliateDestinationRecord
+    ) => Promise<void>
+  ): Promise<AffiliateDestinationRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const locked = await client.query<AffiliateDestinationRecord>(
+        `select ${DESTINATION_COLUMNS} from affiliate_destination d
+         where d.offering_id = $1 for update`,
+        [offeringId]
+      );
+      const current = locked.rows[0];
+      if (!current) {
+        await client.query("rollback");
+        return null;
+      }
+
+      await work(client, current);
+
+      const updated = await client.query<AffiliateDestinationRecord>(
+        `select ${DESTINATION_COLUMNS} from affiliate_destination d
+         where d.id = $1`,
+        [current.id]
+      );
+      await client.query("commit");
+      return updated.rows[0] ?? null;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Locks the Offering and reports whether its lifecycle admits authoring.
    *
    * `null` means the Offering is not this Business's to touch; the read-only
@@ -169,11 +385,17 @@ export class PgAffiliateRepository implements OnModuleDestroy {
     return status;
   }
 
+  /**
+   * `businessId` is absent for the Platform administration actions, and the
+   * audit record says so: an Admin acts in the Admin context rather than for a
+   * Business (`US-IDN-F08-001` AC-6). Recording the Offering's owner there
+   * would claim an authority the Admin was not using.
+   */
   private async audit(
     client: PoolClient,
     entry: {
       action: string;
-      businessId: string;
+      businessId?: string;
       correlationId: string;
       destinationId: string;
       userId: string;
@@ -186,7 +408,7 @@ export class PgAffiliateRepository implements OnModuleDestroy {
        values ($1,$2,$3,'AffiliateDestination',$4,'ALLOWED',$5)`,
       [
         entry.userId,
-        entry.businessId,
+        entry.businessId ?? null,
         entry.action,
         entry.destinationId,
         entry.correlationId

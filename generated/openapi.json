@@ -597,6 +597,7 @@
         "additionalProperties": false,
         "properties": {
           "handoffEligibility": {
+            "description": "Eligible exactly when Destination Status is Enabled and Validation Result is Valid. Composed from those two, never set on its own.",
             "enum": ["ELIGIBLE", "INELIGIBLE"],
             "type": "string"
           },
@@ -607,6 +608,7 @@
             "enum": ["DRAFT", "ENABLED", "DISABLED"],
             "type": "string"
           },
+          "validationReason": { "type": ["string", "null"] },
           "validationResult": {
             "enum": ["NOT_VALIDATED", "VALID", "INVALID"],
             "type": "string"
@@ -619,9 +621,28 @@
           "offeringId",
           "reference",
           "status",
+          "validationReason",
           "validationResult",
           "version"
         ],
+        "type": "object"
+      },
+      "ReviewAffiliateDestination": {
+        "additionalProperties": false,
+        "description": "Review carries a note and nothing else, because it changes nothing else.",
+        "properties": {
+          "note": { "maxLength": 1000, "type": ["string", "null"] }
+        },
+        "type": "object"
+      },
+      "ValidateAffiliateDestination": {
+        "additionalProperties": false,
+        "description": "Produces exactly one current result. NOT_VALIDATED is the absence of a result and cannot be produced by validating.",
+        "properties": {
+          "reason": { "maxLength": 1000, "type": ["string", "null"] },
+          "result": { "enum": ["VALID", "INVALID"], "type": "string" }
+        },
+        "required": ["result"],
         "type": "object"
       },
       "OfferingInventoryEntry": {
@@ -2907,6 +2928,337 @@
           }
         },
         "tags": ["Offering"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination": {
+      "get": {
+        "description": "An authorized Admin's view of the destination, its current validation result and its Handoff Eligibility.",
+        "operationId": "getAffiliateDestinationForAdmin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDestination"
+                }
+              }
+            },
+            "description": "Affiliate Destination"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Affiliate Destination matches that Offering"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination/review": {
+      "post": {
+        "description": "Records an approved Admin review. Changes no destination status, no validation result and no Handoff Eligibility by itself.",
+        "operationId": "reviewAffiliateDestination",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewAffiliateDestination"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDestination"
+                }
+              }
+            },
+            "description": "Review recorded"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid review"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Affiliate Destination matches that Offering"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination/validation": {
+      "post": {
+        "description": "Produces exactly one current validation result. Leaves the destination status unchanged; a Valid result stays Ineligible until the destination is enabled.",
+        "operationId": "validateAffiliateDestination",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateAffiliateDestination"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDestination"
+                }
+              }
+            },
+            "description": "Validation result recorded"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid validation result"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Affiliate Destination matches that Offering"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination/enablement": {
+      "post": {
+        "description": "Enables a Valid destination, producing Enabled and Eligible. Refused for any other validation result.",
+        "operationId": "enableAffiliateDestination",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDestination"
+                }
+              }
+            },
+            "description": "Destination enabled"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Affiliate Destination matches that Offering"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The destination is not Valid"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination/disablement": {
+      "post": {
+        "description": "Disables an Enabled destination, producing Disabled and Ineligible. The current validation result is preserved.",
+        "operationId": "disableAffiliateDestination",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDestination"
+                }
+              }
+            },
+            "description": "Destination disabled"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Affiliate Destination matches that Offering"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The destination is not Enabled"
+          }
+        },
+        "tags": ["Platform"]
       }
     },
     "/api/v1/health/live": {

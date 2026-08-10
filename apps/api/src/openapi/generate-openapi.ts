@@ -12,6 +12,24 @@ const errorResponse = (description: string) => ({
   description
 });
 
+/// The five Platform administration operations differ only in what they do, so
+/// their shared shape is written once.
+const adminOfferingParameter = {
+  in: "path",
+  name: "offeringId",
+  required: true,
+  schema: { format: "uuid", type: "string" }
+};
+
+const affiliateDestinationResponse = (description: string) => ({
+  content: {
+    "application/json": {
+      schema: { $ref: "#/components/schemas/AffiliateDestination" }
+    }
+  },
+  description
+});
+
 const healthOperation = (operationId: string, unavailable?: string) => ({
   operationId,
   responses: {
@@ -623,6 +641,8 @@ const document = {
         additionalProperties: false,
         properties: {
           handoffEligibility: {
+            description:
+              "Eligible exactly when Destination Status is Enabled and Validation Result is Valid. Composed from those two, never set on its own.",
             enum: ["ELIGIBLE", "INELIGIBLE"],
             type: "string"
           },
@@ -633,6 +653,7 @@ const document = {
             enum: ["DRAFT", "ENABLED", "DISABLED"],
             type: "string"
           },
+          validationReason: { type: ["string", "null"] },
           validationResult: {
             enum: ["NOT_VALIDATED", "VALID", "INVALID"],
             type: "string"
@@ -645,9 +666,28 @@ const document = {
           "offeringId",
           "reference",
           "status",
+          "validationReason",
           "validationResult",
           "version"
         ],
+        type: "object"
+      },
+      ReviewAffiliateDestination: {
+        additionalProperties: false,
+        description:
+          "Review carries a note and nothing else, because it changes nothing else.",
+        properties: { note: { maxLength: 1000, type: ["string", "null"] } },
+        type: "object"
+      },
+      ValidateAffiliateDestination: {
+        additionalProperties: false,
+        description:
+          "Produces exactly one current result. NOT_VALIDATED is the absence of a result and cannot be produced by validating.",
+        properties: {
+          reason: { maxLength: 1000, type: ["string", "null"] },
+          result: { enum: ["VALID", "INVALID"], type: "string" }
+        },
+        required: ["result"],
         type: "object"
       },
       OfferingInventoryEntry: {
@@ -2017,6 +2057,120 @@ const document = {
           "404": errorResponse("No Offering matches that identifier")
         },
         tags: ["Offering"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination": {
+      get: {
+        description:
+          "An authorized Admin's view of the destination, its current validation result and its Handoff Eligibility.",
+        operationId: "getAffiliateDestinationForAdmin",
+        parameters: [adminOfferingParameter],
+        responses: {
+          "200": affiliateDestinationResponse("Affiliate Destination"),
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("An entered Admin context is required"),
+          "404": errorResponse("No Affiliate Destination matches that Offering")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination/review": {
+      post: {
+        description:
+          "Records an approved Admin review. Changes no destination status, no validation result and no Handoff Eligibility by itself.",
+        operationId: "reviewAffiliateDestination",
+        parameters: [adminOfferingParameter],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ReviewAffiliateDestination"
+              }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": affiliateDestinationResponse("Review recorded"),
+          "400": errorResponse("Invalid review"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "An entered Admin context is required, or the request origin is not allowed"
+          ),
+          "404": errorResponse("No Affiliate Destination matches that Offering")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination/validation": {
+      post: {
+        description:
+          "Produces exactly one current validation result. Leaves the destination status unchanged; a Valid result stays Ineligible until the destination is enabled.",
+        operationId: "validateAffiliateDestination",
+        parameters: [adminOfferingParameter],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ValidateAffiliateDestination"
+              }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": affiliateDestinationResponse("Validation result recorded"),
+          "400": errorResponse("Invalid validation result"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "An entered Admin context is required, or the request origin is not allowed"
+          ),
+          "404": errorResponse("No Affiliate Destination matches that Offering")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination/enablement": {
+      post: {
+        description:
+          "Enables a Valid destination, producing Enabled and Eligible. Refused for any other validation result.",
+        operationId: "enableAffiliateDestination",
+        parameters: [adminOfferingParameter],
+        responses: {
+          "200": affiliateDestinationResponse("Destination enabled"),
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "An entered Admin context is required, or the request origin is not allowed"
+          ),
+          "404": errorResponse(
+            "No Affiliate Destination matches that Offering"
+          ),
+          "409": errorResponse("The destination is not Valid")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/affiliate-destination/disablement": {
+      post: {
+        description:
+          "Disables an Enabled destination, producing Disabled and Ineligible. The current validation result is preserved.",
+        operationId: "disableAffiliateDestination",
+        parameters: [adminOfferingParameter],
+        responses: {
+          "200": affiliateDestinationResponse("Destination disabled"),
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "An entered Admin context is required, or the request origin is not allowed"
+          ),
+          "404": errorResponse(
+            "No Affiliate Destination matches that Offering"
+          ),
+          "409": errorResponse("The destination is not Enabled")
+        },
+        tags: ["Platform"]
       }
     },
     "/api/v1/health/live": { get: healthOperation("getLiveness") },

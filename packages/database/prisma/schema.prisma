@@ -98,6 +98,8 @@ model UserAccount {
   sessions        UserSession[]
   passwordReset   PasswordReset?
   adminAuthorization AdminAuthorization?
+  affiliateReviews   AffiliateDestinationReview[] @relation("AffiliateReviewer")
+  affiliateValidations AffiliateDestination[]     @relation("AffiliateValidator")
 
   @@map("user_account")
 }
@@ -382,13 +384,37 @@ model AffiliateDestination {
   reference         String                     @db.VarChar(2048)
   status            AffiliateDestinationStatus @default(DRAFT)
   validationResult  AffiliateValidationResult  @default(NOT_VALIDATED) @map("validation_result")
+  /// Why the current result was reached. PRD-0001 §9.4 defines what `Valid`
+  /// and `Invalid` mean and leaves the method open, so this records an outcome
+  /// rather than a mechanism.
+  validationReason  String?                    @map("validation_reason") @db.VarChar(1000)
+  validatedAt       DateTime?                  @map("validated_at") @db.Timestamptz(6)
+  validatedBy       String?                    @map("validated_by") @db.Uuid
   handoffEligibility HandoffEligibility        @default(INELIGIBLE) @map("handoff_eligibility")
   version           Int                        @default(1)
   createdAt         DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime                   @default(now()) @map("updated_at") @db.Timestamptz(6)
   offering          Offering                   @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+  validator         UserAccount?               @relation("AffiliateValidator", fields: [validatedBy], references: [id], onDelete: Restrict)
+  reviews           AffiliateDestinationReview[]
 
   @@map("affiliate_destination")
+}
+
+/// Evidence that an approved Admin review happened. `US-OFR-F07-001` AC-2
+/// makes Review change no result, and PRD-0001 §9.4 makes it a condition a
+/// `Valid` result depends on — so it has to be recorded somewhere.
+model AffiliateDestinationReview {
+  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  destinationId String               @map("destination_id") @db.Uuid
+  reviewedBy    String               @map("reviewed_by") @db.Uuid
+  note          String?              @db.VarChar(1000)
+  reviewedAt    DateTime             @default(now()) @map("reviewed_at") @db.Timestamptz(6)
+  destination   AffiliateDestination @relation(fields: [destinationId], references: [id], onDelete: Restrict)
+  reviewer      UserAccount          @relation("AffiliateReviewer", fields: [reviewedBy], references: [id], onDelete: Restrict)
+
+  @@index([destinationId, reviewedAt])
+  @@map("affiliate_destination_review")
 }
 
 model OfferingPublication {

@@ -333,10 +333,53 @@ export const affiliateDestinationSchema = z
     offeringId: z.string().uuid(),
     reference: z.string(),
     status: z.enum(["DRAFT", "ENABLED", "DISABLED"]),
+    validationReason: z.string().nullable(),
     validationResult: z.enum(["NOT_VALIDATED", "VALID", "INVALID"]),
     version: z.number().int().positive()
   })
   .strict();
+
+/**
+ * `US-OFR-F07-001` AC-2. Review carries a note and nothing else, because it
+ * changes nothing else — no status, no validation result, no eligibility.
+ */
+export const reviewAffiliateDestinationSchema = z
+  .object({
+    note: z
+      .string()
+      .trim()
+      .max(1000)
+      .nullish()
+      .transform((value) =>
+        value === undefined || value === "" ? null : value
+      )
+  })
+  .strict();
+
+/**
+ * AC-3. Exactly one current result, so `NOT_VALIDATED` is not offered: that is
+ * the absence of a result, which Validate cannot produce.
+ */
+export const validateAffiliateDestinationSchema = z
+  .object({
+    reason: z
+      .string()
+      .trim()
+      .max(1000)
+      .nullish()
+      .transform((value) =>
+        value === undefined || value === "" ? null : value
+      ),
+    result: z.enum(["VALID", "INVALID"])
+  })
+  .strict();
+
+export type ReviewAffiliateDestination = z.infer<
+  typeof reviewAffiliateDestinationSchema
+>;
+export type ValidateAffiliateDestination = z.infer<
+  typeof validateAffiliateDestinationSchema
+>;
 
 export type AuthorAffiliateDestination = z.infer<
   typeof authorAffiliateDestinationSchema

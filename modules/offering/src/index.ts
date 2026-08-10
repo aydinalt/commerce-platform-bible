@@ -200,6 +200,7 @@ export interface AffiliateDestinationRecord {
   offeringId: string;
   reference: string;
   status: "DRAFT" | "ENABLED" | "DISABLED";
+  validationReason: string | null;
   validationResult: "NOT_VALIDATED" | "VALID" | "INVALID";
   version: number;
 }
@@ -232,6 +233,54 @@ export class AffiliateDestinationReadOnlyError extends Error {
   constructor() {
     super("AFFILIATE_DESTINATION_READ_ONLY");
     this.name = "AffiliateDestinationReadOnlyError";
+  }
+}
+
+/**
+ * Affiliate Destination Handoff Eligibility (`US-OFR-F07-001` AC-10).
+ *
+ * A biconditional, not a flag: Eligible exactly when the destination is Enabled
+ * *and* its current validation result is Valid. Four administration actions can
+ * move those two inputs, so none of them sets this — they set what they change
+ * and read the answer back from here.
+ *
+ * The case worth stating out loud is re-validating an already Enabled
+ * destination as Invalid. AC-4 leaves its status Enabled, and this drops its
+ * eligibility anyway, because eligibility was never a property of the status
+ * alone.
+ *
+ * PRD-0001 §9 keeps this result separate from final Offering Public
+ * Eligibility (AC-11), which is why nothing here consults an Offering.
+ */
+export function composeHandoffEligibility(input: {
+  status: AffiliateDestinationStatus;
+  validationResult: AffiliateValidationResult;
+}): "ELIGIBLE" | "INELIGIBLE" {
+  return input.status === "ENABLED" && input.validationResult === "VALID"
+    ? "ELIGIBLE"
+    : "INELIGIBLE";
+}
+
+export type AffiliateDestinationStatus = "DRAFT" | "ENABLED" | "DISABLED";
+export type AffiliateValidationResult = "NOT_VALIDATED" | "VALID" | "INVALID";
+
+/**
+ * Raised when Enable names a destination whose current validation result is not
+ * `Valid` (AC-6). Enabling an unvalidated destination would make it publicly
+ * reachable on the strength of a check nobody performed.
+ */
+export class AffiliateNotValidatedError extends Error {
+  constructor(readonly validationResult: AffiliateValidationResult) {
+    super("AFFILIATE_NOT_VALIDATED");
+    this.name = "AffiliateNotValidatedError";
+  }
+}
+
+/// Raised when Disable names a destination that is not Enabled (AC-8).
+export class AffiliateNotEnabledError extends Error {
+  constructor(readonly status: AffiliateDestinationStatus) {
+    super("AFFILIATE_NOT_ENABLED");
+    this.name = "AffiliateNotEnabledError";
   }
 }
 
