@@ -56,6 +56,28 @@ enum AttributeValueKind {
   MULTI_SELECT
 }
 
+/// PRD-0001 §9.3. `Enabled` and `Disabled` are reached only through the
+/// Platform administration actions PRD-0006 owns; a Business owner's authoring
+/// always lands on `DRAFT`.
+enum AffiliateDestinationStatus {
+  DRAFT
+  ENABLED
+  DISABLED
+}
+
+/// PRD-0001 §9.4. `NOT_VALIDATED` means the *current* configuration has no
+/// current result — which is why changing the configuration returns to it.
+enum AffiliateValidationResult {
+  NOT_VALIDATED
+  VALID
+  INVALID
+}
+
+enum HandoffEligibility {
+  ELIGIBLE
+  INELIGIBLE
+}
+
 enum PublicationStatus {
   PENDING
   ELIGIBLE
@@ -325,6 +347,8 @@ model Offering {
   attributes   OfferingAttributeValue[]
   publications OfferingPublication[]
   projection   OfferingSearchProjection?
+  /// Zero or one, never shared (PRD-0001 §9.1).
+  affiliateDestination AffiliateDestination?
 
   @@unique([businessId, slug])
   @@index([categoryId, status])
@@ -348,6 +372,23 @@ model OfferingAttributeValue {
 
   @@index([attributeDefinitionId])
   @@map("offering_attribute_value")
+}
+
+/// A distinct object associated with exactly one Offering, not a field on it
+/// (`US-OFR-F06-001`, PRD-0001 §9.1).
+model AffiliateDestination {
+  id                String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  offeringId        String                     @unique @map("offering_id") @db.Uuid
+  reference         String                     @db.VarChar(2048)
+  status            AffiliateDestinationStatus @default(DRAFT)
+  validationResult  AffiliateValidationResult  @default(NOT_VALIDATED) @map("validation_result")
+  handoffEligibility HandoffEligibility        @default(INELIGIBLE) @map("handoff_eligibility")
+  version           Int                        @default(1)
+  createdAt         DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  offering          Offering                   @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+
+  @@map("affiliate_destination")
 }
 
 model OfferingPublication {

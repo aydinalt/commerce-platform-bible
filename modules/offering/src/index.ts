@@ -181,6 +181,61 @@ export class OfferingAlreadyArchivedError extends Error {
 }
 
 /**
+ * The lifecycle states whose Affiliate Destination a Business owner may author
+ * (`US-OFR-F06-001` AC-1, AC-4; PRD-0001 §9.2).
+ *
+ * Archived is absent, which is AC-7: an Archived Offering and its destination
+ * are view-only. The read path does not consult this list — being unable to
+ * change something is not the same as being unable to see it.
+ */
+export const DESTINATION_AUTHORABLE: readonly OfferingLifecycle[] = [
+  "DRAFT",
+  "PUBLISHED",
+  "HIDDEN"
+];
+
+export interface AffiliateDestinationRecord {
+  handoffEligibility: "ELIGIBLE" | "INELIGIBLE";
+  id: string;
+  offeringId: string;
+  reference: string;
+  status: "DRAFT" | "ENABLED" | "DISABLED";
+  validationResult: "NOT_VALIDATED" | "VALID" | "INVALID";
+  version: number;
+}
+
+/**
+ * What authoring a destination produces, whatever its previous state
+ * (PRD-0001 §9.5).
+ *
+ * Creation and editing land on the same three values, so they are one constant
+ * rather than two matching literals — the reason §9.5 gives is that a changed
+ * destination must not stay eligible under an earlier validation result, and
+ * that reason does not distinguish the two.
+ */
+export const AUTHORED_DESTINATION_STATE = {
+  handoffEligibility: "INELIGIBLE",
+  status: "DRAFT",
+  validationResult: "NOT_VALIDATED"
+} as const;
+
+/// Raised when an Offering already has the one destination V1 allows (AC-2).
+export class AffiliateDestinationExistsError extends Error {
+  constructor() {
+    super("AFFILIATE_DESTINATION_EXISTS");
+    this.name = "AffiliateDestinationExistsError";
+  }
+}
+
+/// Raised when authoring is attempted against an Archived Offering (AC-7).
+export class AffiliateDestinationReadOnlyError extends Error {
+  constructor() {
+    super("AFFILIATE_DESTINATION_READ_ONLY");
+    this.name = "AffiliateDestinationReadOnlyError";
+  }
+}
+
+/**
  * Raised when a submitted value does not match the kind its Attribute
  * definition declares — a number sent for a Text, several options for a Single
  * Select, an option belonging to another definition.

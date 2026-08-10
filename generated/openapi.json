@@ -584,6 +584,46 @@
         ],
         "type": "object"
       },
+      "AuthorAffiliateDestination": {
+        "additionalProperties": false,
+        "description": "Carries a reference and nothing else. Review, Validate, Enable, Disable and Handoff Eligibility recalculation belong to Platform administration and cannot be requested here.",
+        "properties": {
+          "reference": { "maxLength": 2048, "minLength": 1, "type": "string" }
+        },
+        "required": ["reference"],
+        "type": "object"
+      },
+      "AffiliateDestination": {
+        "additionalProperties": false,
+        "properties": {
+          "handoffEligibility": {
+            "enum": ["ELIGIBLE", "INELIGIBLE"],
+            "type": "string"
+          },
+          "id": { "format": "uuid", "type": "string" },
+          "offeringId": { "format": "uuid", "type": "string" },
+          "reference": { "type": "string" },
+          "status": {
+            "enum": ["DRAFT", "ENABLED", "DISABLED"],
+            "type": "string"
+          },
+          "validationResult": {
+            "enum": ["NOT_VALIDATED", "VALID", "INVALID"],
+            "type": "string"
+          },
+          "version": { "minimum": 1, "type": "integer" }
+        },
+        "required": [
+          "handoffEligibility",
+          "id",
+          "offeringId",
+          "reference",
+          "status",
+          "validationResult",
+          "version"
+        ],
+        "type": "object"
+      },
       "OfferingInventoryEntry": {
         "additionalProperties": false,
         "properties": {
@@ -2596,6 +2636,217 @@
               }
             },
             "description": "The Offering is already Archived"
+          }
+        },
+        "tags": ["Offering"]
+      }
+    },
+    "/api/v1/businesses/{businessId}/offerings/{offeringId}/affiliate-destination": {
+      "get": {
+        "description": "The destination's current status, validation result and Handoff Eligibility. Readable for every lifecycle state, an Archived Offering included.",
+        "operationId": "getAffiliateDestination",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDestination"
+                }
+              }
+            },
+            "description": "Affiliate Destination"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Offering or Affiliate Destination matches"
+          }
+        },
+        "tags": ["Offering"]
+      },
+      "post": {
+        "description": "Creates the one Affiliate Destination an Offering may have, for a Draft, Published or Hidden Offering. It begins Draft, Not Validated and Ineligible.",
+        "operationId": "createAffiliateDestination",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorAffiliateDestination"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDestination"
+                }
+              }
+            },
+            "description": "Affiliate Destination created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Affiliate Destination"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The Offering is Archived, the Business is Restricted, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Offering matches that identifier"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "This Offering already has a destination"
+          }
+        },
+        "tags": ["Offering"]
+      },
+      "put": {
+        "description": "Saves a new reference. The destination returns to Draft, Not Validated and Ineligible whatever it was before, so an earlier validation cannot remain authoritative for a changed configuration.",
+        "operationId": "editAffiliateDestination",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorAffiliateDestination"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDestination"
+                }
+              }
+            },
+            "description": "Affiliate Destination saved"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Affiliate Destination"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The Offering is Archived, the Business is Restricted, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Offering or Affiliate Destination matches"
           }
         },
         "tags": ["Offering"]

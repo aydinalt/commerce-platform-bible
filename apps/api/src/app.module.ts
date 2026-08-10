@@ -13,11 +13,14 @@ import { IdentityController } from "./identity/identity.controller.js";
 import { AUDIT_WRITER, IdentityService } from "./identity/identity.service.js";
 import { PasswordHasher } from "./identity/password.hasher.js";
 import { OfferingContentService } from "./offering/offering-content.service.js";
+import { AffiliateService } from "./offering/affiliate.service.js";
 import {
   AdminOfferingController,
+  AffiliateDestinationController,
   OfferingController
 } from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
+import { PgAffiliateRepository } from "./persistence/pg-affiliate.repository.js";
 import { PgAttributeRepository } from "./persistence/pg-attribute.repository.js";
 import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
 import { PgCatalogRepository } from "./persistence/pg-catalog.repository.js";
@@ -51,6 +54,7 @@ function allowedOrigins(): readonly string[] {
 @Module({
   controllers: [
     AdminOfferingController,
+    AffiliateDestinationController,
     AttributeController,
     BusinessController,
     CatalogController,
@@ -59,6 +63,7 @@ function allowedOrigins(): readonly string[] {
     OfferingController
   ],
   providers: [
+    AffiliateService,
     AttributeService,
     BusinessService,
     CatalogService,
@@ -66,6 +71,7 @@ function allowedOrigins(): readonly string[] {
     OfferingContentService,
     OfferingService,
     PasswordHasher,
+    PgAffiliateRepository,
     PgAttributeRepository,
     PgBusinessRepository,
     PgCatalogRepository,

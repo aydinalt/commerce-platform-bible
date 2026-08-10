@@ -317,6 +317,33 @@ export type OfferingAttributeValueInput = z.infer<
 export type OfferingContent = z.infer<typeof offeringContentSchema>;
 
 /**
+ * `US-OFR-F06-001`. The body carries a reference and nothing else: AC-8 denies
+ * the Business owner Review, Validate, Enable, Disable and any direct Handoff
+ * Eligibility recalculation, and the surest way to deny them is to give the
+ * request no field that could ask for one.
+ */
+export const authorAffiliateDestinationSchema = z
+  .object({ reference: z.string().trim().min(1).max(2048) })
+  .strict();
+
+export const affiliateDestinationSchema = z
+  .object({
+    handoffEligibility: z.enum(["ELIGIBLE", "INELIGIBLE"]),
+    id: z.string().uuid(),
+    offeringId: z.string().uuid(),
+    reference: z.string(),
+    status: z.enum(["DRAFT", "ENABLED", "DISABLED"]),
+    validationResult: z.enum(["NOT_VALIDATED", "VALID", "INVALID"]),
+    version: z.number().int().positive()
+  })
+  .strict();
+
+export type AuthorAffiliateDestination = z.infer<
+  typeof authorAffiliateDestinationSchema
+>;
+export type AffiliateDestination = z.infer<typeof affiliateDestinationSchema>;
+
+/**
  * One entry of the owning Business management inventory (`US-OFR-F01-001`
  * AC-5). It reports the recorded final Offering Public Eligibility rather than
  * anything a caller could derive: PRD-0001 §7.1 makes that result something

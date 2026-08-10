@@ -15,6 +15,8 @@ import type { FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import {
+  affiliateDestinationSchema,
+  authorAffiliateDestinationSchema,
   createDraftOfferingSchema,
   editOfferingSchema,
   offeringContentSchema,
@@ -24,6 +26,7 @@ import {
 
 import { OriginValidator } from "../security/origin.guard.js";
 import { PrincipalResolver } from "../security/principal-resolver.js";
+import { AffiliateService } from "./affiliate.service.js";
 import { OfferingContentService } from "./offering-content.service.js";
 import { OfferingService } from "./offering.service.js";
 
@@ -174,6 +177,95 @@ export class OfferingController {
         await this.principals.resolve(request)
       )
     );
+  }
+}
+
+/**
+ * Affiliate Destination configuration (`US-OFR-F06-001`).
+ *
+ * Its own controller because PRD-0001 §9.1 makes the destination a distinct
+ * associated object: authoring it is neither Offering creation nor Offering
+ * editing, and folding it into either would say otherwise.
+ *
+ * There is no Review, Validate, Enable or Disable route here. AC-8 denies those
+ * to the Business owner, and PRD-0006 owns the surface that will offer them.
+ */
+@Controller(
+  "businesses/:businessId/offerings/:offeringId/affiliate-destination"
+)
+export class AffiliateDestinationController {
+  constructor(
+    private readonly destinations: AffiliateService,
+    private readonly origins: OriginValidator,
+    private readonly principals: PrincipalResolver
+  ) {}
+
+  /// AC-6, and AC-7's other half: an Archived destination stays readable.
+  @Get()
+  async get(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    return affiliateDestinationSchema.parse(
+      await this.destinations.get(
+        businessId,
+        offeringId,
+        await this.principals.resolve(request)
+      )
+    );
+  }
+
+  @Post()
+  @HttpCode(201)
+  async create(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    const principal = await this.principals.resolve(request);
+    return affiliateDestinationSchema.parse(
+      await this.destinations.create(
+        businessId,
+        offeringId,
+        this.parse(body),
+        principal
+      )
+    );
+  }
+
+  /// AC-4 and AC-5. Saving a reference returns the destination to Draft, Not
+  /// Validated and Ineligible, whatever it was before.
+  @Put()
+  async edit(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    const principal = await this.principals.resolve(request);
+    return affiliateDestinationSchema.parse(
+      await this.destinations.edit(
+        businessId,
+        offeringId,
+        this.parse(body),
+        principal
+      )
+    );
+  }
+
+  private parse(body: unknown) {
+    const parsed = authorAffiliateDestinationSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Invalid Affiliate Destination"
+      });
+    return parsed.data;
   }
 }
 
