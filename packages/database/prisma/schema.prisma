@@ -461,6 +461,14 @@ model OfferingSearchProjection {
   title              String   @db.VarChar(240)
   summary            String?
   businessName       String   @map("business_name") @db.VarChar(200)
+  /// The active Category path display names, so a person can recognise an
+  /// Offering by where it sits (`US-DSC-F02-001` AC-3).
+  categoryPath       String   @map("category_path")
+  /// Attribute display values — the label a person reads, not the identifier
+  /// `filterValues` holds.
+  attributeText      String   @map("attribute_text")
+  /// The four searchable fields concatenated. Membership is decided here; which
+  /// field matched is decided from the fields themselves.
   searchableText     String   @map("searchable_text")
   filterValues       Json     @map("filter_values")
   publishedAt        DateTime @map("published_at") @db.Timestamptz(6)

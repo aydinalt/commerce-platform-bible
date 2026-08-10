@@ -211,21 +211,20 @@ suite("Increment I2 Offering retirement", () => {
 
   it("leaves nothing for Discovery to find", async () => {
     const business = await draft();
-    await setLifecycle(business.offeringId, "PUBLISHED");
-    // Nothing writes this projection yet — `US-OFR-F04-001` will — so it is
-    // planted here to prove retirement removes it rather than leaving that to
-    // a future Story to remember.
-    await pool.query(
-      `insert into offering_search_projection
-         (offering_id, business_id, domain_id, category_id, title,
-          business_name, searchable_text, filter_values, published_at,
-          eligibility_version)
-       select o.id, o.business_id, c.domain_id, o.category_id, o.title,
-         'Author', o.title, '{}'::jsonb, now(), 1
-       from offering o join category c on c.id = o.category_id
-       where o.id = $1`,
+    // When this Story landed, nothing wrote the projection and the row had to
+    // be planted to prove retirement removed it. `US-OFR-F04-001` now writes
+    // it, so the case can use the real path.
+    await send(
+      "POST",
+      `/businesses/${business.businessId}/offerings/${business.offeringId}/publication`,
+      { cookie: business.cookie }
+    );
+    const projectedBefore = await pool.query<{ total: number }>(
+      `select count(*)::int as total from offering_search_projection
+       where offering_id = $1`,
       [business.offeringId]
     );
+    expect(projectedBefore.rows[0]?.total).toBe(1);
 
     await retire(business, business.offeringId);
 

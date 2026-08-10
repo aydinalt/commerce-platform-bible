@@ -4,7 +4,9 @@ import { Pool, type PoolClient } from "pg";
 import type {
   BrowseCategory,
   BrowseView,
-  ListingCard
+  ListingCard,
+  SearchResult,
+  SearchView
 } from "@commerce/discovery";
 
 /**
@@ -140,6 +142,83 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
         domain,
         results,
         siblings
+      };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Search (`US-DSC-F02-001`).
+   *
+   * Membership and level are two different questions asked of the same terms.
+   * An Offering is a candidate when every term appears somewhere in the
+   * approved searchable set — that is what makes the relationship meaningful
+   * rather than incidental. Its level is then the best field that relates to
+   * *any* term, because a query spanning a title word and a Business word
+   * still has a title relationship.
+   *
+   * Nothing outside the projection is consulted, which is how AC-4 holds: the
+   * telephone, the email, the contact URL, the Affiliate Destination, the
+   * Draft and the Archived record are not excluded from matching — they were
+   * never in the set being matched.
+   */
+  async search(input: {
+    pathId: string;
+    query: string;
+    terms: string[];
+  }): Promise<SearchView> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+
+      // AC-1. A Search Start carries no Domain: PRD-0002 §5.10 gives it one
+      // only once the criteria include a selected active leaf Category, which
+      // `US-DSC-F04-001` owns.
+      await client.query(
+        `insert into discovery_start (path_id, kind, domain_id)
+         values ($1, 'SEARCH', null)
+         on conflict (path_id) do nothing`,
+        [input.pathId]
+      );
+
+      const all = input.terms.join(" & ");
+      const any = input.terms.join(" | ");
+      const found = await client.query<
+        Omit<SearchResult, "publishedAt"> & { publishedAt: Date }
+      >(
+        `select p.offering_id as "offeringId", p.title,
+           p.business_name as "businessName", c.name as "categoryName",
+           o.slug, p.published_at as "publishedAt",
+           case
+             when to_tsvector('simple', p.title) @@ to_tsquery('simple', $2)
+               then 'TITLE'
+             when to_tsvector('simple', p.category_path) @@ to_tsquery('simple', $2)
+               then 'CATEGORY_PATH'
+             when to_tsvector('simple', p.business_name) @@ to_tsquery('simple', $2)
+               then 'BUSINESS_NAME'
+             else 'DESCRIPTION_OR_ATTRIBUTE'
+           end as "matchLevel"
+         from offering_search_projection p
+         join offering o on o.id = p.offering_id
+         join category c on c.id = p.category_id
+         where to_tsvector('simple', p.searchable_text)
+           @@ to_tsquery('simple', $1)
+         order by p.published_at desc, p.offering_id`,
+        [all, any]
+      );
+
+      await client.query("commit");
+      return {
+        discoveryPathId: input.pathId,
+        query: input.query,
+        results: found.rows.map((row) => ({
+          ...row,
+          publishedAt: row.publishedAt.toISOString()
+        }))
       };
     } catch (error) {
       await client.query("rollback");

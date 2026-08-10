@@ -17,8 +17,11 @@ import {
   browseRootsSchema,
   browseSelectionSchema,
   browseViewSchema,
+  searchSubmissionSchema,
+  searchViewSchema,
   type BrowseRoots
 } from "@commerce/contracts";
+import { searchTerms } from "@commerce/discovery";
 
 import { PgDiscoveryRepository } from "../persistence/pg-discovery.repository.js";
 
@@ -66,6 +69,47 @@ export class DiscoveryController {
     return browseRootsSchema.parse({
       domains: await this.discovery.browseRoots()
     });
+  }
+
+  /**
+   * Search (`US-DSC-F02-001`).
+   *
+   * A `POST` for the same reason Browse selection is: AC-1 makes a valid
+   * submission create a Discovery Start, and that is an occurrence rather than
+   * a page being fetched.
+   *
+   * A query whose terms are all stripped away — punctuation only — reaches no
+   * searchable information, so AC-5 excludes everything and the answer is an
+   * empty result set rather than an error. It was a valid submission; it just
+   * matched nothing.
+   */
+  @Post("search")
+  @HttpCode(200)
+  async search(@Body() body: unknown) {
+    const parsed = searchSubmissionSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Invalid Search submission"
+      });
+
+    const terms = searchTerms(parsed.data.query);
+    const pathId = parsed.data.discoveryPathId ?? randomUUID();
+    if (terms.length === 0)
+      return searchViewSchema.parse({
+        discoveryPathId: pathId,
+        query: parsed.data.query,
+        results: []
+      });
+
+    return searchViewSchema.parse(
+      await this.discovery.search({
+        pathId,
+        query: parsed.data.query,
+        terms
+      })
+    );
   }
 
   /**

@@ -434,6 +434,64 @@ const document = {
         ],
         type: "object"
       },
+      SearchSubmission: {
+        additionalProperties: false,
+        properties: {
+          discoveryPathId: { format: "uuid", type: "string" },
+          query: { maxLength: 400, minLength: 1, type: "string" }
+        },
+        required: ["query"],
+        type: "object"
+      },
+      SearchResult: {
+        additionalProperties: false,
+        properties: {
+          businessName: { type: "string" },
+          categoryName: { type: "string" },
+          matchLevel: {
+            description:
+              "The highest applicable relationship of PRD-0002 §12.2. A level, not a score: ordering consumes it, and no ranking algorithm is defined.",
+            enum: [
+              "TITLE",
+              "CATEGORY_PATH",
+              "BUSINESS_NAME",
+              "DESCRIPTION_OR_ATTRIBUTE"
+            ],
+            type: "string"
+          },
+          offeringId: { format: "uuid", type: "string" },
+          publishedAt: { format: "date-time", type: "string" },
+          slug: { type: "string" },
+          title: { type: "string" }
+        },
+        required: [
+          "businessName",
+          "categoryName",
+          "matchLevel",
+          "offeringId",
+          "publishedAt",
+          "slug",
+          "title"
+        ],
+        type: "object"
+      },
+      SearchView: {
+        additionalProperties: false,
+        properties: {
+          discoveryPathId: { format: "uuid", type: "string" },
+          query: {
+            description:
+              "The exact submitted query, retained as visible Discovery criteria.",
+            type: "string"
+          },
+          results: {
+            items: { $ref: "#/components/schemas/SearchResult" },
+            type: "array"
+          }
+        },
+        required: ["discoveryPathId", "query", "results"],
+        type: "object"
+      },
       BrowseRoots: {
         additionalProperties: false,
         properties: {
@@ -2337,6 +2395,33 @@ const document = {
             },
             description: "Active root Categories"
           }
+        },
+        tags: ["Discovery"]
+      }
+    },
+    "/api/v1/discovery/search": {
+      post: {
+        description:
+          "Submits a Search query. A valid submission creates a Search Discovery Start, which carries no Domain until the criteria include one selected active leaf Category. Matching considers only title, description, active Category-path display names, public Business display name and public Attribute display values — protected contact, Affiliate Destination, owner-only and Admin-only information, historical records and ineligible Offerings are not in the set at all. Behaviour is identical with or without a session.",
+        operationId: "search",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/SearchSubmission" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/SearchView" }
+              }
+            },
+            description: "Matched Offerings with their highest match level"
+          },
+          "400": errorResponse("Invalid Search submission")
         },
         tags: ["Discovery"]
       }

@@ -692,6 +692,43 @@ export const browseSelectionSchema = z
   .object({ discoveryPathId: z.string().uuid().optional() })
   .strict();
 
+/**
+ * The four relationships PRD-0002 §12.2 ranks. `US-DSC-F02-001` AC-7 asks only
+ * that the highest applicable one be identified — it is a level, not a score,
+ * because a score would be the ranking algorithm §12.2 declines to define.
+ */
+export const SEARCH_MATCH_LEVELS = [
+  "TITLE",
+  "CATEGORY_PATH",
+  "BUSINESS_NAME",
+  "DESCRIPTION_OR_ATTRIBUTE"
+] as const;
+
+/// A valid submission is a non-empty query. Length is bounded because a query
+/// is a person's sentence, not a payload.
+export const searchSubmissionSchema = z
+  .object({
+    discoveryPathId: z.string().uuid().optional(),
+    query: z.string().trim().min(1).max(400)
+  })
+  .strict();
+
+export const searchResultSchema = listingCardSchema.extend({
+  matchLevel: z.enum(SEARCH_MATCH_LEVELS)
+});
+
+export const searchViewSchema = z
+  .object({
+    discoveryPathId: z.string().uuid(),
+    /// The exact submitted query, kept as visible Discovery criteria (AC-6).
+    query: z.string(),
+    results: z.array(searchResultSchema)
+  })
+  .strict();
+
+export type SearchSubmission = z.infer<typeof searchSubmissionSchema>;
+export type SearchViewResponse = z.infer<typeof searchViewSchema>;
+
 export type BrowseRoots = z.infer<typeof browseRootsSchema>;
 export type BrowseViewResponse = z.infer<typeof browseViewSchema>;
 export type BrowseSelection = z.infer<typeof browseSelectionSchema>;

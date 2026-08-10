@@ -288,13 +288,42 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
     eligibilityVersion: number
   ): Promise<void> {
     await client.query(
-      `insert into offering_search_projection
+      `with path as (
+         -- The active Category path, root first. A person recognises an
+         -- Offering by where it sits, not only by its leaf.
+         with recursive walk as (
+           select c.id, c.parent_id, c.name, 0 as depth
+           from category c
+           join offering o on o.category_id = c.id
+           where o.id = $1
+           union all
+           select parent.id, parent.parent_id, parent.name, walk.depth + 1
+           from category parent join walk on walk.parent_id = parent.id
+         )
+         select string_agg(name, ' ' order by depth desc) as names from walk
+       ),
+       attributes as (
+         -- Display values, not identifiers: the option label a person would
+         -- read, and the scalar as it would be shown.
+         select string_agg(
+           coalesce(opt.label, v.text_value, v.number_value::text,
+             case when v.boolean_value then 'true' else 'false' end),
+           ' '
+         ) as values
+         from offering_attribute_value v
+         left join attribute_option opt on opt.id = v.option_id
+         where v.offering_id = $1
+       )
+       insert into offering_search_projection
          (offering_id, business_id, domain_id, category_id, title, summary,
-          business_name, searchable_text, filter_values, published_at,
-          eligibility_version, projected_at)
+          business_name, category_path, attribute_text, searchable_text,
+          filter_values, published_at, eligibility_version, projected_at)
        select o.id, o.business_id, c.domain_id, o.category_id, o.title,
          o.summary, b.name,
-         concat_ws(' ', o.title, o.summary, b.name, c.name),
+         coalesce(path.names, c.name),
+         coalesce(attributes.values, ''),
+         concat_ws(' ', o.title, o.summary, b.name, coalesce(path.names, c.name),
+           coalesce(attributes.values, '')),
          coalesce(
            (select jsonb_object_agg(v."attributeId", v.value)
             from (
@@ -319,6 +348,8 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
        from offering o
        join business b on b.id = o.business_id
        join category c on c.id = o.category_id
+       cross join path
+       cross join attributes
        where o.id = $1
        on conflict (offering_id) do update set
          business_id = excluded.business_id,
@@ -327,6 +358,8 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
          title = excluded.title,
          summary = excluded.summary,
          business_name = excluded.business_name,
+         category_path = excluded.category_path,
+         attribute_text = excluded.attribute_text,
          searchable_text = excluded.searchable_text,
          filter_values = excluded.filter_values,
          published_at = excluded.published_at,

@@ -48,4 +48,50 @@ export interface BrowseView {
   siblings: BrowseCategory[];
 }
 
+/**
+ * The four match relationships PRD-0002 §12.2 ranks, best first.
+ *
+ * `US-DSC-F02-001` AC-7 asks only that the highest applicable one be
+ * identified; `US-DSC-F07-001` owns what ordering does with it. Keeping them
+ * apart is why this is a level and not a score: a score would be a ranking
+ * algorithm, which §12.2 explicitly does not define.
+ */
+export const SEARCH_MATCH_LEVELS = [
+  "TITLE",
+  "CATEGORY_PATH",
+  "BUSINESS_NAME",
+  "DESCRIPTION_OR_ATTRIBUTE"
+] as const;
+
+export type SearchMatchLevel = (typeof SEARCH_MATCH_LEVELS)[number];
+
+export interface SearchResult extends ListingCard {
+  matchLevel: SearchMatchLevel;
+}
+
+export interface SearchView {
+  discoveryPathId: string;
+  /// The exact submitted query, kept as visible Discovery criteria (AC-6).
+  query: string;
+  results: SearchResult[];
+}
+
+/**
+ * The terms a query contributes to matching.
+ *
+ * Everything that is not a letter or a digit becomes a separator, so a term can
+ * never carry `tsquery` syntax into the database. This is deliberately not
+ * linguistic processing — PRD-0002 defines no stemming, no synonyms and no
+ * language model, and inventing one here would be inventing product behaviour.
+ *
+ * The cap exists because a query is a person's sentence, not a workload.
+ */
+export function searchTerms(query: string): string[] {
+  return query
+    .toLocaleLowerCase("tr")
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((term) => term.length > 0)
+    .slice(0, 24);
+}
+
 export const discoveryModule = { name: "discovery" } as const;
