@@ -224,3 +224,86 @@ export const draftOfferingSchema = createDraftOfferingSchema.extend({
 
 export type CreateDraftOffering = z.infer<typeof createDraftOfferingSchema>;
 export type DraftOffering = z.infer<typeof draftOfferingSchema>;
+
+/**
+ * The wire spelling of the three V1 Domains. The Catalog module owns the
+ * concept; shared packages may not import product modules, so the list is
+ * restated here as the published contract and the two are kept in agreement by
+ * a test rather than by an import.
+ */
+export const V1_DOMAINS = ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"] as const;
+
+const categoryIdentitySchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1)
+    .max(120)
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/u,
+      "Use lowercase words separated by hyphens"
+    ),
+  stableKey: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .min(1)
+    .max(100)
+    .regex(/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/u, "Use upper snake case")
+});
+
+/**
+ * A Category is created either as a root that names one V1 Domain
+ * (`US-PLT-F08-001` AC-1) or as a child under one valid parent (AC-2) — never
+ * both and never neither. A root that also named a parent would be claiming a
+ * Domain it must instead inherit (AC-7), so the exclusivity is part of the
+ * contract rather than a rule discovered on the way to the database.
+ */
+export const createRootCategorySchema = categoryIdentitySchema
+  .extend({ domain: z.enum(V1_DOMAINS) })
+  .strict();
+
+export const createChildCategorySchema = categoryIdentitySchema
+  .extend({ parentId: z.string().uuid() })
+  .strict();
+
+export const createCategorySchema = z.union([
+  createRootCategorySchema,
+  createChildCategorySchema
+]);
+
+/// AC-3 changes the display name and nothing else, so identity cannot move with
+/// it: there is no field here that could carry a new slug, key or Domain.
+export const renameCategorySchema = z
+  .object({ name: z.string().trim().min(1).max(160) })
+  .strict();
+
+/// AC-4 moves a Category within its Domain. `null` promotes it to a root of the
+/// same Domain, which is a hierarchy change rather than a Domain change.
+export const reparentCategorySchema = z
+  .object({ parentId: z.string().uuid().nullable() })
+  .strict();
+
+export const categorySchema = z
+  .object({
+    active: z.boolean(),
+    domain: z.enum(V1_DOMAINS),
+    id: z.string().uuid(),
+    name: z.string(),
+    parentId: z.string().uuid().nullable(),
+    slug: z.string(),
+    stableKey: z.string()
+  })
+  .strict();
+
+export const categoriesSchema = z
+  .object({ categories: z.array(categorySchema) })
+  .strict();
+
+export type CreateCategory = z.infer<typeof createCategorySchema>;
+export type RenameCategory = z.infer<typeof renameCategorySchema>;
+export type ReparentCategory = z.infer<typeof reparentCategorySchema>;
+export type CategoryResponse = z.infer<typeof categorySchema>;
+export type Categories = z.infer<typeof categoriesSchema>;

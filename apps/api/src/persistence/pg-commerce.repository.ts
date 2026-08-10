@@ -6,7 +6,7 @@ import type {
   BusinessAccessDecision,
   BusinessAccessReader
 } from "@commerce/business";
-import type { CatalogReader } from "@commerce/catalog";
+import { CategoryNotAssignableError } from "@commerce/catalog";
 import type { IdentityReader } from "@commerce/identity";
 import {
   OfferingSlugConflictError,
@@ -27,12 +27,38 @@ function isUniqueViolation(error: unknown, constraint: string): boolean {
   );
 }
 
+/**
+ * An Offering may be assigned only to an active leaf Category
+ * (`US-PLT-F08-001` AC-8), and the Category's Domain is what gives the Offering
+ * its own (AC-9) — which is why nothing here copies a Domain onto the Offering:
+ * it is derived from this row, not duplicated beside it.
+ *
+ * The share lock is the point. Retirement takes an exclusive lock on the same
+ * row before counting assigned Offerings, so the two cannot interleave: either
+ * this assignment is visible to that count, or this assignment finds the
+ * Category already retired.
+ */
+async function assertAssignable(
+  client: PoolClient,
+  categoryId: string
+): Promise<void> {
+  const category = await client.query<{ assignable: boolean }>(
+    `select (c.active and not exists (
+       select 1 from category child
+       where child.parent_id = c.id and child.active = true
+     )) as assignable
+     from category c where c.id = $1 for share`,
+    [categoryId]
+  );
+  if (category.rows[0]?.assignable !== true)
+    throw new CategoryNotAssignableError(categoryId);
+}
+
 @Injectable()
 export class PgCommerceRepository
   implements
     IdentityReader,
     BusinessAccessReader,
-    CatalogReader,
     DraftOfferingRepository,
     AuditWriter,
     OnModuleDestroy
@@ -91,18 +117,11 @@ export class PgCommerceRepository
     return { allowed: true };
   }
 
-  async isActiveCategory(categoryId: string): Promise<boolean> {
-    const result = await this.pool.query(
-      `select 1 from category where id = $1 and active = true`,
-      [categoryId]
-    );
-    return result.rowCount === 1;
-  }
-
   async create(input: OfferingInput): Promise<DraftOfferingRecord> {
     const client = await this.pool.connect();
     try {
       await client.query("begin");
+      await assertAssignable(client, input.categoryId);
       const result = await client.query<DraftOfferingRecord>(
         `insert into offering
            (business_id, category_id, slug, title, summary, status)

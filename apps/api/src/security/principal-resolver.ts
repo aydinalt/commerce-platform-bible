@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException
+} from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 
 import { TestPrincipalAdapter, type Principal } from "@commerce/identity";
@@ -45,6 +49,10 @@ export class PrincipalResolver {
         throw new UnauthorizedException("Authentication required");
       }
       return {
+        // Carried from the session rather than inferred from authorization:
+        // being able to enter the Admin surface and being in it are different
+        // states (`US-IDN-F08-001` AC-5).
+        adminContext: session.adminContext,
         correlationId: correlationId(request),
         sessionId: session.sessionId,
         userId: session.userId,
@@ -63,5 +71,24 @@ export class PrincipalResolver {
     } catch {
       throw new UnauthorizedException("Authentication required");
     }
+  }
+
+  /**
+   * The principal for an Admin-only surface.
+   *
+   * Authorization alone is not enough: `US-IDN-F08-001` AC-5 makes the Admin
+   * surface something a person enters explicitly, so an authorized Admin who
+   * has not entered it is refused here exactly like anyone else. Without that,
+   * every Admin action would be one stray request away from an ordinary
+   * browsing session.
+   */
+  async resolveAdmin(request: FastifyRequest): Promise<Principal> {
+    const principal = await this.resolve(request);
+    if (principal.adminContext !== true)
+      throw new ForbiddenException({
+        code: "ADMIN_CONTEXT_REQUIRED",
+        message: "This action requires an entered Admin context"
+      });
+    return principal;
   }
 }

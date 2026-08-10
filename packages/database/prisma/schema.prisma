@@ -35,10 +35,14 @@ enum BusinessModerationStatus {
   RESTRICTED
 }
 
+/// The four Offering lifecycle states of PRD-0001 §6. `Hidden` is an Admin
+/// removal from circulation that keeps its publication history; `Archived` is
+/// the terminal result of owner retirement.
 enum OfferingStatus {
   DRAFT
   PUBLISHED
-  RETIRED
+  HIDDEN
+  ARCHIVED
 }
 
 enum AttributeValueKind {
@@ -240,11 +244,16 @@ model Category {
   name       String              @db.VarChar(160)
   active     Boolean             @default(true)
   domain     Domain              @relation(fields: [domainId], references: [id], onDelete: Restrict)
-  parent     Category?           @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  /// The parent reference carries the Domain as well as the identifier, so a
+  /// child can only point at a parent that already agrees with it
+  /// (`US-PLT-F08-001` AC-7, AC-10). Cross-Domain parenting is a foreign key
+  /// violation rather than a rule someone has to remember to check.
+  parent     Category?           @relation("CategoryTree", fields: [parentId, domainId], references: [id, domainId], onDelete: Restrict, onUpdate: Restrict)
   children   Category[]          @relation("CategoryTree")
   attributes CategoryAttribute[]
   offerings  Offering[]
 
+  @@unique([id, domainId])
   @@unique([domainId, slug])
   @@index([parentId])
   @@map("category")
@@ -301,7 +310,7 @@ model Offering {
   status       OfferingStatus            @default(DRAFT)
   version      Int                       @default(1)
   publishedAt  DateTime?                 @map("published_at") @db.Timestamptz(6)
-  retiredAt    DateTime?                 @map("retired_at") @db.Timestamptz(6)
+  archivedAt   DateTime?                 @map("archived_at") @db.Timestamptz(6)
   createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   business     Business                  @relation(fields: [businessId], references: [id], onDelete: Restrict)

@@ -201,6 +201,108 @@
         ],
         "type": "object"
       },
+      "Category": {
+        "additionalProperties": false,
+        "properties": {
+          "active": { "type": "boolean" },
+          "domain": {
+            "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+            "type": "string"
+          },
+          "id": { "format": "uuid", "type": "string" },
+          "name": { "type": "string" },
+          "parentId": { "format": "uuid", "type": ["string", "null"] },
+          "slug": { "type": "string" },
+          "stableKey": { "type": "string" }
+        },
+        "required": [
+          "active",
+          "domain",
+          "id",
+          "name",
+          "parentId",
+          "slug",
+          "stableKey"
+        ],
+        "type": "object"
+      },
+      "Categories": {
+        "additionalProperties": false,
+        "properties": {
+          "categories": {
+            "items": { "$ref": "#/components/schemas/Category" },
+            "type": "array"
+          }
+        },
+        "required": ["categories"],
+        "type": "object"
+      },
+      "CreateCategory": {
+        "description": "A root Category names one V1 Domain; a child names one parent and inherits the Domain. Exactly one of the two forms is accepted.",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "domain": {
+                "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+                "type": "string"
+              },
+              "name": { "maxLength": 160, "minLength": 1, "type": "string" },
+              "slug": {
+                "maxLength": 120,
+                "minLength": 1,
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              "stableKey": {
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
+                "type": "string"
+              }
+            },
+            "required": ["domain", "name", "slug", "stableKey"],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "name": { "maxLength": 160, "minLength": 1, "type": "string" },
+              "parentId": { "format": "uuid", "type": "string" },
+              "slug": {
+                "maxLength": 120,
+                "minLength": 1,
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                "type": "string"
+              },
+              "stableKey": {
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
+                "type": "string"
+              }
+            },
+            "required": ["name", "parentId", "slug", "stableKey"],
+            "type": "object"
+          }
+        ]
+      },
+      "RenameCategory": {
+        "additionalProperties": false,
+        "properties": {
+          "name": { "maxLength": 160, "minLength": 1, "type": "string" }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
+      "ReparentCategory": {
+        "additionalProperties": false,
+        "properties": {
+          "parentId": { "format": "uuid", "type": ["string", "null"] }
+        },
+        "required": ["parentId"],
+        "type": "object"
+      },
       "CreateDraftOffering": {
         "additionalProperties": false,
         "properties": {
@@ -726,6 +828,305 @@
           }
         },
         "tags": ["Business"]
+      }
+    },
+    "/api/v1/admin/categories": {
+      "get": {
+        "description": "Every Category, retired ones included: a retired definition stays readable to management even though active Browse excludes it.",
+        "operationId": "listCategories",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Categories" }
+              }
+            },
+            "description": "Category definitions"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required"
+          }
+        },
+        "tags": ["Platform"]
+      },
+      "post": {
+        "description": "Creates a root Category under one V1 Domain, or a child that inherits its parent's Domain.",
+        "operationId": "createCategory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCategory" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            },
+            "description": "Category created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Category input"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Category matches the given parent"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The parent is retired, or the slug or stable key is taken"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/categories/{categoryId}/name": {
+      "put": {
+        "description": "Changes the display name. Category identity is unaffected: no identifier, slug, stable key or Domain can be carried by this request.",
+        "operationId": "renameCategory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "categoryId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RenameCategory" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            },
+            "description": "Category renamed"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Category name"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Category matches that identifier"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/categories/{categoryId}/parent": {
+      "put": {
+        "description": "Moves a Category within its own Domain. A null parent promotes it to a root of the same Domain. Cross-Domain moves and ancestry cycles are refused.",
+        "operationId": "reparentCategory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "categoryId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReparentCategory" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            },
+            "description": "Category reparented"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid parent"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Category matches that identifier"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The proposed parent is in another Domain or inside the Category's own ancestry"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
+    "/api/v1/admin/categories/{categoryId}/retirement": {
+      "post": {
+        "description": "Retires a Category. Refused while an active child or an assigned Draft, Published or Hidden Offering remains; Archived history does not block it. Nothing is deleted.",
+        "operationId": "retireCategory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "categoryId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            },
+            "description": "Category retired"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An entered Admin context is required, or the request origin is not allowed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Category matches that identifier"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "An active dependency remains"
+          }
+        },
+        "tags": ["Platform"]
       }
     },
     "/api/v1/businesses/{businessId}/information": {

@@ -5,6 +5,7 @@ import {
   NotFoundException
 } from "@nestjs/common";
 
+import { CategoryNotAssignableError } from "@commerce/catalog";
 import type { CreateDraftOffering } from "@commerce/contracts";
 import type { Principal } from "@commerce/identity";
 import {
@@ -64,11 +65,6 @@ export class OfferingService {
       throw new ForbiddenException("Business cannot author offerings");
     }
 
-    if (!(await this.repository.isActiveCategory(input.categoryId))) {
-      await deny("CATEGORY_NOT_ACTIVE");
-      throw new NotFoundException("Category not found");
-    }
-
     try {
       return await this.repository.create({
         businessId,
@@ -85,6 +81,16 @@ export class OfferingService {
         throw new ConflictException({
           code: "OFFERING_SLUG_CONFLICT",
           message: "An Offering with this slug already exists"
+        });
+      }
+      // `US-PLT-F08-001` AC-8 and AC-14. Reported as absence rather than as a
+      // refusal: a Category that cannot take Offerings is not one the author is
+      // being kept away from, it is one that is not there to be chosen.
+      if (error instanceof CategoryNotAssignableError) {
+        await deny("CATEGORY_NOT_ASSIGNABLE");
+        throw new NotFoundException({
+          code: "CATEGORY_NOT_FOUND",
+          message: "No active leaf Category matches that identifier"
         });
       }
       throw error;

@@ -3,6 +3,8 @@ import { APP_FILTER } from "@nestjs/core";
 
 import { BusinessController } from "./business/business.controller.js";
 import { BusinessService } from "./business/business.service.js";
+import { CatalogController } from "./catalog/catalog.controller.js";
+import { CatalogService } from "./catalog/catalog.service.js";
 import { HealthController } from "./health.controller.js";
 import { ErrorEnvelopeFilter } from "./http/error-envelope.filter.js";
 import { IdentityController } from "./identity/identity.controller.js";
@@ -11,6 +13,7 @@ import { PasswordHasher } from "./identity/password.hasher.js";
 import { OfferingController } from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
 import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
+import { PgCatalogRepository } from "./persistence/pg-catalog.repository.js";
 import { PgCommerceRepository } from "./persistence/pg-commerce.repository.js";
 import { PgIdentityRepository } from "./persistence/pg-identity.repository.js";
 import { OriginValidator } from "./security/origin.guard.js";
@@ -40,16 +43,19 @@ function allowedOrigins(): readonly string[] {
 @Module({
   controllers: [
     BusinessController,
+    CatalogController,
     HealthController,
     IdentityController,
     OfferingController
   ],
   providers: [
     BusinessService,
+    CatalogService,
     IdentityService,
     OfferingService,
     PasswordHasher,
     PgBusinessRepository,
+    PgCatalogRepository,
     PgCommerceRepository,
     PgIdentityRepository,
     PrincipalResolver,
