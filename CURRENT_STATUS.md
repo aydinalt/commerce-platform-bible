@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.15
+Version:      2.16
 Last Updated: 2026-08-11
 -->
 
@@ -14,8 +14,8 @@ Last Updated: 2026-08-11
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I4 Public Web Journey — closed |
-| Development | Identity baseline, the catalog and Offering write model, the publication-to-Discovery read path, and the public web journey from Homepage to complete Offering Presentation implemented |
+| Current phase | M12 Increment I5 Compare and Decision Completion — closed |
+| Development | Identity baseline, the catalog and Offering write model, the publication-to-Discovery read path, the public web journey, and the complete Compare-and-Decision journey through to its two Completions implemented |
 | Delivery Status of all Frozen Stories | Not Started — implementation is recorded in closure records, and advancing any Delivery Status is a separate Owner decision |
 
 ## Canonical Layer Status
@@ -134,9 +134,22 @@ complete Presentation of one Offering without signing in. `US-OFR-F05-001` AC-3
 is covered except for its grouping half, which has no governed input anywhere in
 the datamodel or PRD-0006.
 
+## I5 Closure Evidence
+
+Seven Stories delivered across seven commits: `US-DEC-F01-001` through
+`US-DEC-F07-001`. Six migrations, and a suite of 466 tests. Per-Story coverage,
+the delivery decisions and the deferrals are recorded in
+`docs/implementation/I5_COMPARE_AND_DECISION_CLOSURE.md`.
+
+Every Acceptance Criterion of all seven Stories is covered. The increment adds
+the first behaviour that leaves the platform and the first that speaks, and
+bounds both: the affiliate address is made active with nothing attached to it,
+and Decision Chat is a port with no vendor whose replies are checked against the
+Decision Context before they reach a person.
+
 ## Remaining Work
 
-1. Begin I5 Compare and Decision Completion, starting with `US-DEC-F01-001`.
+1. Begin I6 Business Operations, starting with `US-BUS-F03-001`.
 2. Open `US-OFR-F02-001` AC-9 when `US-PLT-F06-001` introduces the correction case it depends on.
 3. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
 4. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
@@ -152,6 +165,9 @@ the datamodel or PRD-0006.
 - Outbound email has a port, an outbox and a worker, but no vendor adapter. `LoggingEmailDispatcher` refuses to construct in production, so a deployment without an adapter fails loudly rather than accepting registrations nobody can complete.
 - Discovery criteria travel in a five-minute `httpOnly` cookie rather than the address, because UX-0002 §4 places persistent or shareable URL state outside V1. A Results page therefore cannot be bookmarked or shared, and refreshing loses the query — an accepted cost of not building something no Story promised.
 - No public page may be prerendered or prefetched. Results depend on current eligibility, and opening an Offering produces an occurrence that a speculative fetch would fabricate.
+- Decision is a JSON contract except for Compare. The Compare table and its entry from a Presentation are built; Decision Chat, selection, Affiliate Handoff and Direct Contact have no screen, and UX-0009 belongs to a later increment.
+- Decision Chat has no assistant vendor. The development adapter restates the Decision Context and refuses to construct in production; the invented-value check that guards `US-DEC-F03-001` AC-6 is numeric only and cannot detect a claim expressed in words.
+- Current-flow Decision state expires after an hour and is swept on the next request rather than by a scheduler.
 - Attribute Filter controls are absent from the web application. `US-DSC-F05-001` is implemented in the API and has no I4 Story for its surface.
 - Web tests render server components through `react-dom/server` rather than in a browser. They prove markup and absence — which is most of what these Stories require — and nothing about layout, focus behaviour or responsive treatment.
 - Discovery results are unpaged. No Frozen Discovery Story specifies a page size, a cursor or a "load more" affordance, and `US-DSC-F07-001` AC-3 and AC-5 require a stable deterministic order that a guessed pagination scheme could contradict.
@@ -177,6 +193,7 @@ the datamodel or PRD-0006.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.16 | 2026-08-11 | Closed I5: the Comparison Set and Compare, the Decision Context, Decision Chat behind a vendorless port, explicit Offering selection, Affiliate Handoff, Direct Contact and the two Decision Completions. Recorded that the assistant has no vendor and that its invented-value guard is numeric only. Delivery Status unchanged. |
 | 2.15 | 2026-08-11 | Closed I4: the Homepage entry, Discovery Results and Listing Cards, the Offering Presentation handoff, complete public Offering Presentation with its `Offering Presentation Open` occurrence, and the Compare-preparation Discovery return. Recorded that Discovery criteria are carried in a transient cookie rather than the address, and that `US-OFR-F05-001` AC-3 waits on a governed Attribute grouping. Delivery Status unchanged. |
 | 2.14 | 2026-08-11 | Closed I3: Affiliate Destination eligibility governance, Offering publication with its Discovery projection, and the unauthenticated Browse, Search, Category narrowing, Attribute filtering, default ordering and Zero Results recovery read path. Recorded that Discovery is still a JSON contract with no page, and that results are deliberately unpaged. Delivery Status unchanged. |
 | 2.13 | 2026-08-10 | Closed I2: Category and Domain management, Attribute definition management, Business information and exposure, and Offering creation, editing, retirement and Affiliate Destination configuration. Aligned the Offering lifecycle, the Attribute value kinds and the required-for-publication flag to their Frozen Stories. Recorded that `US-OFR-F02-001` AC-9 waits for `US-PLT-F06-001`. Delivery Status unchanged. |
