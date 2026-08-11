@@ -40,11 +40,11 @@ CREATE TYPE "OfferingContentArea" AS ENUM ('TITLE', 'SUMMARY', 'ATTRIBUTES');
 
 CREATE TABLE "moderation_case" (
   "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  "business_id" UUID NOT NULL REFERENCES "business"("id") ON DELETE RESTRICT,
+  "business_id" UUID NOT NULL,
   "status" "ModerationCaseStatus" NOT NULL DEFAULT 'OPEN',
-  "opened_by" UUID NOT NULL REFERENCES "user_account"("id") ON DELETE RESTRICT,
+  "opened_by" UUID NOT NULL,
   "opened_at" TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
-  "closed_by" UUID REFERENCES "user_account"("id") ON DELETE RESTRICT,
+  "closed_by" UUID,
   "closed_at" TIMESTAMPTZ(6),
   -- A Closed case without a record of who closed it and when is a case nobody
   -- can answer for. PRD-0006 will write all three together or none of them.
@@ -74,17 +74,10 @@ CREATE TABLE "correction_request" (
   "offering_id" UUID,
   "content_area" "OfferingContentArea",
   "note" VARCHAR(1000),
-  "requested_by" UUID NOT NULL REFERENCES "user_account"("id") ON DELETE RESTRICT,
+  "requested_by" UUID NOT NULL,
   "requested_at" TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
   -- The case and the Business are read together, so a request cannot drift onto
   -- a case belonging to somebody else.
-  CONSTRAINT "correction_request_case_fkey"
-    FOREIGN KEY ("case_id", "business_id")
-    REFERENCES "moderation_case"("id", "business_id") ON DELETE CASCADE,
-  -- And the named Offering is necessarily one the case's Business owns.
-  CONSTRAINT "correction_request_offering_fkey"
-    FOREIGN KEY ("offering_id", "business_id")
-    REFERENCES "offering"("id", "business_id") ON DELETE RESTRICT,
   -- AC-3 and AC-9. An Offering-content correction identifies exactly one
   -- Offering and exactly one content area; every other target identifies
   -- neither. Both directions, so neither half can be supplied alone.
@@ -106,16 +99,65 @@ CREATE INDEX "correction_request_case_id_idx"
 -- because writing it is the same act as making the change.
 CREATE TABLE "correction_edit" (
   "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  "correction_request_id" UUID NOT NULL
-    REFERENCES "correction_request"("id") ON DELETE CASCADE,
-  "offering_id" UUID NOT NULL REFERENCES "offering"("id") ON DELETE RESTRICT,
+  "correction_request_id" UUID NOT NULL,
+  "offering_id" UUID NOT NULL,
   "content_area" "OfferingContentArea" NOT NULL,
-  "edited_by" UUID NOT NULL REFERENCES "user_account"("id") ON DELETE RESTRICT,
+  "edited_by" UUID NOT NULL,
   "edited_at" TIMESTAMPTZ(6) NOT NULL DEFAULT now()
 );
 
 CREATE INDEX "correction_edit_correction_request_id_idx"
   ON "correction_edit" ("correction_request_id");
+
+-- Foreign keys, written out rather than inlined. Every one carries
+-- `ON UPDATE CASCADE`, which is the referential action Prisma's datamodel
+-- means when a relation does not say otherwise. Inlining them leaves the
+-- update action at PostgreSQL's `NO ACTION` default, and the migrated database
+-- then differs from the datamodel in a way only the drift gate can see.
+--
+-- The two composite keys are the point of the whole arrangement: they make "the
+-- corrected Offering belongs to the case's Business" a fact the database holds
+-- rather than a condition somebody has to check.
+
+ALTER TABLE "moderation_case" ADD CONSTRAINT "moderation_case_business_id_fkey"
+  FOREIGN KEY ("business_id") REFERENCES "business"("id")
+  ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE "moderation_case" ADD CONSTRAINT "moderation_case_opened_by_fkey"
+  FOREIGN KEY ("opened_by") REFERENCES "user_account"("id")
+  ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE "moderation_case" ADD CONSTRAINT "moderation_case_closed_by_fkey"
+  FOREIGN KEY ("closed_by") REFERENCES "user_account"("id")
+  ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE "correction_request" ADD CONSTRAINT "correction_request_case_fkey"
+  FOREIGN KEY ("case_id", "business_id")
+  REFERENCES "moderation_case"("id", "business_id")
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "correction_request" ADD CONSTRAINT "correction_request_offering_fkey"
+  FOREIGN KEY ("offering_id", "business_id")
+  REFERENCES "offering"("id", "business_id")
+  ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE "correction_request"
+  ADD CONSTRAINT "correction_request_requested_by_fkey"
+  FOREIGN KEY ("requested_by") REFERENCES "user_account"("id")
+  ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE "correction_edit"
+  ADD CONSTRAINT "correction_edit_correction_request_id_fkey"
+  FOREIGN KEY ("correction_request_id") REFERENCES "correction_request"("id")
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "correction_edit" ADD CONSTRAINT "correction_edit_offering_id_fkey"
+  FOREIGN KEY ("offering_id") REFERENCES "offering"("id")
+  ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE "correction_edit" ADD CONSTRAINT "correction_edit_edited_by_fkey"
+  FOREIGN KEY ("edited_by") REFERENCES "user_account"("id")
+  ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AC-8's first gate, and AC-12 read from the other side: an edit is only ever
 -- an answer to an Open case, and saving one leaves the status alone. Nothing
