@@ -446,6 +446,16 @@ suite("Increment I6 Correction notice and owner response", () => {
   it("refuses a bounded edit once the case is closed", async () => {
     const business = await scenario();
     const notice = await offeringCorrection(business);
+    // `US-PLT-F02-001` made closure conditional on a resolution, so a case can
+    // no longer be closed by writing a status — the trigger refuses it. The
+    // no-action decision here is the Platform-side act that earns the closure;
+    // what this test is about is what happens to the owner's bounded path
+    // afterwards.
+    await pool.query(
+      `insert into moderation_resolution (case_id, no_action_reason, recorded_by)
+       values ($1,'Reviewed and left as is',$2)`,
+      [notice.caseId, admin.userId]
+    );
     await pool.query(
       `update moderation_case
          set status = 'CLOSED', closed_at = now(), closed_by = $2

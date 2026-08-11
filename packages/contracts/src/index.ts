@@ -653,6 +653,99 @@ export const adminPanelSchema = z
 
 export type AdminPanel = z.infer<typeof adminPanelSchema>;
 
+const MODERATION_ACTION_VALUES = [
+  "REQUEST_CORRECTION",
+  "HIDE_OFFERING",
+  "RESTORE_OFFERING",
+  "RESTRICT_BUSINESS",
+  "RESTORE_BUSINESS",
+  "SUSPEND_USER",
+  "REINSTATE_USER"
+] as const;
+
+/**
+ * One General Moderation case (`US-PLT-F02-001`).
+ *
+ * `status` is workflow and nothing else. AC-9 keeps it distinct from every
+ * product state a target has, and the shape says so by carrying no target
+ * state at all: there is no lifecycle here, no moderation status, no access
+ * status, no eligibility and no validation result. A reader who wanted one
+ * would have to go and ask the authority that owns it.
+ *
+ * `availableActions` is a subset of the seven, narrowed by the target's kind,
+ * its current condition and what has a path today. `resolutions` is the
+ * evidence AC-7 makes closure conditional on — an applied action or a recorded
+ * no-action decision, never a flag.
+ */
+export const moderationCaseSchema = z
+  .object({
+    availableActions: z.array(z.enum(MODERATION_ACTION_VALUES)),
+    closedAt: z.string().datetime().nullable(),
+    id: z.string().uuid(),
+    openedAt: z.string().datetime(),
+    /// Present for every kind of target that has one to name — which for an
+    /// Offering case is the Business that will answer for it.
+    businessId: z.string().uuid().nullable(),
+    offeringId: z.string().uuid().nullable(),
+    resolutions: z.array(
+      z
+        .object({
+          action: z.enum(MODERATION_ACTION_VALUES).nullable(),
+          noActionReason: z.string().nullable(),
+          recordedAt: z.string().datetime()
+        })
+        .strict()
+    ),
+    status: z.enum(["OPEN", "CLOSED"]),
+    targetType: z.enum(["OFFERING", "BUSINESS", "USER_ACCOUNT"]),
+    userId: z.string().uuid().nullable()
+  })
+  .strict();
+
+export const moderationCasesSchema = z
+  .object({ cases: z.array(moderationCaseSchema) })
+  .strict();
+
+/**
+ * Opening a case. Exactly one target, expressed as a union rather than three
+ * optional fields, so a request naming both an Offering and a User is not a
+ * request this contract can carry.
+ */
+export const openModerationCaseSchema = z.discriminatedUnion("targetType", [
+  z
+    .object({
+      offeringId: z.string().uuid(),
+      targetType: z.literal("OFFERING")
+    })
+    .strict(),
+  z
+    .object({
+      businessId: z.string().uuid(),
+      targetType: z.literal("BUSINESS")
+    })
+    .strict(),
+  z
+    .object({
+      targetType: z.literal("USER_ACCOUNT"),
+      userId: z.string().uuid()
+    })
+    .strict()
+]);
+
+/**
+ * Recording a no-action decision (AC-7). It carries a reason and nothing else:
+ * deciding to do nothing is still a decision somebody has to stand behind, and
+ * a blank one would be indistinguishable from never having looked.
+ */
+export const recordNoActionSchema = z
+  .object({ reason: z.string().trim().min(1).max(1000) })
+  .strict();
+
+export type ModerationCase = z.infer<typeof moderationCaseSchema>;
+export type ModerationCases = z.infer<typeof moderationCasesSchema>;
+export type OpenModerationCase = z.infer<typeof openModerationCaseSchema>;
+export type RecordNoAction = z.infer<typeof recordNoActionSchema>;
+
 export type CorrectionNotice = z.infer<typeof correctionNoticeSchema>;
 export type CorrectionNotices = z.infer<typeof correctionNoticesSchema>;
 export type RequestCorrection = z.infer<typeof requestCorrectionSchema>;

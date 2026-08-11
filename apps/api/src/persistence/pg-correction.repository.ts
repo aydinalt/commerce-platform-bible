@@ -114,8 +114,13 @@ export class PgCorrectionRepository implements OnModuleDestroy {
         existing.rows[0]?.id ??
         (
           await client.query<{ id: string }>(
-            `insert into moderation_case (business_id, opened_by)
-             values ($1,$2) returning id`,
+            // `US-PLT-F02-001` gave the case a target. A correction is always
+            // about something the Business owns, so the case it opens is a
+            // Business case — which is also why a User Account case can carry
+            // no correction: the composite key has no Business to reach.
+            `insert into moderation_case
+               (target_type, business_id, opened_by)
+             values ('BUSINESS', $1, $2) returning id`,
             [input.businessId, input.requestedBy]
           )
         ).rows[0]?.id;

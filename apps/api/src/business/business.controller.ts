@@ -28,6 +28,7 @@ import {
   type OwnedBusinesses
 } from "@commerce/contracts";
 
+import { PgModerationRepository } from "../persistence/pg-moderation.repository.js";
 import { OriginValidator } from "../security/origin.guard.js";
 import { PrincipalResolver } from "../security/principal-resolver.js";
 import { BusinessService } from "./business.service.js";
@@ -228,6 +229,7 @@ export class BusinessController {
 export class AdminBusinessController {
   constructor(
     private readonly businesses: BusinessService,
+    private readonly cases: PgModerationRepository,
     private readonly corrections: CorrectionService,
     private readonly principals: PrincipalResolver,
     private readonly origins: OriginValidator
@@ -291,7 +293,19 @@ export class AdminBusinessController {
     request: FastifyRequest
   ) {
     this.origins.assertAcceptable(request, true);
-    await this.principals.resolveAdmin(request);
-    return this.businesses.moderate(businessId, status);
+    const principal = await this.principals.resolveAdmin(request);
+    const moderated = await this.businesses.moderate(businessId, status);
+    // `US-PLT-F02-001` AC-7. The action's consequences are this Story's; that
+    // it was applied is the case's, so it is written down where a later
+    // closure can cite it. A Business with no Open case records nothing.
+    await this.cases.recordApplied({
+      action:
+        status === "RESTRICTED" ? "RESTRICT_BUSINESS" : "RESTORE_BUSINESS",
+      businessId,
+      offeringId: null,
+      recordedBy: principal.userId,
+      userId: null
+    });
+    return moderated;
   }
 }

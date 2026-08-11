@@ -42,6 +42,26 @@ enum ModerationCaseStatus {
   CLOSED
 }
 
+/// What a General Moderation case is about (`US-PLT-F02-001`).
+enum ModerationTargetType {
+  OFFERING
+  BUSINESS
+  USER_ACCOUNT
+}
+
+/// The exact seven General Moderation actions of PRD-0006 §7 and Owner
+/// Decision D15/D16. Affiliate Destination Review, Validate, Enable and
+/// Disable are absent: they are a separate action family (AC-10).
+enum ModerationAction {
+  REQUEST_CORRECTION
+  HIDE_OFFERING
+  RESTORE_OFFERING
+  RESTRICT_BUSINESS
+  RESTORE_BUSINESS
+  SUSPEND_USER
+  REINSTATE_USER
+}
+
 /// The four Business-owned Request Correction targets of PRD-0005 §12.1.
 /// `USER_ACCOUNT` is absent, which is AC-2: User Account correction is outside
 /// V1, so it is not a value a notice can take.
@@ -138,6 +158,8 @@ model UserAccount {
   directContactReveals DirectContactReveal[]
   openedCases          ModerationCase[]           @relation("CaseOpener")
   closedCases          ModerationCase[]           @relation("CaseCloser")
+  moderationCases      ModerationCase[]           @relation("CaseSubject")
+  moderationResolutions ModerationResolution[]    @relation("ResolutionRecorder")
   correctionRequests   CorrectionRequest[]        @relation("CorrectionRequester")
   correctionEdits      CorrectionEdit[]           @relation("CorrectionEditor")
 
@@ -281,20 +303,46 @@ model BusinessModerationState {
 /// Platform opens, re-reviews and closes it.
 model ModerationCase {
   id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  businessId String               @map("business_id") @db.Uuid
+  targetType ModerationTargetType @map("target_type")
+  /// Exactly one target, and the Business a case concerns present wherever
+  /// there is one to name — an Offering case carries both.
+  offeringId String?              @map("offering_id") @db.Uuid
+  businessId String?              @map("business_id") @db.Uuid
+  userId     String?              @map("user_id") @db.Uuid
   status     ModerationCaseStatus @default(OPEN)
   openedBy   String               @map("opened_by") @db.Uuid
   openedAt   DateTime             @default(now()) @map("opened_at") @db.Timestamptz(6)
   closedBy   String?              @map("closed_by") @db.Uuid
   closedAt   DateTime?            @map("closed_at") @db.Timestamptz(6)
-  business   Business             @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  offering   Offering?            @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+  business   Business?            @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  user       UserAccount?         @relation("CaseSubject", fields: [userId], references: [id], onDelete: Restrict)
   opener     UserAccount          @relation("CaseOpener", fields: [openedBy], references: [id], onDelete: Restrict)
   closer     UserAccount?         @relation("CaseCloser", fields: [closedBy], references: [id], onDelete: Restrict)
   corrections CorrectionRequest[]
+  resolutions ModerationResolution[]
 
   @@unique([id, businessId], map: "moderation_case_id_business_id_key")
   @@index([businessId, status])
+  @@index([targetType, status])
   @@map("moderation_case")
+}
+
+/// One applied action or one recorded no-action decision. Closure reads these
+/// rather than a flag, because a flag can be set by something that did not do
+/// the work (`US-PLT-F02-001` AC-7).
+model ModerationResolution {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseId         String            @map("case_id") @db.Uuid
+  action         ModerationAction?
+  noActionReason String?           @map("no_action_reason") @db.VarChar(1000)
+  recordedBy     String            @map("recorded_by") @db.Uuid
+  recordedAt     DateTime          @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  moderationCase ModerationCase    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  recorder       UserAccount       @relation("ResolutionRecorder", fields: [recordedBy], references: [id], onDelete: Restrict)
+
+  @@index([caseId, recordedAt])
+  @@map("moderation_resolution")
 }
 
 /// One recorded Request Correction. The Offering and content area are present
@@ -638,6 +686,7 @@ model Offering {
   directContactReveals  DirectContactReveal[]
   correctionRequests    CorrectionRequest[]
   correctionEdits       CorrectionEdit[]
+  moderationCases       ModerationCase[]
 
   @@unique([businessId, slug])
   @@unique([id, businessId], map: "offering_id_business_id_key")

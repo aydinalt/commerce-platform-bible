@@ -1554,6 +1554,134 @@ const document = {
         ],
         type: "object"
       },
+      ModerationCase: {
+        additionalProperties: false,
+        description:
+          "One General Moderation case. `status` is workflow and is not any target product state — there is no lifecycle, moderation status, access status, eligibility or validation result here, and a reader who wants one asks the authority that owns it. `availableActions` is a subset of the exact seven General Moderation actions, narrowed by the target's kind, its current condition, and what has a path today. Affiliate Destination Review, Validate, Enable and Disable are a separate action family and are not members.",
+        properties: {
+          availableActions: {
+            items: {
+              enum: [
+                "REQUEST_CORRECTION",
+                "HIDE_OFFERING",
+                "RESTORE_OFFERING",
+                "RESTRICT_BUSINESS",
+                "RESTORE_BUSINESS",
+                "SUSPEND_USER",
+                "REINSTATE_USER"
+              ],
+              type: "string"
+            },
+            type: "array"
+          },
+          businessId: { format: "uuid", type: ["string", "null"] },
+          closedAt: { format: "date-time", type: ["string", "null"] },
+          id: { format: "uuid", type: "string" },
+          offeringId: { format: "uuid", type: ["string", "null"] },
+          openedAt: { format: "date-time", type: "string" },
+          resolutions: {
+            description:
+              "An applied action or a recorded no-action decision, never both and never neither. Closure is conditional on one of these existing.",
+            items: {
+              additionalProperties: false,
+              properties: {
+                action: {
+                  enum: [
+                    "REQUEST_CORRECTION",
+                    "HIDE_OFFERING",
+                    "RESTORE_OFFERING",
+                    "RESTRICT_BUSINESS",
+                    "RESTORE_BUSINESS",
+                    "SUSPEND_USER",
+                    "REINSTATE_USER",
+                    null
+                  ],
+                  type: ["string", "null"]
+                },
+                noActionReason: { type: ["string", "null"] },
+                recordedAt: { format: "date-time", type: "string" }
+              },
+              required: ["action", "noActionReason", "recordedAt"],
+              type: "object"
+            },
+            type: "array"
+          },
+          status: { enum: ["OPEN", "CLOSED"], type: "string" },
+          targetType: {
+            enum: ["OFFERING", "BUSINESS", "USER_ACCOUNT"],
+            type: "string"
+          },
+          userId: { format: "uuid", type: ["string", "null"] }
+        },
+        required: [
+          "availableActions",
+          "businessId",
+          "closedAt",
+          "id",
+          "offeringId",
+          "openedAt",
+          "resolutions",
+          "status",
+          "targetType",
+          "userId"
+        ],
+        type: "object"
+      },
+      ModerationCases: {
+        additionalProperties: false,
+        properties: {
+          cases: {
+            items: { $ref: "#/components/schemas/ModerationCase" },
+            type: "array"
+          }
+        },
+        required: ["cases"],
+        type: "object"
+      },
+      OpenModerationCase: {
+        description:
+          "Exactly one target, expressed as a union rather than three optional fields, so a request naming both an Offering and a User is not one this contract can carry.",
+        discriminator: { propertyName: "targetType" },
+        oneOf: [
+          {
+            additionalProperties: false,
+            properties: {
+              offeringId: { format: "uuid", type: "string" },
+              targetType: { const: "OFFERING", type: "string" }
+            },
+            required: ["offeringId", "targetType"],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: {
+              businessId: { format: "uuid", type: "string" },
+              targetType: { const: "BUSINESS", type: "string" }
+            },
+            required: ["businessId", "targetType"],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: {
+              targetType: { const: "USER_ACCOUNT", type: "string" },
+              userId: { format: "uuid", type: "string" }
+            },
+            required: ["targetType", "userId"],
+            type: "object"
+          }
+        ]
+      },
+      RecordNoAction: {
+        additionalProperties: false,
+        description:
+          "A reason and nothing else. A blank no-action decision would be indistinguishable from never having looked.",
+        properties: {
+          reason: { maxLength: 1000, minLength: 1, type: "string" }
+        },
+        required: ["reason"],
+        type: "object"
+      },
       CorrectionNotice: {
         additionalProperties: false,
         description:
@@ -3718,6 +3846,163 @@ const document = {
           },
           "401": errorResponse("Authentication required"),
           "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/moderation-cases": {
+      get: {
+        description:
+          "General Moderation cases, optionally filtered by workflow status. A case carries no target product state at all — no Offering lifecycle, moderation status, access status, eligibility or validation result — because case status is workflow and is not any of those.",
+        operationId: "listModerationCases",
+        parameters: [
+          {
+            in: "query",
+            name: "status",
+            required: false,
+            schema: { enum: ["OPEN", "CLOSED"], type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ModerationCases" }
+              }
+            },
+            description: "General Moderation cases"
+          },
+          "400": errorResponse("Invalid case status"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      },
+      post: {
+        description:
+          "Surfaces a General Moderation case for one target, which produces an Open case. A target that already has an Open case is answered with that case rather than a second one: one concern is one case. Opening changes no target lifecycle, moderation, access, visibility, eligibility or validation state.",
+        operationId: "openModerationCase",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/OpenModerationCase" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ModerationCase" }
+              }
+            },
+            description: "The Open case"
+          },
+          "400": errorResponse("Invalid moderation case target"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No target matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/moderation-cases/{caseId}": {
+      get: {
+        description: "One General Moderation case.",
+        operationId: "getModerationCase",
+        parameters: [
+          {
+            in: "path",
+            name: "caseId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ModerationCase" }
+              }
+            },
+            description: "The case"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No case matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/moderation-cases/{caseId}/no-action-decision": {
+      post: {
+        description:
+          "Records that an Admin reviewed the case and decided nothing needs doing. It carries a reason and nothing else, because deciding to do nothing is still a decision somebody stands behind. Recording it changes no target state and does not close the case.",
+        operationId: "recordNoActionDecision",
+        parameters: [
+          {
+            in: "path",
+            name: "caseId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/RecordNoAction" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ModerationCase" }
+              }
+            },
+            description: "The case with the decision recorded"
+          },
+          "400": errorResponse("Invalid no-action decision"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No case matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/moderation-cases/{caseId}/closure": {
+      post: {
+        description:
+          "Closes the case explicitly. Permitted only after an approved action has been applied within the case or a no-action decision has been recorded — Request Correction is not one of those, because it keeps the case Open for re-review. Closing creates no target-state result, and a refused closure leaves the case exactly Open.",
+        operationId: "closeModerationCase",
+        parameters: [
+          {
+            in: "path",
+            name: "caseId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ModerationCase" }
+              }
+            },
+            description: "The Closed case"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No case matches that identifier"),
+          "409": errorResponse(
+            "The case has no approved action or recorded no-action decision"
+          )
         },
         tags: ["Platform"]
       }
