@@ -125,4 +125,108 @@ export class DecisionFlowNotFoundError extends Error {
   }
 }
 
+/**
+ * Everything Decision Chat is allowed to know (`US-DEC-F03-001` AC-4).
+ *
+ * The brief is built from the current Decision Context and nothing else. It
+ * has no telephone number, no email address, no contact URL and no Affiliate
+ * Destination — not because the assistant is asked not to mention them, but
+ * because it is never told them. AC-8 is a property of this shape.
+ *
+ * Neither is there a place for a previous conversation, another Offering, or
+ * anything the person did before. AC-9 forbids that memory and the brief
+ * cannot carry it.
+ */
+export interface BriefedAttribute {
+  readonly name: string;
+  readonly unit: string | null;
+  /// `null` where the Offering supplied no value. The assistant is told the
+  /// absence rather than left to infer one.
+  readonly value: string | null;
+}
+
+export interface BriefedOffering {
+  readonly attributes: readonly BriefedAttribute[];
+  readonly businessName: string;
+  readonly categoryName: string;
+  readonly offeringId: string;
+  readonly title: string;
+}
+
+export interface DecisionBrief {
+  readonly offerings: readonly BriefedOffering[];
+  /// What the person said matters to them, in their words (AC-5). Carried, not
+  /// interpreted into a ranking.
+  readonly priorities: readonly string[];
+}
+
+/**
+ * The assistant, as a port.
+ *
+ * It receives a brief and the conversation so far, and returns words. It has
+ * no database, no network of its own and no way to reach the projection — the
+ * only facts available to it are the ones handed in, which is what makes AC-4
+ * enforceable rather than aspirational.
+ */
+export interface DecisionAssistant {
+  respond(input: {
+    brief: DecisionBrief;
+    question: string;
+    turns: readonly { question: string; reply: string }[];
+  }): Promise<string>;
+}
+
+/**
+ * Every value the brief actually contains, as text.
+ *
+ * Used to check a reply before it reaches a person. It is a whitelist of what
+ * may be said, assembled from what was supplied.
+ */
+function briefedValues(brief: DecisionBrief): Set<string> {
+  const values = new Set<string>();
+  for (const offering of brief.offerings)
+    for (const attribute of offering.attributes)
+      if (attribute.value !== null)
+        for (const token of attribute.value.matchAll(/\d[\d.,]*/gu))
+          values.add(token[0].replace(/[.,]$/u, ""));
+  return values;
+}
+
+/**
+ * Whether a reply states a figure the brief never contained (AC-6).
+ *
+ * This is a narrow guarantee and worth being honest about: it catches invented
+ * *numbers*, which is the dangerous case — a mileage, a capacity, a year that
+ * no Offering ever claimed. It cannot catch an invented sentence. A vendor
+ * adapter is still bound by the brief; this is the check that does not depend
+ * on the vendor honouring it.
+ */
+export function inventsValue(reply: string, brief: DecisionBrief): boolean {
+  const permitted = briefedValues(brief);
+  for (const token of reply.matchAll(/\d[\d.,]*/gu)) {
+    const figure = token[0].replace(/[.,]$/u, "");
+    if (!permitted.has(figure)) return true;
+  }
+  return false;
+}
+
+/// Raised when a reply would have stated something the brief did not contain.
+/// The person is told the assistant could not answer, rather than told a
+/// number nobody published.
+export class AssistantInventedValueError extends Error {
+  constructor() {
+    super("ASSISTANT_INVENTED_VALUE");
+    this.name = "AssistantInventedValueError";
+  }
+}
+
+/// Raised when Chat is asked for on a context that is not currently valid.
+/// AC-3 makes a valid context the condition of Chat beginning at all.
+export class DecisionContextInvalidError extends Error {
+  constructor() {
+    super("DECISION_CONTEXT_INVALID");
+    this.name = "DecisionContextInvalidError";
+  }
+}
+
 export const decisionModule = { name: "decision" } as const;

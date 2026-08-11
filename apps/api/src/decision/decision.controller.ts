@@ -15,19 +15,25 @@ import { z } from "zod";
 
 import {
   addComparisonMemberSchema,
+  askDecisionSchema,
+  decisionChatSchema,
   comparisonSetSchema,
   comparisonViewSchema,
   decisionContextSchema,
   enterDecisionSchema
 } from "@commerce/contracts";
 import {
+  AssistantInventedValueError,
   ComparisonMemberRefusedError,
   ComparisonSetNotFoundError,
+  DecisionContextInvalidError,
   DecisionFlowNotFoundError
 } from "@commerce/decision";
 
 import { PgComparisonRepository } from "../persistence/pg-comparison.repository.js";
 import { PgDecisionRepository } from "../persistence/pg-decision.repository.js";
+
+import { ChatService } from "./chat.service.js";
 
 /**
  * Compare (`US-DEC-F01-001`).
@@ -245,6 +251,90 @@ export class DecisionFlowController {
         throw new NotFoundException({
           code: "DECISION_FLOW_NOT_FOUND",
           message: "That Decision flow has expired or never existed"
+        });
+      throw error;
+    }
+  }
+}
+
+/**
+ * Decision Chat (`US-DEC-F03-001`).
+ *
+ * Public for a Guest, an Enabled User, a Business context, an Admin context
+ * and a Suspended account through its Guest baseline (AC-1) — which is to say
+ * it resolves no principal at all, so there is nothing that could differ. No
+ * account is required before, during or after (AC-2), and none is created.
+ */
+@Controller("decision/flows/:decisionFlowId/chat")
+export class DecisionChatController {
+  constructor(private readonly chat: ChatService) {}
+
+  /// The conversation so far, for this flow only.
+  @Get()
+  async history(
+    @Param("decisionFlowId", uuidParam("decisionFlowId"))
+    decisionFlowId: string
+  ) {
+    return decisionChatSchema.parse(
+      await this.attempt(() => this.chat.history(decisionFlowId))
+    );
+  }
+
+  /**
+   * Asking (AC-3 to AC-6).
+   *
+   * A `POST` because asking is an occurrence: the first question on a valid
+   * context produces Decision Chat Start. A context that is no longer valid is
+   * refused before the assistant is consulted, so nothing is said about an
+   * Offering that stopped being eligible.
+   */
+  @Post()
+  @HttpCode(200)
+  async ask(
+    @Param("decisionFlowId", uuidParam("decisionFlowId"))
+    decisionFlowId: string,
+    @Body() body: unknown
+  ) {
+    const parsed = askDecisionSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Invalid question"
+      });
+
+    return decisionChatSchema.parse(
+      await this.attempt(() =>
+        this.chat.ask({
+          decisionFlowId,
+          priorities: parsed.data.priorities,
+          question: parsed.data.question
+        })
+      )
+    );
+  }
+
+  private async attempt<T>(work: () => Promise<T>): Promise<T> {
+    try {
+      return await work();
+    } catch (error) {
+      if (error instanceof DecisionFlowNotFoundError)
+        throw new NotFoundException({
+          code: "DECISION_FLOW_NOT_FOUND",
+          message: "That Decision flow has expired or never existed"
+        });
+      // AC-3. Chat begins only on a valid current Decision Context, so an
+      // invalid one is refused rather than answered around.
+      if (error instanceof DecisionContextInvalidError)
+        throw new UnprocessableEntityException({
+          code: "DECISION_CONTEXT_INVALID",
+          message: "Repair the Decision Context before continuing"
+        });
+      // AC-6. Better to say nothing than to say a figure nobody published.
+      if (error instanceof AssistantInventedValueError)
+        throw new UnprocessableEntityException({
+          code: "ASSISTANT_INVENTED_VALUE",
+          message: "That question could not be answered from this Offering"
         });
       throw error;
     }

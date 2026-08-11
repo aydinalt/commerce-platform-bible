@@ -976,6 +976,46 @@ export const decisionContextSchema = z
   })
   .strict();
 
+/**
+ * A question, with the priorities the person wants weighed
+ * (`US-DEC-F03-001` AC-5).
+ *
+ * Priorities are the person's own words, carried and repeated rather than
+ * turned into an ordering. Turning "yakıt ekonomisi benim için önemli" into a
+ * ranking would be AC-6's forbidden winner arriving by another route.
+ */
+export const askDecisionSchema = z
+  .object({
+    priorities: z.array(z.string().trim().min(1).max(200)).max(10).default([]),
+    question: z.string().trim().min(1).max(1000)
+  })
+  .strict();
+
+export const chatTurnSchema = z
+  .object({
+    askedAt: z.string().datetime(),
+    question: z.string(),
+    reply: z.string()
+  })
+  .strict();
+
+/**
+ * The conversation so far, for this flow only.
+ *
+ * There is no field for an earlier conversation, a profile or anything the
+ * person did in another flow, because AC-9 forbids all three and a shape that
+ * cannot express them cannot leak them.
+ */
+export const decisionChatSchema = z
+  .object({
+    decisionFlowId: z.string().uuid(),
+    turns: z.array(chatTurnSchema)
+  })
+  .strict();
+
+export type AskDecision = z.infer<typeof askDecisionSchema>;
+export type DecisionChatResponse = z.infer<typeof decisionChatSchema>;
+
 export type EnterDecision = z.infer<typeof enterDecisionSchema>;
 export type DecisionContextResponse = z.infer<typeof decisionContextSchema>;
 

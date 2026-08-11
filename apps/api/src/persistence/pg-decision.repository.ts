@@ -96,13 +96,15 @@ export class PgDecisionRepository implements OnModuleDestroy {
   private async transact<T>(work: (client: PoolClient) => Promise<T>) {
     const client = await this.pool.connect();
     try {
-      await client.query("begin");
       // Expired flows and sets are swept together, so a flow can never be read
-      // while the set it points at has already gone.
+      // while the set it points at has already gone. Outside the transaction:
+      // the refusal that follows reading an expired flow would otherwise roll
+      // the sweep back.
       await client.query(`delete from decision_flow where expires_at <= now()`);
       await client.query(
         `delete from comparison_set where expires_at <= now()`
       );
+      await client.query("begin");
       const result = await work(client);
       await client.query("commit");
       return result;

@@ -181,12 +181,14 @@ export class PgComparisonRepository implements OnModuleDestroy {
   private async transact<T>(work: (client: PoolClient) => Promise<T>) {
     const client = await this.pool.connect();
     try {
-      await client.query("begin");
       // Expired sets are swept opportunistically. There is no scheduler, and a
       // set that has outlived its flow should not be readable in the meantime.
+      // Outside the transaction, because a refused member must not roll back
+      // the removal of somebody else's expired set.
       await client.query(
         `delete from comparison_set where expires_at <= now()`
       );
+      await client.query("begin");
       const result = await work(client);
       await client.query("commit");
       return result;

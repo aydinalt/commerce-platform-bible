@@ -7,10 +7,13 @@ import { AttributeController } from "./catalog/attribute.controller.js";
 import { AttributeService } from "./catalog/attribute.service.js";
 import { CatalogController } from "./catalog/catalog.controller.js";
 import { CatalogService } from "./catalog/catalog.service.js";
+import { ChatService, DECISION_ASSISTANT } from "./decision/chat.service.js";
 import {
+  DecisionChatController,
   DecisionController,
   DecisionFlowController
 } from "./decision/decision.controller.js";
+import { RestatingDecisionAssistant } from "./decision/restating.assistant.js";
 import { DiscoveryController } from "./discovery/discovery.controller.js";
 import { HealthController } from "./health.controller.js";
 import { ErrorEnvelopeFilter } from "./http/error-envelope.filter.js";
@@ -30,6 +33,7 @@ import { PgAffiliateRepository } from "./persistence/pg-affiliate.repository.js"
 import { PgAttributeRepository } from "./persistence/pg-attribute.repository.js";
 import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
 import { PgCatalogRepository } from "./persistence/pg-catalog.repository.js";
+import { PgChatRepository } from "./persistence/pg-chat.repository.js";
 import { PgCommerceRepository } from "./persistence/pg-commerce.repository.js";
 import { PgComparisonRepository } from "./persistence/pg-comparison.repository.js";
 import { PgDecisionRepository } from "./persistence/pg-decision.repository.js";
@@ -68,6 +72,7 @@ function allowedOrigins(): readonly string[] {
     AttributeController,
     BusinessController,
     CatalogController,
+    DecisionChatController,
     DecisionController,
     DecisionFlowController,
     DiscoveryController,
@@ -81,6 +86,7 @@ function allowedOrigins(): readonly string[] {
     AttributeService,
     BusinessService,
     CatalogService,
+    ChatService,
     IdentityService,
     OfferingContentService,
     OfferingService,
@@ -89,6 +95,7 @@ function allowedOrigins(): readonly string[] {
     PgAttributeRepository,
     PgBusinessRepository,
     PgCatalogRepository,
+    PgChatRepository,
     PgCommerceRepository,
     PgComparisonRepository,
     PgDecisionRepository,
@@ -98,6 +105,14 @@ function allowedOrigins(): readonly string[] {
     PgPresentationRepository,
     PrincipalResolver,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
+    // V1 has no assistant vendor. The adapter refuses to construct in
+    // production, so a deployment without a real one fails loudly rather than
+    // quietly answering people with a stub.
+    {
+      provide: DECISION_ASSISTANT,
+      useFactory: () =>
+        new RestatingDecisionAssistant(process.env.NODE_ENV ?? "development")
+    },
     {
       provide: OriginValidator,
       useFactory: () => new OriginValidator(allowedOrigins())

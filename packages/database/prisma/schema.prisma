@@ -347,8 +347,36 @@ model DecisionFlow {
   offering        Offering?      @relation(fields: [offeringId], references: [id], onDelete: Restrict)
   comparisonSet   ComparisonSet? @relation(fields: [comparisonSetId], references: [id], onDelete: Cascade)
 
+  turns           DecisionChatTurn[]
+
   @@index([expiresAt])
   @@map("decision_flow")
+}
+
+/// One question and its reply, for the current flow only (`US-DEC-F03-001`
+/// AC-9). Removed with the flow, and carrying no person.
+model DecisionChatTurn {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  decisionFlowId String       @map("decision_flow_id") @db.Uuid
+  position       Int
+  question       String
+  reply          String
+  askedAt        DateTime     @default(now()) @map("asked_at") @db.Timestamptz(6)
+  decisionFlow   DecisionFlow @relation(fields: [decisionFlowId], references: [id], onDelete: Cascade)
+
+  @@unique([decisionFlowId, position])
+  @@map("decision_chat_turn")
+}
+
+/// One occurrence of assistive Chat beginning on a valid Decision Context
+/// (AC-3). One per flow, and it outlives the flow: that Chat began is a fact
+/// about the past, not current-flow state.
+model DecisionChatStart {
+  decisionFlowId String   @id @map("decision_flow_id") @db.Uuid
+  startedAt      DateTime @default(now()) @map("started_at") @db.Timestamptz(6)
+
+  @@index([startedAt])
+  @@map("decision_chat_start")
 }
 
 /// One occurrence of a valid Comparison Set being opened in Compare (AC-11).
