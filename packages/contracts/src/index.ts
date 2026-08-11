@@ -637,7 +637,10 @@ export const adminPanelSchema = z
         "MANAGE_CATEGORIES",
         "MANAGE_ATTRIBUTE_DEFINITIONS",
         "ADMINISTER_AFFILIATE_DESTINATIONS",
+        "MANAGE_MODERATION_CASES",
+        "MODERATE_OFFERINGS",
         "MODERATE_BUSINESSES",
+        "MODERATE_USER_ACCESS",
         "REQUEST_CORRECTION",
         "READ_OFFERING_HISTORY"
       ])
@@ -652,6 +655,24 @@ export const adminPanelSchema = z
   .strict();
 
 export type AdminPanel = z.infer<typeof adminPanelSchema>;
+
+/**
+ * A User Account after moderation (`US-PLT-F05-001`).
+ *
+ * The account's access status and its identifier, and nothing else. There is
+ * no Admin-authorization field, because nothing here changes one and a
+ * response that reported it would invite somebody to try; and no Business,
+ * Offering or eligibility, because AC-8 leaves all of them exactly where they
+ * were.
+ */
+export const userAccessSchema = z
+  .object({
+    status: z.enum(["ENABLED", "SUSPENDED"]),
+    userId: z.string().uuid()
+  })
+  .strict();
+
+export type UserAccess = z.infer<typeof userAccessSchema>;
 
 const MODERATION_ACTION_VALUES = [
   "REQUEST_CORRECTION",

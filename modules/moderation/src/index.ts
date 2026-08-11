@@ -17,7 +17,10 @@ export const ADMIN_PANEL_FUNCTIONS = [
   "MANAGE_CATEGORIES",
   "MANAGE_ATTRIBUTE_DEFINITIONS",
   "ADMINISTER_AFFILIATE_DESTINATIONS",
+  "MANAGE_MODERATION_CASES",
+  "MODERATE_OFFERINGS",
   "MODERATE_BUSINESSES",
+  "MODERATE_USER_ACCESS",
   "REQUEST_CORRECTION",
   "READ_OFFERING_HISTORY"
 ] as const;
@@ -125,19 +128,14 @@ export const ACTION_TARGET: Record<ModerationAction, ModerationTargetType> = {
 /**
  * The actions with a path behind them today.
  *
- * `US-PLT-F03-001` owns Hide and Restore Offering; `US-PLT-F05-001` owns
- * Suspend and Reinstate User. Until those Stories are delivered, offering
- * either would be an offer the platform could not keep, so this list is what
- * AC-5's "currently valid" is read through. It is separate from
- * `MODERATION_ACTIONS` on purpose: the set does not shrink because four of its
- * members are unbuilt, and the offer does not grow because they are named.
+ * All seven now have one, which is where this list was always going. It stays
+ * separate from `MODERATION_ACTIONS` rather than being deleted, because the
+ * two answer different questions: the set is what General Moderation *is*, and
+ * this is what the platform can currently keep. A future action would be named
+ * in the first before it appeared in the second.
  */
 export const IMPLEMENTED_MODERATION_ACTIONS: readonly ModerationAction[] = [
-  "REQUEST_CORRECTION",
-  "HIDE_OFFERING",
-  "RESTORE_OFFERING",
-  "RESTRICT_BUSINESS",
-  "RESTORE_BUSINESS"
+  ...MODERATION_ACTIONS
 ];
 
 /**

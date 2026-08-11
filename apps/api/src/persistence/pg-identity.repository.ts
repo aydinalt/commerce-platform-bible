@@ -1,10 +1,15 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool } from "pg";
 
-import type {
-  AccountStatus,
-  AuthorizedBusiness,
-  ResolvedSession
+import {
+  ACCESS_MODERATION_RESULT,
+  AccessModerationUnavailableError,
+  accessModerationPermitted,
+  AdminTargetForbiddenError,
+  type AccessModerationAction,
+  type AccountStatus,
+  type AuthorizedBusiness,
+  type ResolvedSession
 } from "@commerce/identity";
 import {
   PASSWORD_RESET_REQUESTED,
@@ -414,6 +419,90 @@ export class PgIdentityRepository implements OnModuleDestroy {
        where user_id = $1 and revoked_at is null`,
       [userId]
     );
+  }
+
+  /**
+   * Suspend and Reinstate User (`US-PLT-F05-001`).
+   *
+   * One method for two actions, and almost all of it is refusal. What it
+   * actually writes is a single column — PRD-0003 owns the state machine, so
+   * consuming its transition means changing the status and nothing else.
+   *
+   * AC-7 and AC-8 are absences with teeth. Nothing here touches
+   * `admin_authorization`, so a suspended Admin keeps what they were granted;
+   * nothing here reads or writes a Business, an Offering, an Affiliate
+   * Destination or a projection, so no eligibility moves because somebody lost
+   * access. A suspended owner's Offerings stay exactly as public as they were,
+   * which is the right answer: the account was moderated, not the Business.
+   *
+   * Sessions are revoked because `US-IDN-F06-001` AC-4 already requires it —
+   * a Suspended holder keeps public Guest behaviour and enters no
+   * authenticated context. That is Identity's rule being honoured rather than
+   * a consequence this Story invents.
+   */
+  async moderateAccess(input: {
+    action: AccessModerationAction;
+    userId: string;
+  }): Promise<{ status: "ENABLED" | "SUSPENDED"; userId: string } | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+
+      const locked = await client.query<{
+        status: "ENABLED" | "SUSPENDED";
+        targetIsAdmin: boolean;
+      }>(
+        `select u.status::text as status,
+           exists (
+             select 1 from admin_authorization a where a.user_id = u.id
+           ) as "targetIsAdmin"
+         from user_account u where u.id = $1 for update`,
+        [input.userId]
+      );
+      const current = locked.rows[0];
+      if (!current) {
+        await client.query("rollback");
+        return null;
+      }
+
+      // AC-5. Checked before the state, because "not yours to move" is true
+      // whatever state the account is in.
+      if (current.targetIsAdmin) throw new AdminTargetForbiddenError();
+      if (
+        !accessModerationPermitted({
+          action: input.action,
+          status: current.status,
+          targetIsAdmin: false
+        })
+      )
+        throw new AccessModerationUnavailableError(
+          input.action,
+          current.status
+        );
+
+      // AC-2 and AC-4. One column, because that is the whole of PRD-0003's
+      // transition.
+      const status = ACCESS_MODERATION_RESULT[input.action];
+      await client.query(
+        `update user_account set status = $2::"AccountStatus" where id = $1`,
+        [input.userId, status]
+      );
+
+      if (status === "SUSPENDED")
+        await client.query(
+          `update user_session set revoked_at = now()
+           where user_id = $1 and revoked_at is null`,
+          [input.userId]
+        );
+
+      await client.query("commit");
+      return { status, userId: input.userId };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**

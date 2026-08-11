@@ -1525,7 +1525,10 @@ const document = {
                 "MANAGE_CATEGORIES",
                 "MANAGE_ATTRIBUTE_DEFINITIONS",
                 "ADMINISTER_AFFILIATE_DESTINATIONS",
+                "MANAGE_MODERATION_CASES",
+                "MODERATE_OFFERINGS",
                 "MODERATE_BUSINESSES",
+                "MODERATE_USER_ACCESS",
                 "REQUEST_CORRECTION",
                 "READ_OFFERING_HISTORY"
               ],
@@ -1552,6 +1555,17 @@ const document = {
           "ownedBusinessIds",
           "userId"
         ],
+        type: "object"
+      },
+      UserAccess: {
+        additionalProperties: false,
+        description:
+          "A User Account after moderation: its identifier and its access status, and nothing else. There is no Admin-authorization field, because nothing here changes one and reporting it would invite somebody to try; and no Business, Offering or eligibility, because none of them moves.",
+        properties: {
+          status: { enum: ["ENABLED", "SUSPENDED"], type: "string" },
+          userId: { format: "uuid", type: "string" }
+        },
+        required: ["status", "userId"],
         type: "object"
       },
       ModerationCase: {
@@ -3908,6 +3922,72 @@ const document = {
           },
           "401": errorResponse("Authentication required"),
           "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/user-accounts/{userId}/suspension": {
+      post: {
+        description:
+          "Suspend User. Available to an ordinary Admin only for an Enabled account that carries no Admin authorization, and applies PRD-0003's `Enabled → Suspended` transition. An Admin-authorized account is refused whatever state it is in: only the Product Owner may suspend one, through a controlled operational process outside this surface. Suspension removes no Admin authorization and changes no Business Moderation Status, Offering lifecycle, Affiliate Destination result or public eligibility — the account was moderated, not anything it owns.",
+        operationId: "suspendUserAccount",
+        parameters: [
+          {
+            in: "path",
+            name: "userId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserAccess" }
+              }
+            },
+            description: "The suspended account"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the target carries Admin authorization"
+          ),
+          "404": errorResponse("No User Account matches that identifier"),
+          "409": errorResponse("Only an Enabled account may be suspended")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/user-accounts/{userId}/reinstatement": {
+      post: {
+        description:
+          "Reinstate User. Available to an ordinary Admin only for a Suspended account that carries no Admin authorization, and applies PRD-0003's `Suspended → Enabled` transition. Reinstatement restores nothing else: no Business is un-restricted, no Offering is republished and no eligibility is recomposed by it.",
+        operationId: "reinstateUserAccount",
+        parameters: [
+          {
+            in: "path",
+            name: "userId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserAccess" }
+              }
+            },
+            description: "The reinstated account"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the target carries Admin authorization"
+          ),
+          "404": errorResponse("No User Account matches that identifier"),
+          "409": errorResponse("Only a Suspended account may be reinstated")
         },
         tags: ["Platform"]
       }

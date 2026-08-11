@@ -18,6 +18,7 @@ import {
   DecisionFlowController
 } from "./decision/decision.controller.js";
 import { RestatingDecisionAssistant } from "./decision/restating.assistant.js";
+import { AccessModerationController } from "./platform/access-moderation.controller.js";
 import { AdminPanelController } from "./platform/admin-panel.controller.js";
 import { ModerationCaseController } from "./platform/moderation.controller.js";
 import { DiscoveryController } from "./discovery/discovery.controller.js";
@@ -75,6 +76,7 @@ function allowedOrigins(): readonly string[] {
 
 @Module({
   controllers: [
+    AccessModerationController,
     AdminBusinessController,
     AdminPanelController,
     ModerationCaseController,

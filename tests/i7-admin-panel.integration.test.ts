@@ -339,6 +339,9 @@ suite("Increment I7 Admin Panel access and baseline", () => {
         "/admin/offerings/{offeringId}/affiliate-destination",
       MANAGE_ATTRIBUTE_DEFINITIONS: "/admin/attributes",
       MANAGE_CATEGORIES: "/admin/categories",
+      MANAGE_MODERATION_CASES: "/admin/moderation-cases",
+      MODERATE_OFFERINGS: "/admin/offerings/{offeringId}/concealment",
+      MODERATE_USER_ACCESS: "/admin/user-accounts/{userId}/suspension",
       MODERATE_BUSINESSES: "/admin/businesses/{businessId}/restriction",
       READ_OFFERING_HISTORY: "/admin/offerings/{offeringId}",
       REQUEST_CORRECTION: "/admin/businesses/{businessId}/correction-requests"

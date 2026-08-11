@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
 import {
   availableModerationActions,
+  IMPLEMENTED_MODERATION_ACTIONS,
   MODERATION_ACTIONS
 } from "../modules/moderation/src/index.js";
 import type {
@@ -352,7 +353,7 @@ suite("Increment I7 General Moderation case management", () => {
     expect(restricted).not.toContain("RESTRICT_BUSINESS");
   });
 
-  it("offers nothing that has no path yet", async () => {
+  it("offers every action that has a path, and would offer no more", async () => {
     const account = await signUp();
 
     const opened = await openCase({
@@ -360,15 +361,20 @@ suite("Increment I7 General Moderation case management", () => {
       userId: account.userId
     });
 
-    // AC-5. Suspend and Reinstate User are members of the set and belong to
-    // `US-PLT-F05-001`. Offering one now would be an offer the platform could
-    // not keep, so the set does not shrink and the offer does not grow.
+    // AC-5. This test named an unbuilt action until `US-PLT-F03-001` and
+    // `US-PLT-F05-001` built the last four, which is the behaviour working:
+    // each case began offering an action the moment there was one to offer,
+    // without the set or this file changing.
     //
-    // This test named the Offering actions until `US-PLT-F03-001` built them,
-    // which is the behaviour working: the case began offering Hide the moment
-    // there was a Hide to offer, without this file or the set changing.
-    expect(opened.body.availableActions).toEqual([]);
-    expect(MODERATION_ACTIONS).toContain("SUSPEND_USER");
+    // All seven now have a path, so what remains to state is why the two lists
+    // are still separate: `MODERATION_ACTIONS` is what General Moderation *is*,
+    // and `IMPLEMENTED_MODERATION_ACTIONS` is what the platform can currently
+    // keep. An eighth action would appear in the first and be refused by the
+    // second until somebody built it.
+    expect([...IMPLEMENTED_MODERATION_ACTIONS].sort()).toEqual(
+      [...MODERATION_ACTIONS].sort()
+    );
+    expect(opened.body.availableActions).toEqual(["SUSPEND_USER"]);
   });
 
   it("keeps the case Open after Request Correction", async () => {
@@ -519,6 +525,6 @@ suite("Increment I7 General Moderation case management", () => {
         suspended: false,
         targetType: "USER_ACCOUNT"
       })
-    ).toEqual([]);
+    ).toEqual(["SUSPEND_USER"]);
   });
 });
