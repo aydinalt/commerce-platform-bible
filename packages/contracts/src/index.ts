@@ -844,10 +844,93 @@ export const offeringPresentationSchema = z
   })
   .strict();
 
+/**
+ * One row of a comparison (`US-DEC-F01-001` AC-7, AC-8).
+ *
+ * `values` is positional: one entry per member, in the set's order. A missing
+ * value is `null`, and AC-8 turns that into "Not provided" where it is read —
+ * the API does not supply the phrase, because the phrase is UX's.
+ *
+ * There is no "not applicable" entry, and no shape for one. AC-9 says a V1
+ * same-leaf Comparison Set never produces that result, and every member shares
+ * one leaf, so every comparable Attribute applies to every member by
+ * construction.
+ */
+export const comparisonRowSchema = z
+  .object({
+    attributeId: z.string().uuid(),
+    kind: z.enum(ATTRIBUTE_VALUE_KINDS),
+    name: z.string(),
+    unit: z.string().nullable(),
+    values: z.array(
+      z
+        .object({
+          boolean: z.boolean().nullable(),
+          number: z.number().nullable(),
+          offeringId: z.string().uuid(),
+          optionLabels: z.array(z.string()),
+          text: z.string().nullable()
+        })
+        .strict()
+        .nullable()
+    )
+  })
+  .strict();
+
+/**
+ * The Comparison Set as the person is building it, before Compare opens.
+ *
+ * `full` is stated rather than left to be derived from `members.length`,
+ * because AC-6 is about what the person may do next: a sixth Offering needs an
+ * explicit removal or replacement first, and the surface offering that choice
+ * should not have to know the number five.
+ */
+export const comparisonSetSchema = z
+  .object({
+    categoryId: z.string().uuid(),
+    categoryName: z.string(),
+    comparisonSetId: z.string().uuid(),
+    full: z.boolean(),
+    members: z.array(listingCardSchema),
+    /// AC-2's floor. A one-member set is one being formed, not an invalid one.
+    openable: z.boolean()
+  })
+  .strict();
+
+/**
+ * Compare itself: the same set, plus the comparable Attributes.
+ *
+ * Nothing here ranks, scores, normalises or recommends, and nothing could —
+ * AC-10 leaves no field in which a winner might be expressed.
+ */
+export const comparisonViewSchema = comparisonSetSchema.extend({
+  rows: z.array(comparisonRowSchema)
+});
+
+export type ComparisonSetResponse = z.infer<typeof comparisonSetSchema>;
+export type ComparisonViewResponse = z.infer<typeof comparisonViewSchema>;
+export type ComparisonRow = z.infer<typeof comparisonRowSchema>;
+
 export type PresentedAttribute = z.infer<typeof presentedAttributeSchema>;
 export type OfferingPresentationResponse = z.infer<
   typeof offeringPresentationSchema
 >;
+
+/**
+ * Adding a member, and the one way a sixth may enter a full set.
+ *
+ * `replaces` is explicit and required at five (AC-6): the person names what
+ * leaves as well as what arrives. Nothing infers a victim — silently dropping
+ * the oldest member would be the system choosing on their behalf.
+ */
+export const addComparisonMemberSchema = z
+  .object({
+    offeringId: z.string().uuid(),
+    replaces: z.string().uuid().optional()
+  })
+  .strict();
+
+export type AddComparisonMember = z.infer<typeof addComparisonMemberSchema>;
 
 export const browseRootsSchema = z
   .object({

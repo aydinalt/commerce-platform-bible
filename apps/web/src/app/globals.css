@@ -192,6 +192,49 @@ article {
   color: #8b97a8;
 }
 
+.comparison {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.comparison th,
+.comparison td {
+  border-bottom: 1px solid #dfe4ec;
+  padding: 0.7rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.comparison thead th {
+  border-bottom-width: 2px;
+}
+
+.comparison thead a {
+  color: #162033;
+  display: block;
+  font-weight: 600;
+}
+
+.comparison-business {
+  color: #526079;
+  display: block;
+  font-weight: 400;
+  margin-bottom: 0.4rem;
+}
+
+.comparison thead button {
+  background: #fff;
+  border-color: #c3cbd9;
+  color: #162033;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.7rem;
+}
+
+.comparison tbody th {
+  color: #526079;
+  font-weight: 400;
+}
+
 .preparation-notice {
   background: #eef2f8;
   border-radius: 0.75rem;

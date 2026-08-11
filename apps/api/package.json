@@ -15,6 +15,7 @@
     "@commerce/catalog": "0.0.0",
     "@commerce/config": "0.0.0",
     "@commerce/contracts": "0.0.0",
+    "@commerce/decision": "0.0.0",
     "@commerce/discovery": "0.0.0",
     "@commerce/identity": "0.0.0",
     "@commerce/notification": "0.0.0",

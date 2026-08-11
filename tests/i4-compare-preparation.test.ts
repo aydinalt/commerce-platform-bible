@@ -211,11 +211,13 @@ describe("Increment I4 Compare preparation return", () => {
       })
     );
 
-    // AC-6. The Compare entry is present and inert. UX-0004 owns forming the
-    // set; nothing here can add a member, and there is no control through
-    // which it could.
+    // AC-6. Rendering a Presentation inside a preparation flow adds nothing.
+    // The Compare entry is a submission the person has to make, and what it
+    // reaches is `US-DEC-F01-001`, which owns forming the set — so nothing on
+    // this page joins a Comparison Set or claims Compare Start by being drawn.
     expect(markup).toContain("Karşılaştırmaya ekle");
-    expect(markup).toMatch(/<button disabled[^>]*>\s*Karşılaştırmaya ekle/u);
+    expect(markup).toMatch(/<form[^>]*>\s*<input type="hidden" name="offeringId"/u);
+    expect(markup).not.toContain("comparisonSetId");
   });
 
   it("says nothing about preparation when there is none", () => {

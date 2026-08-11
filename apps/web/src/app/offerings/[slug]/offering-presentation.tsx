@@ -4,6 +4,7 @@ import type {
 } from "@commerce/contracts";
 
 import type { PreparationContext } from "../../../discovery/entry";
+import { CompareEntry } from "../../compare/compare-entry";
 
 /**
  * Complete public Offering Presentation (`US-OFR-F05-001`, UX-0003).
@@ -59,17 +60,20 @@ function Attributes({ attributes }: { attributes: PresentedAttribute[] }) {
 }
 
 /**
- * AC-6. Compare and single-Offering Decision are shown as entries and do
- * nothing here.
+ * `US-OFR-F05-001` AC-6. The entries are presented; their behaviours belong
+ * elsewhere.
  *
- * They are rendered disabled rather than as links to a route that does not
- * exist: UX-0003 §9.3 gives Compare to UX-0004 and Decision to UX-0009, and
- * neither has been built. A control that looked live and led nowhere would be
- * a worse lie than one that says it is not available yet.
+ * Compare is live now that `US-DEC-F01-001` owns it — and Presentation still
+ * executes nothing: the entry hands the Offering to Decision, which decides
+ * whether it may join. Decision Chat stays disabled rather than linking to a
+ * route that does not exist, because a control that looks live and leads
+ * nowhere is the worse lie.
  */
 function DecisionEntries({
+  offeringId,
   preparation
 }: {
+  offeringId: string;
   preparation?: PreparationContext | undefined;
 }) {
   return (
@@ -77,9 +81,7 @@ function DecisionEntries({
       <h2 id="decision-entries">Bu ilanla ne yapabilirsiniz</h2>
       <ul className="decision-entries">
         <li>
-          <button disabled type="button">
-            Karşılaştırmaya ekle
-          </button>
+          <CompareEntry offeringId={offeringId} />
         </li>
         <li>
           <button disabled type="button">
@@ -98,7 +100,6 @@ function DecisionEntries({
           ilanla birlikte karşılaştırmaya taşınacak.
         </p>
       )}
-      <p>Bu girişler henüz kullanıma açılmadı.</p>
     </section>
   );
 }
@@ -135,7 +136,10 @@ export function OfferingPresentation({
           )}
         </section>
 
-        <DecisionEntries preparation={preparation} />
+        <DecisionEntries
+          offeringId={offering.offeringId}
+          preparation={preparation}
+        />
       </article>
     </main>
   );

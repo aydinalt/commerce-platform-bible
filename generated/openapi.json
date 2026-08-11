@@ -546,6 +546,119 @@
         ],
         "type": "object"
       },
+      "ComparisonSet": {
+        "additionalProperties": false,
+        "description": "A Comparison Set as it is being built. `openable` states the two-member floor and `full` the five-member ceiling, so a surface offering the next action does not have to know the numbers.",
+        "properties": {
+          "categoryId": { "format": "uuid", "type": "string" },
+          "categoryName": { "type": "string" },
+          "comparisonSetId": { "format": "uuid", "type": "string" },
+          "full": { "type": "boolean" },
+          "members": {
+            "items": { "$ref": "#/components/schemas/ListingCard" },
+            "type": "array"
+          },
+          "openable": { "type": "boolean" }
+        },
+        "required": [
+          "categoryId",
+          "categoryName",
+          "comparisonSetId",
+          "full",
+          "members",
+          "openable"
+        ],
+        "type": "object"
+      },
+      "ComparisonRow": {
+        "additionalProperties": false,
+        "description": "One comparable Attribute across the members. `values` is positional and matches the member order; `null` means the Offering supplied no value, and the phrase a person reads for that is UX's. There is no not-applicable entry and no shape for one: every member shares one active leaf Category, so every comparable Attribute applies to all of them.",
+        "properties": {
+          "attributeId": { "format": "uuid", "type": "string" },
+          "kind": {
+            "enum": [
+              "TEXT",
+              "NUMBER",
+              "BOOLEAN",
+              "SINGLE_SELECT",
+              "MULTI_SELECT"
+            ],
+            "type": "string"
+          },
+          "name": { "type": "string" },
+          "unit": { "type": ["string", "null"] },
+          "values": {
+            "items": {
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "boolean": { "type": ["boolean", "null"] },
+                    "number": { "type": ["number", "null"] },
+                    "offeringId": { "format": "uuid", "type": "string" },
+                    "optionLabels": {
+                      "items": { "type": "string" },
+                      "type": "array"
+                    },
+                    "text": { "type": ["string", "null"] }
+                  },
+                  "required": [
+                    "boolean",
+                    "number",
+                    "offeringId",
+                    "optionLabels",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                { "type": "null" }
+              ]
+            },
+            "type": "array"
+          }
+        },
+        "required": ["attributeId", "kind", "name", "unit", "values"],
+        "type": "object"
+      },
+      "ComparisonView": {
+        "additionalProperties": false,
+        "description": "Compare itself. Nothing ranks, scores, normalises or recommends, and no field could express a winner.",
+        "properties": {
+          "categoryId": { "format": "uuid", "type": "string" },
+          "categoryName": { "type": "string" },
+          "comparisonSetId": { "format": "uuid", "type": "string" },
+          "full": { "type": "boolean" },
+          "members": {
+            "items": { "$ref": "#/components/schemas/ListingCard" },
+            "type": "array"
+          },
+          "openable": { "type": "boolean" },
+          "rows": {
+            "items": { "$ref": "#/components/schemas/ComparisonRow" },
+            "type": "array"
+          }
+        },
+        "required": [
+          "categoryId",
+          "categoryName",
+          "comparisonSetId",
+          "full",
+          "members",
+          "openable",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "AddComparisonMember": {
+        "additionalProperties": false,
+        "description": "`replaces` is required in effect at five members: the person names what leaves as well as what arrives, because nothing infers a victim.",
+        "properties": {
+          "offeringId": { "format": "uuid", "type": "string" },
+          "replaces": { "format": "uuid", "type": "string" }
+        },
+        "required": ["offeringId"],
+        "type": "object"
+      },
       "PresentedAttribute": {
         "additionalProperties": false,
         "description": "One Attribute as Presentation shows it. The governed unit and the option labels travel with the value, because the value alone does not mean anything. `supplied` distinguishes a missing optional value from a value that happens to be false or zero.",
@@ -3797,6 +3910,241 @@
           }
         },
         "tags": ["Platform"]
+      }
+    },
+    "/api/v1/decision/comparison-sets": {
+      "post": {
+        "description": "Begins a Comparison Set from one publicly eligible Offering. Public and unauthenticated: PRD-0003 makes Compare part of a person's decision rather than a feature of an account. The shared active leaf Category is taken from the Offering rather than from the request. Compare is optional — no other route requires a set to exist.",
+        "operationId": "beginComparisonSet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddComparisonMember" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ComparisonSet" }
+              }
+            },
+            "description": "The set, holding its first member"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Comparison Set request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "That Offering is not publicly eligible"
+          }
+        },
+        "tags": ["Decision"]
+      }
+    },
+    "/api/v1/decision/comparison-sets/{comparisonSetId}": {
+      "get": {
+        "description": "The set as it stands. A set that has expired and one that never existed answer identically — current-flow state is allowed to disappear.",
+        "operationId": "currentComparisonSet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparisonSetId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ComparisonSet" }
+              }
+            },
+            "description": "The current Comparison Set"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "That Comparison Set has expired or never existed"
+          }
+        },
+        "tags": ["Decision"]
+      }
+    },
+    "/api/v1/decision/comparison-sets/{comparisonSetId}/members": {
+      "post": {
+        "description": "Adds one publicly eligible Offering from the shared active leaf Category. At five members the addition is refused unless `replaces` names the member that leaves; the refusal changes nothing about the current set.",
+        "operationId": "addComparisonMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparisonSetId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddComparisonMember" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ComparisonSet" }
+              }
+            },
+            "description": "The set after the addition"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid Comparison Set request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "That Comparison Set has expired or never existed"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The Offering is ineligible, belongs to another leaf Category, or the set is full"
+          }
+        },
+        "tags": ["Decision"]
+      }
+    },
+    "/api/v1/decision/comparison-sets/{comparisonSetId}/members/{offeringId}": {
+      "delete": {
+        "description": "Removes one member. A set may fall to one member or none; neither is invalid, and neither is openable in Compare.",
+        "operationId": "removeComparisonMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparisonSetId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "offeringId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ComparisonSet" }
+              }
+            },
+            "description": "The set after the removal"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "That Comparison Set has expired or never existed"
+          }
+        },
+        "tags": ["Decision"]
+      }
+    },
+    "/api/v1/decision/comparison-sets/{comparisonSetId}/compare": {
+      "post": {
+        "description": "Opens a valid set in Compare and produces one Compare Start for it. Reopening the same set produces none — it is the same person still comparing the same things. Only Attributes whose authoritative `comparable` property is enabled appear, an absent value is `null` rather than substituted, and nothing is ranked, scored or recommended.",
+        "operationId": "openCompare",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparisonSetId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ComparisonView" }
+              }
+            },
+            "description": "The comparison"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "That Comparison Set has expired or never existed"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Compare needs between two and five eligible Offerings"
+          }
+        },
+        "tags": ["Decision"]
       }
     },
     "/api/v1/discovery/browse": {

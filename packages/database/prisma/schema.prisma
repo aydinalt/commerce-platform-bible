@@ -259,6 +259,7 @@ model Domain {
   categories Category[]
   discoveryStarts DiscoveryStart[]
   presentationOpens OfferingPresentationOpen[]
+  compareStarts CompareStart[]
 
   @@map("domain")
 }
@@ -301,6 +302,48 @@ model OfferingPresentationOpen {
   @@map("offering_presentation_open")
 }
 
+/// Current-flow Compare state (`US-DEC-F01-001`). Not history and not a
+/// session: it expires, and PRD-0003 gives V1 no saved Compare history.
+model ComparisonSet {
+  id         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// The shared active leaf Category every member must belong to (AC-3).
+  categoryId String                @map("category_id") @db.Uuid
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt  DateTime              @map("expires_at") @db.Timestamptz(6)
+  category   Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  members    ComparisonSetMember[]
+
+  @@index([expiresAt])
+  @@map("comparison_set")
+}
+
+/// Membership. Eligibility, the shared leaf and the ceiling of five are
+/// enforced by a trigger, which Prisma cannot model — the integration suites
+/// are what prove they are there.
+model ComparisonSetMember {
+  comparisonSetId String        @map("comparison_set_id") @db.Uuid
+  offeringId      String        @map("offering_id") @db.Uuid
+  addedAt         DateTime      @default(now()) @map("added_at") @db.Timestamptz(6)
+  comparisonSet   ComparisonSet @relation(fields: [comparisonSetId], references: [id], onDelete: Cascade)
+  offering        Offering      @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+
+  @@id([comparisonSetId, offeringId])
+  @@index([offeringId])
+  @@map("comparison_set_member")
+}
+
+/// One occurrence of a valid Comparison Set being opened in Compare (AC-11).
+/// One per set, so reopening the same comparison is not counted twice.
+model CompareStart {
+  comparisonSetId String   @id @map("comparison_set_id") @db.Uuid
+  domainId        String   @map("domain_id") @db.Uuid
+  startedAt       DateTime @default(now()) @map("started_at") @db.Timestamptz(6)
+  domain          Domain   @relation(fields: [domainId], references: [id], onDelete: Restrict)
+
+  @@index([domainId, startedAt])
+  @@map("compare_start")
+}
+
 model Category {
   id         String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   domainId   String              @map("domain_id") @db.Uuid
@@ -318,6 +361,7 @@ model Category {
   children   Category[]          @relation("CategoryTree")
   attributes CategoryAttribute[]
   offerings  Offering[]
+  comparisonSets ComparisonSet[]
 
   @@unique([id, domainId])
   @@unique([domainId, slug])
@@ -392,6 +436,7 @@ model Offering {
   /// Zero or one, never shared (PRD-0001 §9.1).
   affiliateDestination AffiliateDestination?
   presentationOpens    OfferingPresentationOpen[]
+  comparisonMemberships ComparisonSetMember[]
 
   @@unique([businessId, slug])
   @@index([categoryId, status])
