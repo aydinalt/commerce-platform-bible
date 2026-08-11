@@ -790,6 +790,65 @@ export const publicOfferingSchema = listingCardSchema;
 
 export type PublicOfferingResponse = z.infer<typeof publicOfferingSchema>;
 
+/**
+ * One Attribute as complete Presentation shows it (`US-OFR-F05-001` AC-3).
+ *
+ * The definition travels with the value because the value alone does not mean
+ * anything: `120` is not a fact until it is "Power, 120 hp", and an option is
+ * a label a person recognises rather than the identifier that stored it. The
+ * governed `unit` is carried verbatim — UX may place it, not restate it.
+ *
+ * `supplied` is separate from the value being `null` so that a missing
+ * optional value is a statement rather than an inference. AC-4 forbids
+ * inventing a default in its place, and something has to say that it is
+ * absent.
+ */
+export const presentedAttributeSchema = z
+  .object({
+    attributeId: z.string().uuid(),
+    boolean: z.boolean().nullable(),
+    kind: z.enum(ATTRIBUTE_VALUE_KINDS),
+    name: z.string(),
+    number: z.number().nullable(),
+    optionLabels: z.array(z.string()),
+    supplied: z.boolean(),
+    text: z.string().nullable(),
+    unit: z.string().nullable()
+  })
+  .strict();
+
+/**
+ * The PRD-0001 §8.2 product minimum for complete public Presentation.
+ *
+ * What is absent is again the specification. There is no telephone, email or
+ * external contact URL — AC-5 — and no Affiliate Destination: the public
+ * Business identity set is exactly the three fields PRD-0005 owns, and this
+ * shape cannot express a fourth.
+ *
+ * `visuals` is present and always empty. No Offering can hold media yet, and
+ * an absent field would let a consumer conclude that media is not part of the
+ * minimum; an empty one says the Offering supplied none, which is AC-4.
+ */
+export const offeringPresentationSchema = z
+  .object({
+    attributes: z.array(presentedAttributeSchema),
+    business: publicBusinessIdentitySchema,
+    /// Root first. The Category context is the path, not just the leaf.
+    categoryPath: z.array(z.string()).min(1),
+    description: z.string().nullable(),
+    offeringId: z.string().uuid(),
+    publishedAt: z.string().datetime(),
+    slug: z.string(),
+    title: z.string(),
+    visuals: z.array(z.string())
+  })
+  .strict();
+
+export type PresentedAttribute = z.infer<typeof presentedAttributeSchema>;
+export type OfferingPresentationResponse = z.infer<
+  typeof offeringPresentationSchema
+>;
+
 export const browseRootsSchema = z
   .object({
     domains: z.array(

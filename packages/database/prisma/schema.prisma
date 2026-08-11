@@ -258,6 +258,7 @@ model Domain {
   active     Boolean    @default(true)
   categories Category[]
   discoveryStarts DiscoveryStart[]
+  presentationOpens OfferingPresentationOpen[]
 
   @@map("domain")
 }
@@ -281,6 +282,23 @@ model DiscoveryStart {
 
   @@index([kind, startedAt])
   @@map("discovery_start")
+}
+
+/// One occurrence of complete public Presentation successfully beginning for
+/// one eligible Offering (PRD-0001 §8.2.1). A management view produces none.
+model OfferingPresentationOpen {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  offeringId String   @map("offering_id") @db.Uuid
+  /// Denormalised: the occurrence belongs to the Domain it happened in, even
+  /// if the Offering is recategorised afterwards.
+  domainId   String   @map("domain_id") @db.Uuid
+  openedAt   DateTime @default(now()) @map("opened_at") @db.Timestamptz(6)
+  offering   Offering @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+  domain     Domain   @relation(fields: [domainId], references: [id], onDelete: Restrict)
+
+  @@index([offeringId, openedAt])
+  @@index([domainId, openedAt])
+  @@map("offering_presentation_open")
 }
 
 model Category {
@@ -373,6 +391,7 @@ model Offering {
   projection   OfferingSearchProjection?
   /// Zero or one, never shared (PRD-0001 §9.1).
   affiliateDestination AffiliateDestination?
+  presentationOpens    OfferingPresentationOpen[]
 
   @@unique([businessId, slug])
   @@index([categoryId, status])

@@ -1,11 +1,11 @@
 import {
   browseRootsSchema,
   browseViewSchema,
-  publicOfferingSchema,
+  offeringPresentationSchema,
   searchViewSchema,
   type BrowseRoots,
   type BrowseViewResponse,
-  type PublicOfferingResponse,
+  type OfferingPresentationResponse,
   type SearchViewResponse
 } from "@commerce/contracts";
 
@@ -79,23 +79,27 @@ export async function fetchSearchView(
 }
 
 /**
- * Opening the Offering behind a Listing Card (`US-DSC-F09-001`).
+ * Beginning complete Presentation for the Offering behind a Listing Card
+ * (`US-DSC-F09-001`, `US-OFR-F05-001`).
  *
- * `null` rather than a thrown error, because "this cannot be opened" is an
- * ordinary answer: AC-4 makes eligibility a condition of beginning
- * Presentation at all, and an Offering retired between the card being drawn
- * and the card being opened is the expected case, not a fault.
+ * `null` rather than a thrown error, because "this cannot be presented" is an
+ * ordinary answer: eligibility is a condition of beginning Presentation at
+ * all, and an Offering retired between the card being drawn and the card being
+ * opened is the expected case, not a fault.
+ *
+ * The request is what produces `Offering Presentation Open`, so it must not be
+ * made speculatively — no prefetch, no warming, no retry on success.
  */
-export async function fetchPublicOffering(
+export async function fetchOfferingPresentation(
   slug: string
-): Promise<PublicOfferingResponse | null> {
+): Promise<OfferingPresentationResponse | null> {
   const response = await fetch(
     `${apiBaseUrl()}/offerings/${encodeURIComponent(slug)}`,
     { cache: "no-store", headers: { accept: "application/json" } }
   );
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`OFFERING_${response.status}`);
-  return publicOfferingSchema.parse(await response.json());
+  return offeringPresentationSchema.parse(await response.json());
 }
 
 export async function fetchBrowseView(

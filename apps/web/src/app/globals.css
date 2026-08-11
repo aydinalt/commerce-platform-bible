@@ -157,3 +157,46 @@ main:has(.category-choices) {
   border-radius: 0.75rem;
   padding: 1rem 1.15rem;
 }
+
+article {
+  max-width: 46rem;
+}
+
+.category-path {
+  font-size: 0.92rem;
+  margin-top: 0;
+}
+
+.attributes {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.attributes div {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.attributes dt {
+  color: #526079;
+}
+
+.attributes dd {
+  margin: 0;
+  text-align: right;
+}
+
+.attribute-absent dd {
+  color: #8b97a8;
+}
+
+.decision-entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

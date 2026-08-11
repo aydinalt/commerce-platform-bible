@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 
-import { fetchPublicOffering } from "../../../discovery/api";
+import { fetchOfferingPresentation } from "../../../discovery/api";
 
-import { OfferingIdentity } from "./offering-identity";
+import { OfferingPresentation } from "./offering-presentation";
 
 /**
  * The Offering a Listing Card opens (`US-DSC-F09-001`).
@@ -13,9 +13,10 @@ import { OfferingIdentity } from "./offering-identity";
  * AC-7, which matters most in the case where the Offering could not be opened
  * at all.
  *
- * Opening is not Completion (AC-5). No occurrence is recorded here;
- * `Offering Presentation Open` occurs when complete Presentation successfully
- * begins, and PRD-0001 §8.2.1 gives that to `US-OFR-F05-001`.
+ * Opening is not Completion (`US-DSC-F09-001` AC-5). The one occurrence it
+ * produces is `Offering Presentation Open`, and the API produces it at the
+ * moment an eligible complete Presentation is composed — which is why this
+ * route is never prerendered and never prefetched.
  */
 
 /// Eligibility can change between two requests, so this may not be prerendered.
@@ -27,12 +28,12 @@ export default async function OfferingPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const offering = await fetchPublicOffering(slug);
+  const offering = await fetchOfferingPresentation(slug);
 
   // AC-4. Presentation begins only while the Offering is still eligible; a
   // not-found says nothing about why, which is the only answer that leaks
   // neither a retirement nor a moderation decision.
   if (!offering) notFound();
 
-  return <OfferingIdentity offering={offering} />;
+  return <OfferingPresentation offering={offering} />;
 }

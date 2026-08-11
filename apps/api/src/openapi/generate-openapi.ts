@@ -241,6 +241,18 @@ const document = {
         ],
         type: "object"
       },
+      PublicBusinessIdentity: {
+        additionalProperties: false,
+        description:
+          "The public Business identity set is exactly display name, supplied logo and supplied short description. Telephone, email and contact URL have no representation here at all.",
+        properties: {
+          logoUrl: { type: ["string", "null"] },
+          name: { type: "string" },
+          shortDescription: { type: ["string", "null"] }
+        },
+        required: ["logoUrl", "name", "shortDescription"],
+        type: "object"
+      },
       AttributeOption: {
         additionalProperties: false,
         properties: {
@@ -576,6 +588,79 @@ const document = {
           "publishedAt",
           "slug",
           "title"
+        ],
+        type: "object"
+      },
+      PresentedAttribute: {
+        additionalProperties: false,
+        description:
+          "One Attribute as Presentation shows it. The governed unit and the option labels travel with the value, because the value alone does not mean anything. `supplied` distinguishes a missing optional value from a value that happens to be false or zero.",
+        properties: {
+          attributeId: { format: "uuid", type: "string" },
+          boolean: { type: ["boolean", "null"] },
+          kind: {
+            enum: [
+              "TEXT",
+              "NUMBER",
+              "BOOLEAN",
+              "SINGLE_SELECT",
+              "MULTI_SELECT"
+            ],
+            type: "string"
+          },
+          name: { type: "string" },
+          number: { type: ["number", "null"] },
+          optionLabels: { items: { type: "string" }, type: "array" },
+          supplied: { type: "boolean" },
+          text: { type: ["string", "null"] },
+          unit: { type: ["string", "null"] }
+        },
+        required: [
+          "attributeId",
+          "boolean",
+          "kind",
+          "name",
+          "number",
+          "optionLabels",
+          "supplied",
+          "text",
+          "unit"
+        ],
+        type: "object"
+      },
+      OfferingPresentation: {
+        additionalProperties: false,
+        description:
+          "The PRD-0001 §8.2 product minimum for complete public Presentation. It carries no telephone, email, external contact URL or Affiliate Destination — the public Business identity set is exactly the three fields PRD-0005 owns. `visuals` is present and empty because no Offering can hold media yet: the Offering supplied none, rather than media not being part of the minimum.",
+        properties: {
+          attributes: {
+            items: { $ref: "#/components/schemas/PresentedAttribute" },
+            type: "array"
+          },
+          business: { $ref: "#/components/schemas/PublicBusinessIdentity" },
+          categoryPath: {
+            description: "Root first. The Category context is the path.",
+            items: { type: "string" },
+            minItems: 1,
+            type: "array"
+          },
+          description: { type: ["string", "null"] },
+          offeringId: { format: "uuid", type: "string" },
+          publishedAt: { format: "date-time", type: "string" },
+          slug: { type: "string" },
+          title: { type: "string" },
+          visuals: { items: { type: "string" }, type: "array" }
+        },
+        required: [
+          "attributes",
+          "business",
+          "categoryPath",
+          "description",
+          "offeringId",
+          "publishedAt",
+          "slug",
+          "title",
+          "visuals"
         ],
         type: "object"
       },
@@ -2699,7 +2784,7 @@ const document = {
     "/api/v1/offerings/{slug}": {
       get: {
         description:
-          "The Offering a Listing Card opens. Public and unauthenticated. It reads the Discovery projection, so it answers only while final Offering Public Eligibility is Eligible — an Offering that stopped being eligible after its card was drawn is absent rather than refused, and a retired Offering, a Restricted Business and an address that never existed are indistinguishable from outside. Opening records no occurrence and begins no Compare, Decision Chat, Affiliate Handoff or Direct Contact.",
+          "The complete public Presentation of one Offering, reached by opening a Listing Card. Public and unauthenticated. It reads the Discovery projection, so it answers only while final Offering Public Eligibility is Eligible — an Offering that stopped being eligible after its card was drawn is absent rather than refused, and a retired Offering, a Restricted Business and an address that never existed are indistinguishable from outside. A successful answer produces one Offering Presentation Open occurrence; a refusal produces none. Compare, Decision Chat, Affiliate Handoff and Direct Contact are entries the experience offers and other PRDs own — none is executed here.",
         operationId: "publicOffering",
         parameters: [
           {
@@ -2713,10 +2798,12 @@ const document = {
           "200": {
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/ListingCard" }
+                schema: {
+                  $ref: "#/components/schemas/OfferingPresentation"
+                }
               }
             },
-            description: "The exact selected Offering identity"
+            description: "The complete public Presentation"
           },
           "404": errorResponse(
             "No publicly eligible Offering matches that address"

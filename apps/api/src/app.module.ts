@@ -30,6 +30,7 @@ import { PgCommerceRepository } from "./persistence/pg-commerce.repository.js";
 import { PgDiscoveryRepository } from "./persistence/pg-discovery.repository.js";
 import { PgIdentityRepository } from "./persistence/pg-identity.repository.js";
 import { PgOfferingContentRepository } from "./persistence/pg-offering-content.repository.js";
+import { PgPresentationRepository } from "./persistence/pg-presentation.repository.js";
 import { OriginValidator } from "./security/origin.guard.js";
 import { PrincipalResolver } from "./security/principal-resolver.js";
 
@@ -84,6 +85,7 @@ function allowedOrigins(): readonly string[] {
     PgDiscoveryRepository,
     PgIdentityRepository,
     PgOfferingContentRepository,
+    PgPresentationRepository,
     PrincipalResolver,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
     {

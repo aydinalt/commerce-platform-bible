@@ -514,40 +514,6 @@ export class PgDiscoveryRepository implements OnModuleDestroy {
   }
 
   /**
-   * The Offering behind a Listing Card, resolved for opening
-   * (`US-DSC-F09-001`).
-   *
-   * It reads the Discovery projection, which is the same source the card came
-   * from, so AC-4 needs no eligibility check written here: a projection row
-   * exists only while final Offering Public Eligibility is Eligible, and
-   * retirement deletes it. An Offering that stopped being eligible between the
-   * card being drawn and the card being opened is simply not found.
-   */
-  async publicOffering(slug: string): Promise<ListingCard | null> {
-    const client = await this.pool.connect();
-    try {
-      const result = await client.query<
-        Omit<ListingCard, "publishedAt"> & { publishedAt: Date }
-      >(
-        `select p.offering_id as "offeringId", p.title,
-           p.business_name as "businessName", c.name as "categoryName",
-           o.slug, p.published_at as "publishedAt"
-         from offering_search_projection p
-         join offering o on o.id = p.offering_id
-         join category c on c.id = p.category_id
-         where o.slug = $1`,
-        [slug]
-      );
-      const row = result.rows[0];
-      return row
-        ? { ...row, publishedAt: row.publishedAt.toISOString() }
-        : null;
-    } finally {
-      client.release();
-    }
-  }
-
-  /**
    * The Filters offered for one active leaf Category (AC-1).
    *
    * Three conditions, all in the `where`: the Attribute applies to this

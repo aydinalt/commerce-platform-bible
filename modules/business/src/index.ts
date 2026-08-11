@@ -50,9 +50,15 @@ export interface PublicBusinessIdentity {
  * This is only the Business half of AC-7. Final Offering Public Eligibility is
  * owned by PRD-0001 and evaluated where an Offering is presented, so a caller
  * that has a non-null result here still has one more condition to satisfy.
+ *
+ * The parameter is the four fields this actually reads rather than the whole
+ * owner record. A caller composing a public identity should not have to hold a
+ * Business's protected contact channels in order to ask.
  */
 export function publicBusinessIdentity(
-  business: BusinessInformation
+  business: PublicBusinessIdentity & {
+    publicExposure: OwnedBusiness["publicExposure"];
+  }
 ): PublicBusinessIdentity | null {
   if (business.publicExposure !== "ELIGIBLE") return null;
   return {

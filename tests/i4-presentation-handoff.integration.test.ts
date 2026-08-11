@@ -11,7 +11,7 @@ import type {
 } from "../modules/notification/src/index.js";
 import {
   errorEnvelopeSchema,
-  publicOfferingSchema
+  offeringPresentationSchema
 } from "../packages/contracts/src/index.js";
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -166,10 +166,10 @@ suite("Increment I4 Offering Presentation handoff", () => {
 
     // AC-1 and AC-2. The exact identity the Listing Card carried, unchanged.
     expect(opened.statusCode).toBe(200);
-    const offering = publicOfferingSchema.parse(opened.json());
+    const offering = offeringPresentationSchema.parse(opened.json());
     expect(offering.slug).toBe(offeringSlug);
     expect(offering.title).toBe("Kırmızı spor araba");
-    expect(offering.businessName).toBe("Kartal Motors");
+    expect(offering.business.name).toBe("Kartal Motors");
   });
 
   it("needs no session, and answers a session no differently", async () => {
@@ -251,7 +251,7 @@ suite("Increment I4 Offering Presentation handoff", () => {
     expect((await open(draftSlug)).statusCode).toBe(404);
   });
 
-  it("records no occurrence and starts nothing else", async () => {
+  it("begins no Discovery path and no Decision by being opened", async () => {
     const before = await pool.query<{ count: string }>(
       `select count(*)::text as count from discovery_start`
     );
@@ -260,18 +260,18 @@ suite("Increment I4 Offering Presentation handoff", () => {
     await open(offeringSlug);
     await open(offeringSlug);
 
-    // AC-5 and AC-6. Opening is not Completion, begins no Compare, Decision
-    // Chat, Affiliate Handoff or Direct Contact, and — since PRD-0001 §8.2.1
-    // gives `Offering Presentation Open` to complete Presentation — records
-    // nothing at all yet. Discovery Starts are the only occurrence the system
-    // can currently write, and opening writes none.
+    // AC-5 and AC-6. Opening is not Completion and begins no Compare, Decision
+    // Chat, Affiliate Handoff or Direct Contact. The one occurrence it does
+    // produce is `Offering Presentation Open`, which is a different table and
+    // a different Story; a Discovery Start is not among the things opening may
+    // invent.
     const after = await pool.query<{ count: string }>(
       `select count(*)::text as count from discovery_start`
     );
     expect(after.rows[0]?.count).toBe(before.rows[0]?.count);
   });
 
-  it("exposes nothing beyond the identity that was selected", async () => {
+  it("exposes nothing beyond the product minimum", async () => {
     const { offeringSlug } = await publish();
 
     const opened = await open(offeringSlug);
@@ -280,13 +280,22 @@ suite("Increment I4 Offering Presentation handoff", () => {
     // could carry a telephone number, an email address, an external contact
     // URL or an Affiliate Destination, so the handoff cannot widen what
     // Discovery was allowed to show.
-    expect(Object.keys(opened.json<Record<string, unknown>>()).sort()).toEqual([
-      "businessName",
-      "categoryName",
+    const body = opened.json<Record<string, unknown>>();
+    expect(Object.keys(body).sort()).toEqual([
+      "attributes",
+      "business",
+      "categoryPath",
+      "description",
       "offeringId",
       "publishedAt",
       "slug",
-      "title"
+      "title",
+      "visuals"
+    ]);
+    expect(Object.keys(body.business as object).sort()).toEqual([
+      "logoUrl",
+      "name",
+      "shortDescription"
     ]);
   });
 });
