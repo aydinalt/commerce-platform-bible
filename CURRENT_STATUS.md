@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.14
+Version:      2.15
 Last Updated: 2026-08-11
 -->
 
@@ -14,8 +14,8 @@ Last Updated: 2026-08-11
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I3 Publication and Discovery Projection — closed |
-| Development | Identity baseline, the catalog and Offering write model, and the publication-to-Discovery read path implemented |
+| Current phase | M12 Increment I4 Public Web Journey — closed |
+| Development | Identity baseline, the catalog and Offering write model, the publication-to-Discovery read path, and the public web journey from Homepage to complete Offering Presentation implemented |
 | Delivery Status of all Frozen Stories | Not Started — implementation is recorded in closure records, and advancing any Delivery Status is a separate Owner decision |
 
 ## Canonical Layer Status
@@ -120,9 +120,23 @@ transaction, so a Published Offering that nothing can find is not a reachable
 state, and an unauthenticated person can browse, search, narrow, filter and be
 told honestly when nothing matches.
 
+## I4 Closure Evidence
+
+Five Stories delivered across five commits: `US-DSC-F01-001`, `US-DSC-F06-001`,
+`US-DSC-F09-001`, `US-OFR-F05-001` and `US-DSC-F10-001`. One migration, and a
+suite of 388 tests. Per-Story coverage, the delivery decisions and the
+deferrals are recorded in
+`docs/implementation/I4_PUBLIC_WEB_JOURNEY_CLOSURE.md`.
+
+The increment turned a correct API into a usable product: a stranger can now
+arrive at the Homepage, search or browse, open a Listing Card and read the
+complete Presentation of one Offering without signing in. `US-OFR-F05-001` AC-3
+is covered except for its grouping half, which has no governed input anywhere in
+the datamodel or PRD-0006.
+
 ## Remaining Work
 
-1. Begin I4 Public Web Journey, starting with `US-DSC-F01-001` and `US-DSC-F06-001`.
+1. Begin I5 Compare and Decision Completion, starting with `US-DEC-F01-001`.
 2. Open `US-OFR-F02-001` AC-9 when `US-PLT-F06-001` introduces the correction case it depends on.
 3. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
 4. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
@@ -136,7 +150,10 @@ told honestly when nothing matches.
 - `prisma validate` and `prisma migrate diff` cannot run in the local verification environment because the Prisma engine host is unreachable there. Schema syntax is checked locally through `@prisma/prisma-schema-wasm`, but drift itself is only provable in target CI.
 - Authentication is application-owned: Argon2id credentials and server-managed opaque sessions, per `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`. The `TestPrincipalAdapter` survives only as a development affordance that refuses to construct in production, and should be removed once no local workflow depends on it.
 - Outbound email has a port, an outbox and a worker, but no vendor adapter. `LoggingEmailDispatcher` refuses to construct in production, so a deployment without an adapter fails loudly rather than accepting registrations nobody can complete.
-- Discovery is a JSON contract, not a page. Browse, Search, narrowing, filtering, ordering and Zero Results are implemented and unauthenticated, but the web application is still the single static route it was after I0; the experience UX-0002 describes begins in I4.
+- Discovery criteria travel in a five-minute `httpOnly` cookie rather than the address, because UX-0002 §4 places persistent or shareable URL state outside V1. A Results page therefore cannot be bookmarked or shared, and refreshing loses the query — an accepted cost of not building something no Story promised.
+- No public page may be prerendered or prefetched. Results depend on current eligibility, and opening an Offering produces an occurrence that a speculative fetch would fabricate.
+- Attribute Filter controls are absent from the web application. `US-DSC-F05-001` is implemented in the API and has no I4 Story for its surface.
+- Web tests render server components through `react-dom/server` rather than in a browser. They prove markup and absence — which is most of what these Stories require — and nothing about layout, focus behaviour or responsive treatment.
 - Discovery results are unpaged. No Frozen Discovery Story specifies a page size, a cursor or a "load more" affordance, and `US-DSC-F07-001` AC-3 and AC-5 require a stable deterministic order that a guessed pagination scheme could contradict.
 - Discovery Starts are recorded but unread. PRD-0006 Basic Analytics is their only consumer and does not exist; the occurrences are captured now because they cannot be reconstructed afterwards.
 - Affiliate Destination Review, Validate, Enable and Disable are implemented as an Admin surface with Handoff Eligibility derived by a database biconditional over the authored pair, so no administration path can leave a changed destination eligible under an earlier validation. The Handoff itself belongs to `US-DEC-F05-001` in I5.
@@ -160,5 +177,6 @@ told honestly when nothing matches.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.15 | 2026-08-11 | Closed I4: the Homepage entry, Discovery Results and Listing Cards, the Offering Presentation handoff, complete public Offering Presentation with its `Offering Presentation Open` occurrence, and the Compare-preparation Discovery return. Recorded that Discovery criteria are carried in a transient cookie rather than the address, and that `US-OFR-F05-001` AC-3 waits on a governed Attribute grouping. Delivery Status unchanged. |
 | 2.14 | 2026-08-11 | Closed I3: Affiliate Destination eligibility governance, Offering publication with its Discovery projection, and the unauthenticated Browse, Search, Category narrowing, Attribute filtering, default ordering and Zero Results recovery read path. Recorded that Discovery is still a JSON contract with no page, and that results are deliberately unpaged. Delivery Status unchanged. |
 | 2.13 | 2026-08-10 | Closed I2: Category and Domain management, Attribute definition management, Business information and exposure, and Offering creation, editing, retirement and Affiliate Destination configuration. Aligned the Offering lifecycle, the Attribute value kinds and the required-for-publication flag to their Frozen Stories. Recorded that `US-OFR-F02-001` AC-9 waits for `US-PLT-F06-001`. Delivery Status unchanged. |
