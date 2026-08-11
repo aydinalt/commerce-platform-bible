@@ -18,6 +18,7 @@ import {
   DecisionFlowController
 } from "./decision/decision.controller.js";
 import { RestatingDecisionAssistant } from "./decision/restating.assistant.js";
+import { AdminPanelController } from "./platform/admin-panel.controller.js";
 import { DiscoveryController } from "./discovery/discovery.controller.js";
 import { HealthController } from "./health.controller.js";
 import { ErrorEnvelopeFilter } from "./http/error-envelope.filter.js";
@@ -73,6 +74,7 @@ function allowedOrigins(): readonly string[] {
 @Module({
   controllers: [
     AdminBusinessController,
+    AdminPanelController,
     AdminOfferingController,
     AffiliateDestinationController,
     AttributeController,

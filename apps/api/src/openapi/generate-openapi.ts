@@ -1514,6 +1514,46 @@ const document = {
         required: ["destination", "entries", "offering"],
         type: "object"
       },
+      AdminPanel: {
+        additionalProperties: false,
+        description:
+          "The Admin Panel baseline. `userId` and nothing else identifies the Admin, because authorization attaches to the existing User Account and V1 creates no separate Admin identity, account or login. `functions` is a closed list of Platform behaviour that exists today; no provisioning verb is a member. `inheritedBaselines` states that entering Admin context takes nothing away — Guest and authenticated User abilities survive it.",
+        properties: {
+          functions: {
+            items: {
+              enum: [
+                "MANAGE_CATEGORIES",
+                "MANAGE_ATTRIBUTE_DEFINITIONS",
+                "ADMINISTER_AFFILIATE_DESTINATIONS",
+                "MODERATE_BUSINESSES",
+                "REQUEST_CORRECTION",
+                "READ_OFFERING_HISTORY"
+              ],
+              type: "string"
+            },
+            type: "array"
+          },
+          inheritedBaselines: {
+            items: {
+              enum: ["GUEST", "AUTHENTICATED_USER"],
+              type: "string"
+            },
+            type: "array"
+          },
+          ownedBusinessIds: {
+            items: { format: "uuid", type: "string" },
+            type: "array"
+          },
+          userId: { format: "uuid", type: "string" }
+        },
+        required: [
+          "functions",
+          "inheritedBaselines",
+          "ownedBusinessIds",
+          "userId"
+        ],
+        type: "object"
+      },
       CorrectionNotice: {
         additionalProperties: false,
         description:
@@ -3660,6 +3700,26 @@ const document = {
           "404": errorResponse("No owned Business matches that identifier")
         },
         tags: ["Business"]
+      }
+    },
+    "/api/v1/admin/panel": {
+      get: {
+        description:
+          "The Admin Panel baseline. Opens only for an Enabled account with a live Admin authorization that has explicitly entered Admin context, and re-evaluates all three on every request — an authorization removed a moment ago closes the Panel on the next read rather than at the next sign-in. `functions` lists only Platform behaviour that exists today: no grant, remove, transfer, delegate or tier-management action is a member, because first-Admin establishment and authorization changes are Product Owner decisions taken outside the Panel. `ownedBusinessIds` states what this account owns in its own right, which Admin authorization neither creates nor extends.",
+        operationId: "getAdminPanel",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AdminPanel" }
+              }
+            },
+            description: "The Admin Panel baseline"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
       }
     },
     "/api/v1/businesses/{businessId}/correction-notices": {

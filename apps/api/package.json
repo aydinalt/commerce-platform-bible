@@ -18,6 +18,7 @@
     "@commerce/decision": "0.0.0",
     "@commerce/discovery": "0.0.0",
     "@commerce/identity": "0.0.0",
+    "@commerce/moderation": "0.0.0",
     "@commerce/notification": "0.0.0",
     "@commerce/observability": "0.0.0",
     "@commerce/offering": "0.0.0",

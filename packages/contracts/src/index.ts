@@ -612,6 +612,47 @@ export const saveCorrectionSchema = z.discriminatedUnion("area", [
     .strict()
 ]);
 
+/**
+ * The Admin Panel baseline (`US-PLT-F01-001`).
+ *
+ * `userId` and nothing else identifies the Admin, because AC-2 attaches
+ * authorization to the existing account: there is no Admin identifier to
+ * publish, no operator name and no role. A separate Admin identity would have
+ * to appear here first, and it cannot.
+ *
+ * `functions` holds only Platform behaviour that exists today. No provisioning
+ * verb is a member — grant, remove, transfer, delegate and tier management are
+ * Product Owner decisions taken outside the Panel (AC-7, AC-8, AC-9), so none
+ * of them is expressible here.
+ *
+ * `businesses` is always empty of authority: the field states the Businesses
+ * this account owns *in its own right*, which for most Admins is none. AC-6
+ * grants nothing from authorization alone, and a Panel that listed every
+ * Business would read as though it did.
+ */
+export const adminPanelSchema = z
+  .object({
+    functions: z.array(
+      z.enum([
+        "MANAGE_CATEGORIES",
+        "MANAGE_ATTRIBUTE_DEFINITIONS",
+        "ADMINISTER_AFFILIATE_DESTINATIONS",
+        "MODERATE_BUSINESSES",
+        "REQUEST_CORRECTION",
+        "READ_OFFERING_HISTORY"
+      ])
+    ),
+    /// Guest and authenticated User abilities survive entry (AC-4).
+    inheritedBaselines: z.array(z.enum(["GUEST", "AUTHENTICATED_USER"])),
+    /// Businesses owned in this account's own right, which Admin authorization
+    /// neither creates nor extends (AC-6).
+    ownedBusinessIds: z.array(z.string().uuid()),
+    userId: z.string().uuid()
+  })
+  .strict();
+
+export type AdminPanel = z.infer<typeof adminPanelSchema>;
+
 export type CorrectionNotice = z.infer<typeof correctionNoticeSchema>;
 export type CorrectionNotices = z.infer<typeof correctionNoticesSchema>;
 export type RequestCorrection = z.infer<typeof requestCorrectionSchema>;
