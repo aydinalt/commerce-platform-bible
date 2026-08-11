@@ -5805,6 +5805,14 @@
               }
             },
             "description": "No Business matches that identifier"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Only an Unrestricted Business may be restricted"
           }
         },
         "tags": ["Business"]
@@ -5862,6 +5870,14 @@
               }
             },
             "description": "No Business matches that identifier"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Only a Restricted Business may be restored"
           }
         },
         "tags": ["Business"]

@@ -234,4 +234,48 @@ export class BoundedCorrectionUnavailableError extends Error {
   }
 }
 
+/**
+ * The two Business moderation transitions and the states they start from
+ * (`US-PLT-F04-001` AC-1, AC-5).
+ *
+ * Written the same way as the Offering pair, and for the same reason: the
+ * availability question and the application question have to be one sentence,
+ * or a surface eventually offers a Restrict that was already applied.
+ *
+ * Restricting an already-Restricted Business is not harmless. It would write a
+ * fresh moderation row, delete and rewrite projections, and record a second
+ * approved action against a case — all of it describing a transition that did
+ * not happen.
+ */
+export const BUSINESS_MODERATION_SOURCE = {
+  RESTORE_BUSINESS: "RESTRICTED",
+  RESTRICT_BUSINESS: "UNRESTRICTED"
+} as const;
+
+export type BusinessModerationAction = keyof typeof BUSINESS_MODERATION_SOURCE;
+
+export const BUSINESS_MODERATION_RESULT = {
+  RESTORE_BUSINESS: "UNRESTRICTED",
+  RESTRICT_BUSINESS: "RESTRICTED"
+} as const satisfies Record<BusinessModerationAction, string>;
+
+export function businessModerationPermitted(input: {
+  action: BusinessModerationAction;
+  moderation: "RESTRICTED" | "UNRESTRICTED";
+}): boolean {
+  return BUSINESS_MODERATION_SOURCE[input.action] === input.moderation;
+}
+
+/// Raised when Restrict or Restore names a Business whose current moderation
+/// status does not admit it (AC-1, AC-5).
+export class BusinessModerationUnavailableError extends Error {
+  constructor(
+    readonly action: BusinessModerationAction,
+    readonly moderation: "RESTRICTED" | "UNRESTRICTED"
+  ) {
+    super("BUSINESS_MODERATION_UNAVAILABLE");
+    this.name = "BusinessModerationUnavailableError";
+  }
+}
+
 export const businessModule = { name: "business" } as const;

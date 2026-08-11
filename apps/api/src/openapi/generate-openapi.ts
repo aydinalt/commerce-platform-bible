@@ -4214,7 +4214,10 @@ const document = {
           "400": errorResponse("Invalid identifier"),
           "401": errorResponse("Authentication required"),
           "403": errorResponse("Admin context required"),
-          "404": errorResponse("No Business matches that identifier")
+          "404": errorResponse("No Business matches that identifier"),
+          "409": errorResponse(
+            "Only an Unrestricted Business may be restricted"
+          )
         },
         tags: ["Business"]
       }
@@ -4244,7 +4247,8 @@ const document = {
           "400": errorResponse("Invalid identifier"),
           "401": errorResponse("Authentication required"),
           "403": errorResponse("Admin context required"),
-          "404": errorResponse("No Business matches that identifier")
+          "404": errorResponse("No Business matches that identifier"),
+          "409": errorResponse("Only a Restricted Business may be restored")
         },
         tags: ["Business"]
       }

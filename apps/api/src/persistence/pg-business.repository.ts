@@ -2,10 +2,13 @@ import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool } from "pg";
 
 import {
+  BusinessModerationUnavailableError,
+  businessModerationPermitted,
   BusinessSlugConflictError,
   type BusinessInformation,
   type OwnedBusiness
 } from "@commerce/business";
+import { composePublicEligibility } from "@commerce/offering";
 
 import { PROJECT_OFFERING } from "./pg-offering-content.repository.js";
 
@@ -62,14 +65,34 @@ export class PgBusinessRepository implements OnModuleDestroy {
       // Checked first: a moderation row for a Business that does not exist is
       // a foreign-key violation, and a caller naming an unknown identifier
       // deserves an absence rather than a failure.
-      const exists = await client.query(
-        `select 1 from business where id = $1`,
+      const exists = await client.query<{ moderation: string }>(
+        `select coalesce(m.status::text, 'UNRESTRICTED') as moderation
+         from business b
+         left join business_moderation_state m on m.business_id = b.id
+         where b.id = $1 for update of b`,
         [businessId]
       );
-      if (exists.rowCount === 0) {
+      const current = exists.rows[0];
+      if (!current) {
         await client.query("rollback");
         return null;
       }
+
+      // `US-PLT-F04-001` AC-1 and AC-5. Restricting a Business that is already
+      // Restricted is not a harmless repeat: it would rewrite projections and
+      // record a second approved action for a transition that did not happen.
+      if (
+        !businessModerationPermitted({
+          action:
+            status === "RESTRICTED" ? "RESTRICT_BUSINESS" : "RESTORE_BUSINESS",
+          moderation:
+            current.moderation === "RESTRICTED" ? "RESTRICTED" : "UNRESTRICTED"
+        })
+      )
+        throw new BusinessModerationUnavailableError(
+          status === "RESTRICTED" ? "RESTRICT_BUSINESS" : "RESTORE_BUSINESS",
+          current.moderation === "RESTRICTED" ? "RESTRICTED" : "UNRESTRICTED"
+        );
 
       const updated = await client.query(
         `insert into business_moderation_state (business_id, status)
@@ -83,26 +106,54 @@ export class PgBusinessRepository implements OnModuleDestroy {
         return null;
       }
 
+      /**
+       * `US-PLT-F04-001` AC-4 and AC-8. Only lifecycle-Published Offerings are
+       * touched, because a Draft, a Hidden and an Archived Offering are each
+       * ineligible for a reason neither action reaches — which is also AC-3
+       * and AC-7: no lifecycle is written anywhere in this method.
+       *
+       * The composed result is *recorded*, not just acted on. Deleting the
+       * projection makes an Offering unfindable; without a matching evaluation
+       * in the sequence, the Business's own Dashboard would go on reporting
+       * the result of a composition that no longer holds. The two have to move
+       * together or the platform disagrees with itself.
+       */
+      const published = await client.query<{ id: string }>(
+        `select id from offering
+         where business_id = $1 and status = 'PUBLISHED'`,
+        [businessId]
+      );
+      const eligibility = composePublicEligibility({
+        businessExposure: status === "RESTRICTED" ? "INELIGIBLE" : "ELIGIBLE",
+        lifecycle: "PUBLISHED"
+      });
+      for (const offering of published.rows) {
+        const version = await client.query<{ version: number }>(
+          `insert into offering_publication
+             (offering_id, status, eligibility_version, reason_code)
+           values ($1, $2::"PublicationStatus",
+             coalesce((select max(eligibility_version) + 1
+                       from offering_publication where offering_id = $1), 1),
+             $3)
+           returning eligibility_version as version`,
+          [offering.id, eligibility.status, eligibility.reason]
+        );
+        if (eligibility.status === "ELIGIBLE")
+          await client.query(PROJECT_OFFERING, [
+            offering.id,
+            version.rows[0]?.version ?? 1
+          ]);
+      }
+
+      // A Restricted Business leaves Discovery entirely — including any
+      // Offering whose lifecycle is not Published but whose projection somehow
+      // survives. The delete is by Business rather than by the list above so
+      // that nothing is left behind by a state this method did not enumerate.
       if (status === "RESTRICTED")
-        // Final Offering Public Eligibility is composed from the Business
-        // input, so a Restricted Business has no eligible Offerings — and the
-        // projection is where that answer is read from.
         await client.query(
           `delete from offering_search_projection where business_id = $1`,
           [businessId]
         );
-      else {
-        // AC-14. Only lifecycle-Published Offerings regain eligibility. A
-        // Draft, a Hidden and an Archived Offering are each ineligible for a
-        // reason restoration does not touch.
-        const published = await client.query<{ id: string }>(
-          `select id from offering
-           where business_id = $1 and status = 'PUBLISHED'`,
-          [businessId]
-        );
-        for (const offering of published.rows)
-          await client.query(PROJECT_OFFERING, [offering.id, 1]);
-      }
 
       const record = await client.query<OwnedBusiness>(
         `select b.id, b.name, b.slug, b.status,

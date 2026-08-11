@@ -13,6 +13,7 @@ import type {
 import type { Principal } from "@commerce/identity";
 import { permittedOfferingEntries } from "@commerce/offering";
 import {
+  BusinessModerationUnavailableError,
   BusinessSlugConflictError,
   type BusinessInformation,
   type OwnedBusiness
@@ -48,13 +49,29 @@ export class BusinessService {
     businessId: string,
     status: "RESTRICTED" | "UNRESTRICTED"
   ): Promise<OwnedBusiness> {
-    const moderated = await this.repository.moderate(businessId, status);
-    if (!moderated)
-      throw new NotFoundException({
-        code: "BUSINESS_NOT_FOUND",
-        message: "No Business matches that identifier"
-      });
-    return moderated;
+    try {
+      const moderated = await this.repository.moderate(businessId, status);
+      if (!moderated)
+        throw new NotFoundException({
+          code: "BUSINESS_NOT_FOUND",
+          message: "No Business matches that identifier"
+        });
+      return moderated;
+    } catch (error) {
+      if (error instanceof BusinessModerationUnavailableError)
+        // `US-PLT-F04-001` AC-1 and AC-5. A conflict rather than a validation
+        // failure: the request was well formed and the Business is simply
+        // already where the action would have taken it.
+        throw new ConflictException({
+          code: "BUSINESS_MODERATION_UNAVAILABLE",
+          message:
+            status === "RESTRICTED"
+              ? "Only an Unrestricted Business may be restricted"
+              : "Only a Restricted Business may be restored",
+          moderation: error.moderation
+        });
+      throw error;
+    }
   }
 
   /**
