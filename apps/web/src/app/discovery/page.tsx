@@ -36,5 +36,10 @@ export default async function DiscoveryPage() {
 
   if (entry.kind === "SEARCH")
     return <SearchResultsView view={await fetchSearchView(entry)} />;
-  return <BrowseResultsView view={await fetchBrowseView(entry)} />;
+  return (
+    <BrowseResultsView
+      preparation={entry.preparation}
+      view={await fetchBrowseView(entry)}
+    />
+  );
 }

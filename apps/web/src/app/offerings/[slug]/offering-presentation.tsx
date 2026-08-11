@@ -3,6 +3,8 @@ import type {
   PresentedAttribute
 } from "@commerce/contracts";
 
+import type { PreparationContext } from "../../../discovery/entry";
+
 /**
  * Complete public Offering Presentation (`US-OFR-F05-001`, UX-0003).
  *
@@ -65,7 +67,11 @@ function Attributes({ attributes }: { attributes: PresentedAttribute[] }) {
  * neither has been built. A control that looked live and led nowhere would be
  * a worse lie than one that says it is not available yet.
  */
-function DecisionEntries() {
+function DecisionEntries({
+  preparation
+}: {
+  preparation?: PreparationContext | undefined;
+}) {
   return (
     <section aria-labelledby="decision-entries">
       <h2 id="decision-entries">Bu ilanla ne yapabilirsiniz</h2>
@@ -81,15 +87,28 @@ function DecisionEntries() {
           </button>
         </li>
       </ul>
+      {/* `US-DSC-F10-001` AC-5. The preparation context arrived unchanged and
+          is held here so that choosing Compare could pass it on with the
+          Offering now being viewed (UX-0003 §9.2). AC-6 is why it only sits
+          here: nothing has been added to a Comparison Set, and no Compare
+          Start has been claimed. */}
+      {preparation === undefined ? null : (
+        <p role="status">
+          Karşılaştırma hazırlığı sürüyor: seçtiğinizde bu ilan, hazırlıktaki
+          ilanla birlikte karşılaştırmaya taşınacak.
+        </p>
+      )}
       <p>Bu girişler henüz kullanıma açılmadı.</p>
     </section>
   );
 }
 
 export function OfferingPresentation({
-  offering
+  offering,
+  preparation
 }: {
   offering: OfferingPresentationResponse;
+  preparation?: PreparationContext | undefined;
 }) {
   return (
     <main>
@@ -116,7 +135,7 @@ export function OfferingPresentation({
           )}
         </section>
 
-        <DecisionEntries />
+        <DecisionEntries preparation={preparation} />
       </article>
     </main>
   );

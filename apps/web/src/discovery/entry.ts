@@ -57,9 +57,28 @@ export interface SearchEntryState {
 
 export const NO_SEARCH_ENTRY: SearchEntryState = { refused: false, typed: "" };
 
+/**
+ * A Compare-preparation return (`US-DSC-F10-001`).
+ *
+ * Exactly one eligible Offering and the active leaf Category it sits in. It
+ * says "find me a second one of these", and that is the whole of it: it is not
+ * a Comparison Set, it holds no second member, and Discovery never adds one —
+ * AC-6 gives that to UX-0004.
+ *
+ * It travels in the same carrier as the criteria and for the same reason. AC-3
+ * requires it to be transient, unsaved, non-restorable once the flow ends and
+ * absent from persistent or shareable URL state, which is exactly what a
+ * short-lived cookie is and a query parameter is not.
+ */
+export interface PreparationContext {
+  readonly categoryId: string;
+  readonly offeringId: string;
+}
+
 export interface BrowseEntry extends PathContinuation {
   readonly categoryId: string;
   readonly kind: "BROWSE";
+  readonly preparation?: PreparationContext;
 }
 
 export type DiscoveryEntry = BrowseEntry | SearchEntry;
@@ -96,9 +115,36 @@ export function readDiscoveryEntry(
   }
   if (value.kind === "BROWSE") {
     const entry = readBrowseEntry(value.categoryId);
-    return entry ? { ...entry, ...pathId } : null;
+    if (!entry) return null;
+    const preparation = readPreparation(value.preparation, entry.categoryId);
+    return {
+      ...entry,
+      ...pathId,
+      ...(preparation === null ? {} : { preparation })
+    };
   }
   return null;
+}
+
+/**
+ * A preparation context is accepted only where it is coherent
+ * (`US-DSC-F10-001` AC-1 and AC-2).
+ *
+ * The Category it names must be the Category being browsed, because AC-2
+ * constrains Results to *that same* active leaf. A return claiming one leaf
+ * while showing another would satisfy neither, so it is discarded rather than
+ * reconciled — Discovery does not get to decide which half the person meant.
+ */
+export function readPreparation(
+  raw: unknown,
+  categoryId: string
+): PreparationContext | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const value = raw as Record<string, unknown>;
+  if (typeof value.offeringId !== "string" || !UUID.test(value.offeringId))
+    return null;
+  if (value.categoryId !== categoryId) return null;
+  return { categoryId, offeringId: value.offeringId };
 }
 
 /**

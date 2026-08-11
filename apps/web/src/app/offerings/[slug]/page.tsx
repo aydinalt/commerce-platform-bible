@@ -1,17 +1,26 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { fetchOfferingPresentation } from "../../../discovery/api";
+import {
+  DISCOVERY_ENTRY_COOKIE,
+  readDiscoveryEntry
+} from "../../../discovery/entry";
 
 import { OfferingPresentation } from "./offering-presentation";
 
 /**
  * The Offering a Listing Card opens (`US-DSC-F09-001`).
  *
- * Discovery's responsibility ends here (AC-3). Nothing on this route reads the
- * Discovery criteria, and nothing writes them: the carrier cookie is untouched,
- * so a person who opens an Offering and goes back finds the Results they left —
- * AC-7, which matters most in the case where the Offering could not be opened
- * at all.
+ * Discovery's responsibility ends here (AC-3). Nothing on this route writes the
+ * Discovery criteria: the carrier cookie is untouched, so a person who opens an
+ * Offering and goes back finds the Results they left — AC-7, which matters most
+ * in the case where the Offering could not be opened at all.
+ *
+ * It does read one thing. `US-DSC-F10-001` AC-5 requires the unchanged
+ * Compare-preparation context to reach Presentation alongside the newly opened
+ * Offering, so the carrier is read and passed on exactly as found — not
+ * rewritten, not extended, and not turned into a Comparison Set.
  *
  * Opening is not Completion (`US-DSC-F09-001` AC-5). The one occurrence it
  * produces is `Offering Presentation Open`, and the API produces it at the
@@ -28,6 +37,8 @@ export default async function OfferingPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const jar = await cookies();
+  const entry = readDiscoveryEntry(jar.get(DISCOVERY_ENTRY_COOKIE)?.value);
   const offering = await fetchOfferingPresentation(slug);
 
   // AC-4. Presentation begins only while the Offering is still eligible; a
@@ -35,5 +46,10 @@ export default async function OfferingPage({
   // neither a retirement nor a moderation decision.
   if (!offering) notFound();
 
-  return <OfferingPresentation offering={offering} />;
+  return (
+    <OfferingPresentation
+      offering={offering}
+      preparation={entry?.kind === "BROWSE" ? entry.preparation : undefined}
+    />
+  );
 }

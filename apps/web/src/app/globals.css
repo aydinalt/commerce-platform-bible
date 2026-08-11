@@ -192,6 +192,23 @@ article {
   color: #8b97a8;
 }
 
+.preparation-notice {
+  background: #eef2f8;
+  border-radius: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.9rem 1.1rem;
+}
+
+.preparation-notice p {
+  margin: 0 0 0.6rem;
+}
+
+.preparation-notice button {
+  background: #fff;
+  border-color: #c3cbd9;
+  color: #162033;
+}
+
 .decision-entries {
   display: flex;
   flex-wrap: wrap;

@@ -3,7 +3,8 @@ import type {
   SearchViewResponse
 } from "@commerce/contracts";
 
-import { selectCategory } from "../actions";
+import type { PreparationContext } from "../../discovery/entry";
+import { leavePreparation, selectCategory } from "../actions";
 
 import { ListingCards } from "./listing-card";
 
@@ -82,27 +83,82 @@ export function SearchResultsView({ view }: { view: SearchViewResponse }) {
   );
 }
 
-export function BrowseResultsView({ view }: { view: BrowseViewResponse }) {
+/**
+ * The Compare-preparation return, stated rather than implied
+ * (`US-DSC-F10-001`).
+ *
+ * A person who arrived this way is looking for a second Offering inside one
+ * leaf, and the page says so: the constraint is visible, and so is the way out
+ * of it. AC-7 makes leaving clear the context, which is why the exit is a
+ * submission and not a link back.
+ *
+ * Nothing here adds a member to a Comparison Set or claims Compare Start —
+ * AC-6 — and there is no control through which it could.
+ */
+function PreparationNotice({
+  preparation
+}: {
+  preparation: PreparationContext;
+}) {
+  return (
+    <section className="preparation-notice">
+      <p role="status">
+        Karşılaştırma için bu kategoriden ikinci bir ilan seçiyorsunuz.
+      </p>
+      <form action={leavePreparation}>
+        <input name="categoryId" type="hidden" value={preparation.categoryId} />
+        <button type="submit">Karşılaştırma hazırlığından çık</button>
+      </form>
+    </section>
+  );
+}
+
+export function BrowseResultsView({
+  preparation,
+  view
+}: {
+  preparation?: PreparationContext | undefined;
+  view: BrowseViewResponse;
+}) {
   return (
     <main>
       <section>
         <h1>{view.category.name}</h1>
 
+        {preparation === undefined ? null : (
+          <PreparationNotice preparation={preparation} />
+        )}
+
         {/* `US-DSC-F03-001` AC-5 and AC-7: a branch withholds Results rather
             than gathering its descendants', so what a person sees here is the
-            way further down, not a summary of everything below. */}
-        <CategoryChoices categories={view.children} heading="Alt kategoriler" />
+            way further down, not a summary of everything below.
 
+            While a preparation return is in force, AC-2 constrains the context
+            to that one leaf, so the ways out of it are withheld — not disabled
+            and not hidden behind a refusal, simply not offered. */}
+        {preparation === undefined ? (
+          <CategoryChoices
+            categories={view.children}
+            heading="Alt kategoriler"
+          />
+        ) : null}
+
+        {/* AC-8. Inside the constraint the ordinary rules still apply: the same
+            eligibility, the same Listing Cards, the same ordering and the same
+            Zero Results statement. Nothing about this view is special except
+            what it leaves out. */}
         {view.results === null ? null : view.results.length === 0 ? (
           <NothingMatched query={null} />
         ) : (
           <ListingCards cards={view.results} />
         )}
 
-        <CategoryChoices
-          categories={view.ancestors}
-          heading="Üst kategoriler"
-        />
+        {preparation === undefined ? (
+          <CategoryChoices
+            categories={view.ancestors}
+            heading="Üst kategoriler"
+          />
+        ) : null}
       </section>
     </main>
   );

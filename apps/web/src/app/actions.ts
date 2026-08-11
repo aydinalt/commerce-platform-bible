@@ -11,6 +11,7 @@ import {
   DISCOVERY_ROUTE,
   readBrowseEntry,
   readDiscoveryEntry,
+  readPreparation,
   readSearchEntry,
   type DiscoveryEntry,
   type SearchEntryState
@@ -86,6 +87,47 @@ export async function beginBrowse(form: FormData): Promise<void> {
  * count one person as several.
  */
 export async function selectCategory(form: FormData): Promise<void> {
+  const entry = readBrowseEntry(form.get("categoryId"));
+  if (!entry) return;
+  await handOff({ ...entry, pathId: (await currentPathId()) ?? randomUUID() });
+}
+
+/**
+ * Returning into Discovery to find a second Offering to compare
+ * (`US-DSC-F10-001` AC-1).
+ *
+ * The path identifier comes from the flow the person is already in rather than
+ * being minted here. That is AC-4 in one line: a return is a continuation of
+ * looking, not a new beginning, and a fresh identifier would record a second
+ * Discovery Start for the same person still doing the same thing.
+ *
+ * If there is no path to continue, one is issued — a return that arrived
+ * without a flow behind it is the first thing this person has done, and
+ * counting it once is more honest than counting it never.
+ */
+export async function returnToPreparation(form: FormData): Promise<void> {
+  const entry = readBrowseEntry(form.get("categoryId"));
+  if (!entry) return;
+  const preparation = readPreparation(
+    { categoryId: entry.categoryId, offeringId: form.get("offeringId") },
+    entry.categoryId
+  );
+  if (!preparation) return;
+  await handOff({
+    ...entry,
+    pathId: (await currentPathId()) ?? randomUUID(),
+    preparation
+  });
+}
+
+/**
+ * Leaving the preparation flow (AC-7).
+ *
+ * The context is dropped and the person stays where they are. Clearing it is
+ * the whole point — AC-3 makes it non-restorable once the flow ends, so there
+ * is nowhere it could be kept "just in case".
+ */
+export async function leavePreparation(form: FormData): Promise<void> {
   const entry = readBrowseEntry(form.get("categoryId"));
   if (!entry) return;
   await handOff({ ...entry, pathId: (await currentPathId()) ?? randomUUID() });
