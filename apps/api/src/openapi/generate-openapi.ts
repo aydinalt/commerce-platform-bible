@@ -1593,6 +1593,11 @@ const document = {
           id: { format: "uuid", type: "string" },
           offeringId: { format: "uuid", type: ["string", "null"] },
           openedAt: { format: "date-time", type: "string" },
+          reReviewRequired: {
+            description:
+              "True while the owner has saved a correction that nobody has looked at since. Closure is refused while it holds.",
+            type: "boolean"
+          },
           resolutions: {
             description:
               "An applied action or a recorded no-action decision, never both and never neither. Closure is conditional on one of these existing.",
@@ -1634,6 +1639,7 @@ const document = {
           "id",
           "offeringId",
           "openedAt",
+          "reReviewRequired",
           "resolutions",
           "status",
           "targetType",
@@ -1685,6 +1691,13 @@ const document = {
             type: "object"
           }
         ]
+      },
+      RecordReReview: {
+        additionalProperties: false,
+        description:
+          "An optional note and nothing else. The act is the point — somebody looked at what the owner did — and requiring a justification would make the correct thing feel expensive.",
+        properties: { note: { maxLength: 1000, type: ["string", "null"] } },
+        type: "object"
       },
       RecordNoAction: {
         additionalProperties: false,
@@ -4116,6 +4129,44 @@ const document = {
         tags: ["Platform"]
       }
     },
+    "/api/v1/admin/moderation-cases/{caseId}/re-review": {
+      post: {
+        description:
+          "Records that an Admin re-reviewed the owner's correction response. Where the owner has saved a correction, closure is refused until a re-review dated after that response exists — an earlier review cannot stand in for a later answer. Recording one changes no target state and closes nothing; what it changes is what closure will accept.",
+        operationId: "recordReReview",
+        parameters: [
+          {
+            in: "path",
+            name: "caseId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/RecordReReview" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ModerationCase" }
+              }
+            },
+            description: "The case with the re-review recorded"
+          },
+          "400": errorResponse("Invalid re-review"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No case matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
     "/api/v1/admin/moderation-cases/{caseId}/closure": {
       post: {
         description:
@@ -4143,7 +4194,7 @@ const document = {
           "403": errorResponse("Admin context required"),
           "404": errorResponse("No case matches that identifier"),
           "409": errorResponse(
-            "The case has no approved action or recorded no-action decision"
+            "The case has no approved action or recorded no-action decision, or the owner's correction has not been re-reviewed"
           )
         },
         tags: ["Platform"]

@@ -160,6 +160,7 @@ model UserAccount {
   closedCases          ModerationCase[]           @relation("CaseCloser")
   moderationCases      ModerationCase[]           @relation("CaseSubject")
   moderationResolutions ModerationResolution[]    @relation("ResolutionRecorder")
+  correctionReviews     CorrectionReview[]        @relation("CorrectionReviewer")
   correctionRequests   CorrectionRequest[]        @relation("CorrectionRequester")
   correctionEdits      CorrectionEdit[]           @relation("CorrectionEditor")
 
@@ -321,11 +322,28 @@ model ModerationCase {
   closer     UserAccount?         @relation("CaseCloser", fields: [closedBy], references: [id], onDelete: Restrict)
   corrections CorrectionRequest[]
   resolutions ModerationResolution[]
+  reviews     CorrectionReview[]
 
   @@unique([id, businessId], map: "moderation_case_id_business_id_key")
   @@index([businessId, status])
   @@index([targetType, status])
   @@map("moderation_case")
+}
+
+/// One recorded re-review of an owner's correction response
+/// (`US-PLT-F06-001` AC-10). Closure needs one dated after the most recent
+/// owner edit — an earlier review cannot stand in for a later response.
+model CorrectionReview {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseId         String         @map("case_id") @db.Uuid
+  note           String?        @db.VarChar(1000)
+  reviewedBy     String         @map("reviewed_by") @db.Uuid
+  reviewedAt     DateTime       @default(now()) @map("reviewed_at") @db.Timestamptz(6)
+  moderationCase ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  reviewer       UserAccount    @relation("CorrectionReviewer", fields: [reviewedBy], references: [id], onDelete: Restrict)
+
+  @@index([caseId, reviewedAt])
+  @@map("correction_review")
 }
 
 /// One applied action or one recorded no-action decision. Closure reads these

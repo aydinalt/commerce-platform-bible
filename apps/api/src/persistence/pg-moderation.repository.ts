@@ -5,6 +5,7 @@ import {
   ACTION_TARGET,
   availableModerationActions,
   CaseNotResolvedError,
+  CaseNotReReviewedError,
   type ModerationAction,
   type ModerationTargetType
 } from "@commerce/moderation";
@@ -18,6 +19,9 @@ export interface ModerationCaseRecord {
   id: string;
   offeringId: string | null;
   openedAt: string;
+  /// True where the owner has saved a correction that nobody has looked at
+  /// since. Closure is refused while it holds (`US-PLT-F06-001` AC-10).
+  reReviewRequired: boolean;
   resolutions: {
     action: ModerationAction | null;
     noActionReason: string | null;
@@ -34,6 +38,8 @@ interface CaseRow {
   id: string;
   lifecycle: "ARCHIVED" | "DRAFT" | "HIDDEN" | "PUBLISHED" | null;
   offeringId: string | null;
+  lastEditAt: Date | null;
+  lastReviewAt: Date | null;
   openedAt: Date;
   restricted: boolean | null;
   status: "CLOSED" | "OPEN";
@@ -57,7 +63,12 @@ const CASE_SELECT = `select c.id, c.target_type::text as "targetType",
      c.opened_at as "openedAt", c.closed_at as "closedAt",
      (coalesce(m.status::text, 'UNRESTRICTED') = 'RESTRICTED') as restricted,
      (u.status::text = 'SUSPENDED') as suspended,
-     o.status::text as lifecycle
+     o.status::text as lifecycle,
+     (select max(e.edited_at) from correction_edit e
+      join correction_request q on q.id = e.correction_request_id
+      where q.case_id = c.id) as "lastEditAt",
+     (select max(v.reviewed_at) from correction_review v
+      where v.case_id = c.id) as "lastReviewAt"
    from moderation_case c
    left join business_moderation_state m on m.business_id = c.business_id
    left join user_account u on u.id = c.user_id
@@ -210,6 +221,33 @@ export class PgModerationRepository implements OnModuleDestroy {
     );
   }
 
+  /**
+   * Records that an Admin re-reviewed the owner's response
+   * (`US-PLT-F06-001` AC-10).
+   *
+   * It writes one row and reads nothing about the target, which is AC-4 and
+   * AC-13 read forward: looking at something changes nothing about it. What it
+   * does change is what closure will accept — the trigger requires a review
+   * dated after the most recent owner edit.
+   */
+  async reReview(input: {
+    caseId: string;
+    note: string | null;
+    reviewedBy: string;
+  }): Promise<ModerationCaseRecord | null> {
+    const known = await this.pool.query<{ id: string }>(
+      `select id from moderation_case where id = $1`,
+      [input.caseId]
+    );
+    if (!known.rows[0]) return null;
+    await this.pool.query(
+      `insert into correction_review (case_id, note, reviewed_by)
+       values ($1,$2,$3)`,
+      [input.caseId, input.note, input.reviewedBy]
+    );
+    return this.find(input.caseId);
+  }
+
   async find(id: string): Promise<ModerationCaseRecord | null> {
     const result = await this.pool.query<CaseRow>(
       `${CASE_SELECT} where c.id = $1`,
@@ -293,6 +331,8 @@ export class PgModerationRepository implements OnModuleDestroy {
     } catch (error) {
       if (isCheckViolation(error, "CASE_NOT_RESOLVED"))
         throw new CaseNotResolvedError();
+      if (isCheckViolation(error, "CASE_NOT_RE_REVIEWED"))
+        throw new CaseNotReReviewedError();
       throw error;
     }
   }
@@ -365,6 +405,12 @@ export class PgModerationRepository implements OnModuleDestroy {
       id: row.id,
       offeringId: row.offeringId,
       openedAt: row.openedAt.toISOString(),
+      // AC-10. Outstanding exactly while the owner's most recent answer is
+      // newer than the most recent look at it — an earlier review cannot
+      // stand in for a later response.
+      reReviewRequired:
+        row.lastEditAt !== null &&
+        (row.lastReviewAt === null || row.lastReviewAt < row.lastEditAt),
       resolutions: resolutions.get(row.id) ?? [],
       status: row.status,
       targetType: row.targetType,

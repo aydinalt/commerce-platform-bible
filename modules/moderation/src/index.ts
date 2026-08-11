@@ -198,6 +198,21 @@ export class CaseNotResolvedError extends Error {
   }
 }
 
+/**
+ * Raised when closure is requested while the owner's most recent correction
+ * has not been re-reviewed (`US-PLT-F06-001` AC-10).
+ *
+ * Separate from `CaseNotResolvedError` because it is a different omission:
+ * the case has been decided, but the thing the owner was asked to do has not
+ * been looked at.
+ */
+export class CaseNotReReviewedError extends Error {
+  constructor() {
+    super("CASE_NOT_RE_REVIEWED");
+    this.name = "CaseNotReReviewedError";
+  }
+}
+
 /// Raised when an action is applied that the case's target does not admit
 /// right now (AC-5).
 export class ModerationActionUnavailableError extends Error {

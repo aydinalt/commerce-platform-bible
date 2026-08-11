@@ -708,6 +708,9 @@ export const moderationCaseSchema = z
     /// Offering case is the Business that will answer for it.
     businessId: z.string().uuid().nullable(),
     offeringId: z.string().uuid().nullable(),
+    /// True while the owner has answered a correction and nobody has looked
+    /// since. Closure is refused while it holds.
+    reReviewRequired: z.boolean(),
     resolutions: z.array(
       z
         .object({
@@ -762,10 +765,20 @@ export const recordNoActionSchema = z
   .object({ reason: z.string().trim().min(1).max(1000) })
   .strict();
 
+/**
+ * Recording a re-review (`US-PLT-F06-001` AC-10). The note is optional
+ * because the act is the point: somebody looked. A required justification
+ * would make the cheap, correct thing feel expensive.
+ */
+export const recordReReviewSchema = z
+  .object({ note: z.string().trim().max(1000).nullish() })
+  .strict();
+
 export type ModerationCase = z.infer<typeof moderationCaseSchema>;
 export type ModerationCases = z.infer<typeof moderationCasesSchema>;
 export type OpenModerationCase = z.infer<typeof openModerationCaseSchema>;
 export type RecordNoAction = z.infer<typeof recordNoActionSchema>;
+export type RecordReReview = z.infer<typeof recordReReviewSchema>;
 
 export type CorrectionNotice = z.infer<typeof correctionNoticeSchema>;
 export type CorrectionNotices = z.infer<typeof correctionNoticesSchema>;

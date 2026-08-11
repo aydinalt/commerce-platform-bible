@@ -1523,6 +1523,10 @@
           "id": { "format": "uuid", "type": "string" },
           "offeringId": { "format": "uuid", "type": ["string", "null"] },
           "openedAt": { "format": "date-time", "type": "string" },
+          "reReviewRequired": {
+            "description": "True while the owner has saved a correction that nobody has looked at since. Closure is refused while it holds.",
+            "type": "boolean"
+          },
           "resolutions": {
             "description": "An applied action or a recorded no-action decision, never both and never neither. Closure is conditional on one of these existing.",
             "items": {
@@ -1563,6 +1567,7 @@
           "id",
           "offeringId",
           "openedAt",
+          "reReviewRequired",
           "resolutions",
           "status",
           "targetType",
@@ -1613,6 +1618,14 @@
             "type": "object"
           }
         ]
+      },
+      "RecordReReview": {
+        "additionalProperties": false,
+        "description": "An optional note and nothing else. The act is the point — somebody looked at what the owner did — and requiring a justification would make the correct thing feel expensive.",
+        "properties": {
+          "note": { "maxLength": 1000, "type": ["string", "null"] }
+        },
+        "type": "object"
       },
       "RecordNoAction": {
         "additionalProperties": false,
@@ -5630,6 +5643,71 @@
         "tags": ["Platform"]
       }
     },
+    "/api/v1/admin/moderation-cases/{caseId}/re-review": {
+      "post": {
+        "description": "Records that an Admin re-reviewed the owner's correction response. Where the owner has saved a correction, closure is refused until a re-review dated after that response exists — an earlier review cannot stand in for a later answer. Recording one changes no target state and closes nothing; what it changes is what closure will accept.",
+        "operationId": "recordReReview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "caseId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RecordReReview" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModerationCase" }
+              }
+            },
+            "description": "The case with the re-review recorded"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid re-review"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Admin context required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No case matches that identifier"
+          }
+        },
+        "tags": ["Platform"]
+      }
+    },
     "/api/v1/admin/moderation-cases/{caseId}/closure": {
       "post": {
         "description": "Closes the case explicitly. Permitted only after an approved action has been applied within the case or a no-action decision has been recorded — Request Correction is not one of those, because it keeps the case Open for re-review. Closing creates no target-state result, and a refused closure leaves the case exactly Open.",
@@ -5689,7 +5767,7 @@
                 "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
               }
             },
-            "description": "The case has no approved action or recorded no-action decision"
+            "description": "The case has no approved action or recorded no-action decision, or the owner's correction has not been re-reviewed"
           }
         },
         "tags": ["Platform"]

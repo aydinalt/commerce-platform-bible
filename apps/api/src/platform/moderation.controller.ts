@@ -19,9 +19,13 @@ import {
   moderationCaseSchema,
   moderationCasesSchema,
   openModerationCaseSchema,
-  recordNoActionSchema
+  recordNoActionSchema,
+  recordReReviewSchema
 } from "@commerce/contracts";
-import { CaseNotResolvedError } from "@commerce/moderation";
+import {
+  CaseNotResolvedError,
+  CaseNotReReviewedError
+} from "@commerce/moderation";
 
 import { PgModerationRepository } from "../persistence/pg-moderation.repository.js";
 import { OriginValidator } from "../security/origin.guard.js";
@@ -152,6 +156,43 @@ export class ModerationCaseController {
   }
 
   /**
+   * Records a re-review of the owner's correction response
+   * (`US-PLT-F06-001` AC-10).
+   *
+   * Its own route, and deliberately cheap: an optional note and nothing else.
+   * The act is the point — somebody looked at what the owner did. Requiring a
+   * justification would make the correct thing feel expensive and encourage
+   * closing without it, which is the failure this Story exists to prevent.
+   *
+   * Recording a re-review changes no target state and closes nothing. What it
+   * changes is what closure will accept.
+   */
+  @Post(":caseId/re-review")
+  @HttpCode(201)
+  async reReview(
+    @Param("caseId", uuidParam("caseId")) caseId: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    const principal = await this.principals.resolveAdmin(request);
+    const parsed = recordReReviewSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Invalid re-review"
+      });
+    const reviewed = await this.cases.reReview({
+      caseId,
+      note: parsed.data.note ?? null,
+      reviewedBy: principal.userId
+    });
+    if (!reviewed) throw this.absent();
+    return moderationCaseSchema.parse(reviewed);
+  }
+
+  /**
    * Closes the case explicitly (AC-7, AC-8).
    *
    * Explicit because nothing else closes it: no action applied within the case
@@ -177,6 +218,14 @@ export class ModerationCaseController {
           code: "CASE_NOT_RESOLVED",
           message:
             "A case may be closed only after an approved action or a recorded no-action decision"
+        });
+      if (error instanceof CaseNotReReviewedError)
+        // AC-10. The owner answered and nobody has looked since. Closing now
+        // would mean they did work no one read.
+        throw new ConflictException({
+          code: "CASE_NOT_RE_REVIEWED",
+          message:
+            "The owner has saved a correction that has not been re-reviewed"
         });
       throw error;
     }

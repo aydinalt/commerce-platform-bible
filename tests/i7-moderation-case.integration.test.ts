@@ -466,6 +466,7 @@ suite("Increment I7 General Moderation case management", () => {
       "id",
       "offeringId",
       "openedAt",
+      "reReviewRequired",
       "resolutions",
       "status",
       "targetType",
