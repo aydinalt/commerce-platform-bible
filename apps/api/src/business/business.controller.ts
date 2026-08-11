@@ -14,6 +14,7 @@ import type { FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import {
+  businessDashboardSchema,
   businessInformationSchema,
   createBusinessSchema,
   ownedBusinessSchema,
@@ -123,6 +124,28 @@ export class BusinessController {
         businessId,
         parsed.data,
         principal
+      )
+    );
+  }
+  /**
+   * The Business Dashboard (`US-BUS-F04-001`).
+   *
+   * Reached by naming the Business rather than by reading the selected
+   * context: AC-5 makes switching change the active context and nothing else,
+   * and a Dashboard that answered "whichever Business you last selected" would
+   * make AC-6 impossible to keep — a management action would depend on state
+   * the request never mentioned.
+   */
+  @Get(":businessId/dashboard")
+  async dashboard(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    return businessDashboardSchema.parse(
+      await this.businesses.dashboard(
+        businessId,
+        await this.principals.resolve(request)
       )
     );
   }

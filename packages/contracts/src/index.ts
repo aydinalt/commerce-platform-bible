@@ -414,6 +414,46 @@ export const offeringInventorySchema = z
   .object({ offerings: z.array(offeringInventoryEntrySchema) })
   .strict();
 
+/**
+ * The Business Dashboard (`US-BUS-F04-001`).
+ *
+ * A place to stand, not a report. AC-9 lets it expose management areas by
+ * reference and authoritative inventory states; AC-10 forbids analytics,
+ * conversion metrics, revenue reporting, ranking, trends, CRM, Messaging and
+ * transaction behaviour — so there is no count here, no total, no comparison
+ * and no field in which one could appear. The Offerings are listed, and a
+ * person who wants to know how many can see them.
+ *
+ * The Moderation Status travels with the Business because AC-2 requires it to
+ * stay identifiable while the owner works: someone whose Business is
+ * Restricted should not have to discover it by being refused.
+ */
+export const businessDashboardSchema = z
+  .object({
+    business: z
+      .object({
+        id: z.string().uuid(),
+        moderationStatus: z.enum(["UNRESTRICTED", "RESTRICTED"]),
+        name: z.string(),
+        publicExposure: z.enum(["ELIGIBLE", "INELIGIBLE"]),
+        slug: z.string()
+      })
+      .strict(),
+    /// Lifecycle-organized, and by reference: an entry names an Offering and
+    /// the authoritative states PRD-0001 owns, and redefines neither.
+    inventory: z
+      .object({
+        ARCHIVED: z.array(offeringInventoryEntrySchema),
+        DRAFT: z.array(offeringInventoryEntrySchema),
+        HIDDEN: z.array(offeringInventoryEntrySchema),
+        PUBLISHED: z.array(offeringInventoryEntrySchema)
+      })
+      .strict()
+  })
+  .strict();
+
+export type BusinessDashboardResponse = z.infer<typeof businessDashboardSchema>;
+
 export type CreateDraftOffering = z.infer<typeof createDraftOfferingSchema>;
 export type DraftOffering = z.infer<typeof draftOfferingSchema>;
 export type OfferingInventory = z.infer<typeof offeringInventorySchema>;

@@ -120,6 +120,46 @@ export class PgBusinessRepository implements OnModuleDestroy {
     }
   }
 
+  /**
+   * The Business as its Dashboard names it (`US-BUS-F04-001` AC-1, AC-2).
+   *
+   * The ownership join is the authorization: a person who does not own this
+   * Business gets no row, and the caller reports that as absence. Admin
+   * authorization cannot substitute for it, because there is no other way in
+   * (AC-8).
+   *
+   * The Moderation Status comes back with the name, so the owner sees it
+   * wherever they are working rather than discovering it by being refused.
+   */
+  async findDashboardBusiness(
+    businessId: string,
+    userId: string
+  ): Promise<{
+    id: string;
+    moderationStatus: "RESTRICTED" | "UNRESTRICTED";
+    name: string;
+    publicExposure: "ELIGIBLE" | "INELIGIBLE";
+    slug: string;
+  } | null> {
+    const result = await this.pool.query<{
+      id: string;
+      moderationStatus: "RESTRICTED" | "UNRESTRICTED";
+      name: string;
+      publicExposure: "ELIGIBLE" | "INELIGIBLE";
+      slug: string;
+    }>(
+      `select b.id, b.name, b.slug,
+         b.public_exposure::text as "publicExposure",
+         coalesce(m.status::text, 'UNRESTRICTED') as "moderationStatus"
+       from business b
+       join business_owner bo on bo.business_id = b.id and bo.user_id = $2
+       left join business_moderation_state m on m.business_id = b.id
+       where b.id = $1`,
+      [businessId, userId]
+    );
+    return result.rows[0] ?? null;
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();
   }

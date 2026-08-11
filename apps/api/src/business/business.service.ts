@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 
 import type {
+  BusinessDashboardResponse,
   CreateBusiness,
   UpdateBusinessInformation
 } from "@commerce/contracts";
@@ -53,6 +54,46 @@ export class BusinessService {
         message: "No Business matches that identifier"
       });
     return moderated;
+  }
+
+  /**
+   * The Business Dashboard (`US-BUS-F04-001`).
+   *
+   * Three gates, checked in the order the Story states them: the account is
+   * Enabled, the person owns *this* Business, and only then is anything
+   * assembled. AC-7 is why they are checked here on every read rather than
+   * remembered from the switch — an account suspended a minute ago must not
+   * still be standing in a Dashboard.
+   *
+   * What comes back is a place to stand: the Business, its Moderation Status,
+   * and its Offerings organized by lifecycle. No count, no total, no trend
+   * (AC-10), and nothing that redefines a state PRD-0001 owns (AC-9).
+   */
+  async dashboard(
+    businessId: string,
+    principal: Principal
+  ): Promise<BusinessDashboardResponse> {
+    if (!(await this.audit.isEnabled(principal.userId)))
+      throw new ForbiddenException("Account is not active");
+
+    const business = await this.repository.findDashboardBusiness(
+      businessId,
+      principal.userId
+    );
+    // AC-8. Admin authorization is not ownership, and there is no branch here
+    // that could make it into one.
+    if (!business) throw new NotFoundException();
+
+    const inventory = await this.audit.listInventory(businessId);
+    return {
+      business,
+      inventory: {
+        ARCHIVED: inventory.filter((entry) => entry.status === "ARCHIVED"),
+        DRAFT: inventory.filter((entry) => entry.status === "DRAFT"),
+        HIDDEN: inventory.filter((entry) => entry.status === "HIDDEN"),
+        PUBLISHED: inventory.filter((entry) => entry.status === "PUBLISHED")
+      }
+    };
   }
 
   async create(

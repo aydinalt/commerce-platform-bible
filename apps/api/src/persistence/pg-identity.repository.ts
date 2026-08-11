@@ -329,6 +329,18 @@ export class PgIdentityRepository implements OnModuleDestroy {
    * (`US-IDN-F07-001` AC-2), and reports whether it was accepted rather than
    * assuming it was.
    */
+  /**
+   * Entering a Business context (`US-IDN-F07-001`, `US-BUS-F04-001`).
+   *
+   * The ownership test is inside the same statement that writes the selection,
+   * which is what makes `US-BUS-F04-001` AC-11 true without a second thought:
+   * a switch that is not authorized updates no row, so the last confirmed
+   * active Business is still there afterwards. There is no window in which the
+   * context is cleared while a new one is being checked.
+   *
+   * The session conditions re-evaluate liveness on every switch (AC-7); a
+   * Suspended holder never reaches here, because the session does not resolve.
+   */
   async selectBusinessContext(input: {
     businessId: string;
     sessionId: string;

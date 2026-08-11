@@ -26,13 +26,21 @@ type OfferingInput = Parameters<DraftOfferingRepository["create"]>[0];
  * says `date-time`, and the response is validated against it before anything
  * gets a chance to serialise a `Date` into something else.
  */
+/**
+ * One Offering as the owner's inventory names it.
+ *
+ * The two state fields are typed rather than left as strings: they are
+ * PRD-0001's vocabularies, and `US-BUS-F04-001` AC-9 asks the Dashboard to
+ * expose them without redefining them — which is easier to keep true when a
+ * fifth lifecycle cannot be typed here in the first place.
+ */
 export interface InventoryEntry {
   categoryId: string;
   createdAt: string;
   id: string;
-  publicEligibility: string;
+  publicEligibility: "ELIGIBLE" | "INELIGIBLE" | "PENDING" | "WITHDRAWN";
   slug: string;
-  status: string;
+  status: "ARCHIVED" | "DRAFT" | "HIDDEN" | "PUBLISHED";
   title: string;
   updatedAt: string;
 }

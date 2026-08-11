@@ -1434,6 +1434,69 @@
         "required": ["result"],
         "type": "object"
       },
+      "BusinessDashboard": {
+        "additionalProperties": false,
+        "description": "The Business Dashboard: a place to stand, not a report. It names the active Business and its Moderation Status — so an owner sees a restriction rather than discovering it by being refused — and lists the Offerings organized by lifecycle, by reference and without redefining any authoritative state. There is no count, no total, no ranking, no trend and no conversion or revenue figure, and no field in which one could appear. Requires an Enabled authenticated User who owns this exact Business; Admin authorization is not ownership and opens nothing.",
+        "properties": {
+          "business": {
+            "additionalProperties": false,
+            "properties": {
+              "id": { "format": "uuid", "type": "string" },
+              "moderationStatus": {
+                "enum": ["UNRESTRICTED", "RESTRICTED"],
+                "type": "string"
+              },
+              "name": { "type": "string" },
+              "publicExposure": {
+                "enum": ["ELIGIBLE", "INELIGIBLE"],
+                "type": "string"
+              },
+              "slug": { "type": "string" }
+            },
+            "required": [
+              "id",
+              "moderationStatus",
+              "name",
+              "publicExposure",
+              "slug"
+            ],
+            "type": "object"
+          },
+          "inventory": {
+            "additionalProperties": false,
+            "properties": {
+              "ARCHIVED": {
+                "items": {
+                  "$ref": "#/components/schemas/OfferingInventoryEntry"
+                },
+                "type": "array"
+              },
+              "DRAFT": {
+                "items": {
+                  "$ref": "#/components/schemas/OfferingInventoryEntry"
+                },
+                "type": "array"
+              },
+              "HIDDEN": {
+                "items": {
+                  "$ref": "#/components/schemas/OfferingInventoryEntry"
+                },
+                "type": "array"
+              },
+              "PUBLISHED": {
+                "items": {
+                  "$ref": "#/components/schemas/OfferingInventoryEntry"
+                },
+                "type": "array"
+              }
+            },
+            "required": ["ARCHIVED", "DRAFT", "HIDDEN", "PUBLISHED"],
+            "type": "object"
+          }
+        },
+        "required": ["business", "inventory"],
+        "type": "object"
+      },
       "OfferingInventoryEntry": {
         "additionalProperties": false,
         "properties": {
@@ -4564,6 +4627,63 @@
           }
         },
         "tags": ["Decision"]
+      }
+    },
+    "/api/v1/businesses/{businessId}/dashboard": {
+      "get": {
+        "description": "The owner's Dashboard for one Business. The Business is named in the path rather than taken from the selected context, so no management read depends on state the request never mentioned. Enabled status and exact ownership are re-evaluated on every read.",
+        "operationId": "businessDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BusinessDashboard" }
+              }
+            },
+            "description": "The Dashboard"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Account is not active"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Business matches that identifier"
+          }
+        },
+        "tags": ["Business"]
       }
     },
     "/api/v1/admin/businesses/{businessId}/restriction": {
