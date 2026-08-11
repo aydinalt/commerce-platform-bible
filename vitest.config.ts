@@ -22,6 +22,12 @@ function workspaceAliases(): Record<string, string> {
 }
 
 export default defineConfig({
+  /**
+   * The web application's own tsconfig sets `jsx: "preserve"`, because Next
+   * owns that transform. Tests render components outside Next, so they need a
+   * transform that actually produces something runnable.
+   */
+  oxc: { jsx: "automatic" },
   resolve: { alias: workspaceAliases() },
   test: {
     /**

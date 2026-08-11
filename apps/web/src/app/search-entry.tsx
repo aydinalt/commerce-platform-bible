@@ -1,0 +1,58 @@
+"use client";
+
+import { useActionState } from "react";
+
+import { NO_SEARCH_ENTRY } from "../discovery/entry";
+
+import { beginSearch } from "./actions";
+
+/**
+ * The public Search entry.
+ *
+ * The person controls the query and nothing else touches it: no Autocomplete,
+ * no suggestion list, no submission while they are still typing, no hidden
+ * Category or Filter travelling alongside it (`US-DSC-F01-001` AC-7,
+ * UX-0001 §7.2). A single text field and a submit control is the whole of it,
+ * and the absences are the specification.
+ */
+export function SearchEntry() {
+  const [state, submit, pending] = useActionState(beginSearch, NO_SEARCH_ENTRY);
+
+  return (
+    <form action={submit} className="search-entry">
+      {/* AC-1. The exact approved prompt, and the label of the field it
+          belongs to — UX-0001 §15 asks for the association, not just the
+          words nearby. */}
+      <h1>
+        <label htmlFor="discovery-query">Bugün ne yapmak istiyorsunuz?</label>
+      </h1>
+      <div className="search-entry-row">
+        <input
+          aria-describedby={state.refused ? "discovery-query-error" : undefined}
+          aria-invalid={state.refused}
+          // Off rather than absent: a browser offering the person their own
+          // earlier queries would be History behaviour AC-7 forbids.
+          autoComplete="off"
+          defaultValue={state.typed}
+          id="discovery-query"
+          maxLength={400}
+          name="query"
+          // The empty case is worth refusing in the browser too. The rule
+          // itself lives on the server, where a submission cannot avoid it.
+          required
+          type="text"
+        />
+        <button disabled={pending} type="submit">
+          Ara
+        </button>
+      </div>
+      {state.refused ? (
+        // AC-5 and AC-8. Stated in words rather than colour, and the field
+        // still holds exactly what was typed.
+        <p id="discovery-query-error" role="alert">
+          Aramaya başlamak için en az bir karakter yazın.
+        </p>
+      ) : null}
+    </form>
+  );
+}
