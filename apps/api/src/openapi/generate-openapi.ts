@@ -591,6 +591,71 @@ const document = {
         ],
         type: "object"
       },
+      DecisionContext: {
+        additionalProperties: false,
+        description:
+          "The current Decision Context: exactly one eligible Offering or one Comparison Set, never both. `valid` is separate from the contents because a context can be well-formed and still unusable — the Offering may have been retired, or the set may have fallen below two members. Decision Chat and every handoff action are unavailable while it is invalid. There is no field for a previous decision, a saved context or anything the person did before.",
+        properties: {
+          comparison: {
+            oneOf: [
+              { $ref: "#/components/schemas/ComparisonSet" },
+              { type: "null" }
+            ]
+          },
+          decisionFlowId: { format: "uuid", type: "string" },
+          invalidity: {
+            enum: ["OFFERING_INELIGIBLE", "SET_NOT_VALID", null],
+            type: ["string", "null"]
+          },
+          offering: {
+            oneOf: [
+              { $ref: "#/components/schemas/ListingCard" },
+              { type: "null" }
+            ]
+          },
+          repairs: {
+            description:
+              "A closed list. Repairing the set is offered only where there is a set to repair.",
+            items: {
+              enum: [
+                "REPAIR_COMPARISON_SET",
+                "CHOOSE_ANOTHER_OFFERING",
+                "LEAVE_DECISION"
+              ],
+              type: "string"
+            },
+            type: "array"
+          },
+          valid: { type: "boolean" }
+        },
+        required: [
+          "comparison",
+          "decisionFlowId",
+          "invalidity",
+          "offering",
+          "repairs",
+          "valid"
+        ],
+        type: "object"
+      },
+      EnterDecision: {
+        description:
+          "Exactly one eligible Offering or one valid Comparison Set. A union rather than two optional fields, so a request asking to decide about two unrelated things cannot be expressed.",
+        oneOf: [
+          {
+            additionalProperties: false,
+            properties: { offeringId: { format: "uuid", type: "string" } },
+            required: ["offeringId"],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: { comparisonSetId: { format: "uuid", type: "string" } },
+            required: ["comparisonSetId"],
+            type: "object"
+          }
+        ]
+      },
       ComparisonSet: {
         additionalProperties: false,
         description:
@@ -2803,6 +2868,68 @@ const document = {
           "409": errorResponse("The destination is not Enabled")
         },
         tags: ["Platform"]
+      }
+    },
+    "/api/v1/decision/flows": {
+      post: {
+        description:
+          "Enters Decision with one eligible Offering or the Comparison Set Compare built. Public and unauthenticated. Compare is not required: a person who has read one Offering has a complete Decision Context. The flow expires and carries no person, so no personal Decision history can exist.",
+        operationId: "enterDecision",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/EnterDecision" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DecisionContext" }
+              }
+            },
+            description: "The Decision Context"
+          },
+          "400": errorResponse(
+            "A Decision Context is one Offering or one Comparison Set"
+          ),
+          "404": errorResponse(
+            "That Comparison Set has expired or never existed"
+          )
+        },
+        tags: ["Decision"]
+      }
+    },
+    "/api/v1/decision/flows/{decisionFlowId}": {
+      get: {
+        description:
+          "The context with its validity decided now. An Offering retired since the person entered reports the context invalid rather than continuing to look usable, and is not returned in a diminished form that Chat could still quote.",
+        operationId: "decisionContext",
+        parameters: [
+          {
+            in: "path",
+            name: "decisionFlowId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DecisionContext" }
+              }
+            },
+            description: "The current Decision Context"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "404": errorResponse(
+            "That Decision flow has expired or never existed"
+          )
+        },
+        tags: ["Decision"]
       }
     },
     "/api/v1/decision/comparison-sets": {

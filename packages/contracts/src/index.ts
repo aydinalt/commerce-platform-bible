@@ -932,6 +932,53 @@ export const addComparisonMemberSchema = z
 
 export type AddComparisonMember = z.infer<typeof addComparisonMemberSchema>;
 
+/**
+ * Entering Decision (`US-DEC-F02-001` AC-1 to AC-3).
+ *
+ * Exactly one of the two, and the schema says so rather than trusting the
+ * caller: a body carrying both would be a person asking to decide about two
+ * unrelated things at once, which AC-5 forbids merging.
+ */
+export const enterDecisionSchema = z
+  .union([
+    z.object({ offeringId: z.string().uuid() }).strict(),
+    z.object({ comparisonSetId: z.string().uuid() }).strict()
+  ])
+  .describe("Exactly one eligible Offering or one valid Comparison Set");
+
+/**
+ * The Decision Context as it currently stands.
+ *
+ * `valid` is separate from the context's contents because a context can be
+ * well-formed and still unusable: the Offering may have been retired, or the
+ * set may have fallen below two members. AC-7 makes Chat and the handoff
+ * actions unavailable in exactly that case, and AC-9 requires the person to be
+ * told what they may do about it.
+ *
+ * There is no field for a previous decision, a saved context or anything the
+ * person did before. AC-6 forbids that memory, and a shape that cannot express
+ * it cannot leak it.
+ */
+export const decisionContextSchema = z
+  .object({
+    comparison: comparisonSetSchema.nullable(),
+    decisionFlowId: z.string().uuid(),
+    invalidity: z.enum(["OFFERING_INELIGIBLE", "SET_NOT_VALID"]).nullable(),
+    offering: listingCardSchema.nullable(),
+    repairs: z.array(
+      z.enum([
+        "REPAIR_COMPARISON_SET",
+        "CHOOSE_ANOTHER_OFFERING",
+        "LEAVE_DECISION"
+      ])
+    ),
+    valid: z.boolean()
+  })
+  .strict();
+
+export type EnterDecision = z.infer<typeof enterDecisionSchema>;
+export type DecisionContextResponse = z.infer<typeof decisionContextSchema>;
+
 export const browseRootsSchema = z
   .object({
     domains: z.array(

@@ -16,14 +16,18 @@ import { z } from "zod";
 import {
   addComparisonMemberSchema,
   comparisonSetSchema,
-  comparisonViewSchema
+  comparisonViewSchema,
+  decisionContextSchema,
+  enterDecisionSchema
 } from "@commerce/contracts";
 import {
   ComparisonMemberRefusedError,
-  ComparisonSetNotFoundError
+  ComparisonSetNotFoundError,
+  DecisionFlowNotFoundError
 } from "@commerce/decision";
 
 import { PgComparisonRepository } from "../persistence/pg-comparison.repository.js";
+import { PgDecisionRepository } from "../persistence/pg-decision.repository.js";
 
 /**
  * Compare (`US-DEC-F01-001`).
@@ -170,6 +174,77 @@ export class DecisionController {
               : error.refusal === "MEMBER_OTHER_CATEGORY"
                 ? "Every member must share the same active leaf Category"
                 : "That Offering is not publicly eligible"
+        });
+      throw error;
+    }
+  }
+}
+
+/**
+ * The Decision Context (`US-DEC-F02-001`).
+ *
+ * Public, like Compare. A context is one eligible Offering or one valid
+ * Comparison Set, and the flow it belongs to expires — there is no route here
+ * that could produce a personal Decision history, because there is nothing
+ * that stores one.
+ */
+@Controller("decision/flows")
+export class DecisionFlowController {
+  constructor(private readonly decisions: PgDecisionRepository) {}
+
+  /**
+   * Entering Decision (AC-1 to AC-3).
+   *
+   * The body carries one of the two, never both — the schema is a union rather
+   * than two optional fields, so a request asking to decide about two
+   * unrelated things cannot be expressed.
+   */
+  @Post()
+  @HttpCode(201)
+  async enter(@Body() body: unknown) {
+    const parsed = enterDecisionSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "A Decision Context is one Offering or one Comparison Set"
+      });
+
+    return decisionContextSchema.parse(
+      await this.attempt(() =>
+        "offeringId" in parsed.data
+          ? this.decisions.enterWithOffering(parsed.data.offeringId)
+          : this.decisions.enterWithComparisonSet(parsed.data.comparisonSetId)
+      )
+    );
+  }
+
+  /**
+   * The current context, with its validity as it stands now (AC-7, AC-8).
+   *
+   * Read on every request rather than remembered: an Offering retired a moment
+   * ago has to stop being something Decision speaks about immediately.
+   */
+  @Get(":decisionFlowId")
+  async context(
+    @Param("decisionFlowId", uuidParam("decisionFlowId"))
+    decisionFlowId: string
+  ) {
+    return decisionContextSchema.parse(
+      await this.attempt(() => this.decisions.context(decisionFlowId))
+    );
+  }
+
+  private async attempt<T>(work: () => Promise<T>): Promise<T> {
+    try {
+      return await work();
+    } catch (error) {
+      // A flow is current-flow state; it is allowed to disappear, and one that
+      // never existed says exactly the same thing.
+      if (error instanceof DecisionFlowNotFoundError)
+        throw new NotFoundException({
+          code: "DECISION_FLOW_NOT_FOUND",
+          message: "That Decision flow has expired or never existed"
         });
       throw error;
     }

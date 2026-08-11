@@ -69,4 +69,60 @@ export function openableInCompare(memberCount: number): boolean {
   );
 }
 
+/**
+ * How long a Decision flow survives.
+ *
+ * The same order as a Comparison Set, because they belong to the same act:
+ * the flow that outlived its set would be a context about nothing.
+ */
+export const DECISION_FLOW_TTL_MINUTES = 60;
+
+/**
+ * Why a Decision Context is not currently usable (`US-DEC-F02-001` AC-7,
+ * AC-8).
+ *
+ * A context can be well-formed and still be invalid: the Offering it names may
+ * have been retired since, or the Comparison Set may have fallen below two
+ * members while the person was reading. Both are ordinary and both must be
+ * said, because Chat and the handoff actions are unavailable until the person
+ * repairs it.
+ */
+export type ContextInvalidity =
+  /// The single Offering is no longer publicly eligible.
+  | "OFFERING_INELIGIBLE"
+  /// The Comparison Set no longer holds two to five eligible members.
+  | "SET_NOT_VALID";
+
+/**
+ * What a person may do about an invalid context (AC-9).
+ *
+ * A closed list, for the same reason Zero Results recovery is one: it makes
+ * "offer nothing else" checkable. Repairing the set is offered only where
+ * there is a set to repair — a single-Offering context has no Compare surface
+ * to return to.
+ */
+export const CONTEXT_REPAIRS = [
+  "REPAIR_COMPARISON_SET",
+  "CHOOSE_ANOTHER_OFFERING",
+  "LEAVE_DECISION"
+] as const;
+
+export type ContextRepair = (typeof CONTEXT_REPAIRS)[number];
+
+export function contextRepairs(input: {
+  hasComparisonSet: boolean;
+}): ContextRepair[] {
+  return CONTEXT_REPAIRS.filter(
+    (repair) => repair !== "REPAIR_COMPARISON_SET" || input.hasComparisonSet
+  );
+}
+
+/// Raised when the flow a request names has expired or never existed.
+export class DecisionFlowNotFoundError extends Error {
+  constructor() {
+    super("DECISION_FLOW_NOT_FOUND");
+    this.name = "DecisionFlowNotFoundError";
+  }
+}
+
 export const decisionModule = { name: "decision" } as const;

@@ -7,7 +7,10 @@ import { AttributeController } from "./catalog/attribute.controller.js";
 import { AttributeService } from "./catalog/attribute.service.js";
 import { CatalogController } from "./catalog/catalog.controller.js";
 import { CatalogService } from "./catalog/catalog.service.js";
-import { DecisionController } from "./decision/decision.controller.js";
+import {
+  DecisionController,
+  DecisionFlowController
+} from "./decision/decision.controller.js";
 import { DiscoveryController } from "./discovery/discovery.controller.js";
 import { HealthController } from "./health.controller.js";
 import { ErrorEnvelopeFilter } from "./http/error-envelope.filter.js";
@@ -29,6 +32,7 @@ import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
 import { PgCatalogRepository } from "./persistence/pg-catalog.repository.js";
 import { PgCommerceRepository } from "./persistence/pg-commerce.repository.js";
 import { PgComparisonRepository } from "./persistence/pg-comparison.repository.js";
+import { PgDecisionRepository } from "./persistence/pg-decision.repository.js";
 import { PgDiscoveryRepository } from "./persistence/pg-discovery.repository.js";
 import { PgIdentityRepository } from "./persistence/pg-identity.repository.js";
 import { PgOfferingContentRepository } from "./persistence/pg-offering-content.repository.js";
@@ -65,6 +69,7 @@ function allowedOrigins(): readonly string[] {
     BusinessController,
     CatalogController,
     DecisionController,
+    DecisionFlowController,
     DiscoveryController,
     HealthController,
     IdentityController,
@@ -86,6 +91,7 @@ function allowedOrigins(): readonly string[] {
     PgCatalogRepository,
     PgCommerceRepository,
     PgComparisonRepository,
+    PgDecisionRepository,
     PgDiscoveryRepository,
     PgIdentityRepository,
     PgOfferingContentRepository,

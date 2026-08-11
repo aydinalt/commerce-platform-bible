@@ -312,6 +312,7 @@ model ComparisonSet {
   expiresAt  DateTime              @map("expires_at") @db.Timestamptz(6)
   category   Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   members    ComparisonSetMember[]
+  decisionFlows DecisionFlow[]
 
   @@index([expiresAt])
   @@map("comparison_set")
@@ -330,6 +331,24 @@ model ComparisonSetMember {
   @@id([comparisonSetId, offeringId])
   @@index([offeringId])
   @@map("comparison_set_member")
+}
+
+/// The current Decision flow (`US-DEC-F02-001`). Its context is exactly one
+/// eligible Offering or one Comparison Set — a database CHECK, because a
+/// context holding two things would let Chat speak about something the person
+/// never chose. It carries no person and expires on its own, which is how AC-6
+/// forbids a personal Decision history by construction.
+model DecisionFlow {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  offeringId      String?        @map("offering_id") @db.Uuid
+  comparisonSetId String?        @map("comparison_set_id") @db.Uuid
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt       DateTime       @map("expires_at") @db.Timestamptz(6)
+  offering        Offering?      @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+  comparisonSet   ComparisonSet? @relation(fields: [comparisonSetId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("decision_flow")
 }
 
 /// One occurrence of a valid Comparison Set being opened in Compare (AC-11).
@@ -437,6 +456,7 @@ model Offering {
   affiliateDestination AffiliateDestination?
   presentationOpens    OfferingPresentationOpen[]
   comparisonMemberships ComparisonSetMember[]
+  decisionFlows         DecisionFlow[]
 
   @@unique([businessId, slug])
   @@index([categoryId, status])
