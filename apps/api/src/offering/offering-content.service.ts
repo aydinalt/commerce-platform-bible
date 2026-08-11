@@ -67,17 +67,25 @@ export class OfferingContentService {
       throw new ForbiddenException("Account is not active");
     }
 
+    // Editing an existing Draft survives restriction (`US-BUS-F03-001` AC-5);
+    // editing a Published or Hidden one does not (AC-7). Which of the two this
+    // is depends on the Offering, so the general gate is asked first and the
+    // lifecycle decides below.
     const access = await this.commerce.canAuthorOfferings(
       businessId,
-      principal.userId
+      principal.userId,
+      "EDIT_DRAFT"
     );
-    // Restriction is a separate gate from ownership: it narrows what may be
-    // edited (AC-8) rather than hiding the Offering.
-    const restricted = !access.allowed && access.reason === "RESTRICTED";
-    if (!access.allowed && !restricted) {
+    if (!access.allowed) {
       await deny(access.reason);
       throw new NotFoundException();
     }
+    const published = await this.commerce.canAuthorOfferings(
+      businessId,
+      principal.userId,
+      "EDIT_PUBLISHED"
+    );
+    const restricted = !published.allowed && published.reason === "RESTRICTED";
 
     const existing = await this.content.findOwned(businessId, offeringId);
     if (!existing) {
@@ -143,11 +151,14 @@ export class OfferingContentService {
       throw new ForbiddenException("Account is not active");
     }
 
+    // AC-8. Retirement is permitted while Restricted wherever PRD-0001 permits
+    // it at all: a person may always stop offering something.
     const access = await this.commerce.canAuthorOfferings(
       businessId,
-      principal.userId
+      principal.userId,
+      "RETIRE_OFFERING"
     );
-    if (!access.allowed && access.reason !== "RESTRICTED") {
+    if (!access.allowed) {
       await deny(access.reason);
       throw new NotFoundException();
     }
@@ -206,12 +217,23 @@ export class OfferingContentService {
       throw new ForbiddenException("Account is not active");
     }
 
+    // AC-6. Publishing a Draft is withdrawn while Restricted, so this is where
+    // a Restricted Business is stopped — before any publication gate runs, so
+    // the refusal names restriction rather than the publication minimum.
     const access = await this.commerce.canAuthorOfferings(
       businessId,
-      principal.userId
+      principal.userId,
+      "PUBLISH_OFFERING"
     );
-    if (!access.allowed && access.reason !== "RESTRICTED") {
+    if (!access.allowed) {
       await deny(access.reason);
+      // Restriction is a refusal a person can act on — they know the Offering
+      // is theirs — while every other reason is an absence.
+      if (access.reason === "RESTRICTED")
+        throw new ForbiddenException({
+          code: "BUSINESS_RESTRICTED",
+          message: "A Restricted Business may not publish a Draft"
+        });
       throw new NotFoundException();
     }
 
@@ -280,12 +302,13 @@ export class OfferingContentService {
       principal.businessId !== businessId
     )
       throw new NotFoundException();
+    // AC-5. Reading an owned Offering survives restriction.
     const access = await this.commerce.canAuthorOfferings(
       businessId,
-      principal.userId
+      principal.userId,
+      "VIEW_OWNED"
     );
-    if (!access.allowed && access.reason !== "RESTRICTED")
-      throw new NotFoundException();
+    if (!access.allowed) throw new NotFoundException();
 
     const offering = await this.content.findOwned(businessId, offeringId);
     if (!offering) throw new NotFoundException();

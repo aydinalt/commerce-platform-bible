@@ -3332,6 +3332,66 @@ const document = {
         tags: ["Decision"]
       }
     },
+    "/api/v1/admin/businesses/{businessId}/restriction": {
+      post: {
+        description:
+          "Applies an approved Restrict Business action. Moderation Status becomes Restricted and Business Public Exposure Input becomes Ineligible — the two are one mapping the database keeps, not two fields a caller sets. The Business's Offerings stop being publicly eligible, and nothing else moves: no Offering lifecycle, no Affiliate Destination status or validation result, no User Account access status and no ownership. The owner keeps Business Information, existing Drafts, viewing what they own, retirement, and Affiliate Destinations on Offerings that are still owner-manageable; they lose creating an Offering, publishing a Draft and normally editing a Published or Hidden one.",
+        operationId: "restrictBusiness",
+        parameters: [
+          {
+            in: "path",
+            name: "businessId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OwnedBusiness" }
+              }
+            },
+            description: "The Business after restriction"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No Business matches that identifier")
+        },
+        tags: ["Business"]
+      }
+    },
+    "/api/v1/admin/businesses/{businessId}/restoration": {
+      post: {
+        description:
+          "Applies an approved Restore Business action. Moderation Status becomes Unrestricted and exposure input becomes Eligible. Normal Business-management permissions return, but nothing is published and nothing is un-hidden: only lifecycle-Published Offerings regain final public eligibility, and no Affiliate Destination status or Handoff Eligibility changes because of restoration alone.",
+        operationId: "restoreBusiness",
+        parameters: [
+          {
+            in: "path",
+            name: "businessId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OwnedBusiness" }
+              }
+            },
+            description: "The Business after restoration"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No Business matches that identifier")
+        },
+        tags: ["Business"]
+      }
+    },
     "/api/v1/decision/comparison-sets": {
       post: {
         description:

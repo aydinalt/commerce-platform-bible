@@ -56,9 +56,12 @@ export class OfferingService {
       throw new ForbiddenException("Account is not active");
     }
 
+    // AC-6. Creating an Offering is one of the three acts restriction takes
+    // away, so this is where a Restricted Business is stopped.
     const access = await this.repository.canAuthorOfferings(
       businessId,
-      principal.userId
+      principal.userId,
+      "CREATE_OFFERING"
     );
     if (!access.allowed) {
       await deny(access.reason);
@@ -116,11 +119,13 @@ export class OfferingService {
       throw new NotFoundException();
     }
 
+    // AC-5. A Restricted owner still sees what they own.
     const access = await this.repository.canAuthorOfferings(
       businessId,
-      principal.userId
+      principal.userId,
+      "VIEW_OWNED"
     );
-    if (!access.allowed && access.reason !== "RESTRICTED") {
+    if (!access.allowed) {
       await deny(access.reason);
       throw new NotFoundException();
     }
@@ -146,9 +151,12 @@ export class OfferingService {
       throw new ForbiddenException();
     }
 
+    // AC-5. Viewing an owned Published, Hidden or Archived Offering survives
+    // restriction — this read used to refuse, which the Story corrects.
     const access = await this.repository.canAuthorOfferings(
       businessId,
-      principal.userId
+      principal.userId,
+      "VIEW_OWNED"
     );
     if (!access.allowed) {
       await deny(access.reason);

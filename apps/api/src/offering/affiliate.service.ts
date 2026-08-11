@@ -111,21 +111,35 @@ export class AffiliateService {
       throw new NotFoundException();
     }
 
+    // AC-9. Viewing survives restriction outright; authoring survives only
+    // where the Offering itself is still owner-manageable, which while
+    // Restricted means a Draft. So the general gate is asked with the intent,
+    // and the Offering's lifecycle decides the rest.
     const access = await this.commerce.canAuthorOfferings(
       businessId,
-      principal.userId
+      principal.userId,
+      action === "read" ? "VIEW_OWNED" : "MANAGE_AFFILIATE_DESTINATION"
     );
-    const restricted = !access.allowed && access.reason === "RESTRICTED";
-    if (!access.allowed && !restricted) {
+    if (!access.allowed) {
       await deny(access.reason);
       throw new NotFoundException();
     }
-    if (restricted && action !== "read") {
-      await deny("BUSINESS_RESTRICTED");
-      throw new ForbiddenException({
-        code: "BUSINESS_RESTRICTED",
-        message: "A Restricted Business may not author an Affiliate Destination"
-      });
+    if (action !== "read") {
+      const editable = await this.commerce.canAuthorOfferings(
+        businessId,
+        principal.userId,
+        "EDIT_PUBLISHED"
+      );
+      const restricted = !editable.allowed && editable.reason === "RESTRICTED";
+      const lifecycle = await this.destinations.offeringLifecycle(offeringId);
+      if (restricted && lifecycle !== "DRAFT") {
+        await deny("BUSINESS_RESTRICTED");
+        throw new ForbiddenException({
+          code: "BUSINESS_RESTRICTED",
+          message:
+            "A Restricted Business may author an Affiliate Destination only on a Draft Offering"
+        });
+      }
     }
   }
 

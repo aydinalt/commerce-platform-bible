@@ -270,8 +270,12 @@ suite("Increment I2 Business information", () => {
       body: complete,
       cookie
     });
+    // Exposure input follows the moderation status (`US-BUS-F03-001` AC-3), so
+    // Restricting the Business is the only way to reach Ineligible — writing
+    // the column directly is refused by the database.
     await pool.query(
-      `update business set public_exposure = 'INELIGIBLE' where id = $1`,
+      `update business_moderation_state set status = 'RESTRICTED'
+       where business_id = $1`,
       [businessId]
     );
 

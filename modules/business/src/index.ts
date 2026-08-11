@@ -3,9 +3,17 @@ export type BusinessAccessDecision =
   | { allowed: false; reason: "NOT_FOUND" | "RESTRICTED" | "SUSPENDED" };
 
 export interface BusinessAccessReader {
+  /**
+   * Whether this owner may do this particular thing right now.
+   *
+   * The intent is a parameter because restriction withdraws some acts and not
+   * others (`US-BUS-F03-001` AC-5 to AC-9). A caller that does not say what it
+   * is about to do cannot be given a correct answer.
+   */
   canAuthorOfferings(
     businessId: string,
-    userId: string
+    userId: string,
+    intent: OwnerIntent
   ): Promise<BusinessAccessDecision>;
 }
 
@@ -91,6 +99,47 @@ export class BusinessSlugConflictError extends Error {
     super("BUSINESS_SLUG_CONFLICT");
     this.name = "BusinessSlugConflictError";
   }
+}
+
+/**
+ * What an owner is trying to do (`US-BUS-F03-001` AC-5 to AC-9).
+ *
+ * Restriction is not a door being locked; it is a specific set of things being
+ * withdrawn. A Restricted owner still manages the Business, still edits an
+ * existing Draft, still sees what they published and still retires what they
+ * no longer want — so a single "may this Business be authored" question was
+ * always going to answer too many things at once.
+ */
+export const OWNER_INTENTS = [
+  "MANAGE_INFORMATION",
+  "VIEW_OWNED",
+  "CREATE_OFFERING",
+  "EDIT_DRAFT",
+  "EDIT_PUBLISHED",
+  "PUBLISH_OFFERING",
+  "RETIRE_OFFERING",
+  "MANAGE_AFFILIATE_DESTINATION"
+] as const;
+
+export type OwnerIntent = (typeof OWNER_INTENTS)[number];
+
+/**
+ * The three things restriction withdraws, and only those.
+ *
+ * AC-6 removes creating an Offering and publishing a Draft; AC-7 removes
+ * normal editing of a Published or Hidden Offering, leaving the bounded
+ * correction-edit path `US-PLT-F06-001` will own. Everything else in
+ * `OWNER_INTENTS` survives, which is what AC-5, AC-8 and AC-9 say in three
+ * different sentences.
+ */
+const WITHDRAWN_WHILE_RESTRICTED: readonly OwnerIntent[] = [
+  "CREATE_OFFERING",
+  "PUBLISH_OFFERING",
+  "EDIT_PUBLISHED"
+];
+
+export function restrictionWithdraws(intent: OwnerIntent): boolean {
+  return WITHDRAWN_WHILE_RESTRICTED.includes(intent);
 }
 
 export const businessModule = { name: "business" } as const;

@@ -127,3 +127,54 @@ export class BusinessController {
     );
   }
 }
+
+/**
+ * Restrict and Restore (`US-BUS-F03-001` AC-4, AC-11).
+ *
+ * Admin-only, and deliberately two actions rather than one status field: the
+ * Story names them, and an endpoint that accepted a status would let a caller
+ * write `Restricted` without an approved Restrict Business action behind it.
+ *
+ * The moderation case around these — why, by whom, and what happens next — is
+ * `US-PLT-F02-001`'s. What lives here is what the two actions *do*.
+ */
+@Controller("admin/businesses")
+export class AdminBusinessController {
+  constructor(
+    private readonly businesses: BusinessService,
+    private readonly principals: PrincipalResolver,
+    private readonly origins: OriginValidator
+  ) {}
+
+  @Post(":businessId/restriction")
+  @HttpCode(200)
+  async restrict(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Req() request: FastifyRequest
+  ) {
+    return ownedBusinessSchema.parse(
+      await this.moderate(businessId, "RESTRICTED", request)
+    );
+  }
+
+  @Post(":businessId/restoration")
+  @HttpCode(200)
+  async restore(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Req() request: FastifyRequest
+  ) {
+    return ownedBusinessSchema.parse(
+      await this.moderate(businessId, "UNRESTRICTED", request)
+    );
+  }
+
+  private async moderate(
+    businessId: string,
+    status: "RESTRICTED" | "UNRESTRICTED",
+    request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    await this.principals.resolveAdmin(request);
+    return this.businesses.moderate(businessId, status);
+  }
+}

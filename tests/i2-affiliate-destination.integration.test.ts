@@ -479,10 +479,11 @@ suite("Increment I2 Affiliate Destination", () => {
       cookie: business.cookie
     });
 
-    // The destination is part of what the platform would put in front of a
-    // person on the Business's behalf, so restriction reaches it — but seeing
-    // your own configuration is management visibility, not exposure.
-    expect(edited.statusCode).toBe(403);
+    // `US-BUS-F03-001` AC-9 narrows what restriction reaches here: a Draft is
+    // still the owner's to manage, so its destination is too. Reading is
+    // untouched either way — seeing your own configuration is management
+    // visibility, not exposure.
+    expect(edited.statusCode).toBe(200);
     expect(read.statusCode).toBe(200);
   });
 

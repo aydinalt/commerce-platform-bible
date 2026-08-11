@@ -2,9 +2,11 @@ import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import type { AuditEntry, AuditWriter } from "@commerce/audit";
-import type {
-  BusinessAccessDecision,
-  BusinessAccessReader
+import {
+  restrictionWithdraws,
+  type BusinessAccessDecision,
+  type BusinessAccessReader,
+  type OwnerIntent
 } from "@commerce/business";
 import { CategoryNotAssignableError } from "@commerce/catalog";
 import type { IdentityReader } from "@commerce/identity";
@@ -112,9 +114,19 @@ export class PgCommerceRepository
     return result.rows[0]?.enabled ?? false;
   }
 
+  /**
+   * Whether this owner may do this particular thing (`US-BUS-F03-001`).
+   *
+   * Restriction withdraws three acts and leaves the rest — creating an
+   * Offering, publishing a Draft and normally editing a Published or Hidden
+   * one. Asking with an intent is what lets a Restricted owner keep managing
+   * their Business, their Drafts and their retirements without every caller
+   * re-deciding which of those restriction was supposed to stop.
+   */
   async canAuthorOfferings(
     businessId: string,
-    userId: string
+    userId: string,
+    intent: OwnerIntent
   ): Promise<BusinessAccessDecision> {
     const result = await this.pool.query<{
       moderation: string;
@@ -129,7 +141,7 @@ export class PgCommerceRepository
     );
     const row = result.rows[0];
     if (!row) return { allowed: false, reason: "NOT_FOUND" };
-    if (row.moderation === "RESTRICTED")
+    if (row.moderation === "RESTRICTED" && restrictionWithdraws(intent))
       return { allowed: false, reason: "RESTRICTED" };
     if (row.status === "SUSPENDED" || row.status === "RETIRED")
       return { allowed: false, reason: "SUSPENDED" };

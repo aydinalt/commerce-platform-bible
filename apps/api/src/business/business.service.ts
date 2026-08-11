@@ -35,6 +35,26 @@ export class BusinessService {
    * it (`US-BUS-F01-001` AC-3), and the same account owns it — there is no
    * separate Business identity (AC-9).
    */
+  /**
+   * Applies an approved Restrict or Restore Business action.
+   *
+   * The repository moves the moderation status and makes the composed
+   * eligibility true again on both sides. A Business that does not exist
+   * answers as absent rather than as a refusal.
+   */
+  async moderate(
+    businessId: string,
+    status: "RESTRICTED" | "UNRESTRICTED"
+  ): Promise<OwnedBusiness> {
+    const moderated = await this.repository.moderate(businessId, status);
+    if (!moderated)
+      throw new NotFoundException({
+        code: "BUSINESS_NOT_FOUND",
+        message: "No Business matches that identifier"
+      });
+    return moderated;
+  }
+
   async create(
     input: CreateBusiness,
     principal: Principal

@@ -1,7 +1,10 @@
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 
-import { BusinessController } from "./business/business.controller.js";
+import {
+  AdminBusinessController,
+  BusinessController
+} from "./business/business.controller.js";
 import { BusinessService } from "./business/business.service.js";
 import { AttributeController } from "./catalog/attribute.controller.js";
 import { AttributeService } from "./catalog/attribute.service.js";
@@ -67,6 +70,7 @@ function allowedOrigins(): readonly string[] {
 
 @Module({
   controllers: [
+    AdminBusinessController,
     AdminOfferingController,
     AffiliateDestinationController,
     AttributeController,

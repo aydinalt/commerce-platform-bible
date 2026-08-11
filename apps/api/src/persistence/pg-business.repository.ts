@@ -7,6 +7,8 @@ import {
   type OwnedBusiness
 } from "@commerce/business";
 
+import { PROJECT_OFFERING } from "./pg-offering-content.repository.js";
+
 /**
  * Every Business Information column, named once. The owner read-back and the
  * update read-back must agree exactly, and AC-9 is easier to keep true when the
@@ -29,11 +31,94 @@ function isUniqueViolation(error: unknown, constraint: string): boolean {
   );
 }
 
+/**
+ * Restrict and Restore (`US-BUS-F03-001` AC-4, AC-11).
+ *
+ * The moderation status moves and the exposure input follows it — the database
+ * keeps that mapping, so this writes one thing. What it also has to do is make
+ * PRD-0001's composed result true again on both sides: a Restricted Business's
+ * Offerings must stop being findable, and a restored one's Published Offerings
+ * must reappear.
+ *
+ * AC-10 and AC-13 are then absences. Nothing here writes an Offering lifecycle,
+ * an Affiliate Destination status or validation result, a User Account status
+ * or an ownership row, and AC-12 and AC-14 fall out of the same restraint: only
+ * lifecycle-Published Offerings are re-projected, so a Draft stays a Draft and
+ * a Hidden or Archived Offering stays where it was.
+ */
 @Injectable()
 export class PgBusinessRepository implements OnModuleDestroy {
   private readonly pool = new Pool({
     connectionString: process.env.DATABASE_URL
   });
+
+  async moderate(
+    businessId: string,
+    status: "RESTRICTED" | "UNRESTRICTED"
+  ): Promise<OwnedBusiness | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      // Checked first: a moderation row for a Business that does not exist is
+      // a foreign-key violation, and a caller naming an unknown identifier
+      // deserves an absence rather than a failure.
+      const exists = await client.query(
+        `select 1 from business where id = $1`,
+        [businessId]
+      );
+      if (exists.rowCount === 0) {
+        await client.query("rollback");
+        return null;
+      }
+
+      const updated = await client.query(
+        `insert into business_moderation_state (business_id, status)
+         values ($1, $2::"BusinessModerationStatus")
+         on conflict (business_id) do update set
+           status = excluded.status, updated_at = now()`,
+        [businessId, status]
+      );
+      if (updated.rowCount === 0) {
+        await client.query("rollback");
+        return null;
+      }
+
+      if (status === "RESTRICTED")
+        // Final Offering Public Eligibility is composed from the Business
+        // input, so a Restricted Business has no eligible Offerings — and the
+        // projection is where that answer is read from.
+        await client.query(
+          `delete from offering_search_projection where business_id = $1`,
+          [businessId]
+        );
+      else {
+        // AC-14. Only lifecycle-Published Offerings regain eligibility. A
+        // Draft, a Hidden and an Archived Offering are each ineligible for a
+        // reason restoration does not touch.
+        const published = await client.query<{ id: string }>(
+          `select id from offering
+           where business_id = $1 and status = 'PUBLISHED'`,
+          [businessId]
+        );
+        for (const offering of published.rows)
+          await client.query(PROJECT_OFFERING, [offering.id, 1]);
+      }
+
+      const record = await client.query<OwnedBusiness>(
+        `select b.id, b.name, b.slug, b.status,
+           b.public_exposure as "publicExposure"
+         from business b where b.id = $1`,
+        [businessId]
+      );
+      await client.query("commit");
+      return record.rows[0] ?? null;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();

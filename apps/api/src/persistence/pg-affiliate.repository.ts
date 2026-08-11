@@ -41,6 +41,21 @@ export class PgAffiliateRepository implements OnModuleDestroy {
    * Offering is not refused — it is simply not there, which is the same answer
    * the caller would get for an Offering that does not exist.
    */
+  /**
+   * The Offering's current lifecycle, for the one caller that needs it.
+   *
+   * `US-BUS-F03-001` AC-9 lets a Restricted owner author an Affiliate
+   * Destination only where the Offering itself is still owner-manageable, and
+   * that is a lifecycle question rather than a destination one.
+   */
+  async offeringLifecycle(offeringId: string): Promise<string | null> {
+    const result = await this.pool.query<{ status: string }>(
+      `select status::text as status from offering where id = $1`,
+      [offeringId]
+    );
+    return result.rows[0]?.status ?? null;
+  }
+
   async findOwned(
     businessId: string,
     offeringId: string
