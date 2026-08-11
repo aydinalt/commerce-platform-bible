@@ -286,8 +286,9 @@ suite("Increment I5 Comparison Set and Compare", () => {
       "MEMBER_OTHER_CATEGORY"
     );
     const after = comparisonSetSchema.parse(
-      (await send("GET", `/decision/comparison-sets/${set.comparisonSetId}`))
-        .json()
+      (
+        await send("GET", `/decision/comparison-sets/${set.comparisonSetId}`)
+      ).json()
     );
     expect(after.members.map((m) => m.offeringId).sort()).toEqual(
       [first.offeringId, second.offeringId].sort()
@@ -458,7 +459,10 @@ suite("Increment I5 Comparison Set and Compare", () => {
       "GET",
       `/decision/comparison-sets/${set.comparisonSetId}`
     );
-    const never = await send("GET", `/decision/comparison-sets/${randomUUID()}`);
+    const never = await send(
+      "GET",
+      `/decision/comparison-sets/${randomUUID()}`
+    );
 
     // Current-flow state is allowed to disappear; that is what makes it
     // current-flow rather than history.

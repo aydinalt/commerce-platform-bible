@@ -216,7 +216,9 @@ describe("Increment I4 Compare preparation return", () => {
     // reaches is `US-DEC-F01-001`, which owns forming the set — so nothing on
     // this page joins a Comparison Set or claims Compare Start by being drawn.
     expect(markup).toContain("Karşılaştırmaya ekle");
-    expect(markup).toMatch(/<form[^>]*>\s*<input type="hidden" name="offeringId"/u);
+    expect(markup).toMatch(
+      /<form[^>]*>\s*<input type="hidden" name="offeringId"/u
+    );
     expect(markup).not.toContain("comparisonSetId");
   });
 

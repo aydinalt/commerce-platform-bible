@@ -54,9 +54,7 @@ export async function addToCompare(
   const { refusal, set } = await addToComparison({
     comparisonSetId: await currentSetId(),
     offeringId,
-    ...(typeof replaces === "string" && replaces.length > 0
-      ? { replaces }
-      : {})
+    ...(typeof replaces === "string" && replaces.length > 0 ? { replaces } : {})
   });
   if (!set) return { refusal: refusal ?? "UNKNOWN" };
   await remember(set.comparisonSetId);

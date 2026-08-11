@@ -2856,7 +2856,9 @@ const document = {
             description: "The current Comparison Set"
           },
           "400": errorResponse("Invalid identifier"),
-          "404": errorResponse("That Comparison Set has expired or never existed")
+          "404": errorResponse(
+            "That Comparison Set has expired or never existed"
+          )
         },
         tags: ["Decision"]
       }
@@ -2892,7 +2894,9 @@ const document = {
             description: "The set after the addition"
           },
           "400": errorResponse("Invalid Comparison Set request"),
-          "404": errorResponse("That Comparison Set has expired or never existed"),
+          "404": errorResponse(
+            "That Comparison Set has expired or never existed"
+          ),
           "422": errorResponse(
             "The Offering is ineligible, belongs to another leaf Category, or the set is full"
           )
@@ -2929,7 +2933,9 @@ const document = {
             description: "The set after the removal"
           },
           "400": errorResponse("Invalid identifier"),
-          "404": errorResponse("That Comparison Set has expired or never existed")
+          "404": errorResponse(
+            "That Comparison Set has expired or never existed"
+          )
         },
         tags: ["Decision"]
       }
@@ -2957,7 +2963,9 @@ const document = {
             description: "The comparison"
           },
           "400": errorResponse("Invalid identifier"),
-          "404": errorResponse("That Comparison Set has expired or never existed"),
+          "404": errorResponse(
+            "That Comparison Set has expired or never existed"
+          ),
           "422": errorResponse(
             "Compare needs between two and five eligible Offerings"
           )
