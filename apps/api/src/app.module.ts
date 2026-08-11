@@ -20,6 +20,7 @@ import {
 import { RestatingDecisionAssistant } from "./decision/restating.assistant.js";
 import { AccessModerationController } from "./platform/access-moderation.controller.js";
 import { AdminPanelController } from "./platform/admin-panel.controller.js";
+import { AnalyticsController } from "./platform/analytics.controller.js";
 import { ModerationCaseController } from "./platform/moderation.controller.js";
 import { DiscoveryController } from "./discovery/discovery.controller.js";
 import { HealthController } from "./health.controller.js";
@@ -47,6 +48,7 @@ import { PgComparisonRepository } from "./persistence/pg-comparison.repository.j
 import { PgDecisionRepository } from "./persistence/pg-decision.repository.js";
 import { PgDiscoveryRepository } from "./persistence/pg-discovery.repository.js";
 import { PgIdentityRepository } from "./persistence/pg-identity.repository.js";
+import { PgAnalyticsRepository } from "./persistence/pg-analytics.repository.js";
 import { PgModerationRepository } from "./persistence/pg-moderation.repository.js";
 import { PgOfferingContentRepository } from "./persistence/pg-offering-content.repository.js";
 import { PgPresentationRepository } from "./persistence/pg-presentation.repository.js";
@@ -79,6 +81,7 @@ function allowedOrigins(): readonly string[] {
     AccessModerationController,
     AdminBusinessController,
     AdminPanelController,
+    AnalyticsController,
     ModerationCaseController,
     AdminOfferingController,
     AffiliateDestinationController,
@@ -116,6 +119,7 @@ function allowedOrigins(): readonly string[] {
     PgDecisionRepository,
     PgDiscoveryRepository,
     PgIdentityRepository,
+    PgAnalyticsRepository,
     PgModerationRepository,
     PgOfferingContentRepository,
     PgPresentationRepository,

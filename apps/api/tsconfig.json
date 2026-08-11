@@ -19,6 +19,9 @@
       "path": "../../packages/observability"
     },
     {
+      "path": "../../modules/analytics"
+    },
+    {
       "path": "../../modules/audit"
     },
     {

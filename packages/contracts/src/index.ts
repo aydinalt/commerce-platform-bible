@@ -711,6 +711,81 @@ export type DestinationWorkloadItem = z.infer<
 >;
 export type DestinationWorkload = z.infer<typeof destinationWorkloadSchema>;
 
+const tally = z.record(z.string(), z.number().int().nonnegative());
+
+/**
+ * One core-flow indicator (`US-PLT-F10-001` AC-3, AC-12).
+ *
+ * `byDomain` is empty where the owning source supplies no Domain association,
+ * rather than carrying a Domain guessed from something related. It is also
+ * allowed not to sum to `overall`: a Search Discovery Start with no selected
+ * leaf Category has no Domain at all, and Platform infers none from what
+ * somebody typed. The gap between the two is the truth, not a defect.
+ */
+const coreFlowCountSchema = z
+  .object({
+    byDomain: z.array(
+      z.object({ count: z.number().int().nonnegative(), domain: z.string() })
+    ),
+    overall: z.number().int().nonnegative()
+  })
+  .strict();
+
+/**
+ * Basic Analytics (`US-PLT-F10-001`).
+ *
+ * Operational visibility, not analytics. Every figure is a count of records
+ * that already exist, grouped by the results their own authorities produced —
+ * nothing here is derived, weighted, projected or scored, which is most of
+ * AC-18 by construction.
+ *
+ * The two Completions are separate fields under `coreFlow` and are named for
+ * what they are: an Affiliate Handoff initiation and a Direct Contact reveal.
+ * Neither is a purchase, a sale, a contract, a reply or any external success,
+ * and there is no combined figure in which either could be read as one.
+ *
+ * `actionable` carries where a workload indicator leads. It is navigation and
+ * nothing else — no entry performs anything, and there is no field for one
+ * that would.
+ */
+export const analyticsSchema = z
+  .object({
+    actionable: z
+      .object({
+        DESTINATION_WORKLOAD: z.string(),
+        OPEN_MODERATION_CASES: z.string()
+      })
+      .strict(),
+    affiliateDestinations: z
+      .object({
+        handoffEligibility: tally,
+        status: tally,
+        validationResult: tally
+      })
+      .strict(),
+    businesses: tally,
+    coreFlow: z
+      .object({
+        AFFILIATE_HANDOFF_COMPLETIONS: coreFlowCountSchema,
+        COMPARE_STARTS: coreFlowCountSchema,
+        DECISION_CHAT_STARTS: coreFlowCountSchema,
+        DIRECT_CONTACT_COMPLETIONS: coreFlowCountSchema,
+        DISCOVERY_STARTS: coreFlowCountSchema,
+        OFFERING_PRESENTATION_OPENS: coreFlowCountSchema
+      })
+      .strict(),
+    destinationWorkload: tally,
+    moderationCases: z.object({ openByTarget: tally, status: tally }).strict(),
+    offerings: z
+      .object({ lifecycle: tally, publicEligibility: tally })
+      .strict(),
+    period: z.enum(["TODAY", "LAST_7_DAYS", "LAST_30_DAYS", "ALL_TIME"]),
+    userAccounts: tally
+  })
+  .strict();
+
+export type Analytics = z.infer<typeof analyticsSchema>;
+
 const MODERATION_ACTION_VALUES = [
   "REQUEST_CORRECTION",
   "HIDE_OFFERING",

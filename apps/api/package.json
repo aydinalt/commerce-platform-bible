@@ -10,6 +10,7 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
+    "@commerce/analytics": "0.0.0",
     "@commerce/audit": "0.0.0",
     "@commerce/business": "0.0.0",
     "@commerce/catalog": "0.0.0",

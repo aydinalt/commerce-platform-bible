@@ -1447,6 +1447,126 @@
         "required": ["destination", "entries", "offering"],
         "type": "object"
       },
+      "Analytics": {
+        "additionalProperties": false,
+        "description": "Every figure is a count of records that already exist, grouped by results their own authorities produced. Nothing is derived, weighted, projected or scored. `actionable` carries where a workload indicator leads: it is navigation, and no entry performs anything.",
+        "properties": {
+          "actionable": {
+            "additionalProperties": false,
+            "properties": {
+              "DESTINATION_WORKLOAD": { "type": "string" },
+              "OPEN_MODERATION_CASES": { "type": "string" }
+            },
+            "required": ["DESTINATION_WORKLOAD", "OPEN_MODERATION_CASES"],
+            "type": "object"
+          },
+          "affiliateDestinations": {
+            "additionalProperties": false,
+            "properties": {
+              "handoffEligibility": { "$ref": "#/components/schemas/Tally" },
+              "status": { "$ref": "#/components/schemas/Tally" },
+              "validationResult": { "$ref": "#/components/schemas/Tally" }
+            },
+            "required": ["handoffEligibility", "status", "validationResult"],
+            "type": "object"
+          },
+          "businesses": { "$ref": "#/components/schemas/Tally" },
+          "coreFlow": {
+            "additionalProperties": false,
+            "properties": {
+              "AFFILIATE_HANDOFF_COMPLETIONS": {
+                "$ref": "#/components/schemas/CoreFlowCount"
+              },
+              "COMPARE_STARTS": {
+                "$ref": "#/components/schemas/CoreFlowCount"
+              },
+              "DECISION_CHAT_STARTS": {
+                "$ref": "#/components/schemas/CoreFlowCount"
+              },
+              "DIRECT_CONTACT_COMPLETIONS": {
+                "$ref": "#/components/schemas/CoreFlowCount"
+              },
+              "DISCOVERY_STARTS": {
+                "$ref": "#/components/schemas/CoreFlowCount"
+              },
+              "OFFERING_PRESENTATION_OPENS": {
+                "$ref": "#/components/schemas/CoreFlowCount"
+              }
+            },
+            "required": [
+              "AFFILIATE_HANDOFF_COMPLETIONS",
+              "COMPARE_STARTS",
+              "DECISION_CHAT_STARTS",
+              "DIRECT_CONTACT_COMPLETIONS",
+              "DISCOVERY_STARTS",
+              "OFFERING_PRESENTATION_OPENS"
+            ],
+            "type": "object"
+          },
+          "destinationWorkload": { "$ref": "#/components/schemas/Tally" },
+          "moderationCases": {
+            "additionalProperties": false,
+            "properties": {
+              "openByTarget": { "$ref": "#/components/schemas/Tally" },
+              "status": { "$ref": "#/components/schemas/Tally" }
+            },
+            "required": ["openByTarget", "status"],
+            "type": "object"
+          },
+          "offerings": {
+            "additionalProperties": false,
+            "properties": {
+              "lifecycle": { "$ref": "#/components/schemas/Tally" },
+              "publicEligibility": { "$ref": "#/components/schemas/Tally" }
+            },
+            "required": ["lifecycle", "publicEligibility"],
+            "type": "object"
+          },
+          "period": {
+            "enum": ["TODAY", "LAST_7_DAYS", "LAST_30_DAYS", "ALL_TIME"],
+            "type": "string"
+          },
+          "userAccounts": { "$ref": "#/components/schemas/Tally" }
+        },
+        "required": [
+          "actionable",
+          "affiliateDestinations",
+          "businesses",
+          "coreFlow",
+          "destinationWorkload",
+          "moderationCases",
+          "offerings",
+          "period",
+          "userAccounts"
+        ],
+        "type": "object"
+      },
+      "Tally": {
+        "additionalProperties": { "minimum": 0, "type": "integer" },
+        "description": "Counts keyed by the authoritative result they group by.",
+        "type": "object"
+      },
+      "CoreFlowCount": {
+        "additionalProperties": false,
+        "description": "One core-flow indicator. `byDomain` is empty where the owning source supplies no Domain association, and is allowed not to sum to `overall`: an occurrence with no Domain is counted overall and appears in none.",
+        "properties": {
+          "byDomain": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "count": { "minimum": 0, "type": "integer" },
+                "domain": { "type": "string" }
+              },
+              "required": ["count", "domain"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "overall": { "minimum": 0, "type": "integer" }
+        },
+        "required": ["byDomain", "overall"],
+        "type": "object"
+      },
       "AdminPanel": {
         "additionalProperties": false,
         "description": "The Admin Panel baseline. `userId` and nothing else identifies the Admin, because authorization attaches to the existing User Account and V1 creates no separate Admin identity, account or login. `functions` is a closed list of Platform behaviour that exists today; no provisioning verb is a member. `inheritedBaselines` states that entering Admin context takes nothing away — Guest and authenticated User abilities survive it.",
@@ -5315,6 +5435,58 @@
           }
         },
         "tags": ["Business"]
+      }
+    },
+    "/api/v1/admin/analytics": {
+      "get": {
+        "description": "Basic Analytics: operational visibility, not analytics. Periods are exactly Today, Last 7 days, Last 30 days and All time; there is no custom range. Current-state indicators are counted as they stand now, because \"how many Businesses are Restricted\" is not an occurrence a window could bound. Core-flow indicators are counted within the period, and a Domain breakdown appears only where the owning source records one — a Search Discovery Start with no selected leaf Category has no Domain, and no Domain is inferred from free-text, so that breakdown deliberately does not sum to its total. Affiliate Handoff Completion and Direct Contact Completion are separate figures named for what they are; neither is a purchase, sale, contract, reply or external success, and there is no combined figure in which either could be read as one. Nothing here writes anything.",
+        "operationId": "getBasicAnalytics",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "enum": ["TODAY", "LAST_7_DAYS", "LAST_30_DAYS", "ALL_TIME"],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Analytics" }
+              }
+            },
+            "description": "The Basic Analytics snapshot"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid analytics period"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Admin context required"
+          }
+        },
+        "tags": ["Platform"]
       }
     },
     "/api/v1/admin/panel": {
