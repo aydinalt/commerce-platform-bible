@@ -10,7 +10,8 @@ import {
   contextRepairs,
   DECISION_FLOW_TTL_MINUTES,
   DecisionFlowNotFoundError,
-  openableInCompare
+  openableInCompare,
+  SelectionNotInContextError
 } from "@commerce/decision";
 
 /**
@@ -26,6 +27,7 @@ import {
 interface FlowRow {
   comparisonSetId: string | null;
   offeringId: string | null;
+  selectedOfferingId: string | null;
 }
 
 @Injectable()
@@ -87,6 +89,42 @@ export class PgDecisionRepository implements OnModuleDestroy {
     return this.transact(async (client) => this.read(client, decisionFlowId));
   }
 
+  /**
+   * Selecting, changing or clearing (`US-DEC-F04-001` AC-2, AC-3, AC-5).
+   *
+   * One statement for all three, because they are one act: the person says
+   * which Offering this flow is about, and `null` says none of them yet.
+   * Whether the named Offering belongs to the context is the trigger's
+   * question, not this one's.
+   *
+   * Non-selected members are untouched (AC-4) — nothing here writes to the
+   * Comparison Set, and selecting is not a kind of removal.
+   */
+  async select(
+    decisionFlowId: string,
+    offeringId: string | null
+  ): Promise<DecisionContextResponse> {
+    return this.transact(async (client) => {
+      try {
+        const updated = await client.query(
+          `update decision_flow set selected_offering_id = $2 where id = $1`,
+          [decisionFlowId, offeringId]
+        );
+        if (updated.rowCount === 0) throw new DecisionFlowNotFoundError();
+      } catch (error) {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "message" in error &&
+          String(error.message).includes("SELECTION_NOT_IN_CONTEXT")
+        )
+          throw new SelectionNotInContextError();
+        throw error;
+      }
+      return this.read(client, decisionFlowId);
+    });
+  }
+
   private identifier(created: { rows: { id: string }[] }): string {
     const id = created.rows[0]?.id;
     if (!id) throw new Error("DECISION_FLOW_NOT_CREATED");
@@ -131,7 +169,8 @@ export class PgDecisionRepository implements OnModuleDestroy {
   ): Promise<DecisionContextResponse> {
     const found = await client.query<FlowRow>(
       `select offering_id as "offeringId",
-         comparison_set_id as "comparisonSetId"
+         comparison_set_id as "comparisonSetId",
+         selected_offering_id as "selectedOfferingId"
        from decision_flow where id = $1`,
       [decisionFlowId]
     );
@@ -155,9 +194,23 @@ export class PgDecisionRepository implements OnModuleDestroy {
         ? comparison !== null && comparison.openable
         : offering !== null;
 
+    // AC-6's other half, read rather than written: a selection whose Offering
+    // stopped being eligible resolves to nothing here, so it cannot be acted
+    // on even though the column still holds an identifier. The removal case is
+    // cleared by the database; this one cannot be, because nobody touched the
+    // set — the world changed underneath it.
+    const selected =
+      flow.selectedOfferingId === null
+        ? null
+        : await this.offering(client, flow.selectedOfferingId);
+
     return {
       comparison,
       decisionFlowId,
+      // AC-7. One answer for both handoffs, and it needs a valid context *and*
+      // a current eligible selection — a valid context with nothing chosen
+      // offers nothing.
+      handoffAvailable: valid && selected !== null,
       invalidity: valid
         ? null
         : flow.offeringId === null
@@ -167,6 +220,7 @@ export class PgDecisionRepository implements OnModuleDestroy {
       repairs: valid
         ? []
         : contextRepairs({ hasComparisonSet: flow.comparisonSetId !== null }),
+      selected,
       valid
     };
   }

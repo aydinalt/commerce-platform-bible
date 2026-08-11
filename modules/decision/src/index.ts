@@ -117,6 +117,21 @@ export function contextRepairs(input: {
   );
 }
 
+/**
+ * Raised when a selection names something the Decision Context does not
+ * contain (`US-DEC-F04-001` AC-3).
+ *
+ * Translated from the trigger, so the interface layer never reads PostgreSQL
+ * error text — and so that the refusal keeps its meaning: the person asked to
+ * act on something that is not in front of them.
+ */
+export class SelectionNotInContextError extends Error {
+  constructor() {
+    super("SELECTION_NOT_IN_CONTEXT");
+    this.name = "SelectionNotInContextError";
+  }
+}
+
 /// Raised when the flow a request names has expired or never existed.
 export class DecisionFlowNotFoundError extends Error {
   constructor() {

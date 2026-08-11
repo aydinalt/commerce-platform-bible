@@ -963,8 +963,20 @@ export const decisionContextSchema = z
   .object({
     comparison: comparisonSetSchema.nullable(),
     decisionFlowId: z.string().uuid(),
+    /**
+     * Whether a handoff may be offered at all (`US-DEC-F04-001` AC-7).
+     *
+     * It is `true` only where a current eligible Selected Offering exists, so
+     * `US-DEC-F05-001` and `US-DEC-F06-001` read one answer rather than each
+     * re-deriving it. Selection is not the same question as context validity:
+     * a valid context with nothing selected offers no handoff.
+     */
+    handoffAvailable: z.boolean(),
     invalidity: z.enum(["OFFERING_INELIGIBLE", "SET_NOT_VALID"]).nullable(),
     offering: listingCardSchema.nullable(),
+    /// The explicitly Selected Offering, or nothing. `null` is the ordinary
+    /// starting state and the state a cleared selection returns to.
+    selected: listingCardSchema.nullable(),
     repairs: z.array(
       z.enum([
         "REPAIR_COMPARISON_SET",
@@ -1016,6 +1028,13 @@ export const decisionChatSchema = z
 export type AskDecision = z.infer<typeof askDecisionSchema>;
 export type DecisionChatResponse = z.infer<typeof decisionChatSchema>;
 
+/// Selecting is explicit, and so is clearing: `offeringId: null` is the person
+/// saying "none of these yet" rather than an omission.
+export const selectOfferingSchema = z
+  .object({ offeringId: z.string().uuid().nullable() })
+  .strict();
+
+export type SelectOffering = z.infer<typeof selectOfferingSchema>;
 export type EnterDecision = z.infer<typeof enterDecisionSchema>;
 export type DecisionContextResponse = z.infer<typeof decisionContextSchema>;
 

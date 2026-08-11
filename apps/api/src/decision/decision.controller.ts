@@ -9,6 +9,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   UnprocessableEntityException
 } from "@nestjs/common";
 import { z } from "zod";
@@ -20,14 +21,16 @@ import {
   comparisonSetSchema,
   comparisonViewSchema,
   decisionContextSchema,
-  enterDecisionSchema
+  enterDecisionSchema,
+  selectOfferingSchema
 } from "@commerce/contracts";
 import {
   AssistantInventedValueError,
   ComparisonMemberRefusedError,
   ComparisonSetNotFoundError,
   DecisionContextInvalidError,
-  DecisionFlowNotFoundError
+  DecisionFlowNotFoundError,
+  SelectionNotInContextError
 } from "@commerce/decision";
 
 import { PgComparisonRepository } from "../persistence/pg-comparison.repository.js";
@@ -241,6 +244,35 @@ export class DecisionFlowController {
     );
   }
 
+  /**
+   * Selecting, changing or clearing the Selected Offering (AC-2, AC-3, AC-5).
+   *
+   * A `PUT` because the person is stating what the selection *is*, including
+   * that it is nothing. There is no separate clear route, because clearing is
+   * not a different act — it is the same statement with a different answer.
+   */
+  @Put(":decisionFlowId/selection")
+  @HttpCode(200)
+  async select(
+    @Param("decisionFlowId", uuidParam("decisionFlowId"))
+    decisionFlowId: string,
+    @Body() body: unknown
+  ) {
+    const parsed = selectOfferingSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Invalid selection"
+      });
+
+    return decisionContextSchema.parse(
+      await this.attempt(() =>
+        this.decisions.select(decisionFlowId, parsed.data.offeringId)
+      )
+    );
+  }
+
   private async attempt<T>(work: () => Promise<T>): Promise<T> {
     try {
       return await work();
@@ -251,6 +283,13 @@ export class DecisionFlowController {
         throw new NotFoundException({
           code: "DECISION_FLOW_NOT_FOUND",
           message: "That Decision flow has expired or never existed"
+        });
+      // AC-3. Selecting something the context does not contain is refused, and
+      // the selection that was already there is untouched.
+      if (error instanceof SelectionNotInContextError)
+        throw new UnprocessableEntityException({
+          code: "SELECTION_NOT_IN_CONTEXT",
+          message: "Select an Offering from the current Decision Context"
         });
       throw error;
     }

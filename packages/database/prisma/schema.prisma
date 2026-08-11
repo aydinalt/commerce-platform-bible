@@ -342,11 +342,16 @@ model DecisionFlow {
   id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   offeringId      String?        @map("offering_id") @db.Uuid
   comparisonSetId String?        @map("comparison_set_id") @db.Uuid
+  /// The one Offering this flow is about to act on (`US-DEC-F04-001`). Null is
+  /// the normal starting state: every handoff waits for an explicit act. A
+  /// trigger restricts it to the context, and clears it when the selected
+  /// member leaves a Comparison Set.
+  selectedOfferingId String?     @map("selected_offering_id") @db.Uuid
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   expiresAt       DateTime       @map("expires_at") @db.Timestamptz(6)
   offering        Offering?      @relation(fields: [offeringId], references: [id], onDelete: Restrict)
   comparisonSet   ComparisonSet? @relation(fields: [comparisonSetId], references: [id], onDelete: Cascade)
-
+  selectedOffering Offering?     @relation("DecisionSelection", fields: [selectedOfferingId], references: [id], onDelete: Restrict)
   turns           DecisionChatTurn[]
 
   @@index([expiresAt])
@@ -488,6 +493,7 @@ model Offering {
   presentationOpens    OfferingPresentationOpen[]
   comparisonMemberships ComparisonSetMember[]
   decisionFlows         DecisionFlow[]
+  decisionSelections    DecisionFlow[] @relation("DecisionSelection")
 
   @@unique([businessId, slug])
   @@index([categoryId, status])

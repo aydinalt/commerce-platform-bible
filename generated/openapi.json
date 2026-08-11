@@ -594,6 +594,10 @@
             ]
           },
           "decisionFlowId": { "format": "uuid", "type": "string" },
+          "handoffAvailable": {
+            "description": "Whether a handoff may be offered at all. True only where the context is valid and a current eligible Selected Offering exists — a valid context with nothing selected offers nothing.",
+            "type": "boolean"
+          },
           "invalidity": {
             "enum": ["OFFERING_INELIGIBLE", "SET_NOT_VALID", null],
             "type": ["string", "null"]
@@ -616,16 +620,34 @@
             },
             "type": "array"
           },
+          "selected": {
+            "description": "The explicitly Selected Offering, or nothing. Null is the ordinary starting state and the state a cleared selection returns to.",
+            "oneOf": [
+              { "$ref": "#/components/schemas/ListingCard" },
+              { "type": "null" }
+            ]
+          },
           "valid": { "type": "boolean" }
         },
         "required": [
           "comparison",
           "decisionFlowId",
+          "handoffAvailable",
           "invalidity",
           "offering",
           "repairs",
+          "selected",
           "valid"
         ],
+        "type": "object"
+      },
+      "SelectOffering": {
+        "additionalProperties": false,
+        "description": "Selecting is explicit, and so is clearing: `offeringId: null` is the person saying none of these yet rather than an omission.",
+        "properties": {
+          "offeringId": { "format": "uuid", "type": ["string", "null"] }
+        },
+        "required": ["offeringId"],
         "type": "object"
       },
       "EnterDecision": {
@@ -4092,6 +4114,63 @@
               }
             },
             "description": "That Decision flow has expired or never existed"
+          }
+        },
+        "tags": ["Decision"]
+      }
+    },
+    "/api/v1/decision/flows/{decisionFlowId}/selection": {
+      "put": {
+        "description": "States the Selected Offering, including that it is nothing. Every handoff waits for one: no Affiliate Handoff or Direct Contact is available until a current eligible Selected Offering exists. In a single-Offering context the only selectable Offering is that one; in a Comparison Set context it must be a current member, and selecting one leaves every other member in the set. A selection whose Offering stops being eligible, or whose member is removed from the set, clears itself.",
+        "operationId": "selectOffering",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "decisionFlowId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SelectOffering" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DecisionContext" }
+              }
+            },
+            "description": "The Decision Context after the selection"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid selection"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "That Decision flow has expired or never existed"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Select an Offering from the current Decision Context"
           }
         },
         "tags": ["Decision"]

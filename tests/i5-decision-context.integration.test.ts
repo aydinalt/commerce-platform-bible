@@ -286,7 +286,8 @@ suite("Increment I5 Decision Context", () => {
       "created_at",
       "expires_at",
       "id",
-      "offering_id"
+      "offering_id",
+      "selected_offering_id"
     ]);
   });
 

@@ -350,15 +350,15 @@ suite("Increment I5 Decision Chat", () => {
 
     await ask(decisionFlowId, { question: "Bunu seçiyorum, devam et." });
 
-    // AC-7. Asking for a selection or a handoff cannot produce one: Chat has
-    // no route, no field and no dependency through which either could happen.
-    const columns = await pool.query<{ column_name: string }>(
-      `select column_name from information_schema.columns
-       where table_name = 'decision_flow' order by column_name`
+    // AC-7. Asking for a selection or a handoff cannot produce one. The flow
+    // does hold a Selected Offering — `US-DEC-F04-001` owns it — and Chat has
+    // no dependency that can write it, so asking leaves it exactly as it was.
+    const selected = await pool.query<{ selected: string | null }>(
+      `select selected_offering_id as "selected" from decision_flow
+       where id = $1`,
+      [decisionFlowId]
     );
-    expect(columns.rows.map((row) => row.column_name)).not.toContain(
-      "selected_offering_id"
-    );
+    expect(selected.rows[0]?.selected).toBeNull();
   });
 
   it("makes no claim about a purchase, a reply or an external result", async () => {
