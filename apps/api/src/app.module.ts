@@ -21,6 +21,7 @@ import {
   OfferingController
 } from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
+import { PublicOfferingController } from "./offering/public-offering.controller.js";
 import { PgAffiliateRepository } from "./persistence/pg-affiliate.repository.js";
 import { PgAttributeRepository } from "./persistence/pg-attribute.repository.js";
 import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
@@ -63,7 +64,8 @@ function allowedOrigins(): readonly string[] {
     DiscoveryController,
     HealthController,
     IdentityController,
-    OfferingController
+    OfferingController,
+    PublicOfferingController
   ],
   providers: [
     AffiliateService,

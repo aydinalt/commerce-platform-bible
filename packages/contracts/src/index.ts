@@ -773,6 +773,23 @@ export const listingCardSchema = z
   })
   .strict();
 
+/**
+ * The exact Offering identity Discovery hands to Presentation
+ * (`US-DSC-F09-001` AC-2).
+ *
+ * It is deliberately the same set the Listing Card carried. The person chose
+ * something they could see; handing on a different description of it would
+ * make the hand-off a second decision taken on their behalf.
+ *
+ * `US-OFR-F05-001` extends this into complete Presentation. Until then the
+ * identity is all a public reader is given, which is the honest amount: the
+ * description, the Attribute values and the public Business identity set are
+ * Presentation content, and Presentation has not been built.
+ */
+export const publicOfferingSchema = listingCardSchema;
+
+export type PublicOfferingResponse = z.infer<typeof publicOfferingSchema>;
+
 export const browseRootsSchema = z
   .object({
     domains: z.array(

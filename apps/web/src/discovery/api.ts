@@ -1,9 +1,11 @@
 import {
   browseRootsSchema,
   browseViewSchema,
+  publicOfferingSchema,
   searchViewSchema,
   type BrowseRoots,
   type BrowseViewResponse,
+  type PublicOfferingResponse,
   type SearchViewResponse
 } from "@commerce/contracts";
 
@@ -74,6 +76,26 @@ export async function fetchSearchView(
       ...(entry.pathId === undefined ? {} : { discoveryPathId: entry.pathId })
     })
   );
+}
+
+/**
+ * Opening the Offering behind a Listing Card (`US-DSC-F09-001`).
+ *
+ * `null` rather than a thrown error, because "this cannot be opened" is an
+ * ordinary answer: AC-4 makes eligibility a condition of beginning
+ * Presentation at all, and an Offering retired between the card being drawn
+ * and the card being opened is the expected case, not a fault.
+ */
+export async function fetchPublicOffering(
+  slug: string
+): Promise<PublicOfferingResponse | null> {
+  const response = await fetch(
+    `${apiBaseUrl()}/offerings/${encodeURIComponent(slug)}`,
+    { cache: "no-store", headers: { accept: "application/json" } }
+  );
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`OFFERING_${response.status}`);
+  return publicOfferingSchema.parse(await response.json());
 }
 
 export async function fetchBrowseView(

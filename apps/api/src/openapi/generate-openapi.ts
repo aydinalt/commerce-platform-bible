@@ -2696,6 +2696,35 @@ const document = {
         tags: ["Discovery"]
       }
     },
+    "/api/v1/offerings/{slug}": {
+      get: {
+        description:
+          "The Offering a Listing Card opens. Public and unauthenticated. It reads the Discovery projection, so it answers only while final Offering Public Eligibility is Eligible — an Offering that stopped being eligible after its card was drawn is absent rather than refused, and a retired Offering, a Restricted Business and an address that never existed are indistinguishable from outside. Opening records no occurrence and begins no Compare, Decision Chat, Affiliate Handoff or Direct Contact.",
+        operationId: "publicOffering",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ListingCard" }
+              }
+            },
+            description: "The exact selected Offering identity"
+          },
+          "404": errorResponse(
+            "No publicly eligible Offering matches that address"
+          )
+        },
+        tags: ["Offering"]
+      }
+    },
     "/api/v1/health/live": { get: healthOperation("getLiveness") },
     "/api/v1/health/ready": {
       get: healthOperation(
