@@ -364,7 +364,10 @@ model DecisionChatTurn {
   askedAt        DateTime     @default(now()) @map("asked_at") @db.Timestamptz(6)
   decisionFlow   DecisionFlow @relation(fields: [decisionFlowId], references: [id], onDelete: Cascade)
 
-  @@unique([decisionFlowId, position])
+  /// The migration names this constraint for what it means rather than by
+  /// Prisma's default, so the datamodel says which name it expects. Without the
+  /// map the drift gate sees a rename on every run.
+  @@unique([decisionFlowId, position], map: "decision_chat_turn_unique_position")
   @@map("decision_chat_turn")
 }
 
