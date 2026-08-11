@@ -263,7 +263,6 @@ model Business {
   moderationState BusinessModerationState?
   selectedInSessions UserSession[]
   moderationCases ModerationCase[]
-  correctionRequests CorrectionRequest[]
 
   @@map("business")
 }
