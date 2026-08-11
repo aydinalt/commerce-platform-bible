@@ -674,6 +674,43 @@ export const userAccessSchema = z
 
 export type UserAccess = z.infer<typeof userAccessSchema>;
 
+/**
+ * One Affiliate Destination and what is still owed on it
+ * (`US-PLT-F07-001` AC-8 to AC-12).
+ *
+ * `category` is derived on every read from the destination's own status and
+ * validation result. It is not stored and cannot be set: a workload category
+ * is a way of looking at a destination, not a state it can be in, so nothing
+ * can leave a stale one behind after the results it describes have moved.
+ *
+ * `null` means nothing is owed — a destination that has been Enabled or
+ * Disabled has had its decision taken.
+ */
+export const destinationWorkloadItemSchema = z
+  .object({
+    category: z
+      .enum([
+        "NEEDS_VALIDATION",
+        "BUSINESS_CORRECTION_NEEDED",
+        "READY_TO_ENABLE"
+      ])
+      .nullable(),
+    destination: affiliateDestinationSchema,
+    /// The Business that would have to act on a `BUSINESS_CORRECTION_NEEDED`
+    /// item. Named so an Admin can reach it, not so anything is done to it.
+    businessId: z.string().uuid()
+  })
+  .strict();
+
+export const destinationWorkloadSchema = z
+  .object({ items: z.array(destinationWorkloadItemSchema) })
+  .strict();
+
+export type DestinationWorkloadItem = z.infer<
+  typeof destinationWorkloadItemSchema
+>;
+export type DestinationWorkload = z.infer<typeof destinationWorkloadSchema>;
+
 const MODERATION_ACTION_VALUES = [
   "REQUEST_CORRECTION",
   "HIDE_OFFERING",

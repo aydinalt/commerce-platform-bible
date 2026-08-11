@@ -80,6 +80,36 @@ export class PgAffiliateRepository implements OnModuleDestroy {
     return result.rows[0] ?? null;
   }
 
+  /**
+   * Every Affiliate Destination with its derived workload category
+   * (`US-PLT-F07-001` AC-8 to AC-12).
+   *
+   * The category is composed in TypeScript rather than in SQL. It could have
+   * been a `CASE` expression, and then there would be two places that decide
+   * what "Ready to Enable" means — the one PRD-0006 §9 describes and the one
+   * that ships. Reading the two authoritative results and asking the domain
+   * keeps it to one.
+   *
+   * Ordering puts the oldest first: work that has waited longest is the work
+   * most likely to have been forgotten.
+   */
+  async listWorkload(): Promise<
+    { businessId: string; destination: AffiliateDestinationRecord }[]
+  > {
+    const result = await this.pool.query<
+      AffiliateDestinationRecord & { businessId: string }
+    >(
+      `select ${DESTINATION_COLUMNS}, o.business_id as "businessId"
+       from affiliate_destination d
+       join offering o on o.id = d.offering_id
+       order by d.created_at, d.id`
+    );
+    return result.rows.map(({ businessId, ...destination }) => ({
+      businessId,
+      destination
+    }));
+  }
+
   async findOwned(
     businessId: string,
     offeringId: string

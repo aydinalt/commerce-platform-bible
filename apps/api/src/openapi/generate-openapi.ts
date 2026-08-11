@@ -1557,6 +1557,37 @@ const document = {
         ],
         type: "object"
       },
+      DestinationWorkloadItem: {
+        additionalProperties: false,
+        description:
+          "One Affiliate Destination and what is still owed on it. `category` is derived on every read and stored nowhere; `null` means nothing is owed.",
+        properties: {
+          businessId: { format: "uuid", type: "string" },
+          category: {
+            enum: [
+              "NEEDS_VALIDATION",
+              "BUSINESS_CORRECTION_NEEDED",
+              "READY_TO_ENABLE",
+              null
+            ],
+            type: ["string", "null"]
+          },
+          destination: { $ref: "#/components/schemas/AffiliateDestination" }
+        },
+        required: ["businessId", "category", "destination"],
+        type: "object"
+      },
+      DestinationWorkload: {
+        additionalProperties: false,
+        properties: {
+          items: {
+            items: { $ref: "#/components/schemas/DestinationWorkloadItem" },
+            type: "array"
+          }
+        },
+        required: ["items"],
+        type: "object"
+      },
       UserAccess: {
         additionalProperties: false,
         description:
@@ -3464,6 +3495,26 @@ const document = {
           "403": errorResponse("Admin context required"),
           "404": errorResponse("No Offering matches that identifier"),
           "409": errorResponse("Only a Hidden Offering may be restored")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/affiliate-destinations/workload": {
+      get: {
+        description:
+          "Every Affiliate Destination with the work still owed on it. `Needs Validation` is Draft plus Not Validated, `Business Correction Needed` is Draft plus Invalid, and `Ready to Enable` is Draft plus Valid; an Enabled or Disabled destination has had its decision taken and produces no pending item. The category is derived on every read from those two authoritative results and is stored nowhere — it is a way of looking at a destination, not a state it can be in, so it creates no new Affiliate Destination state and cannot go stale. Oldest first.",
+        operationId: "listDestinationWorkload",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DestinationWorkload" }
+              }
+            },
+            description: "The Affiliate Destination workload"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
         },
         tags: ["Platform"]
       }

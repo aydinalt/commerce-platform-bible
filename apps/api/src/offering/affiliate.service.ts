@@ -8,6 +8,7 @@ import {
 import type {
   AuthorAffiliateDestination,
   DestinationManagementEntry,
+  DestinationWorkloadItem,
   ReviewAffiliateDestination,
   ValidateAffiliateDestination
 } from "@commerce/contracts";
@@ -17,6 +18,7 @@ import {
   AffiliateDestinationReadOnlyError,
   AffiliateNotEnabledError,
   AffiliateNotValidatedError,
+  destinationWorkload,
   permittedDestinationEntries,
   type AffiliateDestinationRecord
 } from "@commerce/offering";
@@ -283,6 +285,28 @@ export class AffiliateService {
         });
       throw error;
     }
+  }
+
+  /**
+   * The Admin's workload (`US-PLT-F07-001` AC-8 to AC-12).
+   *
+   * A read and only a read: the category is derived here on every request and
+   * written nowhere, so it cannot go stale and cannot be mistaken for a state
+   * a destination is in. AC-3 and AC-13 hold for the same reason — nothing in
+   * this path writes a destination status, a validation result, a Handoff
+   * Eligibility, an Offering lifecycle, a Business moderation status or an
+   * account status.
+   */
+  async workload(): Promise<DestinationWorkloadItem[]> {
+    const rows = await this.destinations.listWorkload();
+    return rows.map((row) => ({
+      businessId: row.businessId,
+      category: destinationWorkload({
+        status: row.destination.status,
+        validationResult: row.destination.validationResult
+      }),
+      destination: row.destination
+    }));
   }
 
   /// The Admin's read, which owns no Business and needs none.

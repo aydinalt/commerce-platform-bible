@@ -19,6 +19,7 @@ import {
   authorAffiliateDestinationSchema,
   createDraftOfferingSchema,
   destinationManagementEntrySchema,
+  destinationWorkloadSchema,
   editOfferingSchema,
   offeringContentSchema,
   offeringInventorySchema,
@@ -403,6 +404,21 @@ export class AdminOfferingController {
       targetId: offeringId
     });
     return offeringContentSchema.parse(moderated);
+  }
+
+  /**
+   * The Affiliate Destination workload (`US-PLT-F07-001` AC-8 to AC-12).
+   *
+   * On the collection rather than under one Offering, because the question it
+   * answers is "what is waiting for me" rather than "what about this one". A
+   * `GET`, so looking at the queue moves nothing in it.
+   */
+  @Get("affiliate-destinations/workload")
+  async workload(@Req() request: FastifyRequest) {
+    await this.principals.resolveAdmin(request);
+    return destinationWorkloadSchema.parse({
+      items: await this.destinations.workload()
+    });
   }
 
   @Get(":offeringId/affiliate-destination")

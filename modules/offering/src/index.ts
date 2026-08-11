@@ -380,6 +380,60 @@ export class OfferingModerationUnavailableError extends Error {
   }
 }
 
+/**
+ * The four Affiliate Destination Administration actions
+ * (`US-PLT-F07-001` AC-1, AC-2).
+ *
+ * A separate family from General Moderation, and named here so the separation
+ * is a thing the code states rather than a convention two lists happen to
+ * respect. Nothing in `MODERATION_ACTIONS` appears here and nothing here
+ * appears there; a test checks the intersection is empty, because the way that
+ * boundary ends is somebody adding one verb to the wrong list.
+ */
+export const DESTINATION_ADMINISTRATION_ACTIONS = [
+  "REVIEW",
+  "VALIDATE",
+  "ENABLE",
+  "DISABLE"
+] as const;
+
+export type DestinationAdministrationAction =
+  (typeof DESTINATION_ADMINISTRATION_ACTIONS)[number];
+
+/**
+ * What an Admin still has to do about a destination (AC-8 to AC-11).
+ *
+ * Three categories, and `null` for a destination that needs nothing. They are
+ * *derived* from the two authoritative results rather than stored, which is
+ * AC-12: a workload category is a way of looking at a destination, not a state
+ * it can be in. Nothing writes one, so nothing can leave one behind after the
+ * results it describes have moved.
+ *
+ * Every category has `Draft` on one side, because a destination that has been
+ * Enabled or Disabled has had its decision taken. `Disabled` is deliberately
+ * not pending work: somebody decided it, and re-deciding is a new act rather
+ * than an unfinished one.
+ */
+export const DESTINATION_WORKLOAD_CATEGORIES = [
+  "NEEDS_VALIDATION",
+  "BUSINESS_CORRECTION_NEEDED",
+  "READY_TO_ENABLE"
+] as const;
+
+export type DestinationWorkloadCategory =
+  (typeof DESTINATION_WORKLOAD_CATEGORIES)[number];
+
+export function destinationWorkload(input: {
+  status: AffiliateDestinationStatus;
+  validationResult: AffiliateValidationResult;
+}): DestinationWorkloadCategory | null {
+  // AC-11. An Enabled or Disabled destination is not waiting for anybody.
+  if (input.status !== "DRAFT") return null;
+  if (input.validationResult === "NOT_VALIDATED") return "NEEDS_VALIDATION";
+  if (input.validationResult === "INVALID") return "BUSINESS_CORRECTION_NEEDED";
+  return "READY_TO_ENABLE";
+}
+
 export const offeringModule = { name: "offering" } as const;
 
 /**
