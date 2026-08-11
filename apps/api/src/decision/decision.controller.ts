@@ -10,19 +10,24 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  Req,
   UnprocessableEntityException
 } from "@nestjs/common";
+import type { FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import {
   addComparisonMemberSchema,
   affiliateHandoffSchema,
+  contactChannelsSchema,
+  directContactRevealSchema,
   askDecisionSchema,
   decisionChatSchema,
   comparisonSetSchema,
   comparisonViewSchema,
   decisionContextSchema,
   enterDecisionSchema,
+  revealContactSchema,
   selectOfferingSchema
 } from "@commerce/contracts";
 import {
@@ -31,12 +36,15 @@ import {
   ComparisonSetNotFoundError,
   DecisionContextInvalidError,
   DecisionFlowNotFoundError,
+  DirectContactUnavailableError,
   HandoffUnavailableError,
   SelectionNotInContextError
 } from "@commerce/decision";
 
 import { PgComparisonRepository } from "../persistence/pg-comparison.repository.js";
 import { PgDecisionRepository } from "../persistence/pg-decision.repository.js";
+import { OriginValidator } from "../security/origin.guard.js";
+import { PrincipalResolver } from "../security/principal-resolver.js";
 
 import { ChatService } from "./chat.service.js";
 
@@ -201,7 +209,11 @@ export class DecisionController {
  */
 @Controller("decision/flows")
 export class DecisionFlowController {
-  constructor(private readonly decisions: PgDecisionRepository) {}
+  constructor(
+    private readonly decisions: PgDecisionRepository,
+    private readonly origins: OriginValidator,
+    private readonly principals: PrincipalResolver
+  ) {}
 
   /**
    * Entering Decision (AC-1 to AC-3).
@@ -300,10 +312,100 @@ export class DecisionFlowController {
     );
   }
 
+  /**
+   * Which Direct Contact channels exist (`US-DEC-F06-001` AC-5, AC-6).
+   *
+   * Public, and deliberately so: knowing that a telephone number exists is not
+   * being told it, and the choice AC-5 requires has to be offerable before
+   * anything is revealed. `revealable` is what a Guest is missing.
+   */
+  @Get(":decisionFlowId/direct-contact")
+  async channels(
+    @Param("decisionFlowId", uuidParam("decisionFlowId"))
+    decisionFlowId: string,
+    @Req() request: FastifyRequest
+  ) {
+    const authenticated = await this.isEnabledUser(request);
+    return contactChannelsSchema.parse(
+      await this.attempt(() =>
+        this.decisions.contactChannels(decisionFlowId, authenticated)
+      )
+    );
+  }
+
+  /**
+   * Revealing one channel (AC-1, AC-9, AC-10).
+   *
+   * The only route in Decision that requires authentication. A Guest is
+   * refused with `401` and told nothing else — AC-7 sends them to UX-0008 with
+   * the interrupted action, and the action is exactly this request, which they
+   * may repeat unchanged after signing in. AC-8's re-evaluation is then not a
+   * separate mechanism: every gate is checked again because the request is
+   * simply made again.
+   */
+  @Post(":decisionFlowId/direct-contact")
+  @HttpCode(200)
+  async reveal(
+    @Param("decisionFlowId", uuidParam("decisionFlowId"))
+    decisionFlowId: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    const principal = await this.principals.resolve(request);
+
+    const parsed = revealContactSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Choose one available contact channel"
+      });
+
+    return directContactRevealSchema.parse(
+      await this.attempt(() =>
+        this.decisions.revealContact({
+          channel: parsed.data.channel,
+          decisionFlowId,
+          userId: principal.userId
+        })
+      )
+    );
+  }
+
+  /**
+   * Whether this request carries an Enabled authenticated User.
+   *
+   * Asked by trying to resolve one, because that is the only answer that means
+   * anything: `PrincipalResolver` refuses a Suspended holder, who keeps the
+   * Guest baseline and must be treated as a Guest here (AC-1, AC-6).
+   */
+  private async isEnabledUser(request: FastifyRequest): Promise<boolean> {
+    try {
+      await this.principals.resolve(request);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private async attempt<T>(work: () => Promise<T>): Promise<T> {
     try {
       return await work();
     } catch (error) {
+      // AC-11. Nothing revealed, nothing recorded — so Completion sees none.
+      if (error instanceof DirectContactUnavailableError)
+        throw new UnprocessableEntityException({
+          code: error.reason,
+          message:
+            error.reason === "NOTHING_SELECTED"
+              ? "Select an Offering before continuing"
+              : error.reason === "OFFERING_INELIGIBLE"
+                ? "That Offering is no longer publicly eligible"
+                : error.reason === "NO_CHANNEL"
+                  ? "This Business supplied no contact channel"
+                  : "Choose one of the available contact channels"
+        });
       // AC-4 and AC-9. An unavailable handoff is refused and nothing is
       // recorded, so `US-DEC-F07-001` sees no Completion for it.
       if (error instanceof HandoffUnavailableError)

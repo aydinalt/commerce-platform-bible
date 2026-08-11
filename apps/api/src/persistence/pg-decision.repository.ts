@@ -3,6 +3,8 @@ import { Pool, type PoolClient } from "pg";
 
 import type {
   AffiliateHandoffResponse,
+  ContactChannelsResponse,
+  DirectContactRevealResponse,
   ComparisonSetResponse,
   DecisionContextResponse,
   ListingCardResponse
@@ -11,6 +13,7 @@ import {
   contextRepairs,
   DECISION_FLOW_TTL_MINUTES,
   DecisionFlowNotFoundError,
+  DirectContactUnavailableError,
   HandoffUnavailableError,
   openableInCompare,
   SelectionNotInContextError
@@ -201,6 +204,129 @@ export class PgDecisionRepository implements OnModuleDestroy {
         offeringId: selectedOfferingId
       };
     });
+  }
+
+  /**
+   * Which channels the owning Business supplied (`US-DEC-F06-001` AC-3, AC-5).
+   *
+   * The names of the channels, never their values. A Guest may be told that a
+   * telephone number exists — AC-6 protects the number, not its existence —
+   * and the choice AC-5 requires has to be offerable before anything is
+   * revealed.
+   */
+  async contactChannels(
+    decisionFlowId: string,
+    authenticated: boolean
+  ): Promise<ContactChannelsResponse> {
+    return this.transact(async (client) => {
+      const supplied = await this.channels(client, decisionFlowId);
+      return {
+        available: supplied.channels,
+        // AC-1 and AC-2 in one answer: an Enabled authenticated User, and an
+        // Offering that is still eligible now.
+        revealable: authenticated && supplied.channels.length > 0
+      };
+    });
+  }
+
+  /**
+   * Revealing one explicitly chosen channel (AC-9, AC-10).
+   *
+   * Every gate is passed before anything is read out, and the read and the
+   * record share a transaction — so AC-10 and AC-11 are one statement: either a
+   * reveal happened and it is recorded, or nothing was revealed and nothing is.
+   *
+   * The recorded row holds the channel and not the value. Writing the number
+   * down would create a second place the Business's protected information could
+   * leak from, and no criterion asks for it.
+   */
+  async revealContact(input: {
+    channel: DirectContactRevealResponse["channel"];
+    decisionFlowId: string;
+    userId: string;
+  }): Promise<DirectContactRevealResponse> {
+    return this.transact(async (client) => {
+      const supplied = await this.channels(client, input.decisionFlowId);
+      const value = supplied.values[input.channel];
+      // AC-5. A channel this Business did not supply is refused rather than
+      // substituted with one it did.
+      if (value === null || value === undefined)
+        throw new DirectContactUnavailableError("CHANNEL_NOT_AVAILABLE");
+
+      const recorded = await client.query<{ revealedAt: Date }>(
+        `insert into direct_contact_reveal
+           (decision_flow_id, offering_id, user_id, channel)
+         values ($1, $2, $3, $4::"DirectContactChannel")
+         returning revealed_at as "revealedAt"`,
+        [input.decisionFlowId, supplied.offeringId, input.userId, input.channel]
+      );
+      const revealedAt = recorded.rows[0]?.revealedAt;
+      if (!revealedAt) throw new Error("REVEAL_NOT_RECORDED");
+
+      return {
+        channel: input.channel,
+        offeringId: supplied.offeringId,
+        revealedAt: revealedAt.toISOString(),
+        value
+      };
+    });
+  }
+
+  /**
+   * The Selected Offering's owning Business and its supplied channels.
+   *
+   * Reads through the Discovery projection, so AC-2 is the same question the
+   * rest of the system asks: an Offering that stopped being eligible is not
+   * there, and Direct Contact stops with it.
+   */
+  private async channels(
+    client: PoolClient,
+    decisionFlowId: string
+  ): Promise<{
+    channels: DirectContactRevealResponse["channel"][];
+    offeringId: string;
+    values: Record<string, string | null>;
+  }> {
+    const flow = await client.query<{ selectedOfferingId: string | null }>(
+      `select selected_offering_id as "selectedOfferingId"
+       from decision_flow where id = $1`,
+      [decisionFlowId]
+    );
+    const selectedOfferingId = flow.rows[0]?.selectedOfferingId;
+    if (selectedOfferingId === undefined) throw new DecisionFlowNotFoundError();
+    if (selectedOfferingId === null)
+      throw new DirectContactUnavailableError("NOTHING_SELECTED");
+
+    const found = await client.query<{
+      contactEmail: string | null;
+      contactTelephone: string | null;
+      contactUrl: string | null;
+    }>(
+      `select b.contact_telephone as "contactTelephone",
+         b.contact_email as "contactEmail", b.contact_url as "contactUrl"
+       from offering_search_projection p
+       join business b on b.id = p.business_id
+       where p.offering_id = $1`,
+      [selectedOfferingId]
+    );
+    const business = found.rows[0];
+    if (!business)
+      throw new DirectContactUnavailableError("OFFERING_INELIGIBLE");
+
+    const values = {
+      EMAIL: business.contactEmail,
+      TELEPHONE: business.contactTelephone,
+      URL: business.contactUrl
+    };
+    const channels = (
+      ["TELEPHONE", "EMAIL", "URL"] as DirectContactRevealResponse["channel"][]
+    ).filter((channel) => values[channel] !== null);
+    // AC-3. A Business with no supplied channel cannot be contacted by anyone,
+    // which is a state of the Business rather than a failure of the request.
+    if (channels.length === 0)
+      throw new DirectContactUnavailableError("NO_CHANNEL");
+
+    return { channels, offeringId: selectedOfferingId, values };
   }
 
   private async transact<T>(work: (client: PoolClient) => Promise<T>) {

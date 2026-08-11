@@ -161,6 +161,42 @@ export class HandoffUnavailableError extends Error {
   }
 }
 
+/// The complete V1 Direct Contact channel set (`US-DEC-F06-001` AC-4).
+export const DIRECT_CONTACT_CHANNELS = ["TELEPHONE", "EMAIL", "URL"] as const;
+
+export type DirectContactChannel = (typeof DIRECT_CONTACT_CHANNELS)[number];
+
+/**
+ * Why Direct Contact is not available (`US-DEC-F06-001` AC-11).
+ *
+ * Each gate answers for itself, because the remedies differ: a Guest signs in,
+ * a person whose Offering was retired chooses another, and a Business with no
+ * supplied channel cannot be contacted by anyone.
+ */
+export type ContactUnavailability =
+  /// No current eligible Selected Offering.
+  | "NOTHING_SELECTED"
+  /// The Selected Offering is no longer publicly eligible (AC-2).
+  | "OFFERING_INELIGIBLE"
+  /// The owning Business supplied no approved channel (AC-3).
+  | "NO_CHANNEL"
+  /// The channel asked for is not one this Business supplied (AC-5).
+  | "CHANNEL_NOT_AVAILABLE";
+
+/**
+ * Raised when Direct Contact cannot proceed.
+ *
+ * AC-11 makes this the point at which nothing is revealed and nothing is
+ * recorded — so a refusal leaves no Completion for `US-DEC-F07-001` to find,
+ * and no protected information anywhere near the response.
+ */
+export class DirectContactUnavailableError extends Error {
+  constructor(readonly reason: ContactUnavailability) {
+    super(reason);
+    this.name = "DirectContactUnavailableError";
+  }
+}
+
 /// Raised when the flow a request names has expired or never existed.
 export class DecisionFlowNotFoundError extends Error {
   constructor() {

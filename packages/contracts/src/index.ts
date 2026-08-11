@@ -1045,6 +1045,55 @@ export const affiliateHandoffSchema = z
 
 export type AffiliateHandoffResponse = z.infer<typeof affiliateHandoffSchema>;
 
+export const DIRECT_CONTACT_CHANNELS = ["TELEPHONE", "EMAIL", "URL"] as const;
+
+/**
+ * Which approved channels a Business supplied, without revealing any of them
+ * (`US-DEC-F06-001` AC-5, AC-6).
+ *
+ * A Guest and an authenticated User both see this list, because knowing that a
+ * telephone number exists is not the same as being told it. Choosing among
+ * several has to be possible before the reveal, and this is what makes the
+ * choice offerable without pre-empting it.
+ */
+export const contactChannelsSchema = z
+  .object({
+    available: z.array(z.enum(DIRECT_CONTACT_CHANNELS)),
+    /// Whether this person may reveal one now. False for a Guest, and false
+    /// while the Selected Offering is not currently eligible.
+    revealable: z.boolean()
+  })
+  .strict();
+
+/// The person names the channel they want. Required even where only one is
+/// available: AC-9 reveals what was explicitly chosen.
+export const revealContactSchema = z
+  .object({ channel: z.enum(DIRECT_CONTACT_CHANNELS) })
+  .strict();
+
+/**
+ * A successful reveal (`US-DEC-F06-001` AC-10).
+ *
+ * The revealed value, the channel it belongs to, and nothing else. AC-12
+ * forbids a message, an inbox, a conversation, a reply, a delivery, an answer,
+ * a Business-response state and an external-success confirmation — none of
+ * which this shape can express.
+ */
+export const directContactRevealSchema = z
+  .object({
+    channel: z.enum(DIRECT_CONTACT_CHANNELS),
+    offeringId: z.string().uuid(),
+    revealedAt: z.string().datetime(),
+    value: z.string()
+  })
+  .strict();
+
+export type ContactChannelsResponse = z.infer<typeof contactChannelsSchema>;
+export type RevealContact = z.infer<typeof revealContactSchema>;
+export type DirectContactRevealResponse = z.infer<
+  typeof directContactRevealSchema
+>;
+
 /// Selecting is explicit, and so is clearing: `offeringId: null` is the person
 /// saying "none of these yet" rather than an omission.
 export const selectOfferingSchema = z

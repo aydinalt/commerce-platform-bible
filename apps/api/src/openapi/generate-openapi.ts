@@ -692,6 +692,43 @@ const document = {
         ],
         type: "object"
       },
+      ContactChannels: {
+        additionalProperties: false,
+        description:
+          "Which Direct Contact channels the owning Business supplied, without revealing any of them. Public: knowing that a telephone number exists is not being told it, and the choice among several has to be offerable before anything is revealed. `revealable` is false for a Guest and false while the Selected Offering is not currently eligible.",
+        properties: {
+          available: {
+            items: { enum: ["TELEPHONE", "EMAIL", "URL"], type: "string" },
+            type: "array"
+          },
+          revealable: { type: "boolean" }
+        },
+        required: ["available", "revealable"],
+        type: "object"
+      },
+      RevealContact: {
+        additionalProperties: false,
+        description:
+          "The person names the channel they want. Required even where only one is available, because what is revealed is what was explicitly chosen.",
+        properties: {
+          channel: { enum: ["TELEPHONE", "EMAIL", "URL"], type: "string" }
+        },
+        required: ["channel"],
+        type: "object"
+      },
+      DirectContactReveal: {
+        additionalProperties: false,
+        description:
+          "A successful reveal, which Decision Completion consumes. The revealed value, the channel it belongs to, and nothing else — no message, inbox, conversation, reply, delivery, answer, Business-response state or external-success confirmation can be expressed here.",
+        properties: {
+          channel: { enum: ["TELEPHONE", "EMAIL", "URL"], type: "string" },
+          offeringId: { format: "uuid", type: "string" },
+          revealedAt: { format: "date-time", type: "string" },
+          value: { type: "string" }
+        },
+        required: ["channel", "offeringId", "revealedAt", "value"],
+        type: "object"
+      },
       AffiliateHandoff: {
         additionalProperties: false,
         description:
@@ -3003,6 +3040,79 @@ const document = {
           "400": errorResponse("Invalid identifier"),
           "404": errorResponse(
             "That Decision flow has expired or never existed"
+          )
+        },
+        tags: ["Decision"]
+      }
+    },
+    "/api/v1/decision/flows/{decisionFlowId}/direct-contact": {
+      get: {
+        description:
+          "Which Direct Contact channels the Selected Offering's Business supplied. Public, and reveals none of them.",
+        operationId: "directContactChannels",
+        parameters: [
+          {
+            in: "path",
+            name: "decisionFlowId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ContactChannels" }
+              }
+            },
+            description: "The available channels"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "404": errorResponse(
+            "That Decision flow has expired or never existed"
+          ),
+          "422": errorResponse(
+            "Nothing is selected, the Offering is no longer publicly eligible, or the Business supplied no channel"
+          )
+        },
+        tags: ["Decision"]
+      },
+      post: {
+        description:
+          "Reveals one explicitly chosen approved channel and makes it available. The only Decision route that requires authentication: a Guest is refused and told nothing, and may repeat this exact request unchanged after signing in — which is also how every gate comes to be re-evaluated on return. Requires an Enabled authenticated User, a Selected Offering that is still publicly eligible, and a channel the Business actually supplied. A refusal reveals nothing and records nothing, so no Completion follows it. No message, inbox, conversation, reply, delivery, answer, Business-response state or external-success confirmation is created.",
+        operationId: "revealDirectContact",
+        parameters: [
+          {
+            in: "path",
+            name: "decisionFlowId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/RevealContact" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DirectContactReveal" }
+              }
+            },
+            description: "The revealed channel"
+          },
+          "400": errorResponse("Choose one available contact channel"),
+          "401": errorResponse("Authentication required"),
+          "404": errorResponse(
+            "That Decision flow has expired or never existed"
+          ),
+          "422": errorResponse(
+            "Nothing is selected, the Offering is no longer publicly eligible, the Business supplied no channel, or that channel is not available"
           )
         },
         tags: ["Decision"]

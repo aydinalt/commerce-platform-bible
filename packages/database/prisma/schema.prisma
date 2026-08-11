@@ -78,6 +78,15 @@ enum HandoffEligibility {
   INELIGIBLE
 }
 
+/// The complete V1 Direct Contact channel set (`US-DEC-F06-001` AC-4,
+/// PRD-0004). An enum rather than a string: a fourth channel is not a value
+/// this can hold.
+enum DirectContactChannel {
+  TELEPHONE
+  EMAIL
+  URL
+}
+
 enum PublicationStatus {
   PENDING
   ELIGIBLE
@@ -100,6 +109,7 @@ model UserAccount {
   adminAuthorization AdminAuthorization?
   affiliateReviews   AffiliateDestinationReview[] @relation("AffiliateReviewer")
   affiliateValidations AffiliateDestination[]     @relation("AffiliateValidator")
+  directContactReveals DirectContactReveal[]
 
   @@map("user_account")
 }
@@ -395,6 +405,26 @@ model AffiliateHandoff {
   @@map("affiliate_handoff")
 }
 
+/// One successful Direct Contact reveal (`US-DEC-F06-001` AC-10), which
+/// `US-DEC-F07-001` consumes as Direct Contact Completion. It records which
+/// channel was revealed and to whom, and nothing about what followed — there is
+/// no message, inbox, conversation or reply here, and the revealed value itself
+/// is absent because a log of it would be a second place it could leak from.
+model DirectContactReveal {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  decisionFlowId String               @map("decision_flow_id") @db.Uuid
+  offeringId     String               @map("offering_id") @db.Uuid
+  userId         String               @map("user_id") @db.Uuid
+  channel        DirectContactChannel
+  revealedAt     DateTime             @default(now()) @map("revealed_at") @db.Timestamptz(6)
+  offering       Offering             @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+  user           UserAccount          @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([offeringId, revealedAt])
+  @@index([decisionFlowId])
+  @@map("direct_contact_reveal")
+}
+
 /// One occurrence of assistive Chat beginning on a valid Decision Context
 /// (AC-3). One per flow, and it outlives the flow: that Chat began is a fact
 /// about the past, not current-flow state.
@@ -514,6 +544,7 @@ model Offering {
   decisionFlows         DecisionFlow[]
   decisionSelections    DecisionFlow[] @relation("DecisionSelection")
   affiliateHandoffs     AffiliateHandoff[]
+  directContactReveals  DirectContactReveal[]
 
   @@unique([businessId, slug])
   @@index([categoryId, status])
