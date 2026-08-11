@@ -340,6 +340,41 @@ export const affiliateDestinationSchema = z
   .strict();
 
 /**
+ * The Business-side Affiliate Destination management entry (`US-BUS-F06-001`).
+ *
+ * Three parts, and the separation is the Story: the Offering that owns the
+ * association, the destination itself — `null` where none exists, which is
+ * what makes AC-2's create entry expressible — and the entries currently
+ * permitted.
+ *
+ * `destination` carries PRD-0001's `status`, `validationResult` and
+ * `handoffEligibility` unchanged. Business restates none of them and derives
+ * none of them (AC-4, AC-5); it reports what the authoritative owner recorded.
+ *
+ * `entries` can hold only `VIEW`, `CREATE` and `EDIT`. Review, Validate, Enable
+ * and Disable are not absent from a list — they are absent from the type, so a
+ * Business surface could not offer one (AC-9). Nothing here names an affiliate
+ * network, a click, a commission or a settlement either (AC-12).
+ */
+export const destinationManagementEntrySchema = z
+  .object({
+    destination: affiliateDestinationSchema.nullable(),
+    entries: z.array(z.enum(["VIEW", "CREATE", "EDIT"])),
+    offering: z
+      .object({
+        id: z.string().uuid(),
+        status: z.enum(["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"]),
+        title: z.string()
+      })
+      .strict()
+  })
+  .strict();
+
+export type DestinationManagementEntry = z.infer<
+  typeof destinationManagementEntrySchema
+>;
+
+/**
  * `US-OFR-F07-001` AC-2. Review carries a note and nothing else, because it
  * changes nothing else — no status, no validation result, no eligibility.
  */

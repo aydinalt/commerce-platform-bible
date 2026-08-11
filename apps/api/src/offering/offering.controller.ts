@@ -18,6 +18,7 @@ import {
   affiliateDestinationSchema,
   authorAffiliateDestinationSchema,
   createDraftOfferingSchema,
+  destinationManagementEntrySchema,
   editOfferingSchema,
   offeringContentSchema,
   offeringInventorySchema,
@@ -226,6 +227,30 @@ export class AffiliateDestinationController {
     private readonly origins: OriginValidator,
     private readonly principals: PrincipalResolver
   ) {}
+
+  /**
+   * The management entry (`US-BUS-F06-001`).
+   *
+   * Separate from the read below rather than a relaxation of it. That read
+   * answers "what is this Offering's destination", and `US-OFR-F06-001` makes
+   * absence a 404 there. This one answers "what may I do about this Offering's
+   * destination", where absence is not a failure — it is the condition AC-2
+   * offers Create for.
+   */
+  @Get("management")
+  async management(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    return destinationManagementEntrySchema.parse(
+      await this.destinations.managementEntry(
+        businessId,
+        offeringId,
+        await this.principals.resolve(request)
+      )
+    );
+  }
 
   /// AC-6, and AC-7's other half: an Archived destination stays readable.
   @Get()

@@ -56,6 +56,30 @@ export class PgAffiliateRepository implements OnModuleDestroy {
     return result.rows[0]?.status ?? null;
   }
 
+  /**
+   * The owned Offering the destination entry is about (`US-BUS-F06-001` AC-1).
+   *
+   * Ownership is the `where`, not a check afterwards: an Offering belonging to
+   * another Business is not refused, it is simply not found — the same answer
+   * as for an Offering that never existed. `offeringLifecycle` above cannot
+   * serve here, because it deliberately knows nothing about who owns what.
+   */
+  async findOwnedOffering(
+    businessId: string,
+    offeringId: string
+  ): Promise<{ id: string; status: OfferingLifecycle; title: string } | null> {
+    const result = await this.pool.query<{
+      id: string;
+      status: OfferingLifecycle;
+      title: string;
+    }>(
+      `select id, status::text as status, title
+       from offering where id = $1 and business_id = $2`,
+      [offeringId, businessId]
+    );
+    return result.rows[0] ?? null;
+  }
+
   async findOwned(
     businessId: string,
     offeringId: string

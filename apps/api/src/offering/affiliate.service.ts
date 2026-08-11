@@ -7,6 +7,7 @@ import {
 
 import type {
   AuthorAffiliateDestination,
+  DestinationManagementEntry,
   ReviewAffiliateDestination,
   ValidateAffiliateDestination
 } from "@commerce/contracts";
@@ -16,6 +17,7 @@ import {
   AffiliateDestinationReadOnlyError,
   AffiliateNotEnabledError,
   AffiliateNotValidatedError,
+  permittedDestinationEntries,
   type AffiliateDestinationRecord
 } from "@commerce/offering";
 
@@ -48,6 +50,48 @@ export class AffiliateService {
     );
     if (!destination) throw this.absent();
     return destination;
+  }
+
+  /**
+   * The Business-side management entry (`US-BUS-F06-001`).
+   *
+   * One read answers three questions that a surface would otherwise have to
+   * guess at separately: what the Offering is, what its destination currently
+   * says, and what the owner may do about it. The third is composed from the
+   * first two by the same rule the write path enforces, so an offered entry is
+   * one that would be honoured (AC-2, AC-3).
+   *
+   * Everything the destination reports is copied, not computed. AC-4 and AC-5
+   * leave status, validation result and Handoff Eligibility with PRD-0001, and
+   * the surest way to leave a result alone is to have no expression here that
+   * could produce it.
+   */
+  async managementEntry(
+    businessId: string,
+    offeringId: string,
+    principal: Principal
+  ): Promise<DestinationManagementEntry> {
+    await this.authorize(businessId, offeringId, principal, "read");
+    const offering = await this.destinations.findOwnedOffering(
+      businessId,
+      offeringId
+    );
+    // AC-1. No owned Offering, no entry — and no hint that one exists
+    // elsewhere.
+    if (!offering) throw this.absent();
+    const destination = await this.destinations.findOwned(
+      businessId,
+      offeringId
+    );
+    return {
+      destination,
+      entries: permittedDestinationEntries({
+        exists: destination !== null,
+        lifecycle: offering.status,
+        restricted: await this.restricted(businessId, principal.userId)
+      }),
+      offering
+    };
   }
 
   async create(
@@ -125,12 +169,7 @@ export class AffiliateService {
       throw new NotFoundException();
     }
     if (action !== "read") {
-      const editable = await this.commerce.canAuthorOfferings(
-        businessId,
-        principal.userId,
-        "EDIT_PUBLISHED"
-      );
-      const restricted = !editable.allowed && editable.reason === "RESTRICTED";
+      const restricted = await this.restricted(businessId, principal.userId);
       const lifecycle = await this.destinations.offeringLifecycle(offeringId);
       if (restricted && lifecycle !== "DRAFT") {
         await deny("BUSINESS_RESTRICTED");
@@ -141,6 +180,26 @@ export class AffiliateService {
         });
       }
     }
+  }
+
+  /**
+   * Whether the Business is currently Restricted, asked of the one authority
+   * that knows (`US-BUS-F03-001`).
+   *
+   * The question is put as "may this Business edit a Published Offering", and
+   * a `RESTRICTED` refusal is the answer. Reading the moderation status
+   * directly would be a second place that decides what restriction means.
+   */
+  private async restricted(
+    businessId: string,
+    userId: string
+  ): Promise<boolean> {
+    const editable = await this.commerce.canAuthorOfferings(
+      businessId,
+      userId,
+      "EDIT_PUBLISHED"
+    );
+    return !editable.allowed && editable.reason === "RESTRICTED";
   }
 
   private async attempt(

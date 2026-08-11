@@ -1482,6 +1482,38 @@ const document = {
         ],
         type: "object"
       },
+      DestinationManagementEntry: {
+        additionalProperties: false,
+        description:
+          "The Business-side Affiliate Destination management entry. `destination` is null where the Offering has none, which is the condition Create is offered for; where one exists, its status, validation result and Handoff Eligibility are PRD-0001's results reported unchanged. `entries` can hold only VIEW, CREATE and EDIT: Review, Validate, Enable and Disable are Platform administration actions and are not values a Business entry can take. Nothing here names an affiliate network, attribution, commission or settlement.",
+        properties: {
+          destination: {
+            oneOf: [
+              { $ref: "#/components/schemas/AffiliateDestination" },
+              { type: "null" }
+            ]
+          },
+          entries: {
+            items: { enum: ["VIEW", "CREATE", "EDIT"], type: "string" },
+            type: "array"
+          },
+          offering: {
+            additionalProperties: false,
+            properties: {
+              id: { format: "uuid", type: "string" },
+              status: {
+                enum: ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"],
+                type: "string"
+              },
+              title: { type: "string" }
+            },
+            required: ["id", "status", "title"],
+            type: "object"
+          }
+        },
+        required: ["destination", "entries", "offering"],
+        type: "object"
+      },
       ReviewAffiliateDestination: {
         additionalProperties: false,
         description:
@@ -2844,6 +2876,44 @@ const document = {
         tags: ["Offering"]
       }
     },
+    "/api/v1/businesses/{businessId}/offerings/{offeringId}/affiliate-destination/management":
+      {
+        get: {
+          description:
+            "The Business-side Affiliate Destination management entry for one owned Offering: the destination if there is one, `null` if there is not, and the entries currently permitted. Reports PRD-0001's status, validation result and Handoff Eligibility without recalculating any of them. Review, Validate, Enable and Disable are not entries a Business may hold.",
+          operationId: "getDestinationManagementEntry",
+          parameters: [
+            {
+              in: "path",
+              name: "businessId",
+              required: true,
+              schema: { format: "uuid", type: "string" }
+            },
+            {
+              in: "path",
+              name: "offeringId",
+              required: true,
+              schema: { format: "uuid", type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              content: {
+                "application/json": {
+                  schema: {
+                    $ref: "#/components/schemas/DestinationManagementEntry"
+                  }
+                }
+              },
+              description: "Affiliate Destination management entry"
+            },
+            "400": errorResponse("Invalid identifier"),
+            "401": errorResponse("Authentication required"),
+            "404": errorResponse("No owned Offering matches")
+          },
+          tags: ["Offering"]
+        }
+      },
     "/api/v1/businesses/{businessId}/offerings/{offeringId}/affiliate-destination":
       {
         get: {

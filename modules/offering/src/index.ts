@@ -391,3 +391,61 @@ export function permittedOfferingEntries(input: {
     return input.lifecycle === "DRAFT" || !input.restricted;
   });
 }
+
+/**
+ * Whether an Offering is currently the owner's to change (`US-BUS-F06-001`
+ * AC-1, AC-6).
+ *
+ * Two conditions, from two authorities: PRD-0001 §9.2 says which lifecycle
+ * states admit authoring at all, and PRD-0005 says a Restricted Business keeps
+ * only its Drafts. Naming the conjunction once means the destination entry and
+ * the destination write path cannot drift apart on what "owner-manageable"
+ * means, because there is only one sentence saying it.
+ */
+export function destinationManageable(input: {
+  lifecycle: OfferingLifecycle;
+  restricted: boolean;
+}): boolean {
+  if (!DESTINATION_AUTHORABLE.includes(input.lifecycle)) return false;
+  return !input.restricted || input.lifecycle === "DRAFT";
+}
+
+/**
+ * The Affiliate Destination entries a Business Dashboard may offer
+ * (`US-BUS-F06-001` AC-2, AC-3).
+ *
+ * Three values, and the four that are missing are AC-9: there is no `REVIEW`,
+ * `VALIDATE`, `ENABLE` or `DISABLE`, because those are PRD-0006 administration
+ * actions and a Business owner has none of them. They are not omitted from a
+ * check — they are not values this type can hold, so no Business surface can
+ * offer one even by mistake.
+ */
+export const DESTINATION_ENTRIES = ["VIEW", "CREATE", "EDIT"] as const;
+
+export type DestinationEntry = (typeof DESTINATION_ENTRIES)[number];
+
+/**
+ * Which destination entries are permitted for one Offering right now.
+ *
+ * `VIEW` is offered only where a destination exists, because looking at
+ * something absent is not an entry; and it is offered wherever one exists,
+ * including for an Archived Offering, which is AC-10 — view-only rather than
+ * invisible.
+ *
+ * `CREATE` and `EDIT` are the same permission asked of two different worlds:
+ * zero-or-one association means exactly one of them can ever apply (AC-5,
+ * PRD-0001 §9.1). Neither is offered where the Offering is not the owner's to
+ * change, which is AC-1 and, for a Restricted Business, AC-6.
+ */
+export function permittedDestinationEntries(input: {
+  exists: boolean;
+  lifecycle: OfferingLifecycle;
+  restricted: boolean;
+}): DestinationEntry[] {
+  const manageable = destinationManageable(input);
+  return DESTINATION_ENTRIES.filter((entry) => {
+    if (entry === "VIEW") return input.exists;
+    if (entry === "CREATE") return manageable && !input.exists;
+    return manageable && input.exists;
+  });
+}
