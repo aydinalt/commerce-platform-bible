@@ -1466,27 +1466,19 @@
             "additionalProperties": false,
             "properties": {
               "ARCHIVED": {
-                "items": {
-                  "$ref": "#/components/schemas/OfferingInventoryEntry"
-                },
+                "items": { "$ref": "#/components/schemas/ManagedOffering" },
                 "type": "array"
               },
               "DRAFT": {
-                "items": {
-                  "$ref": "#/components/schemas/OfferingInventoryEntry"
-                },
+                "items": { "$ref": "#/components/schemas/ManagedOffering" },
                 "type": "array"
               },
               "HIDDEN": {
-                "items": {
-                  "$ref": "#/components/schemas/OfferingInventoryEntry"
-                },
+                "items": { "$ref": "#/components/schemas/ManagedOffering" },
                 "type": "array"
               },
               "PUBLISHED": {
-                "items": {
-                  "$ref": "#/components/schemas/OfferingInventoryEntry"
-                },
+                "items": { "$ref": "#/components/schemas/ManagedOffering" },
                 "type": "array"
               }
             },
@@ -1495,6 +1487,51 @@
           }
         },
         "required": ["business", "inventory"],
+        "type": "object"
+      },
+      "ManagedOffering": {
+        "additionalProperties": false,
+        "description": "One owned Offering with the entries currently permitted for it, composed from PRD-0001's lifecycle rules and PRD-0005's Business access rules — the same two authorities the write path consults, so an offered entry is one that would be honoured. There is no RESTORE, because a Business owner may not return a Hidden Offering to Published, and no DELETE, because V1 has no permanent Offering deletion. `status` and `publicEligibility` stay separate: lifecycle Published is not the same as being publicly eligible.",
+        "properties": {
+          "categoryId": { "format": "uuid", "type": "string" },
+          "createdAt": { "format": "date-time", "type": "string" },
+          "entries": {
+            "items": {
+              "enum": [
+                "VIEW",
+                "EDIT",
+                "PUBLISH",
+                "RETIRE",
+                "MANAGE_AFFILIATE_DESTINATION"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": { "format": "uuid", "type": "string" },
+          "publicEligibility": {
+            "enum": ["PENDING", "ELIGIBLE", "INELIGIBLE", "WITHDRAWN"],
+            "type": "string"
+          },
+          "slug": { "type": "string" },
+          "status": {
+            "enum": ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"],
+            "type": "string"
+          },
+          "title": { "type": "string" },
+          "updatedAt": { "format": "date-time", "type": "string" }
+        },
+        "required": [
+          "categoryId",
+          "createdAt",
+          "entries",
+          "id",
+          "publicEligibility",
+          "slug",
+          "status",
+          "title",
+          "updatedAt"
+        ],
         "type": "object"
       },
       "OfferingInventoryEntry": {

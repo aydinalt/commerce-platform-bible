@@ -327,3 +327,67 @@ export class AttributeValueMismatchError extends Error {
 }
 
 export const offeringModule = { name: "offering" } as const;
+
+/**
+ * The Offering actions a Dashboard may offer (`US-BUS-F05-001` AC-2).
+ *
+ * A closed list, and what is missing from it is the point: there is no
+ * `RESTORE`, because AC-10 forbids a Business owner returning a Hidden
+ * Offering to Published, and no `DELETE`, because AC-12 gives V1 no permanent
+ * deletion at all. Neither can be offered by mistake, because neither is a
+ * value this type can hold.
+ */
+export const OFFERING_ENTRIES = [
+  "VIEW",
+  "EDIT",
+  "PUBLISH",
+  "RETIRE",
+  "MANAGE_AFFILIATE_DESTINATION"
+] as const;
+
+export type OfferingEntry = (typeof OFFERING_ENTRIES)[number];
+
+/**
+ * Which entries are permitted for one Offering right now.
+ *
+ * Two authorities meet here and both must agree (AC-2): PRD-0001 decides what
+ * a lifecycle state allows, and PRD-0005 decides what a Restricted Business
+ * may still do. Composing them once means a surface cannot offer an action
+ * that the write path would then refuse — the offer and the refusal are the
+ * same rule read twice.
+ *
+ * `publicationMinimumSatisfied` is consumed rather than re-derived: AC-7 says
+ * the feedback must not redefine the Universal Publication Minimum, and the
+ * safest way not to redefine something is to be told the answer.
+ */
+export function permittedOfferingEntries(input: {
+  lifecycle: OfferingLifecycle;
+  publicationMinimumSatisfied: boolean;
+  restricted: boolean;
+}): OfferingEntry[] {
+  return OFFERING_ENTRIES.filter((entry) => {
+    // AC-11. An Archived Offering is history: readable, and nothing else.
+    if (input.lifecycle === "ARCHIVED") return entry === "VIEW";
+
+    if (entry === "VIEW") return true;
+    // AC-5 and AC-14. A Draft is the owner's to edit whatever the Business's
+    // standing; a Published or Hidden Offering is not, while Restricted.
+    if (entry === "EDIT")
+      return input.lifecycle === "DRAFT" || !input.restricted;
+    // AC-6. Three conditions, and the minimum is one of them — a Publish entry
+    // that led straight to a refusal would be an offer the platform could not
+    // keep.
+    if (entry === "PUBLISH")
+      return (
+        input.lifecycle === "DRAFT" &&
+        !input.restricted &&
+        input.publicationMinimumSatisfied
+      );
+    // AC-8 and AC-14. Retirement is permitted from every non-terminal state,
+    // and restriction does not withdraw it.
+    if (entry === "RETIRE") return true;
+    // `US-BUS-F03-001` AC-9: authoring a destination survives restriction only
+    // where the Offering itself is still owner-manageable.
+    return input.lifecycle === "DRAFT" || !input.restricted;
+  });
+}

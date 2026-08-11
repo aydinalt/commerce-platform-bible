@@ -11,6 +11,7 @@ import type {
   UpdateBusinessInformation
 } from "@commerce/contracts";
 import type { Principal } from "@commerce/identity";
+import { permittedOfferingEntries } from "@commerce/offering";
 import {
   BusinessSlugConflictError,
   type BusinessInformation,
@@ -85,13 +86,31 @@ export class BusinessService {
     if (!business) throw new NotFoundException();
 
     const inventory = await this.audit.listInventory(businessId);
+    const publishable = await this.audit.publishableDrafts(businessId);
+    const restricted = business.moderationStatus === "RESTRICTED";
+
+    /**
+     * `US-BUS-F05-001` AC-2. The entries offered are the ones the write path
+     * would allow, composed from the same two authorities: PRD-0001's lifecycle
+     * rules and PRD-0005's Business access rules. Offering an action that would
+     * then be refused is the failure this composition exists to prevent.
+     */
+    const managed = inventory.map((entry) => ({
+      ...entry,
+      entries: permittedOfferingEntries({
+        lifecycle: entry.status,
+        publicationMinimumSatisfied: publishable.has(entry.id),
+        restricted
+      })
+    }));
+
     return {
       business,
       inventory: {
-        ARCHIVED: inventory.filter((entry) => entry.status === "ARCHIVED"),
-        DRAFT: inventory.filter((entry) => entry.status === "DRAFT"),
-        HIDDEN: inventory.filter((entry) => entry.status === "HIDDEN"),
-        PUBLISHED: inventory.filter((entry) => entry.status === "PUBLISHED")
+        ARCHIVED: managed.filter((entry) => entry.status === "ARCHIVED"),
+        DRAFT: managed.filter((entry) => entry.status === "DRAFT"),
+        HIDDEN: managed.filter((entry) => entry.status === "HIDDEN"),
+        PUBLISHED: managed.filter((entry) => entry.status === "PUBLISHED")
       }
     };
   }

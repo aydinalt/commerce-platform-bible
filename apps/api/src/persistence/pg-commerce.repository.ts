@@ -12,6 +12,7 @@ import { CategoryNotAssignableError } from "@commerce/catalog";
 import type { IdentityReader } from "@commerce/identity";
 import {
   composePublicEligibility,
+  evaluatePublicationMinimum,
   OfferingSlugConflictError,
   type DraftOfferingRecord,
   type DraftOfferingRepository
@@ -231,6 +232,59 @@ export class PgCommerceRepository
    * lists every lifecycle state: management visibility is not public exposure,
    * so an Ineligible Offering is exactly what its owner most needs to see.
    */
+  /**
+   * Which of this Business's Drafts satisfy the Universal Publication Minimum.
+   *
+   * Asked once for the whole inventory rather than once per Draft, and asked in
+   * PRD-0001's own terms: the same four conditions `evaluatePublicationMinimum`
+   * takes, read from the database and handed to it. `US-BUS-F05-001` AC-7
+   * forbids the Dashboard from redefining the minimum, and the surest way not
+   * to redefine something is to call the one function that owns it.
+   */
+  async publishableDrafts(businessId: string): Promise<Set<string>> {
+    const rows = await this.pool.query<{
+      businessDisplayName: string;
+      categoryActiveLeaf: boolean;
+      id: string;
+      missingRequiredAttributes: string;
+      title: string;
+    }>(
+      `select o.id, o.title, b.name as "businessDisplayName",
+         (c.active and not exists (
+            select 1 from category child
+            where child.parent_id = c.id and child.active = true
+          )) as "categoryActiveLeaf",
+         (select count(*) from category_attribute ca
+          join attribute_definition d on d.id = ca.attribute_definition_id
+          where ca.category_id = o.category_id
+            and d.required_for_publication = true
+            and not exists (
+              select 1 from offering_attribute_value v
+              where v.offering_id = o.id
+                and v.attribute_definition_id = d.id
+            )) as "missingRequiredAttributes"
+       from offering o
+       join business b on b.id = o.business_id
+       join category c on c.id = o.category_id
+       where o.business_id = $1 and o.status = 'DRAFT'`,
+      [businessId]
+    );
+
+    return new Set(
+      rows.rows
+        .filter(
+          (row) =>
+            evaluatePublicationMinimum({
+              businessDisplayName: row.businessDisplayName,
+              categoryActiveLeaf: row.categoryActiveLeaf,
+              missingRequiredAttributes: Number(row.missingRequiredAttributes),
+              title: row.title
+            }).satisfied
+        )
+        .map((row) => row.id)
+    );
+  }
+
   async listInventory(businessId: string): Promise<InventoryEntry[]> {
     const result = await this.pool.query<
       Omit<InventoryEntry, "createdAt" | "updatedAt"> & {

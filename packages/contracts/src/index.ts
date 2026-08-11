@@ -428,6 +428,31 @@ export const offeringInventorySchema = z
  * stay identifiable while the owner works: someone whose Business is
  * Restricted should not have to discover it by being refused.
  */
+/**
+ * One Offering as the Dashboard offers it (`US-BUS-F05-001`).
+ *
+ * The inventory entry plus the entries currently permitted for it. There is no
+ * `RESTORE` and no `DELETE` in the enum, because AC-10 forbids the first and
+ * AC-12 forbids the second — a surface cannot offer either by accident.
+ *
+ * `status` and `publicEligibility` stay two separate fields for AC-13: a
+ * lifecycle-Published Offering is not the same thing as a publicly eligible
+ * one, and a single field would lose the difference.
+ */
+export const managedOfferingSchema = offeringInventoryEntrySchema.extend({
+  entries: z.array(
+    z.enum([
+      "VIEW",
+      "EDIT",
+      "PUBLISH",
+      "RETIRE",
+      "MANAGE_AFFILIATE_DESTINATION"
+    ])
+  )
+});
+
+export type ManagedOffering = z.infer<typeof managedOfferingSchema>;
+
 export const businessDashboardSchema = z
   .object({
     business: z
@@ -443,10 +468,10 @@ export const businessDashboardSchema = z
     /// the authoritative states PRD-0001 owns, and redefines neither.
     inventory: z
       .object({
-        ARCHIVED: z.array(offeringInventoryEntrySchema),
-        DRAFT: z.array(offeringInventoryEntrySchema),
-        HIDDEN: z.array(offeringInventoryEntrySchema),
-        PUBLISHED: z.array(offeringInventoryEntrySchema)
+        ARCHIVED: z.array(managedOfferingSchema),
+        DRAFT: z.array(managedOfferingSchema),
+        HIDDEN: z.array(managedOfferingSchema),
+        PUBLISHED: z.array(managedOfferingSchema)
       })
       .strict()
   })
