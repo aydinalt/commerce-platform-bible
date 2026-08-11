@@ -16,9 +16,14 @@ import { z } from "zod";
 import {
   businessDashboardSchema,
   businessInformationSchema,
+  correctionNoticeSchema,
+  correctionNoticesSchema,
   createBusinessSchema,
+  offeringContentSchema,
   ownedBusinessSchema,
   ownedBusinessesSchema,
+  requestCorrectionSchema,
+  saveCorrectionSchema,
   updateBusinessInformationSchema,
   type OwnedBusinesses
 } from "@commerce/contracts";
@@ -26,6 +31,7 @@ import {
 import { OriginValidator } from "../security/origin.guard.js";
 import { PrincipalResolver } from "../security/principal-resolver.js";
 import { BusinessService } from "./business.service.js";
+import { CorrectionService } from "./correction.service.js";
 
 /**
  * Path identifiers reach PostgreSQL `uuid` columns, so they are rejected at the
@@ -45,9 +51,66 @@ const uuidParam = (name: string) =>
 export class BusinessController {
   constructor(
     private readonly businesses: BusinessService,
+    private readonly corrections: CorrectionService,
     private readonly principals: PrincipalResolver,
     private readonly origins: OriginValidator
   ) {}
+
+  /**
+   * The owner's correction notices (`US-BUS-F07-001` AC-3, AC-4).
+   *
+   * A `GET`, and that is the whole of AC-5: reading a notice performs no
+   * write, so no state can move because a notice was looked at. There is no
+   * sibling route for replying, acknowledging or dismissing — AC-6 rules out
+   * Messaging, and the way to rule out a conversation is to leave no verb that
+   * could start one.
+   */
+  @Get(":businessId/correction-notices")
+  async correctionNotices(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Req() request: FastifyRequest
+  ) {
+    return correctionNoticesSchema.parse({
+      notices: await this.corrections.notices(
+        businessId,
+        await this.principals.resolve(request)
+      )
+    });
+  }
+
+  /**
+   * The bounded correction save (§8.3.1).
+   *
+   * Addressed by the correction rather than by the Offering, because the
+   * correction is what confers the permission. There is no way to spell "edit
+   * this Offering under correction authority" without naming the correction
+   * that granted it, so an unrelated Offering has no path here at all (AC-9).
+   */
+  @Put(":businessId/correction-notices/:correctionId/response")
+  async saveCorrection(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Param("correctionId", uuidParam("correctionId")) correctionId: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    const principal = await this.principals.resolve(request);
+    const parsed = saveCorrectionSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Invalid correction response"
+      });
+    return offeringContentSchema.parse(
+      await this.corrections.save(
+        businessId,
+        correctionId,
+        parsed.data,
+        principal
+      )
+    );
+  }
 
   /**
    * Creates a Business for the acting person. Requires no Admin approval
@@ -165,9 +228,40 @@ export class BusinessController {
 export class AdminBusinessController {
   constructor(
     private readonly businesses: BusinessService,
+    private readonly corrections: CorrectionService,
     private readonly principals: PrincipalResolver,
     private readonly origins: OriginValidator
   ) {}
+
+  /**
+   * Request Correction (`US-BUS-F07-001`, PRD-0006 §7.3).
+   *
+   * The one Platform action this Increment needs, so that the Business
+   * response path has something real to answer. It opens or joins an Open case
+   * and changes nothing else — no lifecycle, no moderation status, no exposure
+   * input, no eligibility (AC-5). Re-review and closure are PRD-0006's and are
+   * not here (AC-15).
+   */
+  @Post(":businessId/correction-requests")
+  @HttpCode(201)
+  async requestCorrection(
+    @Param("businessId", uuidParam("businessId")) businessId: string,
+    @Body() body: unknown,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    const principal = await this.principals.resolveAdmin(request);
+    const parsed = requestCorrectionSchema.safeParse(body);
+    if (!parsed.success)
+      throw new BadRequestException({
+        code: "VALIDATION_FAILED",
+        fieldErrors: z.flattenError(parsed.error).fieldErrors,
+        message: "Invalid correction request"
+      });
+    return correctionNoticeSchema.parse(
+      await this.corrections.request(businessId, parsed.data, principal)
+    );
+  }
 
   @Post(":businessId/restriction")
   @HttpCode(200)

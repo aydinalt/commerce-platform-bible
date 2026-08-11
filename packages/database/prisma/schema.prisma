@@ -35,6 +35,32 @@ enum BusinessModerationStatus {
   RESTRICTED
 }
 
+/// A General Moderation Case is Open until PRD-0006 explicitly closes it
+/// (`US-BUS-F07-001` AC-12, AC-15). An owner response never moves it.
+enum ModerationCaseStatus {
+  OPEN
+  CLOSED
+}
+
+/// The four Business-owned Request Correction targets of PRD-0005 §12.1.
+/// `USER_ACCOUNT` is absent, which is AC-2: User Account correction is outside
+/// V1, so it is not a value a notice can take.
+enum CorrectionTarget {
+  BUSINESS_INFORMATION
+  OFFERING_CONTENT
+  AFFILIATE_DESTINATION_CONFIGURATION
+  DIRECT_CONTACT_INFORMATION
+}
+
+/// The parts of Offering content a correction may aim at. Category is absent:
+/// a correction fixes what an Offering says, it does not move the Offering to
+/// another part of the catalogue while its Business is Restricted.
+enum OfferingContentArea {
+  TITLE
+  SUMMARY
+  ATTRIBUTES
+}
+
 /// The four Offering lifecycle states of PRD-0001 §6. `Hidden` is an Admin
 /// removal from circulation that keeps its publication history; `Archived` is
 /// the terminal result of owner retirement.
@@ -110,6 +136,10 @@ model UserAccount {
   affiliateReviews   AffiliateDestinationReview[] @relation("AffiliateReviewer")
   affiliateValidations AffiliateDestination[]     @relation("AffiliateValidator")
   directContactReveals DirectContactReveal[]
+  openedCases          ModerationCase[]           @relation("CaseOpener")
+  closedCases          ModerationCase[]           @relation("CaseCloser")
+  correctionRequests   CorrectionRequest[]        @relation("CorrectionRequester")
+  correctionEdits      CorrectionEdit[]           @relation("CorrectionEditor")
 
   @@map("user_account")
 }
@@ -232,6 +262,8 @@ model Business {
   offerings Offering[]
   moderationState BusinessModerationState?
   selectedInSessions UserSession[]
+  moderationCases ModerationCase[]
+  correctionRequests CorrectionRequest[]
 
   @@map("business")
 }
@@ -244,6 +276,66 @@ model BusinessModerationState {
   business   Business                 @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@map("business_moderation_state")
+}
+
+/// A General Moderation Case (PRD-0006 §7.3). Business responds to it; only
+/// Platform opens, re-reviews and closes it.
+model ModerationCase {
+  id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  businessId String               @map("business_id") @db.Uuid
+  status     ModerationCaseStatus @default(OPEN)
+  openedBy   String               @map("opened_by") @db.Uuid
+  openedAt   DateTime             @default(now()) @map("opened_at") @db.Timestamptz(6)
+  closedBy   String?              @map("closed_by") @db.Uuid
+  closedAt   DateTime?            @map("closed_at") @db.Timestamptz(6)
+  business   Business             @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  opener     UserAccount          @relation("CaseOpener", fields: [openedBy], references: [id], onDelete: Restrict)
+  closer     UserAccount?         @relation("CaseCloser", fields: [closedBy], references: [id], onDelete: Restrict)
+  corrections CorrectionRequest[]
+
+  @@unique([id, businessId], map: "moderation_case_id_business_id_key")
+  @@index([businessId, status])
+  @@map("moderation_case")
+}
+
+/// One recorded Request Correction. The Offering and content area are present
+/// exactly when the target is Offering content, which a CHECK enforces in both
+/// directions.
+model CorrectionRequest {
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseId      String               @map("case_id") @db.Uuid
+  businessId  String               @map("business_id") @db.Uuid
+  target      CorrectionTarget
+  offeringId  String?              @map("offering_id") @db.Uuid
+  contentArea OfferingContentArea? @map("content_area")
+  note        String?              @db.VarChar(1000)
+  requestedBy String               @map("requested_by") @db.Uuid
+  requestedAt DateTime             @default(now()) @map("requested_at") @db.Timestamptz(6)
+  moderationCase ModerationCase    @relation(fields: [caseId, businessId], references: [id, businessId], onDelete: Cascade, map: "correction_request_case_fkey")
+  offering    Offering?            @relation(fields: [offeringId, businessId], references: [id, businessId], onDelete: Restrict, map: "correction_request_offering_fkey")
+  requester   UserAccount          @relation("CorrectionRequester", fields: [requestedBy], references: [id], onDelete: Restrict)
+  edits       CorrectionEdit[]
+
+  @@index([businessId, requestedAt])
+  @@index([caseId])
+  @@map("correction_request")
+}
+
+/// One saved owner response. Its existence is what makes Platform re-review
+/// outstanding (`US-BUS-F07-001` AC-14) — no separate flag to forget.
+model CorrectionEdit {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  correctionRequestId String              @map("correction_request_id") @db.Uuid
+  offeringId          String              @map("offering_id") @db.Uuid
+  contentArea         OfferingContentArea @map("content_area")
+  editedBy            String              @map("edited_by") @db.Uuid
+  editedAt            DateTime            @default(now()) @map("edited_at") @db.Timestamptz(6)
+  request             CorrectionRequest   @relation(fields: [correctionRequestId], references: [id], onDelete: Cascade)
+  offering            Offering            @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+  editor              UserAccount         @relation("CorrectionEditor", fields: [editedBy], references: [id], onDelete: Restrict)
+
+  @@index([correctionRequestId])
+  @@map("correction_edit")
 }
 
 model BusinessOwner {
@@ -545,8 +637,11 @@ model Offering {
   decisionSelections    DecisionFlow[] @relation("DecisionSelection")
   affiliateHandoffs     AffiliateHandoff[]
   directContactReveals  DirectContactReveal[]
+  correctionRequests    CorrectionRequest[]
+  correctionEdits       CorrectionEdit[]
 
   @@unique([businessId, slug])
+  @@unique([id, businessId], map: "offering_id_business_id_key")
   @@index([categoryId, status])
   @@map("offering")
 }

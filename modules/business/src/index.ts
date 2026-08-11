@@ -142,4 +142,96 @@ export function restrictionWithdraws(intent: OwnerIntent): boolean {
   return WITHDRAWN_WHILE_RESTRICTED.includes(intent);
 }
 
+/**
+ * The Business-owned Request Correction targets (`US-BUS-F07-001` AC-1).
+ *
+ * PRD-0005 §12.1 names four, and the fifth thing people will ask for is a
+ * correction against a User Account. AC-2 puts that outside V1, so it is not a
+ * value here and not a value in the database either — a notice against an
+ * account is not refused anywhere, because there is nowhere for it to be
+ * written.
+ */
+export const CORRECTION_TARGETS = [
+  "BUSINESS_INFORMATION",
+  "OFFERING_CONTENT",
+  "AFFILIATE_DESTINATION_CONFIGURATION",
+  "DIRECT_CONTACT_INFORMATION"
+] as const;
+
+export type CorrectionTarget = (typeof CORRECTION_TARGETS)[number];
+
+/**
+ * The parts of Offering content a correction may aim at (AC-9).
+ *
+ * Category is absent. A correction exists to fix what an Offering says, and
+ * moving a Published Offering into a different part of the catalogue while its
+ * Business is Restricted is a different act with different consequences for
+ * Discovery — one PRD-0001's ordinary edit path owns, under the ordinary gate.
+ */
+export const OFFERING_CONTENT_AREAS = [
+  "TITLE",
+  "SUMMARY",
+  "ATTRIBUTES"
+] as const;
+
+export type OfferingContentArea = (typeof OFFERING_CONTENT_AREAS)[number];
+
+/**
+ * The management area a notice opens (AC-4).
+ *
+ * A total mapping rather than a lookup that might miss: every target has
+ * exactly one area, so a notice can always say where to go, and no notice can
+ * point somewhere the target did not name.
+ */
+export const CORRECTION_MANAGEMENT_AREAS = {
+  AFFILIATE_DESTINATION_CONFIGURATION: "AFFILIATE_DESTINATION",
+  BUSINESS_INFORMATION: "BUSINESS_INFORMATION",
+  DIRECT_CONTACT_INFORMATION: "BUSINESS_INFORMATION",
+  OFFERING_CONTENT: "OFFERING_CONTENT"
+} as const satisfies Record<CorrectionTarget, string>;
+
+export type CorrectionManagementArea =
+  (typeof CORRECTION_MANAGEMENT_AREAS)[CorrectionTarget];
+
+/**
+ * Whether the bounded correction-edit path is open right now (AC-8).
+ *
+ * PRD-0005 §8.3.1 writes this as a conjunction of five conditions, and it is
+ * expressed as one here for the same reason: a path that could be entered with
+ * four of them satisfied would be a path around restriction rather than a
+ * narrow exception to it.
+ *
+ * Ownership is not a parameter — it is settled before this is asked, by the
+ * query that found the correction at all. A correction reached through an
+ * ownership join belongs to the acting owner or was never found.
+ */
+export function boundedCorrectionAvailable(input: {
+  caseOpen: boolean;
+  lifecycle: "DRAFT" | "PUBLISHED" | "HIDDEN" | "ARCHIVED";
+  target: CorrectionTarget;
+}): boolean {
+  return (
+    input.caseOpen &&
+    input.target === "OFFERING_CONTENT" &&
+    (input.lifecycle === "PUBLISHED" || input.lifecycle === "HIDDEN")
+  );
+}
+
+/// Raised when a correction save names a content area the notice did not
+/// target (AC-9, AC-10).
+export class CorrectionAreaNotTargetedError extends Error {
+  constructor(readonly area: OfferingContentArea) {
+    super("CORRECTION_AREA_NOT_TARGETED");
+    this.name = "CorrectionAreaNotTargetedError";
+  }
+}
+
+/// Raised when the bounded path is entered without every condition of AC-8.
+export class BoundedCorrectionUnavailableError extends Error {
+  constructor(readonly reason: string) {
+    super("BOUNDED_CORRECTION_UNAVAILABLE");
+    this.name = "BoundedCorrectionUnavailableError";
+  }
+}
+
 export const businessModule = { name: "business" } as const;

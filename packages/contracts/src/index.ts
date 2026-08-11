@@ -514,6 +514,109 @@ export const businessDashboardSchema = z
 
 export type BusinessDashboardResponse = z.infer<typeof businessDashboardSchema>;
 
+const CORRECTION_TARGET_VALUES = [
+  "BUSINESS_INFORMATION",
+  "OFFERING_CONTENT",
+  "AFFILIATE_DESTINATION_CONFIGURATION",
+  "DIRECT_CONTACT_INFORMATION"
+] as const;
+
+/**
+ * One correction notice as its owner sees it (`US-BUS-F07-001` AC-3, AC-4).
+ *
+ * The notice states a target and where to go about it, and nothing else. There
+ * is no body, no thread, no reply field and no participant — AC-6 forbids
+ * Messaging, and the way to forbid a conversation is to publish a shape that
+ * cannot hold one. `note` is the Admin's single recorded reason, which is why
+ * it is one nullable string rather than a list that could grow into a thread.
+ *
+ * `boundedEditAvailable` is stated rather than left to the reader: PRD-0005
+ * §8.3.1 is a conjunction of five conditions, and a surface that re-derived it
+ * would eventually offer an entry the save then refused.
+ */
+export const correctionNoticeSchema = z
+  .object({
+    boundedEditAvailable: z.boolean(),
+    caseId: z.string().uuid(),
+    caseStatus: z.enum(["OPEN", "CLOSED"]),
+    contentArea: z.enum(["TITLE", "SUMMARY", "ATTRIBUTES"]).nullable(),
+    id: z.string().uuid(),
+    /// Where the notice opens. Null where the owner is not currently
+    /// authorized for that area, because AC-4 opens only what is authorized.
+    managementArea: z
+      .enum([
+        "BUSINESS_INFORMATION",
+        "OFFERING_CONTENT",
+        "AFFILIATE_DESTINATION"
+      ])
+      .nullable(),
+    note: z.string().nullable(),
+    offeringId: z.string().uuid().nullable(),
+    reReviewRequired: z.boolean(),
+    requestedAt: z.string().datetime(),
+    target: z.enum(CORRECTION_TARGET_VALUES)
+  })
+  .strict();
+
+export const correctionNoticesSchema = z
+  .object({ notices: z.array(correctionNoticeSchema) })
+  .strict();
+
+/**
+ * What Platform records when it asks for a correction. The Offering and
+ * content area travel together with the target, and the database refuses any
+ * other combination.
+ */
+export const requestCorrectionSchema = z
+  .object({
+    contentArea: z.enum(["TITLE", "SUMMARY", "ATTRIBUTES"]).nullish(),
+    note: z.string().trim().max(1000).nullish(),
+    offeringId: z.string().uuid().nullish(),
+    target: z.enum(CORRECTION_TARGET_VALUES)
+  })
+  .strict();
+
+/**
+ * One bounded correction save (AC-9).
+ *
+ * A discriminated union rather than a partial Offering: each member carries
+ * exactly the one area it names, so a request to change the title while
+ * "also just fixing" the attributes is not a request this contract can carry.
+ * The untargeted edit AC-10 forbids has no field to travel in.
+ */
+export const saveCorrectionSchema = z.discriminatedUnion("area", [
+  z
+    .object({
+      area: z.literal("TITLE"),
+      title: z.string().trim().min(1).max(240)
+    })
+    .strict(),
+  z
+    .object({
+      area: z.literal("SUMMARY"),
+      summary: z
+        .string()
+        .trim()
+        .max(1000)
+        .nullish()
+        .transform((value) =>
+          value === undefined || value === "" ? null : value
+        )
+    })
+    .strict(),
+  z
+    .object({
+      area: z.literal("ATTRIBUTES"),
+      attributes: z.array(offeringAttributeValueSchema).max(200)
+    })
+    .strict()
+]);
+
+export type CorrectionNotice = z.infer<typeof correctionNoticeSchema>;
+export type CorrectionNotices = z.infer<typeof correctionNoticesSchema>;
+export type RequestCorrection = z.infer<typeof requestCorrectionSchema>;
+export type SaveCorrection = z.infer<typeof saveCorrectionSchema>;
+
 export type CreateDraftOffering = z.infer<typeof createDraftOfferingSchema>;
 export type DraftOffering = z.infer<typeof draftOfferingSchema>;
 export type OfferingInventory = z.infer<typeof offeringInventorySchema>;

@@ -6,6 +6,7 @@ import {
   BusinessController
 } from "./business/business.controller.js";
 import { BusinessService } from "./business/business.service.js";
+import { CorrectionService } from "./business/correction.service.js";
 import { AttributeController } from "./catalog/attribute.controller.js";
 import { AttributeService } from "./catalog/attribute.service.js";
 import { CatalogController } from "./catalog/catalog.controller.js";
@@ -35,6 +36,7 @@ import { PublicOfferingController } from "./offering/public-offering.controller.
 import { PgAffiliateRepository } from "./persistence/pg-affiliate.repository.js";
 import { PgAttributeRepository } from "./persistence/pg-attribute.repository.js";
 import { PgBusinessRepository } from "./persistence/pg-business.repository.js";
+import { PgCorrectionRepository } from "./persistence/pg-correction.repository.js";
 import { PgCatalogRepository } from "./persistence/pg-catalog.repository.js";
 import { PgChatRepository } from "./persistence/pg-chat.repository.js";
 import { PgCommerceRepository } from "./persistence/pg-commerce.repository.js";
@@ -89,6 +91,7 @@ function allowedOrigins(): readonly string[] {
     AffiliateService,
     AttributeService,
     BusinessService,
+    CorrectionService,
     CatalogService,
     ChatService,
     IdentityService,
@@ -98,6 +101,7 @@ function allowedOrigins(): readonly string[] {
     PgAffiliateRepository,
     PgAttributeRepository,
     PgBusinessRepository,
+    PgCorrectionRepository,
     PgCatalogRepository,
     PgChatRepository,
     PgCommerceRepository,

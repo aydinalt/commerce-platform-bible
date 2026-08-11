@@ -1447,6 +1447,130 @@
         "required": ["destination", "entries", "offering"],
         "type": "object"
       },
+      "CorrectionNotice": {
+        "additionalProperties": false,
+        "description": "One correction notice as its owner sees it. It states a target, where to go about it, and whether the bounded correction-edit path is open — and nothing else. There is no body, thread, reply field or participant, because Request Correction creates no Messaging. `managementArea` is null where the owner is not currently authorized for that area. `reReviewRequired` is true once an owner response has been saved: the record of the response is the requirement, not a flag anybody sets.",
+        "properties": {
+          "boundedEditAvailable": { "type": "boolean" },
+          "caseId": { "format": "uuid", "type": "string" },
+          "caseStatus": { "enum": ["OPEN", "CLOSED"], "type": "string" },
+          "contentArea": {
+            "enum": ["TITLE", "SUMMARY", "ATTRIBUTES", null],
+            "type": ["string", "null"]
+          },
+          "id": { "format": "uuid", "type": "string" },
+          "managementArea": {
+            "enum": [
+              "BUSINESS_INFORMATION",
+              "OFFERING_CONTENT",
+              "AFFILIATE_DESTINATION",
+              null
+            ],
+            "type": ["string", "null"]
+          },
+          "note": { "type": ["string", "null"] },
+          "offeringId": { "format": "uuid", "type": ["string", "null"] },
+          "reReviewRequired": { "type": "boolean" },
+          "requestedAt": { "format": "date-time", "type": "string" },
+          "target": {
+            "description": "The four Business-owned Request Correction targets. User Account correction is outside V1 and is not a value this can take.",
+            "enum": [
+              "BUSINESS_INFORMATION",
+              "OFFERING_CONTENT",
+              "AFFILIATE_DESTINATION_CONFIGURATION",
+              "DIRECT_CONTACT_INFORMATION"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "boundedEditAvailable",
+          "caseId",
+          "caseStatus",
+          "contentArea",
+          "id",
+          "managementArea",
+          "note",
+          "offeringId",
+          "reReviewRequired",
+          "requestedAt",
+          "target"
+        ],
+        "type": "object"
+      },
+      "CorrectionNotices": {
+        "additionalProperties": false,
+        "properties": {
+          "notices": {
+            "items": { "$ref": "#/components/schemas/CorrectionNotice" },
+            "type": "array"
+          }
+        },
+        "required": ["notices"],
+        "type": "object"
+      },
+      "RequestCorrection": {
+        "additionalProperties": false,
+        "description": "What Platform records when it asks for a correction. An Offering-content request carries the exact Offering and content area; every other target carries neither, and the database refuses any other combination. Category is not a correctable content area: a correction fixes what an Offering says rather than moving it elsewhere in the catalogue.",
+        "properties": {
+          "contentArea": {
+            "enum": ["TITLE", "SUMMARY", "ATTRIBUTES", null],
+            "type": ["string", "null"]
+          },
+          "note": { "maxLength": 1000, "type": ["string", "null"] },
+          "offeringId": { "format": "uuid", "type": ["string", "null"] },
+          "target": {
+            "enum": [
+              "BUSINESS_INFORMATION",
+              "OFFERING_CONTENT",
+              "AFFILIATE_DESTINATION_CONFIGURATION",
+              "DIRECT_CONTACT_INFORMATION"
+            ],
+            "type": "string"
+          }
+        },
+        "required": ["target"],
+        "type": "object"
+      },
+      "SaveCorrection": {
+        "description": "One bounded correction save. Each member carries exactly the one content area it names, so a request to change the targeted area while also changing another is not a request this contract can express — the untargeted edit has no field to travel in.",
+        "discriminator": { "propertyName": "area" },
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "area": { "const": "TITLE", "type": "string" },
+              "title": { "maxLength": 240, "minLength": 1, "type": "string" }
+            },
+            "required": ["area", "title"],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "area": { "const": "SUMMARY", "type": "string" },
+              "summary": { "maxLength": 1000, "type": ["string", "null"] }
+            },
+            "required": ["area"],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "area": { "const": "ATTRIBUTES", "type": "string" },
+              "attributes": {
+                "items": {
+                  "$ref": "#/components/schemas/OfferingAttributeValueInput"
+                },
+                "maxItems": 200,
+                "type": "array"
+              }
+            },
+            "required": ["area", "attributes"],
+            "type": "object"
+          }
+        ]
+      },
       "ReviewAffiliateDestination": {
         "additionalProperties": false,
         "description": "Review carries a note and nothing else, because it changes nothing else.",
@@ -4806,6 +4930,207 @@
               }
             },
             "description": "No owned Business matches that identifier"
+          }
+        },
+        "tags": ["Business"]
+      }
+    },
+    "/api/v1/businesses/{businessId}/correction-notices": {
+      "get": {
+        "description": "The owner's correction notices. Each identifies the exact approved target area and, where the owner is currently authorized for it, the management area it opens. Reading a notice changes nothing: no lifecycle, moderation, access, exposure, eligibility, validation or case state. There is no reply, acknowledgement or dismissal route, because Request Correction creates no Messaging.",
+        "operationId": "listCorrectionNotices",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CorrectionNotices" }
+              }
+            },
+            "description": "Correction notices"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid identifier"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No owned Business matches that identifier"
+          }
+        },
+        "tags": ["Business"]
+      }
+    },
+    "/api/v1/businesses/{businessId}/correction-notices/{correctionId}/response": {
+      "put": {
+        "description": "The bounded correction-edit path. Available only for an Open case targeting Offering content on a Published or Hidden Offering the acting User owns, and limited to the exact Offering and the exact targeted content area. The saved result must keep the Universal Publication Minimum satisfied. It grants no Offering creation, no Draft publication, no unrelated or untargeted edit, no lifecycle change, no moderation-status or exposure-input change, no public eligibility and no case closure: the case stays Open and Platform re-review is required.",
+        "operationId": "saveCorrectionResponse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          },
+          {
+            "in": "path",
+            "name": "correctionId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SaveCorrection" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OfferingContent" }
+              }
+            },
+            "description": "The Offering after the bounded correction"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid correction response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The notice did not identify that content area"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Offering-content correction matches"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The bounded path requires an Open case and a Published or Hidden Offering"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The saved correction would leave the Offering below the Universal Publication Minimum"
+          }
+        },
+        "tags": ["Business"]
+      }
+    },
+    "/api/v1/admin/businesses/{businessId}/correction-requests": {
+      "post": {
+        "description": "Records Request Correction against a Business-owned target. Opens a General Moderation Case if none is Open, or joins the Open one. Targets are exactly Business Information, Offering content, Affiliate Destination configuration and Direct Contact information; User Account correction is outside V1 and is not a value this accepts. An Offering-content request carries the exact Offering and content area, and no other target may carry either. Recording it changes no lifecycle, moderation, access, exposure, eligibility, validation or case state, and creates no message, conversation, ticket discussion, reply or inbox. Re-review, approved action, no-action decision and case closure are not offered here.",
+        "operationId": "requestCorrection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": { "format": "uuid", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RequestCorrection" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CorrectionNotice" }
+              }
+            },
+            "description": "The recorded correction notice"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Invalid correction request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "Admin context required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "No Business matches that identifier"
           }
         },
         "tags": ["Business"]

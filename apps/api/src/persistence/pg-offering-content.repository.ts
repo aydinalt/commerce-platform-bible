@@ -1,6 +1,12 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
+import {
+  BoundedCorrectionUnavailableError,
+  boundedCorrectionAvailable,
+  CorrectionAreaNotTargetedError,
+  type OfferingContentArea
+} from "@commerce/business";
 import type { OfferingAttributeValueInput } from "@commerce/contracts";
 import {
   AttributeValueMismatchError,
@@ -238,6 +244,144 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
         throw new OfferingSlugConflictError("");
       // The arity trigger is a backstop rather than the first line of defence,
       // but if it ever fires it must still arrive as a named refusal.
+      if (isCheckViolation(error, SINGLE_SELECT_ARITY_CONSTRAINT))
+        throw new AttributeValueMismatchError("");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * The bounded correction edit (`US-BUS-F07-001` §8.3.1).
+   *
+   * It lives beside `edit` rather than in a correction-specific repository
+   * because it writes Offering content, and Offering content is written in one
+   * place. What makes it bounded is not where it lives but what it does: one
+   * area, one Offering, and the same publication-minimum gate the ordinary edit
+   * applies.
+   *
+   * Every gate is re-read inside the transaction that would perform the change.
+   * A correction whose case closed between the owner opening the notice and
+   * saving it must be refused, and the only way to be sure is to look while
+   * holding the row.
+   *
+   * The absences are the Story. Nothing here writes an Offering status, a
+   * `published_at`, a Business moderation status, an exposure input, an
+   * `offering_publication` row or a Discovery projection — so AC-10 and AC-13
+   * hold because there is no statement that could break them, and the case
+   * stays Open (AC-12) for the same reason.
+   */
+  async saveCorrection(input: {
+    area: OfferingContentArea;
+    attributes: OfferingAttributeValueInput[] | null;
+    businessId: string;
+    correctionRequestId: string;
+    correlationId: string;
+    summary: string | null;
+    title: string | null;
+    userId: string;
+  }): Promise<OfferingContentRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+
+      const targeted = await client.query<{
+        caseStatus: "CLOSED" | "OPEN";
+        contentArea: OfferingContentArea;
+        lifecycle: OfferingLifecycle;
+        offeringId: string;
+      }>(
+        `select r.offering_id as "offeringId",
+           r.content_area::text as "contentArea",
+           c.status::text as "caseStatus",
+           o.status::text as lifecycle
+         from correction_request r
+         join moderation_case c on c.id = r.case_id
+         join offering o on o.id = r.offering_id
+         where r.id = $1 and r.business_id = $2
+           and r.target = 'OFFERING_CONTENT'
+         for update of o`,
+        [input.correctionRequestId, input.businessId]
+      );
+      const target = targeted.rows[0];
+      if (!target) {
+        await client.query("rollback");
+        return null;
+      }
+
+      // AC-8. The conjunction, asked once, of the authority that owns it.
+      if (
+        !boundedCorrectionAvailable({
+          caseOpen: target.caseStatus === "OPEN",
+          lifecycle: target.lifecycle,
+          target: "OFFERING_CONTENT"
+        })
+      )
+        throw new BoundedCorrectionUnavailableError(
+          target.caseStatus === "OPEN"
+            ? "OFFERING_NOT_TARGETABLE"
+            : "CASE_CLOSED"
+        );
+
+      // AC-9. The area the owner sent must be the area the notice named.
+      if (target.contentArea !== input.area)
+        throw new CorrectionAreaNotTargetedError(input.area);
+
+      if (input.area === "TITLE")
+        await client.query(`update offering set title = $2 where id = $1`, [
+          target.offeringId,
+          input.title
+        ]);
+      else if (input.area === "SUMMARY")
+        await client.query(`update offering set summary = $2 where id = $1`, [
+          target.offeringId,
+          input.summary
+        ]);
+      else
+        await this.replaceAttributes(
+          client,
+          target.offeringId,
+          input.attributes ?? []
+        );
+
+      // AC-11. Unconditional, because the bounded path only ever reaches a
+      // Published or Hidden Offering — one that is already publicly promised.
+      await this.assertPublicationMinimum(client, target.offeringId);
+
+      // AC-14. The record of the response *is* the re-review requirement. The
+      // trigger on this table re-checks the Open case and the exact target, so
+      // even a future caller that skipped the checks above cannot write one.
+      await client.query(
+        `insert into correction_edit
+           (correction_request_id, offering_id, content_area, edited_by)
+         values ($1,$2,$3::"OfferingContentArea",$4)`,
+        [input.correctionRequestId, target.offeringId, input.area, input.userId]
+      );
+
+      await client.query(
+        `insert into audit_record
+          (actor_user_id, effective_business_id, action, target_type, target_id,
+           result, correlation_id, safe_metadata)
+         values ($1,$2,'business.correction.save','Offering',$3,'ALLOWED',$4,$5)`,
+        [
+          input.userId,
+          input.businessId,
+          target.offeringId,
+          input.correlationId,
+          JSON.stringify({ area: input.area })
+        ]
+      );
+
+      const saved = await this.read(
+        client,
+        input.businessId,
+        target.offeringId
+      );
+      await client.query("commit");
+      return saved;
+    } catch (error) {
+      await client.query("rollback");
       if (isCheckViolation(error, SINGLE_SELECT_ARITY_CONSTRAINT))
         throw new AttributeValueMismatchError("");
       throw error;
