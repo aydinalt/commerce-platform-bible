@@ -25,7 +25,19 @@ export const DISCOVERY_ENTRY_MAX_AGE_SECONDS = 300;
 /// would themselves be the URL state UX-0002 defers.
 export const DISCOVERY_ROUTE = "/discovery";
 
-export interface SearchEntry {
+/**
+ * The server-issued path a person is already following.
+ *
+ * `US-DSC-F03-001` AC-8 allows exactly one Discovery Start per Browse path, so
+ * every selection after the first has to say which path it belongs to.
+ * Forgetting it would not lose data — it would silently record a second person
+ * beginning to look.
+ */
+export interface PathContinuation {
+  readonly pathId?: string;
+}
+
+export interface SearchEntry extends PathContinuation {
   readonly kind: "SEARCH";
   readonly query: string;
 }
@@ -45,12 +57,49 @@ export interface SearchEntryState {
 
 export const NO_SEARCH_ENTRY: SearchEntryState = { refused: false, typed: "" };
 
-export interface BrowseEntry {
+export interface BrowseEntry extends PathContinuation {
   readonly categoryId: string;
   readonly kind: "BROWSE";
 }
 
 export type DiscoveryEntry = BrowseEntry | SearchEntry;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+
+/**
+ * The carrier is a cookie, so it is worth remembering that a person can edit
+ * it. Nothing here trusts it: an entry that does not read back as one of the
+ * two shapes is discarded rather than repaired, and the criteria it carries
+ * are re-validated by the API on every read anyway.
+ */
+export function readDiscoveryEntry(
+  raw: string | undefined
+): DiscoveryEntry | null {
+  if (!raw) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+
+  const value = parsed as Record<string, unknown>;
+  const pathId =
+    typeof value.pathId === "string" && UUID.test(value.pathId)
+      ? { pathId: value.pathId }
+      : {};
+
+  if (value.kind === "SEARCH") {
+    const { entry } = readSearchEntry(value.query);
+    return entry ? { ...entry, ...pathId } : null;
+  }
+  if (value.kind === "BROWSE") {
+    const entry = readBrowseEntry(value.categoryId);
+    return entry ? { ...entry, ...pathId } : null;
+  }
+  return null;
+}
 
 /**
  * UX-0001 §7.3 permits leading and trailing whitespace to be ignored for
@@ -80,9 +129,5 @@ export function readSearchEntry(raw: unknown): {
  */
 export function readBrowseEntry(raw: unknown): BrowseEntry | null {
   const categoryId = typeof raw === "string" ? raw.trim() : "";
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(
-    categoryId
-  )
-    ? { categoryId, kind: "BROWSE" }
-    : null;
+  return UUID.test(categoryId) ? { categoryId, kind: "BROWSE" } : null;
 }

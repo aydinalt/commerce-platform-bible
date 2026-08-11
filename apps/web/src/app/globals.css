@@ -104,3 +104,56 @@ nav button {
   outline: 2px solid #162033;
   outline-offset: 2px;
 }
+
+main:has(.listing-cards),
+main:has(.category-choices) {
+  align-items: start;
+  place-items: start center;
+}
+
+.listing-cards,
+.category-choices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.listing-cards {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.listing-card {
+  background: #fff;
+  border: 1px solid #dfe4ec;
+  border-radius: 0.75rem;
+  padding: 1rem 1.15rem;
+}
+
+.listing-card h3 {
+  font-size: 1.05rem;
+  margin: 0 0 0.35rem;
+}
+
+.listing-card a {
+  color: #162033;
+}
+
+.listing-card-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.category-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.zero-results {
+  border: 1px dashed #c3cbd9;
+  border-radius: 0.75rem;
+  padding: 1rem 1.15rem;
+}

@@ -1,4 +1,13 @@
-import { browseRootsSchema, type BrowseRoots } from "@commerce/contracts";
+import {
+  browseRootsSchema,
+  browseViewSchema,
+  searchViewSchema,
+  type BrowseRoots,
+  type BrowseViewResponse,
+  type SearchViewResponse
+} from "@commerce/contracts";
+
+import type { BrowseEntry, SearchEntry } from "./entry";
 
 /**
  * The web application talks to the API over the same published contract every
@@ -35,4 +44,44 @@ export async function fetchBrowseRoots(): Promise<BrowseRoots> {
   });
   if (!response.ok) throw new Error(`BROWSE_ROOTS_${response.status}`);
   return browseRootsSchema.parse(await response.json());
+}
+
+/**
+ * Both Discovery reads are `POST`s, and both are uncached.
+ *
+ * They are `POST`s because the API treats beginning to look as an occurrence
+ * rather than a page — `US-DSC-F02-001` AC-1 and `US-DSC-F03-001` AC-1 each
+ * create a Discovery Start. Caching them would mean either replaying somebody
+ * else's Results or recording a Start that nobody made.
+ */
+async function post(path: string, body: unknown): Promise<unknown> {
+  const response = await fetch(`${apiBaseUrl()}${path}`, {
+    body: JSON.stringify(body),
+    cache: "no-store",
+    headers: { accept: "application/json", "content-type": "application/json" },
+    method: "POST"
+  });
+  if (!response.ok) throw new Error(`DISCOVERY_${response.status}`);
+  return response.json();
+}
+
+export async function fetchSearchView(
+  entry: SearchEntry
+): Promise<SearchViewResponse> {
+  return searchViewSchema.parse(
+    await post("/discovery/search", {
+      query: entry.query,
+      ...(entry.pathId === undefined ? {} : { discoveryPathId: entry.pathId })
+    })
+  );
+}
+
+export async function fetchBrowseView(
+  entry: BrowseEntry
+): Promise<BrowseViewResponse> {
+  return browseViewSchema.parse(
+    await post(`/discovery/browse/categories/${entry.categoryId}`, {
+      ...(entry.pathId === undefined ? {} : { discoveryPathId: entry.pathId })
+    })
+  );
 }

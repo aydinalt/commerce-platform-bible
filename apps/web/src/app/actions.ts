@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -8,6 +10,7 @@ import {
   DISCOVERY_ENTRY_MAX_AGE_SECONDS,
   DISCOVERY_ROUTE,
   readBrowseEntry,
+  readDiscoveryEntry,
   readSearchEntry,
   type DiscoveryEntry,
   type SearchEntryState
@@ -39,6 +42,18 @@ async function handOff(entry: DiscoveryEntry): Promise<never> {
 }
 
 /**
+ * A path identifier is issued here rather than taken from the API's answer,
+ * because a page render cannot write a cookie. Issuing it at the moment of the
+ * action is also the more honest place: the path begins when the person acts,
+ * and the API is told which path its Start belongs to rather than inventing
+ * one per request.
+ */
+async function currentPathId(): Promise<string | undefined> {
+  const jar = await cookies();
+  return readDiscoveryEntry(jar.get(DISCOVERY_ENTRY_COOKIE)?.value)?.pathId;
+}
+
+/**
  * AC-2 and AC-5. A query that is only whitespace does not start Search; the
  * person keeps what they typed and Home claims nothing.
  */
@@ -49,7 +64,7 @@ export async function beginSearch(
   const { entry, typed } = readSearchEntry(form.get("query"));
   if (!entry) return { refused: true, typed };
   // Never returns: the hand-off ends in a redirect.
-  return handOff(entry);
+  return handOff({ ...entry, pathId: randomUUID() });
 }
 
 /**
@@ -59,5 +74,19 @@ export async function beginSearch(
 export async function beginBrowse(form: FormData): Promise<void> {
   const entry = readBrowseEntry(form.get("categoryId"));
   if (!entry) return;
-  await handOff(entry);
+  await handOff({ ...entry, pathId: randomUUID() });
+}
+
+/**
+ * Moving through the hierarchy once Browse has begun.
+ *
+ * The difference from `beginBrowse` is the whole of `US-DSC-F03-001` AC-8: the
+ * path identifier is kept, so a descendant selection finds the Discovery Start
+ * already recorded and adds nothing. A fresh identifier here would quietly
+ * count one person as several.
+ */
+export async function selectCategory(form: FormData): Promise<void> {
+  const entry = readBrowseEntry(form.get("categoryId"));
+  if (!entry) return;
+  await handOff({ ...entry, pathId: (await currentPathId()) ?? randomUUID() });
 }
