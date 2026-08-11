@@ -112,7 +112,7 @@ export type ModerationTargetType = (typeof MODERATION_TARGET_TYPES)[number];
  * wrong kind of thing is not a rare mistake to guard against — it is a
  * category error, so the mapping is total and stated once.
  */
-const ACTION_TARGET: Record<ModerationAction, ModerationTargetType> = {
+export const ACTION_TARGET: Record<ModerationAction, ModerationTargetType> = {
   HIDE_OFFERING: "OFFERING",
   REINSTATE_USER: "USER_ACCOUNT",
   REQUEST_CORRECTION: "BUSINESS",
@@ -134,6 +134,8 @@ const ACTION_TARGET: Record<ModerationAction, ModerationTargetType> = {
  */
 export const IMPLEMENTED_MODERATION_ACTIONS: readonly ModerationAction[] = [
   "REQUEST_CORRECTION",
+  "HIDE_OFFERING",
+  "RESTORE_OFFERING",
   "RESTRICT_BUSINESS",
   "RESTORE_BUSINESS"
 ];
@@ -152,6 +154,7 @@ export const IMPLEMENTED_MODERATION_ACTIONS: readonly ModerationAction[] = [
  */
 export function availableModerationActions(input: {
   caseOpen: boolean;
+  lifecycle?: "ARCHIVED" | "DRAFT" | "HIDDEN" | "PUBLISHED";
   restricted?: boolean;
   suspended?: boolean;
   targetType: ModerationTargetType;
@@ -160,6 +163,11 @@ export function availableModerationActions(input: {
   return MODERATION_ACTIONS.filter((action) => {
     if (ACTION_TARGET[action] !== input.targetType) return false;
     if (!IMPLEMENTED_MODERATION_ACTIONS.includes(action)) return false;
+    // `US-PLT-F03-001` AC-1 and AC-3. Hide leaves Published, Restore leaves
+    // Hidden, and a Draft or Archived Offering is somewhere neither action
+    // was ever going.
+    if (action === "HIDE_OFFERING") return input.lifecycle === "PUBLISHED";
+    if (action === "RESTORE_OFFERING") return input.lifecycle === "HIDDEN";
     if (action === "RESTRICT_BUSINESS") return input.restricted !== true;
     if (action === "RESTORE_BUSINESS") return input.restricted === true;
     if (action === "SUSPEND_USER") return input.suspended !== true;

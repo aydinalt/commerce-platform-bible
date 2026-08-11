@@ -353,16 +353,22 @@ suite("Increment I7 General Moderation case management", () => {
   });
 
   it("offers nothing that has no path yet", async () => {
-    const owner = await business();
-    const offeringId = await publishedOffering(owner);
+    const account = await signUp();
 
-    const opened = await openCase({ offeringId, targetType: "OFFERING" });
+    const opened = await openCase({
+      targetType: "USER_ACCOUNT",
+      userId: account.userId
+    });
 
-    // AC-5. Hide and Restore Offering are members of the set and belong to
-    // `US-PLT-F03-001`. Offering one now would be an offer the platform could
+    // AC-5. Suspend and Reinstate User are members of the set and belong to
+    // `US-PLT-F05-001`. Offering one now would be an offer the platform could
     // not keep, so the set does not shrink and the offer does not grow.
+    //
+    // This test named the Offering actions until `US-PLT-F03-001` built them,
+    // which is the behaviour working: the case began offering Hide the moment
+    // there was a Hide to offer, without this file or the set changing.
     expect(opened.body.availableActions).toEqual([]);
-    expect(MODERATION_ACTIONS).toContain("HIDE_OFFERING");
+    expect(MODERATION_ACTIONS).toContain("SUSPEND_USER");
   });
 
   it("keeps the case Open after Request Correction", async () => {

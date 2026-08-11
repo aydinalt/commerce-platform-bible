@@ -326,6 +326,60 @@ export class AttributeValueMismatchError extends Error {
   }
 }
 
+/**
+ * The two Offering moderation transitions, and only those
+ * (`US-PLT-F03-001` AC-1 to AC-4).
+ *
+ * Written as a map from action to the lifecycle it may start from, so the
+ * availability question and the application question are answered by the same
+ * sentence. Hide leaves Published; Restore leaves Hidden. There is no third
+ * entry.
+ *
+ * AC-6 is what the map does not contain. There is no Archive, no restoring an
+ * Archived Offering, no returning Hidden to Draft and no publishing a Draft on
+ * a Business's behalf. Those are not refused by a check — they are not actions
+ * this type can name, so no Admin surface can offer one and no path can reach
+ * one.
+ */
+export const OFFERING_MODERATION_SOURCE = {
+  HIDE_OFFERING: "PUBLISHED",
+  RESTORE_OFFERING: "HIDDEN"
+} as const satisfies Record<string, OfferingLifecycle>;
+
+export type OfferingModerationAction = keyof typeof OFFERING_MODERATION_SOURCE;
+
+/// What each action produces. PRD-0001 owns both results; this restates the
+/// pair only so the two halves of one transition cannot drift apart.
+export const OFFERING_MODERATION_RESULT = {
+  HIDE_OFFERING: "HIDDEN",
+  RESTORE_OFFERING: "PUBLISHED"
+} as const satisfies Record<OfferingModerationAction, OfferingLifecycle>;
+
+export function offeringModerationPermitted(input: {
+  action: OfferingModerationAction;
+  lifecycle: OfferingLifecycle;
+}): boolean {
+  return OFFERING_MODERATION_SOURCE[input.action] === input.lifecycle;
+}
+
+/**
+ * Raised when Hide or Restore names an Offering whose lifecycle does not admit
+ * it (AC-1, AC-3).
+ *
+ * It carries what was found rather than what was wanted, because the useful
+ * thing to know is the state that refused — an Archived Offering is not a
+ * Published one that failed, it is somewhere the action was never going.
+ */
+export class OfferingModerationUnavailableError extends Error {
+  constructor(
+    readonly action: OfferingModerationAction,
+    readonly lifecycle: OfferingLifecycle
+  ) {
+    super("OFFERING_MODERATION_UNAVAILABLE");
+    this.name = "OfferingModerationUnavailableError";
+  }
+}
+
 export const offeringModule = { name: "offering" } as const;
 
 /**

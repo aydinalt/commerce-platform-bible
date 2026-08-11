@@ -12,9 +12,11 @@ import {
   AttributeValueMismatchError,
   BusinessRestrictedError,
   OfferingAlreadyArchivedError,
+  OfferingModerationUnavailableError,
   OfferingNotEditableError,
   OfferingNotPublishableError,
-  PublicationMinimumError
+  PublicationMinimumError,
+  type OfferingModerationAction
 } from "@commerce/offering";
 
 import {
@@ -277,6 +279,50 @@ export class OfferingContentService {
             "The Offering does not satisfy the Universal Publication Minimum"
         });
       }
+      throw error;
+    }
+  }
+
+  /**
+   * Hide and Restore Offering (`US-PLT-F03-001`).
+   *
+   * No ownership check, because an Admin owns nothing here — the authority is
+   * the entered Admin context, settled before this is reached. What is checked
+   * is the lifecycle, and it is checked inside the transaction that would
+   * perform the transition, so a refusal leaves the Offering exactly where it
+   * was (AC-10).
+   */
+  async moderate(
+    offeringId: string,
+    action: OfferingModerationAction,
+    principal: Principal
+  ): Promise<OfferingContentRecord> {
+    try {
+      const moderated = await this.content.moderate({
+        action,
+        correlationId: principal.correlationId,
+        offeringId,
+        userId: principal.userId
+      });
+      if (!moderated)
+        throw new NotFoundException({
+          code: "OFFERING_NOT_FOUND",
+          message: "No Offering matches that identifier"
+        });
+      return moderated;
+    } catch (error) {
+      if (error instanceof OfferingModerationUnavailableError)
+        // AC-1 and AC-3. A conflict rather than a validation failure: the
+        // request was well formed and the Offering is simply not somewhere
+        // this action can start from.
+        throw new ConflictException({
+          code: "OFFERING_MODERATION_UNAVAILABLE",
+          lifecycle: error.lifecycle,
+          message:
+            action === "HIDE_OFFERING"
+              ? "Only a Published Offering may be hidden"
+              : "Only a Hidden Offering may be restored"
+        });
       throw error;
     }
   }

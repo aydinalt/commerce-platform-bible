@@ -14,12 +14,16 @@ import {
   composePublicEligibility,
   evaluatePublicationMinimum,
   OfferingAlreadyArchivedError,
+  OFFERING_MODERATION_RESULT,
+  offeringModerationPermitted,
+  OfferingModerationUnavailableError,
   OfferingNotEditableError,
   OfferingNotPublishableError,
   OfferingSlugConflictError,
   PublicationMinimumError,
   RETIREABLE_LIFECYCLES,
-  type OfferingLifecycle
+  type OfferingLifecycle,
+  type OfferingModerationAction
 } from "@commerce/offering";
 
 const UNIQUE_VIOLATION = "23505";
@@ -246,6 +250,139 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
       // but if it ever fires it must still arrive as a named refusal.
       if (isCheckViolation(error, SINGLE_SELECT_ARITY_CONSTRAINT))
         throw new AttributeValueMismatchError("");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Hide and Restore Offering (`US-PLT-F03-001`).
+   *
+   * One method for two actions, because they are one shape: check that the
+   * lifecycle admits the action, apply the transition PRD-0001 owns, and let
+   * the composition decide what that means for public eligibility.
+   *
+   * The interesting half is Restore. AC-8 forbids claiming eligibility just
+   * because the lifecycle came back to Published, and the way to not claim it
+   * is to ask: the Business's current exposure input is read here and fed to
+   * `composePublicEligibility`, which may well answer `INELIGIBLE`. A Restored
+   * Offering belonging to a Restricted Business stays out of Discovery, and
+   * nothing in this method could have decided otherwise.
+   *
+   * AC-7 is the absence. Nothing here writes a Business moderation status, an
+   * account status, an Affiliate Destination status, a validation result or a
+   * Handoff Eligibility — and AC-9 is the same kind of absence: no case status
+   * is touched, so a case stays Open until somebody closes it on purpose.
+   */
+  async moderate(input: {
+    action: OfferingModerationAction;
+    correlationId: string;
+    offeringId: string;
+    userId: string;
+  }): Promise<OfferingContentRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+
+      const locked = await client.query<{
+        businessId: string;
+        publicExposure: string;
+        status: OfferingLifecycle;
+      }>(
+        `select o.status::text as status, o.business_id as "businessId",
+           b.public_exposure::text as "publicExposure"
+         from offering o
+         join business b on b.id = o.business_id
+         where o.id = $1 for update of o`,
+        [input.offeringId]
+      );
+      const current = locked.rows[0];
+      if (!current) {
+        await client.query("rollback");
+        return null;
+      }
+
+      // AC-1 and AC-3. The one gate, asked of the authority that owns it.
+      if (
+        !offeringModerationPermitted({
+          action: input.action,
+          lifecycle: current.status
+        })
+      )
+        throw new OfferingModerationUnavailableError(
+          input.action,
+          current.status
+        );
+
+      // AC-2 and AC-4. `published_at` is untouched by either transition: it
+      // records when the Offering first became public, and being hidden and
+      // shown again does not make that a different moment.
+      const lifecycle = OFFERING_MODERATION_RESULT[input.action];
+      await client.query(
+        `update offering set status = $2::"OfferingStatus" where id = $1`,
+        [input.offeringId, lifecycle]
+      );
+
+      // AC-5 and AC-8. A new evaluation appended to the sequence, never an
+      // amendment: the earlier result was true of the state it was recorded
+      // against.
+      const eligibility = composePublicEligibility({
+        businessExposure:
+          current.publicExposure === "ELIGIBLE" ? "ELIGIBLE" : "INELIGIBLE",
+        lifecycle
+      });
+      const version = await client.query<{ version: number }>(
+        `insert into offering_publication
+           (offering_id, status, eligibility_version, reason_code)
+         values ($1, $2::"PublicationStatus",
+           coalesce((select max(eligibility_version) + 1
+                     from offering_publication where offering_id = $1), 1),
+           $3)
+         returning eligibility_version as version`,
+        [input.offeringId, eligibility.status, eligibility.reason]
+      );
+
+      // Discovery follows the composed result rather than the lifecycle, which
+      // is the same rule read from the other side: a Restore that composed
+      // `INELIGIBLE` puts nothing back in front of anybody.
+      if (eligibility.status === "ELIGIBLE")
+        await this.project(
+          client,
+          input.offeringId,
+          version.rows[0]?.version ?? 1
+        );
+      else
+        await client.query(
+          `delete from offering_search_projection where offering_id = $1`,
+          [input.offeringId]
+        );
+
+      await client.query(
+        `insert into audit_record
+          (actor_user_id, effective_business_id, action, target_type, target_id,
+           result, correlation_id)
+         values ($1,$2,$5,'Offering',$3,'ALLOWED',$4)`,
+        [
+          input.userId,
+          current.businessId,
+          input.offeringId,
+          input.correlationId,
+          input.action === "HIDE_OFFERING"
+            ? "offering.moderation.hide"
+            : "offering.moderation.restore"
+        ]
+      );
+
+      const moderated = await this.read(
+        client,
+        current.businessId,
+        input.offeringId
+      );
+      await client.query("commit");
+      return moderated;
+    } catch (error) {
+      await client.query("rollback");
       throw error;
     } finally {
       client.release();

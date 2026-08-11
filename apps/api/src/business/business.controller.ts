@@ -301,10 +301,8 @@ export class AdminBusinessController {
     await this.cases.recordApplied({
       action:
         status === "RESTRICTED" ? "RESTRICT_BUSINESS" : "RESTORE_BUSINESS",
-      businessId,
-      offeringId: null,
       recordedBy: principal.userId,
-      userId: null
+      targetId: businessId
     });
     return moderated;
   }

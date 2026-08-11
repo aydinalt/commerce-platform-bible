@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool } from "pg";
 
 import {
+  ACTION_TARGET,
   availableModerationActions,
   CaseNotResolvedError,
   type ModerationAction,
@@ -31,6 +32,7 @@ interface CaseRow {
   businessId: string | null;
   closedAt: Date | null;
   id: string;
+  lifecycle: "ARCHIVED" | "DRAFT" | "HIDDEN" | "PUBLISHED" | null;
   offeringId: string | null;
   openedAt: Date;
   restricted: boolean | null;
@@ -43,21 +45,23 @@ interface CaseRow {
 /**
  * The case read, with just enough of the target to answer AC-5.
  *
- * Two facts are joined in — whether the Business is Restricted and whether the
- * account is Suspended — and they are the *only* target state that crosses this
- * boundary. They are read to decide which actions to offer, never reported: a
- * case that published its target's product state would be exactly the
- * conflation AC-9 forbids.
+ * Three facts are joined in — whether the Business is Restricted, whether the
+ * account is Suspended, and the Offering's lifecycle — and they are the *only*
+ * target state that crosses this boundary. They are read to decide which
+ * actions to offer, never reported: a case that published its target's product
+ * state would be exactly the conflation AC-9 forbids.
  */
 const CASE_SELECT = `select c.id, c.target_type::text as "targetType",
      c.offering_id as "offeringId", c.business_id as "businessId",
      c.user_id as "userId", c.status::text as status,
      c.opened_at as "openedAt", c.closed_at as "closedAt",
      (coalesce(m.status::text, 'UNRESTRICTED') = 'RESTRICTED') as restricted,
-     (u.status::text = 'SUSPENDED') as suspended
+     (u.status::text = 'SUSPENDED') as suspended,
+     o.status::text as lifecycle
    from moderation_case c
    left join business_moderation_state m on m.business_id = c.business_id
-   left join user_account u on u.id = c.user_id`;
+   left join user_account u on u.id = c.user_id
+   left join offering o on o.id = c.offering_id`;
 
 function isCheckViolation(error: unknown, constraint: string): boolean {
   if (typeof error !== "object" || error === null) return false;
@@ -178,25 +182,30 @@ export class PgModerationRepository implements OnModuleDestroy {
    */
   async recordApplied(input: {
     action: ModerationAction;
-    businessId: string | null;
-    offeringId: string | null;
     recordedBy: string;
-    userId: string | null;
+    targetId: string;
   }): Promise<void> {
+    // Which column identifies the target follows from the action, so a caller
+    // supplies the thing it acted on and nothing else. An Offering case also
+    // names the Business that will answer for it, and matching on both would
+    // have quietly missed every Offering action.
+    const column = {
+      BUSINESS: "business_id",
+      OFFERING: "offering_id",
+      USER_ACCOUNT: "user_id"
+    }[ACTION_TARGET[input.action]];
     await this.pool.query(
       `insert into moderation_resolution (case_id, action, recorded_by)
-       select c.id, $1::"ModerationAction", $5
+       select c.id, $1::"ModerationAction", $3
        from moderation_case c
        where c.status = 'OPEN'
-         and c.offering_id is not distinct from $2
-         and c.business_id is not distinct from $3
-         and c.user_id is not distinct from $4`,
+         and c.target_type = $4::"ModerationTargetType"
+         and c.${column} = $2`,
       [
         input.action,
-        input.offeringId,
-        input.businessId,
-        input.userId,
-        input.recordedBy
+        input.targetId,
+        input.recordedBy,
+        ACTION_TARGET[input.action]
       ]
     );
   }
@@ -346,6 +355,7 @@ export class PgModerationRepository implements OnModuleDestroy {
     return {
       availableActions: availableModerationActions({
         caseOpen: row.status === "OPEN",
+        ...(row.lifecycle === null ? {} : { lifecycle: row.lifecycle }),
         restricted: row.restricted ?? false,
         suspended: row.suspended ?? false,
         targetType: row.targetType

@@ -27,6 +27,7 @@ import {
   type OfferingInventory
 } from "@commerce/contracts";
 
+import { PgModerationRepository } from "../persistence/pg-moderation.repository.js";
 import { OriginValidator } from "../security/origin.guard.js";
 import { PrincipalResolver } from "../security/principal-resolver.js";
 import { AffiliateService } from "./affiliate.service.js";
@@ -333,6 +334,7 @@ export class AffiliateDestinationController {
 @Controller("admin/offerings")
 export class AdminOfferingController {
   constructor(
+    private readonly cases: PgModerationRepository,
     private readonly content: OfferingContentService,
     private readonly destinations: AffiliateService,
     private readonly origins: OriginValidator,
@@ -346,6 +348,61 @@ export class AdminOfferingController {
   ) {
     await this.principals.resolveAdmin(request);
     return offeringContentSchema.parse(await this.content.forAdmin(offeringId));
+  }
+
+  /**
+   * Hide Offering (`US-PLT-F03-001` AC-1, AC-2).
+   *
+   * Its own route, and Restore is another, because they are two approved
+   * actions rather than one status field. An endpoint that accepted a
+   * lifecycle would let a caller write `ARCHIVED` — which is precisely the
+   * transition AC-6 says Platform does not have.
+   */
+  @Post(":offeringId/concealment")
+  @HttpCode(200)
+  async hide(
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    return this.applyModeration(offeringId, "HIDE_OFFERING", request);
+  }
+
+  /// Restore Offering (AC-3, AC-4). It returns the lifecycle to Published and
+  /// promises nothing about public eligibility — PRD-0001 composes that.
+  @Post(":offeringId/restoration")
+  @HttpCode(200)
+  async restore(
+    @Param("offeringId", uuidParam("offeringId")) offeringId: string,
+    @Req() request: FastifyRequest
+  ) {
+    return this.applyModeration(offeringId, "RESTORE_OFFERING", request);
+  }
+
+  /**
+   * The two actions share everything except their name.
+   *
+   * The case note is written after the transition, never before: `US-PLT-F02-001`
+   * AC-7 wants a record of what was *applied*, and a refused Hide has applied
+   * nothing. A failure throws before this line is reached, so no case can cite
+   * an action that did not happen.
+   */
+  private async applyModeration(
+    offeringId: string,
+    action: "HIDE_OFFERING" | "RESTORE_OFFERING",
+    request: FastifyRequest
+  ) {
+    const principal = await this.adminGuard(request);
+    const moderated = await this.content.moderate(
+      offeringId,
+      action,
+      principal
+    );
+    await this.cases.recordApplied({
+      action,
+      recordedBy: principal.userId,
+      targetId: offeringId
+    });
+    return offeringContentSchema.parse(moderated);
   }
 
   @Get(":offeringId/affiliate-destination")

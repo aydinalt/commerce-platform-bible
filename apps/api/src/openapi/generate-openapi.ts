@@ -3379,6 +3379,68 @@ const document = {
         tags: ["Offering"]
       }
     },
+    "/api/v1/admin/offerings/{offeringId}/concealment": {
+      post: {
+        description:
+          "Hide Offering. Available only for a Published Offering, and applies PRD-0001's `Published → Hidden` transition. Public eligibility is re-evaluated rather than asserted, and the Offering leaves Discovery. It changes no Business Moderation Status, User Account access status, Affiliate Destination status, validation result or Handoff Eligibility, and closes no moderation case. There is no Archive, Archived-restore, Hidden-to-Draft or Draft-publication action anywhere: Platform does not have those transitions.",
+        operationId: "hideOffering",
+        parameters: [
+          {
+            in: "path",
+            name: "offeringId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OfferingContent" }
+              }
+            },
+            description: "The Hidden Offering"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No Offering matches that identifier"),
+          "409": errorResponse("Only a Published Offering may be hidden")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offerings/{offeringId}/restoration": {
+      post: {
+        description:
+          "Restore Offering. Available only for a Hidden Offering, and applies PRD-0001's `Hidden → Published` transition. Returning the lifecycle to Published promises nothing about public eligibility: it is composed from every authoritative input, so a restored Offering belonging to a Restricted Business stays publicly ineligible and out of Discovery. Initial publication time is unchanged, and no unrelated state moves.",
+        operationId: "restoreOffering",
+        parameters: [
+          {
+            in: "path",
+            name: "offeringId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OfferingContent" }
+              }
+            },
+            description: "The restored Offering"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No Offering matches that identifier"),
+          "409": errorResponse("Only a Hidden Offering may be restored")
+        },
+        tags: ["Platform"]
+      }
+    },
     "/api/v1/admin/offerings/{offeringId}/affiliate-destination": {
       get: {
         description:
