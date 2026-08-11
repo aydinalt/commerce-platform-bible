@@ -309,4 +309,28 @@ export class DecisionContextInvalidError extends Error {
   }
 }
 
+/**
+ * Decision Completion (`US-DEC-F07-001`).
+ *
+ * Two results, and keeping them two is the whole of AC-4. There is no combined
+ * verdict here and no function that returns one: a person who was handed off
+ * to an affiliate and a person who was shown a telephone number reached
+ * different ends, and PRD-0006 counts them separately.
+ *
+ * Completion is derived rather than declared. AC-3 forbids asking for another
+ * confirmation, so nothing here is written when a person says they are
+ * finished — the evidence F05 and F06 already recorded *is* the Completion,
+ * read back.
+ *
+ * AC-5 fixes its meaning: the platform's V1 Decision-support responsibility
+ * ended. AC-6 lists what it is not, and this shape says none of them — there
+ * is no field for a purchase, a reply, a response or an external result.
+ */
+export const COMPLETION_KINDS = [
+  "AFFILIATE_HANDOFF",
+  "DIRECT_CONTACT"
+] as const;
+
+export type CompletionKind = (typeof COMPLETION_KINDS)[number];
+
 export const decisionModule = { name: "decision" } as const;

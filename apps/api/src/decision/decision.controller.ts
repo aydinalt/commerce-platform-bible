@@ -20,6 +20,7 @@ import {
   addComparisonMemberSchema,
   affiliateHandoffSchema,
   contactChannelsSchema,
+  decisionCompletionsSchema,
   directContactRevealSchema,
   askDecisionSchema,
   decisionChatSchema,
@@ -309,6 +310,27 @@ export class DecisionFlowController {
   ) {
     return affiliateHandoffSchema.parse(
       await this.attempt(() => this.decisions.initiateHandoff(decisionFlowId))
+    );
+  }
+
+  /**
+   * Decision Completion (`US-DEC-F07-001`).
+   *
+   * A read, and only a read. AC-3 forbids asking for another confirmation, so
+   * there is no route that "completes" anything — the initiation F05 recorded
+   * and the reveal F06 recorded are the Completions, reported back separately.
+   *
+   * Public, and the same in every Domain (AC-10): nothing on this path consults
+   * a Category, a Domain or anything that could differ between Mobility, Real
+   * Estate and Technology.
+   */
+  @Get(":decisionFlowId/completion")
+  async completion(
+    @Param("decisionFlowId", uuidParam("decisionFlowId"))
+    decisionFlowId: string
+  ) {
+    return decisionCompletionsSchema.parse(
+      await this.attempt(() => this.decisions.completions(decisionFlowId))
     );
   }
 

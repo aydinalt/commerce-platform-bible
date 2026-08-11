@@ -3,10 +3,11 @@ import { Pool, type PoolClient } from "pg";
 
 import type {
   AffiliateHandoffResponse,
-  ContactChannelsResponse,
-  DirectContactRevealResponse,
   ComparisonSetResponse,
+  ContactChannelsResponse,
+  DecisionCompletionsResponse,
   DecisionContextResponse,
+  DirectContactRevealResponse,
   ListingCardResponse
 } from "@commerce/contracts";
 import {
@@ -202,6 +203,72 @@ export class PgDecisionRepository implements OnModuleDestroy {
         destination,
         initiatedAt: initiatedAt.toISOString(),
         offeringId: selectedOfferingId
+      };
+    });
+  }
+
+  /**
+   * The two Completions, read from the evidence (`US-DEC-F07-001`).
+   *
+   * Nothing is written here. AC-3 forbids asking for another confirmation, so
+   * Completion is what the initiation and the reveal already mean rather than a
+   * second act on top of them — and AC-9 is satisfied the same way: there is no
+   * Completion record to be a personal history of.
+   *
+   * The two are read separately and returned separately (AC-4). A combined
+   * answer would lose which end the person actually reached, and PRD-0006
+   * counts them apart.
+   */
+  async completions(
+    decisionFlowId: string
+  ): Promise<DecisionCompletionsResponse> {
+    return this.transact(async (client) => {
+      const flow = await client.query(
+        `select 1 from decision_flow where id = $1`,
+        [decisionFlowId]
+      );
+      if (flow.rowCount === 0) throw new DecisionFlowNotFoundError();
+
+      // The latest of each, because a person may hand off twice; Completion is
+      // a statement about the journey rather than a tally.
+      const handoff = await client.query<{
+        initiatedAt: Date;
+        offeringId: string;
+      }>(
+        `select initiated_at as "initiatedAt", offering_id as "offeringId"
+         from affiliate_handoff where decision_flow_id = $1
+         order by initiated_at desc limit 1`,
+        [decisionFlowId]
+      );
+      const contact = await client.query<{
+        channel: DirectContactRevealResponse["channel"];
+        offeringId: string;
+        revealedAt: Date;
+      }>(
+        `select channel::text as channel, offering_id as "offeringId",
+           revealed_at as "revealedAt"
+         from direct_contact_reveal where decision_flow_id = $1
+         order by revealed_at desc limit 1`,
+        [decisionFlowId]
+      );
+
+      const initiated = handoff.rows[0];
+      const revealed = contact.rows[0];
+      return {
+        affiliateHandoff: initiated
+          ? {
+              completedAt: initiated.initiatedAt.toISOString(),
+              offeringId: initiated.offeringId
+            }
+          : null,
+        decisionFlowId,
+        directContact: revealed
+          ? {
+              channel: revealed.channel,
+              completedAt: revealed.revealedAt.toISOString(),
+              offeringId: revealed.offeringId
+            }
+          : null
       };
     });
   }

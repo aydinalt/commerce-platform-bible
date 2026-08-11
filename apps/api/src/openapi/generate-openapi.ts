@@ -692,6 +692,48 @@ const document = {
         ],
         type: "object"
       },
+      DecisionCompletions: {
+        additionalProperties: false,
+        description:
+          "The two Decision Completions, kept apart. Each is present only where its own evidence exists — an initiated Affiliate Handoff, or a revealed Direct Contact channel. There is deliberately no combined completed flag: the two are different ends to a journey and are counted separately. Completion means the platform's V1 Decision-support responsibility ended; it claims no purchase, sale, booking, contract, application, call, email, reply, response or external service result, and no field here could express one. Nothing is written to produce it and no further confirmation is asked for.",
+        properties: {
+          affiliateHandoff: {
+            oneOf: [
+              {
+                additionalProperties: false,
+                properties: {
+                  completedAt: { format: "date-time", type: "string" },
+                  offeringId: { format: "uuid", type: "string" }
+                },
+                required: ["completedAt", "offeringId"],
+                type: "object"
+              },
+              { type: "null" }
+            ]
+          },
+          decisionFlowId: { format: "uuid", type: "string" },
+          directContact: {
+            oneOf: [
+              {
+                additionalProperties: false,
+                properties: {
+                  channel: {
+                    enum: ["TELEPHONE", "EMAIL", "URL"],
+                    type: "string"
+                  },
+                  completedAt: { format: "date-time", type: "string" },
+                  offeringId: { format: "uuid", type: "string" }
+                },
+                required: ["channel", "completedAt", "offeringId"],
+                type: "object"
+              },
+              { type: "null" }
+            ]
+          }
+        },
+        required: ["affiliateHandoff", "decisionFlowId", "directContact"],
+        type: "object"
+      },
       ContactChannels: {
         additionalProperties: false,
         description:
@@ -3036,6 +3078,36 @@ const document = {
               }
             },
             description: "The current Decision Context"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "404": errorResponse(
+            "That Decision flow has expired or never existed"
+          )
+        },
+        tags: ["Decision"]
+      }
+    },
+    "/api/v1/decision/flows/{decisionFlowId}/completion": {
+      get: {
+        description:
+          "The Completions this flow reached. A read and only a read: no further confirmation is asked for, and nothing is written to produce one. The same meaning applies in every Domain — nothing on this path consults a Category or a Domain.",
+        operationId: "decisionCompletion",
+        parameters: [
+          {
+            in: "path",
+            name: "decisionFlowId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DecisionCompletions" }
+              }
+            },
+            description: "The Completions reached, each on its own"
           },
           "400": errorResponse("Invalid identifier"),
           "404": errorResponse(

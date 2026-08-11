@@ -1094,6 +1094,43 @@ export type DirectContactRevealResponse = z.infer<
   typeof directContactRevealSchema
 >;
 
+/**
+ * The two Decision Completions, kept apart (`US-DEC-F07-001` AC-4).
+ *
+ * Each is present only where its own evidence exists: an initiated Affiliate
+ * Handoff, or a revealed Direct Contact channel. There is deliberately no
+ * combined `completed` flag — the two are different ends to a journey, and
+ * PRD-0006 counts them separately.
+ *
+ * Nothing here claims a purchase, a sale, a booking, a contract, an
+ * application, a call, an email, a reply or an external service result. AC-6
+ * forbids all of them, and this shape can express none.
+ */
+export const decisionCompletionsSchema = z
+  .object({
+    affiliateHandoff: z
+      .object({
+        completedAt: z.string().datetime(),
+        offeringId: z.string().uuid()
+      })
+      .strict()
+      .nullable(),
+    directContact: z
+      .object({
+        channel: z.enum(DIRECT_CONTACT_CHANNELS),
+        completedAt: z.string().datetime(),
+        offeringId: z.string().uuid()
+      })
+      .strict()
+      .nullable(),
+    decisionFlowId: z.string().uuid()
+  })
+  .strict();
+
+export type DecisionCompletionsResponse = z.infer<
+  typeof decisionCompletionsSchema
+>;
+
 /// Selecting is explicit, and so is clearing: `offeringId: null` is the person
 /// saying "none of these yet" rather than an omission.
 export const selectOfferingSchema = z
