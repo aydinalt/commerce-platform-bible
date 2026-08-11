@@ -1028,6 +1028,23 @@ export const decisionChatSchema = z
 export type AskDecision = z.infer<typeof askDecisionSchema>;
 export type DecisionChatResponse = z.infer<typeof decisionChatSchema>;
 
+/**
+ * A successful Affiliate Handoff initiation (`US-DEC-F05-001` AC-8).
+ *
+ * The response says where the person is being sent and that the platform made
+ * it active. It carries no claim about what happens there — AC-10 forbids an
+ * external-success claim, and there is no field in which one could be made.
+ */
+export const affiliateHandoffSchema = z
+  .object({
+    destination: z.string(),
+    initiatedAt: z.string().datetime(),
+    offeringId: z.string().uuid()
+  })
+  .strict();
+
+export type AffiliateHandoffResponse = z.infer<typeof affiliateHandoffSchema>;
+
 /// Selecting is explicit, and so is clearing: `offeringId: null` is the person
 /// saying "none of these yet" rather than an omission.
 export const selectOfferingSchema = z

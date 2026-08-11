@@ -16,6 +16,7 @@ import { z } from "zod";
 
 import {
   addComparisonMemberSchema,
+  affiliateHandoffSchema,
   askDecisionSchema,
   decisionChatSchema,
   comparisonSetSchema,
@@ -30,6 +31,7 @@ import {
   ComparisonSetNotFoundError,
   DecisionContextInvalidError,
   DecisionFlowNotFoundError,
+  HandoffUnavailableError,
   SelectionNotInContextError
 } from "@commerce/decision";
 
@@ -273,10 +275,47 @@ export class DecisionFlowController {
     );
   }
 
+  /**
+   * Affiliate Handoff (`US-DEC-F05-001`).
+   *
+   * Public and unauthenticated (AC-1, AC-7): no Registration is required
+   * before or after, and none is created. A `POST` because it is an
+   * occurrence, and an explicit one — AC-5 makes the person choose it, so
+   * nothing reaches this route by being followed.
+   *
+   * The response says where the person is being sent. Making that address the
+   * active destination is the browser's part, and the surface that redirects
+   * carries no tracking, no interstitial and no attribution: PRD-0003 leaves
+   * redirect technology, affiliate-network integration and external-success
+   * tracking outside V1.
+   */
+  @Post(":decisionFlowId/affiliate-handoff")
+  @HttpCode(200)
+  async handoff(
+    @Param("decisionFlowId", uuidParam("decisionFlowId"))
+    decisionFlowId: string
+  ) {
+    return affiliateHandoffSchema.parse(
+      await this.attempt(() => this.decisions.initiateHandoff(decisionFlowId))
+    );
+  }
+
   private async attempt<T>(work: () => Promise<T>): Promise<T> {
     try {
       return await work();
     } catch (error) {
+      // AC-4 and AC-9. An unavailable handoff is refused and nothing is
+      // recorded, so `US-DEC-F07-001` sees no Completion for it.
+      if (error instanceof HandoffUnavailableError)
+        throw new UnprocessableEntityException({
+          code: error.reason,
+          message:
+            error.reason === "NOTHING_SELECTED"
+              ? "Select an Offering before continuing"
+              : error.reason === "OFFERING_INELIGIBLE"
+                ? "That Offering is no longer publicly eligible"
+                : "This Offering has no eligible Affiliate Destination"
+        });
       // A flow is current-flow state; it is allowed to disappear, and one that
       // never existed says exactly the same thing.
       if (error instanceof DecisionFlowNotFoundError)

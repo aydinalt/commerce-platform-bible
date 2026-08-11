@@ -692,6 +692,18 @@ const document = {
         ],
         type: "object"
       },
+      AffiliateHandoff: {
+        additionalProperties: false,
+        description:
+          "A successful Affiliate Handoff initiation, which Decision Completion consumes. It says where the person is being sent and that the platform made it active; it carries no claim about what happens there, and has no field in which one could be made.",
+        properties: {
+          destination: { type: "string" },
+          initiatedAt: { format: "date-time", type: "string" },
+          offeringId: { format: "uuid", type: "string" }
+        },
+        required: ["destination", "initiatedAt", "offeringId"],
+        type: "object"
+      },
       SelectOffering: {
         additionalProperties: false,
         description:
@@ -2991,6 +3003,39 @@ const document = {
           "400": errorResponse("Invalid identifier"),
           "404": errorResponse(
             "That Decision flow has expired or never existed"
+          )
+        },
+        tags: ["Decision"]
+      }
+    },
+    "/api/v1/decision/flows/{decisionFlowId}/affiliate-handoff": {
+      post: {
+        description:
+          "Initiates an Affiliate Handoff for the current Selected Offering. Public and unauthenticated: no Registration is required before or after, and none is created. Both eligibility results are read rather than recalculated — final Offering Public Eligibility must be Eligible and the Affiliate Destination's Handoff Eligibility must be Eligible. A refusal records nothing, so no Completion follows it. No Favorites, Messaging, personal Decision history, destination-authoring state or external-success claim is created, and no attribution or tracking is attached.",
+        operationId: "initiateAffiliateHandoff",
+        parameters: [
+          {
+            in: "path",
+            name: "decisionFlowId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AffiliateHandoff" }
+              }
+            },
+            description: "The initiated handoff and its destination"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "404": errorResponse(
+            "That Decision flow has expired or never existed"
+          ),
+          "422": errorResponse(
+            "Nothing is selected, the Offering is no longer publicly eligible, or it has no eligible Affiliate Destination"
           )
         },
         tags: ["Decision"]

@@ -132,6 +132,35 @@ export class SelectionNotInContextError extends Error {
   }
 }
 
+/**
+ * Why an Affiliate Handoff is not available (`US-DEC-F05-001` AC-4).
+ *
+ * Two eligibility results and one selection, each with its own answer. PRD-0001
+ * owns both eligibility results and AC-3 forbids recalculating either, so these
+ * name what was *read* rather than what was worked out.
+ */
+export type HandoffUnavailability =
+  /// No current eligible Selected Offering (`US-DEC-F04-001` AC-7).
+  | "NOTHING_SELECTED"
+  /// The Offering is no longer publicly eligible.
+  | "OFFERING_INELIGIBLE"
+  /// No Affiliate Destination, or its Handoff Eligibility is Ineligible.
+  | "DESTINATION_INELIGIBLE";
+
+/**
+ * Raised when a handoff is asked for and cannot be given.
+ *
+ * AC-9 makes this the point at which nothing is recorded: an unavailable
+ * handoff produces no initiation result, so `US-DEC-F07-001` sees no
+ * Completion for it.
+ */
+export class HandoffUnavailableError extends Error {
+  constructor(readonly reason: HandoffUnavailability) {
+    super(reason);
+    this.name = "HandoffUnavailableError";
+  }
+}
+
 /// Raised when the flow a request names has expired or never existed.
 export class DecisionFlowNotFoundError extends Error {
   constructor() {

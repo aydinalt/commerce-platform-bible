@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import type {
+  AffiliateHandoffResponse,
   ComparisonSetResponse,
   DecisionContextResponse,
   ListingCardResponse
@@ -10,6 +11,7 @@ import {
   contextRepairs,
   DECISION_FLOW_TTL_MINUTES,
   DecisionFlowNotFoundError,
+  HandoffUnavailableError,
   openableInCompare,
   SelectionNotInContextError
 } from "@commerce/decision";
@@ -129,6 +131,76 @@ export class PgDecisionRepository implements OnModuleDestroy {
     const id = created.rows[0]?.id;
     if (!id) throw new Error("DECISION_FLOW_NOT_CREATED");
     return id;
+  }
+
+  /**
+   * Initiating an Affiliate Handoff (`US-DEC-F05-001`).
+   *
+   * Both eligibility results are *read*, never worked out. AC-3 forbids
+   * recalculating either, and PRD-0001 §7.1 says the same thing more strongly:
+   * there is one recorded answer for each, and this query joins them.
+   *
+   * The read and the record share a transaction, so AC-8 and AC-9 are one
+   * statement: either the destination was eligible at this moment and an
+   * initiation exists, or it was not and nothing does.
+   */
+  async initiateHandoff(
+    decisionFlowId: string
+  ): Promise<AffiliateHandoffResponse> {
+    return this.transact(async (client) => {
+      const flow = await client.query<{ selectedOfferingId: string | null }>(
+        `select selected_offering_id as "selectedOfferingId"
+         from decision_flow where id = $1`,
+        [decisionFlowId]
+      );
+      const selectedOfferingId = flow.rows[0]?.selectedOfferingId;
+      if (selectedOfferingId === undefined)
+        throw new DecisionFlowNotFoundError();
+      // AC-5 by way of `US-DEC-F04-001` AC-1: a handoff waits for an explicit
+      // selection, and nothing here can supply one on the person's behalf.
+      if (selectedOfferingId === null)
+        throw new HandoffUnavailableError("NOTHING_SELECTED");
+
+      const eligible = await client.query<{ destination: string }>(
+        `select a.reference as destination
+         from offering_search_projection p
+         join affiliate_destination a on a.offering_id = p.offering_id
+         where p.offering_id = $1
+           and a.handoff_eligibility = 'ELIGIBLE'`,
+        [selectedOfferingId]
+      );
+      const destination = eligible.rows[0]?.destination;
+      if (destination === undefined) {
+        // Two conditions, two answers. Which one failed is worth saying: a
+        // retired Offering and an unvalidated destination are different
+        // problems with different remedies.
+        const stillEligible = await client.query(
+          `select 1 from offering_search_projection where offering_id = $1`,
+          [selectedOfferingId]
+        );
+        throw new HandoffUnavailableError(
+          stillEligible.rowCount === 0
+            ? "OFFERING_INELIGIBLE"
+            : "DESTINATION_INELIGIBLE"
+        );
+      }
+
+      // AC-8. One initiation result, carrying the exact address made active.
+      const recorded = await client.query<{ initiatedAt: Date }>(
+        `insert into affiliate_handoff
+           (decision_flow_id, offering_id, destination)
+         values ($1, $2, $3) returning initiated_at as "initiatedAt"`,
+        [decisionFlowId, selectedOfferingId, destination]
+      );
+      const initiatedAt = recorded.rows[0]?.initiatedAt;
+      if (!initiatedAt) throw new Error("HANDOFF_NOT_RECORDED");
+
+      return {
+        destination,
+        initiatedAt: initiatedAt.toISOString(),
+        offeringId: selectedOfferingId
+      };
+    });
   }
 
   private async transact<T>(work: (client: PoolClient) => Promise<T>) {

@@ -376,6 +376,25 @@ model DecisionChatTurn {
   @@map("decision_chat_turn")
 }
 
+/// One successful Affiliate Handoff initiation (`US-DEC-F05-001` AC-8), which
+/// `US-DEC-F07-001` consumes as Affiliate Handoff Completion. It records that
+/// an external destination was made active and nothing about what happened
+/// there. The flow reference is not a foreign key on purpose: the flow expires
+/// and the initiation must outlive it.
+model AffiliateHandoff {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  decisionFlowId String   @map("decision_flow_id") @db.Uuid
+  offeringId     String   @map("offering_id") @db.Uuid
+  /// The exact address made active, as it stood at that moment.
+  destination    String   @db.VarChar(2048)
+  initiatedAt    DateTime @default(now()) @map("initiated_at") @db.Timestamptz(6)
+  offering       Offering @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+
+  @@index([offeringId, initiatedAt])
+  @@index([decisionFlowId])
+  @@map("affiliate_handoff")
+}
+
 /// One occurrence of assistive Chat beginning on a valid Decision Context
 /// (AC-3). One per flow, and it outlives the flow: that Chat began is a fact
 /// about the past, not current-flow state.
@@ -494,6 +513,7 @@ model Offering {
   comparisonMemberships ComparisonSetMember[]
   decisionFlows         DecisionFlow[]
   decisionSelections    DecisionFlow[] @relation("DecisionSelection")
+  affiliateHandoffs     AffiliateHandoff[]
 
   @@unique([businessId, slug])
   @@index([categoryId, status])
