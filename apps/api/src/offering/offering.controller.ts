@@ -21,6 +21,7 @@ import {
   destinationManagementEntrySchema,
   destinationWorkloadSchema,
   editOfferingSchema,
+  editableOfferingContentSchema,
   offeringContentSchema,
   offeringInventorySchema,
   reviewAffiliateDestinationSchema,
@@ -121,7 +122,7 @@ export class OfferingController {
     @Param("offeringId", uuidParam("offeringId")) offeringId: string,
     @Req() request: FastifyRequest
   ) {
-    return offeringContentSchema.parse(
+    return editableOfferingContentSchema.parse(
       await this.content.get(
         businessId,
         offeringId,

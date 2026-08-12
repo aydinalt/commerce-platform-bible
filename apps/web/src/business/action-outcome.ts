@@ -50,3 +50,34 @@ export function refusalMessage(code: string): string {
     "That could not be done. Nothing about this Offering has changed."
   );
 }
+
+/**
+ * The same codes, said the way a save has to say them.
+ *
+ * A second map rather than a second sentence bolted onto the first, because
+ * two of these codes reach the person at two different moments and mean two
+ * different things. `PUBLICATION_MINIMUM_NOT_SATISFIED` on a publication means
+ * "this is not ready yet"; on a save of a Published Offering it means "your
+ * change would have left something already public incomplete, so it was not
+ * applied". Wording that covered both would be true of neither.
+ *
+ * `BUSINESS_RESTRICTED` is likewise narrower here: `US-BUS-F03-001` AC-5 keeps
+ * Draft editing with a Restricted owner, so the refusal is about which
+ * Offering, not about editing as such.
+ */
+export const EDIT_REFUSALS: Record<string, string> = {
+  ATTRIBUTE_VALUE_MISMATCH:
+    "One of the values does not fit the Attribute it belongs to. Nothing was saved.",
+  BUSINESS_RESTRICTED:
+    "This Business is Restricted, so only its Draft Offerings can be edited. Nothing was saved.",
+  OFFERING_ARCHIVED: "This Offering is retired and can no longer be edited.",
+  PUBLICATION_MINIMUM_NOT_SATISFIED:
+    "That change was not saved: it would have left this Offering short of what it needs to stay published."
+};
+
+export function editRefusalMessage(code: string): string {
+  return (
+    EDIT_REFUSALS[code] ??
+    "That could not be saved. This Offering still holds what it held before."
+  );
+}

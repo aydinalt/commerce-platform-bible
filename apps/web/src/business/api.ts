@@ -1,8 +1,11 @@
 import {
   businessDashboardSchema,
   businessInformationSchema,
+  editableOfferingContentSchema,
   type BusinessDashboardResponse,
   type BusinessInformationResponse,
+  type EditOffering,
+  type EditableOfferingContent,
   type UpdateBusinessInformation
 } from "@commerce/contracts";
 
@@ -107,6 +110,60 @@ async function codeOf(response: Response): Promise<string> {
   if (text === "") return "";
   const body = JSON.parse(text) as Record<string, unknown>;
   return typeof body.code === "string" ? body.code : "";
+}
+
+/**
+ * One Offering as its owner sees it (UX-0005 §9 Edit).
+ *
+ * Content and applicable Attribute definitions arrive together, so the form is
+ * built from definitions that applied to this Offering at the instant its
+ * values were read. Fetching them separately would let a Category change
+ * between the two requests and produce a form offering inputs the write path
+ * would refuse.
+ *
+ * `null` again covers "no such Offering" and "not yours" alike.
+ */
+export async function fetchOfferingContent(
+  session: string,
+  businessId: string,
+  offeringId: string
+): Promise<EditableOfferingContent | null> {
+  const response = await fetch(
+    `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/content`,
+    { cache: "no-store", headers: ownerHeaders(session) }
+  );
+  if (!response.ok) return null;
+  return editableOfferingContentSchema.parse(await response.json());
+}
+
+/**
+ * Saves the Offering's content as a replacement (`US-OFR-F02-001`).
+ *
+ * There is no lifecycle field to send, because the route has none to receive.
+ * AC-10 says a saved edit creates, publishes, retires, hides, restores,
+ * validates, enables and disables nothing, and this client cannot ask for any
+ * of it even by mistake.
+ */
+export async function saveOfferingContent(
+  session: string,
+  businessId: string,
+  offeringId: string,
+  input: EditOffering
+): Promise<{ body: unknown; status: number }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/content`,
+    {
+      body: JSON.stringify(input),
+      cache: "no-store",
+      headers: { ...ownerHeaders(session), "content-type": "application/json" },
+      method: "PUT"
+    }
+  );
+  const text = await response.text();
+  return {
+    body: text === "" ? {} : (JSON.parse(text) as unknown),
+    status: response.status
+  };
 }
 
 /**

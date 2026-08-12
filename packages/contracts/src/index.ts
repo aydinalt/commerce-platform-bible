@@ -1113,6 +1113,52 @@ export type AttributeResponse = z.infer<typeof attributeSchema>;
 export type Attributes = z.infer<typeof attributesSchema>;
 
 /**
+ * One Attribute the Offering's Category makes applicable.
+ *
+ * A narrower thing than `attributeSchema`: an owner filling in a form needs to
+ * know what to type and whether it is required, not which Categories the
+ * definition is attached to or whether it is comparable. Governance properties
+ * belong to PRD-0006 and are `US-PLT-F09-001`'s to show.
+ *
+ * Only active options appear. A retired option is one no Offering may newly
+ * take (`US-PLT-F09-001` AC-12), so offering it in a form would be offering a
+ * value the write path refuses.
+ */
+export const applicableAttributeSchema = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    options: z.array(
+      z.object({ id: z.string().uuid(), label: z.string() }).strict()
+    ),
+    requiredForPublication: z.boolean(),
+    unit: z.string().nullable(),
+    valueKind: z.enum(ATTRIBUTE_VALUE_KINDS)
+  })
+  .strict();
+
+/**
+ * The owner's read of an Offering: what it holds, and what it could hold.
+ *
+ * One response rather than two reads. The values an Offering has and the
+ * definitions that govern them are answered at one instant against one
+ * Category, so a form cannot be built from definitions that stopped applying
+ * between the two requests — it would offer inputs the write path would then
+ * refuse as `ATTRIBUTE_VALUE_MISMATCH`.
+ *
+ * The write responses stay `offeringContentSchema`. A caller that just
+ * published something is not filling in a form.
+ */
+export const editableOfferingContentSchema = offeringContentSchema.extend({
+  applicableAttributes: z.array(applicableAttributeSchema)
+});
+
+export type ApplicableAttribute = z.infer<typeof applicableAttributeSchema>;
+export type EditableOfferingContent = z.infer<
+  typeof editableOfferingContentSchema
+>;
+
+/**
  * The value kinds that can be a Filter. `TEXT` is absent — PRD-0002 §10.1 makes
  * Text Attributes unfilterable in V1, and `US-PLT-F09-001` already refuses to
  * mark one filterable.

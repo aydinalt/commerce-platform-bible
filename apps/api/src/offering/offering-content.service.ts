@@ -338,11 +338,18 @@ export class OfferingContentService {
     return offering;
   }
 
+  /**
+   * The owner's read: the content, and the Attributes its Category applies.
+   *
+   * The definitions are fetched only after the Offering has been found, so a
+   * Business this person does not own learns nothing about which Attributes
+   * some Category carries — the absence stays a plain absence.
+   */
   async get(
     businessId: string,
     offeringId: string,
     principal: Principal
-  ): Promise<OfferingContentRecord> {
+  ): Promise<OfferingContentRecord & { applicableAttributes: unknown[] }> {
     if (
       principal.businessId !== undefined &&
       principal.businessId !== businessId
@@ -358,7 +365,10 @@ export class OfferingContentService {
 
     const offering = await this.content.findOwned(businessId, offeringId);
     if (!offering) throw new NotFoundException();
-    return offering;
+    return {
+      ...offering,
+      applicableAttributes: await this.content.applicableAttributes(offeringId)
+    };
   }
 
   private async reported(

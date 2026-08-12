@@ -60,6 +60,15 @@ interface DefinitionShape {
   valueKind: string;
 }
 
+export interface ApplicableAttributeRecord {
+  id: string;
+  name: string;
+  options: { id: string; label: string }[];
+  requiredForPublication: boolean;
+  unit: string | null;
+  valueKind: string;
+}
+
 /**
  * The Discovery projection, written from an Offering.
  *
@@ -167,6 +176,46 @@ export class PgOfferingContentRepository implements OnModuleDestroy {
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * The Attributes the Offering's Category makes applicable.
+   *
+   * Read from the Offering rather than from a Category identifier the caller
+   * supplies, so the definitions returned are the ones that govern *this*
+   * Offering — the same join `assertPublishable` walks when it counts missing
+   * required values, and the same one `edit` validates submitted values
+   * against. A caller passing its own Category could be told about Attributes
+   * the write path would then reject.
+   *
+   * Inactive definitions and retired options are excluded: `US-PLT-F09-001`
+   * AC-11 and AC-12 stop new values being taken for either, so listing them
+   * would offer something the write path refuses.
+   */
+  async applicableAttributes(
+    offeringId: string
+  ): Promise<ApplicableAttributeRecord[]> {
+    const result = await this.pool.query<ApplicableAttributeRecord>(
+      `select d.id, d.name, d.unit,
+         d.required_for_publication as "requiredForPublication",
+         d.value_kind::text as "valueKind",
+         coalesce(
+           (select json_agg(o order by o.label)
+            from (
+              select opt.id, opt.label
+              from attribute_option opt
+              where opt.attribute_definition_id = d.id and opt.active = true
+            ) o),
+           '[]'
+         ) as options
+       from offering off
+       join category_attribute ca on ca.category_id = off.category_id
+       join attribute_definition d on d.id = ca.attribute_definition_id
+       where off.id = $1 and d.active = true
+       order by ca.sort_order, d.name`,
+      [offeringId]
+    );
+    return result.rows;
   }
 
   /**

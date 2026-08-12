@@ -1437,6 +1437,113 @@ const document = {
         ],
         type: "object"
       },
+      EditableOfferingContent: {
+        additionalProperties: false,
+        description:
+          "The owner's read of an Offering: what it holds, and what its Category lets it hold. One response rather than two requests, so a form cannot be built from definitions that stopped applying between them. Inactive definitions and retired options are absent — the write path would refuse a value for either.",
+        properties: {
+          applicableAttributes: {
+            items: {
+              additionalProperties: false,
+              properties: {
+                id: { format: "uuid", type: "string" },
+                name: { type: "string" },
+                options: {
+                  description:
+                    "Active allowed values, for the two Select kinds only.",
+                  items: {
+                    additionalProperties: false,
+                    properties: {
+                      id: { format: "uuid", type: "string" },
+                      label: { type: "string" }
+                    },
+                    required: ["id", "label"],
+                    type: "object"
+                  },
+                  type: "array"
+                },
+                requiredForPublication: { type: "boolean" },
+                unit: { type: ["string", "null"] },
+                valueKind: {
+                  enum: [
+                    "TEXT",
+                    "NUMBER",
+                    "BOOLEAN",
+                    "SINGLE_SELECT",
+                    "MULTI_SELECT"
+                  ],
+                  type: "string"
+                }
+              },
+              required: [
+                "id",
+                "name",
+                "options",
+                "requiredForPublication",
+                "unit",
+                "valueKind"
+              ],
+              type: "object"
+            },
+            type: "array"
+          },
+          attributes: {
+            items: {
+              additionalProperties: false,
+              properties: {
+                attributeId: { format: "uuid", type: "string" },
+                booleanValue: { type: ["boolean", "null"] },
+                numberValue: { type: ["number", "null"] },
+                optionIds: {
+                  items: { format: "uuid", type: "string" },
+                  type: "array"
+                },
+                textValue: { type: ["string", "null"] }
+              },
+              required: [
+                "attributeId",
+                "booleanValue",
+                "numberValue",
+                "optionIds",
+                "textValue"
+              ],
+              type: "object"
+            },
+            type: "array"
+          },
+          businessId: { format: "uuid", type: "string" },
+          categoryId: { format: "uuid", type: "string" },
+          id: { format: "uuid", type: "string" },
+          publishedAt: {
+            description:
+              "Initial Published At. Immutable once set; an edit never changes it.",
+            format: "date-time",
+            type: ["string", "null"]
+          },
+          slug: { type: "string" },
+          status: {
+            enum: ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"],
+            type: "string"
+          },
+          summary: { type: ["string", "null"] },
+          title: { type: "string" },
+          version: { minimum: 1, type: "integer" }
+        },
+        required: [
+          "applicableAttributes",
+          "attributes",
+          "businessId",
+          "categoryId",
+          "id",
+          "publishedAt",
+          "slug",
+          "status",
+          "summary",
+          "title",
+          "version"
+        ],
+        type: "object"
+      },
       AuthorAffiliateDestination: {
         additionalProperties: false,
         description:
@@ -3188,7 +3295,7 @@ const document = {
     "/api/v1/businesses/{businessId}/offerings/{offeringId}/content": {
       get: {
         description:
-          "The Offering's complete content, Attribute values included. Every lifecycle state is readable, Archived among them.",
+          "The Offering's complete content, Attribute values included, together with the Attributes its Category applies. Every lifecycle state is readable, Archived among them.",
         operationId: "getOfferingContent",
         parameters: [
           {
@@ -3208,10 +3315,12 @@ const document = {
           "200": {
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/OfferingContent" }
+                schema: {
+                  $ref: "#/components/schemas/EditableOfferingContent"
+                }
               }
             },
-            description: "Offering content"
+            description: "Offering content and the Attributes it may hold"
           },
           "400": errorResponse("Invalid identifier"),
           "401": errorResponse("Authentication required"),

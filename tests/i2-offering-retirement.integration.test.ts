@@ -10,6 +10,7 @@ import type {
   EmailMessage
 } from "../modules/notification/src/index.js";
 import {
+  editableOfferingContentSchema,
   errorEnvelopeSchema,
   offeringContentSchema
 } from "../packages/contracts/src/index.js";
@@ -304,9 +305,14 @@ suite("Increment I2 Offering retirement", () => {
       { cookie: admin.cookie }
     );
 
-    // AC-6. Two different questions: the owner asks about an Offering of
-    // theirs, the Admin asks about an Offering.
-    expect(offeringContentSchema.parse(asOwner.json()).status).toBe("ARCHIVED");
+    // AC-6. Two different questions asked of two different shapes: the owner
+    // asks about an Offering of theirs and is told what it could hold as well
+    // as what it holds, because that read is what a form is built from. The
+    // Admin asks about an Offering and gets the record — a historical read has
+    // no form behind it, so it carries no definitions.
+    expect(editableOfferingContentSchema.parse(asOwner.json()).status).toBe(
+      "ARCHIVED"
+    );
     expect(offeringContentSchema.parse(asAdmin.json()).status).toBe("ARCHIVED");
   });
 
