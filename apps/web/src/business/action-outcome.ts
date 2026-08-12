@@ -33,8 +33,22 @@ export const ACTION_IDLE: ActionState = { kind: "IDLE" };
  * over: the person is told what to do next, not exactly what is missing.
  */
 export const ACTION_REFUSALS: Record<string, string> = {
+  AFFILIATE_DESTINATION_EXISTS:
+    "This Offering already has a destination. Change the one it has instead.",
+  AFFILIATE_DESTINATION_NOT_FOUND:
+    "This Offering has no destination to change.",
+  AFFILIATE_DESTINATION_READ_ONLY:
+    "This Offering is retired, so its destination is a record now and cannot be changed.",
   BUSINESS_RESTRICTED:
     "This Business is Restricted, so that action is unavailable right now.",
+  /*
+   * The management entry could not be read at all, so this action does not
+   * know whether a destination exists and therefore does not know which verb
+   * the request would be. Guessing would mean creating where a replacement was
+   * meant, or the reverse.
+   */
+  DESTINATION_NOT_MANAGEABLE:
+    "This destination cannot be managed right now. Nothing was saved.",
   OFFERING_ALREADY_ARCHIVED: "This Offering has already been retired.",
   OFFERING_NOT_EDITABLE: "This Offering can no longer be edited.",
   OFFERING_NOT_PUBLISHABLE: "Only a Draft Offering can be published.",

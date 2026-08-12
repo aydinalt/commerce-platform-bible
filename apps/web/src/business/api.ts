@@ -2,10 +2,13 @@ import {
   businessDashboardSchema,
   businessInformationSchema,
   correctionNoticesSchema,
+  destinationManagementEntrySchema,
   editableOfferingContentSchema,
+  type AuthorAffiliateDestination,
   type BusinessDashboardResponse,
   type BusinessInformationResponse,
   type CorrectionNotice,
+  type DestinationManagementEntry,
   type EditOffering,
   type EditableOfferingContent,
   type SaveCorrection,
@@ -213,6 +216,61 @@ export async function saveOfferingContent(
       cache: "no-store",
       headers: { ...ownerHeaders(session), "content-type": "application/json" },
       method: "PUT"
+    }
+  );
+  const text = await response.text();
+  return {
+    body: text === "" ? {} : (JSON.parse(text) as unknown),
+    status: response.status
+  };
+}
+
+/**
+ * What may be done about this Offering's Affiliate Destination (UX-0005 §13).
+ *
+ * Deliberately not the destination read. That one answers "what is this
+ * Offering's destination" and makes absence a 404; this one answers "what may
+ * I do about it", where absence is not a failure — it is the condition Create
+ * exists for. Asking the second question of the first route would mean reading
+ * a 404 as an opportunity, which is exactly the kind of inference that goes
+ * wrong later.
+ */
+export async function fetchDestinationManagement(
+  session: string,
+  businessId: string,
+  offeringId: string
+): Promise<DestinationManagementEntry | null> {
+  const response = await fetch(
+    `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/affiliate-destination/management`,
+    { cache: "no-store", headers: ownerHeaders(session) }
+  );
+  if (!response.ok) return null;
+  return destinationManagementEntrySchema.parse(await response.json());
+}
+
+/**
+ * Authors the destination's reference (`US-OFR-F06-001` AC-3, AC-4).
+ *
+ * `POST` where none exists and `PUT` where one does, chosen from the entry the
+ * API offered rather than from a guess about whether the read found anything.
+ * The body carries a reference and nothing else: AC-8 denies the owner Review,
+ * Validate, Enable, Disable and any Handoff Eligibility recalculation, and the
+ * way to deny them is to leave no field that could ask.
+ */
+export async function saveDestination(
+  session: string,
+  businessId: string,
+  offeringId: string,
+  input: AuthorAffiliateDestination,
+  creating: boolean
+): Promise<{ body: unknown; status: number }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/affiliate-destination`,
+    {
+      body: JSON.stringify(input),
+      cache: "no-store",
+      headers: { ...ownerHeaders(session), "content-type": "application/json" },
+      method: creating ? "POST" : "PUT"
     }
   );
   const text = await response.text();
