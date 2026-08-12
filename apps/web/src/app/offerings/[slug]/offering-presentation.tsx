@@ -4,6 +4,7 @@ import type {
 } from "@commerce/contracts";
 
 import type { PreparationContext } from "../../../discovery/entry";
+import { startDecisionFromOffering } from "../../decision/actions";
 import { CompareEntry } from "../../compare/compare-entry";
 
 /**
@@ -63,11 +64,11 @@ function Attributes({ attributes }: { attributes: PresentedAttribute[] }) {
  * `US-OFR-F05-001` AC-6. The entries are presented; their behaviours belong
  * elsewhere.
  *
- * Compare is live now that `US-DEC-F01-001` owns it — and Presentation still
- * executes nothing: the entry hands the Offering to Decision, which decides
- * whether it may join. Decision Chat stays disabled rather than linking to a
- * route that does not exist, because a control that looks live and leads
- * nowhere is the worse lie.
+ * Both entries are live now, and Presentation still executes neither: each
+ * hands this Offering to Decision, which decides what may happen to it.
+ * Starting a Decision flow performs no selection — UX-0009 §8 makes that an
+ * explicit act taken inside the flow, so arriving there with something already
+ * chosen would be the platform choosing.
  */
 function DecisionEntries({
   offeringId,
@@ -84,9 +85,12 @@ function DecisionEntries({
           <CompareEntry offeringId={offeringId} />
         </li>
         <li>
-          <button disabled type="button">
-            Karar sohbetini başlat
-          </button>
+          {/* UX-0009 §5.1. Compare is not required to reach Decision: one
+              eligible Offering is a whole context. */}
+          <form action={startDecisionFromOffering}>
+            <input name="offeringId" type="hidden" value={offeringId} />
+            <button type="submit">Karar sohbetini başlat</button>
+          </form>
         </li>
       </ul>
       {/* `US-DSC-F10-001` AC-5. The preparation context arrived unchanged and

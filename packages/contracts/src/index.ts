@@ -1555,6 +1555,7 @@ export const decisionChatSchema = z
   .strict();
 
 export type AskDecision = z.infer<typeof askDecisionSchema>;
+export type ChatTurn = z.infer<typeof chatTurnSchema>;
 export type DecisionChatResponse = z.infer<typeof decisionChatSchema>;
 
 /**

@@ -3,6 +3,7 @@ import type {
   ComparisonViewResponse
 } from "@commerce/contracts";
 
+import { startDecisionFromComparison } from "../decision/actions";
 import { removeFromCompare } from "./comparison-actions";
 
 /**
@@ -75,6 +76,18 @@ export function ComparisonTable({ view }: { view: ComparisonViewResponse }) {
             ))}
           </tbody>
         </table>
+
+        {/* UX-0009 §5.2. The set is handed to Decision unchanged: entering is
+            not a change to what was being compared, and nothing is selected
+            here — §8 makes selection an act performed inside Decision. */}
+        <form action={startDecisionFromComparison}>
+          <input
+            name="comparisonSetId"
+            type="hidden"
+            value={view.comparisonSetId}
+          />
+          <button type="submit">Karar sohbetine geçin</button>
+        </form>
 
         {view.rows.length === 0 ? (
           // Every member shares one leaf, so this means the Category defines no
