@@ -1,11 +1,14 @@
 import {
   businessDashboardSchema,
   businessInformationSchema,
+  correctionNoticesSchema,
   editableOfferingContentSchema,
   type BusinessDashboardResponse,
   type BusinessInformationResponse,
+  type CorrectionNotice,
   type EditOffering,
   type EditableOfferingContent,
+  type SaveCorrection,
   type UpdateBusinessInformation
 } from "@commerce/contracts";
 
@@ -110,6 +113,59 @@ async function codeOf(response: Response): Promise<string> {
   if (text === "") return "";
   const body = JSON.parse(text) as Record<string, unknown>;
   return typeof body.code === "string" ? body.code : "";
+}
+
+/**
+ * The owner's correction notices (UX-0005 §12, `US-BUS-F07-001`).
+ *
+ * A read and nothing more. There is no acknowledge, no dismiss and no reply
+ * here because there is none there either: AC-5 says looking at a notice moves
+ * no state and AC-6 leaves no conversation for a reply to belong to.
+ *
+ * An empty list on failure would be a lie of the worst kind — it would say
+ * "nothing needs your attention" when the truth is "we could not ask". `null`
+ * keeps the two apart.
+ */
+export async function fetchCorrectionNotices(
+  session: string,
+  businessId: string
+): Promise<CorrectionNotice[] | null> {
+  const response = await fetch(
+    `${apiBaseUrl()}/businesses/${businessId}/correction-notices`,
+    { cache: "no-store", headers: ownerHeaders(session) }
+  );
+  if (!response.ok) return null;
+  return correctionNoticesSchema.parse(await response.json()).notices;
+}
+
+/**
+ * One bounded correction save (§11, `US-BUS-F07-001` AC-9).
+ *
+ * Addressed by the correction, not by the Offering. The correction is what
+ * confers the permission, so there is no way to spell this request without
+ * naming the notice that granted it — an unrelated Offering has no path here
+ * at all.
+ */
+export async function saveCorrection(
+  session: string,
+  businessId: string,
+  correctionId: string,
+  input: SaveCorrection
+): Promise<{ body: unknown; status: number }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/businesses/${businessId}/correction-notices/${correctionId}/response`,
+    {
+      body: JSON.stringify(input),
+      cache: "no-store",
+      headers: { ...ownerHeaders(session), "content-type": "application/json" },
+      method: "PUT"
+    }
+  );
+  const text = await response.text();
+  return {
+    body: text === "" ? {} : (JSON.parse(text) as unknown),
+    status: response.status
+  };
 }
 
 /**

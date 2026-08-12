@@ -2,11 +2,12 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { fetchDashboard } from "../../../business/api";
+import { fetchCorrectionNotices, fetchDashboard } from "../../../business/api";
 import { LIFECYCLE_GROUPS, offersCreate } from "../../../business/inventory";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import { logout } from "../../login/actions";
 import { createDraftOffering } from "./actions";
+import { CorrectionNotices } from "./correction-notices";
 import { CreateOffering } from "./create-offering";
 import { InventoryGroup } from "./inventory-group";
 
@@ -33,7 +34,10 @@ export default async function BusinessDashboardPage({
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const dashboard = await fetchDashboard(session, businessId);
+  const [dashboard, notices] = await Promise.all([
+    fetchDashboard(session, businessId),
+    fetchCorrectionNotices(session, businessId)
+  ]);
   if (dashboard === null) notFound();
 
   const { business, inventory } = dashboard;
@@ -66,6 +70,16 @@ export default async function BusinessDashboardPage({
           Business information
         </Link>
       </p>
+
+      {/* §12. Placed before the inventory, because a notice is something the
+          platform asked of this Business and the inventory is what the
+          Business is doing — a person arriving after a restriction should
+          find the question before the work. Rendered only where the notices
+          could actually be read: an empty list would say "nothing needs your
+          attention", which is not what a failed read means. */}
+      {notices === null ? null : (
+        <CorrectionNotices businessId={business.id} notices={notices} />
+      )}
 
       <h2>Offerings</h2>
       {empty ? (
