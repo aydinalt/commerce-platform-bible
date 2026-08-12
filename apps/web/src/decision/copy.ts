@@ -119,3 +119,85 @@ export const SELECTION_REFUSALS: Record<string, string> = {
 export function selectionRefusal(code: string): string {
   return SELECTION_REFUSALS[code] ?? "Seçim değiştirilemedi.";
 }
+
+/**
+ * §9. The paths, named without either being preferred.
+ *
+ * Both labels describe what the person is about to do rather than what they
+ * will get: "İşletmenin sitesine gidin" and not "En iyi fiyatı görün". §9
+ * forbids preferring a path, and copy that promised an outcome on one side
+ * would be preferring it without saying so.
+ */
+export const HANDOFF_CHOICE = "Nasıl devam etmek istersiniz?";
+export const AFFILIATE_LABEL = "İşletmenin sitesine gidin";
+export const DIRECT_CONTACT_LABEL = "İşletmeyle doğrudan iletişime geçin";
+
+/// §16. An unavailable Affiliate path says it is unavailable and nothing about
+/// where it would have led — the destination is not the person's to see here.
+export const NO_AFFILIATE =
+  "Bu ilan için site üzerinden devam etme yolu şu anda kullanılabilir değil.";
+
+/**
+ * §16. No channel, and no substitute invented.
+ *
+ * The temptation is to offer a message box. UX-0007 does not exist and PRD
+ * scope has no Messaging, so a form here would be a promise the platform
+ * cannot keep — someone would write and wait for a reply that no part of the
+ * system is able to deliver.
+ */
+export const NO_CONTACT_CHANNEL =
+  "Bu işletme doğrudan iletişim bilgisi paylaşmamış. Platformda mesaj gönderilebilecek bir yer yok.";
+
+export const CHANNEL_COPY: Record<"EMAIL" | "TELEPHONE" | "URL", string> = {
+  EMAIL: "E-posta",
+  TELEPHONE: "Telefon",
+  URL: "İnternet sitesi"
+};
+
+/// §11.2. A Guest is told what will happen and why, before being sent away —
+/// and told they come back to this exact point.
+export const CONTACT_NEEDS_ACCOUNT =
+  "Doğrudan iletişim bilgisini görmek için giriş yapmanız gerekiyor. Giriş yaptıktan sonra tam olarak buraya dönersiniz.";
+
+export const HANDOFF_REFUSALS: Record<string, string> = {
+  DECISION_FLOW_NOT_FOUND: "Bu karar akışının süresi doldu.",
+  NOTHING_SELECTED: "Önce bir ilan seçin.",
+  NO_CHANNEL: "Bu işletme doğrudan iletişim bilgisi paylaşmamış.",
+  NO_ELIGIBLE_DESTINATION:
+    "Bu ilan için site üzerinden devam etme yolu kullanılabilir değil.",
+  OFFERING_INELIGIBLE:
+    "Seçtiğiniz ilan artık uygun değil. Hiçbir işlem tamamlanmadı.",
+  UNAVAILABLE_CHANNEL: "Bu kanal şu anda kullanılabilir değil."
+};
+
+/**
+ * What a failed handoff says.
+ *
+ * Every one of these ends without claiming anything happened, because nothing
+ * did: §18 requires a failed initiation to record no Completion, and the API
+ * refuses inside the transaction that would have recorded one.
+ */
+export function handoffRefusal(code: string): string {
+  return (
+    HANDOFF_REFUSALS[code] ??
+    "İşlem tamamlanamadı. Hiçbir şey başlatılmadı ve hiçbir bilgi paylaşılmadı."
+  );
+}
+
+/**
+ * §12. The two Completions, said as two.
+ *
+ * Neither sentence claims a purchase, a sale, a booking, a contract, an
+ * application, a delivery, an answer or a reply. Each says only what the
+ * platform actually did: it sent the person somewhere, or it showed them
+ * something. What happens next is not the platform's to report, and a
+ * congratulation would be claiming it did.
+ */
+export const AFFILIATE_COMPLETION =
+  "Bu ilan için işletmenin sitesine yönlendirildiniz. Orada ne olduğunu platform bilmez.";
+export const DIRECT_CONTACT_COMPLETION =
+  "Bu ilan için iletişim bilgisi size gösterildi. İletişime geçip geçmediğinizi platform bilmez.";
+
+/// §12. No account is asked for after either Completion. The journey ended;
+/// asking now would be asking for something the person no longer needs.
+export const AFTER_COMPLETION = "Karar yolculuğunuz burada bitiyor.";

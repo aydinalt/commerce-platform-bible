@@ -20,10 +20,19 @@ import { IDLE, REFUSAL_COPY, type AuthState } from "../../identity/outcome";
 export function CredentialForm({
   action,
   legend,
+  returnTo,
   submit
 }: {
   action: (previous: AuthState, form: FormData) => Promise<AuthState>;
   legend: string;
+  /**
+   * Where an interrupted journey resumes (UX-0009 §11.2).
+   *
+   * A destination *name*, not an address. The action maps it through a closed
+   * list, so a value this application does not own resolves to nothing — an
+   * open redirect is not defended against, it is unspeakable.
+   */
+  returnTo?: string | undefined;
   submit: string;
 }) {
   const [state, dispatch, pending] = useActionState(action, IDLE);
@@ -31,6 +40,9 @@ export function CredentialForm({
 
   return (
     <form action={dispatch} noValidate>
+      {returnTo === undefined ? null : (
+        <input name="return" type="hidden" value={returnTo} />
+      )}
       <fieldset disabled={pending}>
         <legend>{legend}</legend>
 

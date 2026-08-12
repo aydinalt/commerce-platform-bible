@@ -1490,6 +1490,21 @@ export const enterDecisionSchema = z
  */
 export const decisionContextSchema = z
   .object({
+    /**
+     * Whether the Affiliate path may be offered right now (`US-DEC-F05-001`
+     * AC-1).
+     *
+     * A boolean and not a destination. UX-0009 §16 keeps an unavailable path
+     * from exposing where it would have led, which is only kept if the
+     * available path does not expose it either — the address is read inside
+     * the initiation and never before.
+     *
+     * Answered by the same conjunction the initiation enforces, so an offered
+     * path is one the platform would honour. Narrower than
+     * `handoffAvailable`: that one says a current eligible Offering is
+     * selected, this one adds that its Affiliate Destination is eligible too.
+     */
+    affiliateAvailable: z.boolean(),
     comparison: comparisonSetSchema.nullable(),
     decisionFlowId: z.string().uuid(),
     /**

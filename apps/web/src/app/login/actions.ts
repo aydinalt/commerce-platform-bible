@@ -11,6 +11,7 @@ import { refusalFor, type AuthState } from "../../identity/outcome";
 import {
   AUTH_ROUTES,
   SESSION_COOKIE,
+  returnPath,
   sessionCookieOptions
 } from "../../identity/session";
 
@@ -44,6 +45,20 @@ export async function login(
 
   const jar = await cookies();
   jar.set(SESSION_COOKIE, outcome.session, sessionCookieOptions());
+
+  /*
+   * UX-0009 §11.2. Someone sent here mid-decision returns to where they were,
+   * and everyone else lands on their account.
+   *
+   * The form carries a destination *name*, not an address: `returnPath` maps
+   * it through a closed list, so a submitted value this application does not
+   * own resolves to nothing and the ordinary landing applies. An open redirect
+   * is not defended against here — it cannot be expressed.
+   */
+  const destination = form.get("return");
+  const back = typeof destination === "string" ? returnPath(destination) : null;
+  if (back !== null) redirect(back);
+
   // §8.1. The person lands where their own relationships are offered, and
   // chooses a context from there. Nothing is entered on their behalf.
   redirect(AUTH_ROUTES.account);

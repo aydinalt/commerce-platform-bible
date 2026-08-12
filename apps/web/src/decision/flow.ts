@@ -1,10 +1,15 @@
 import {
+  affiliateHandoffSchema,
   contactChannelsSchema,
   decisionChatSchema,
+  decisionCompletionsSchema,
   decisionContextSchema,
+  directContactRevealSchema,
   type ContactChannelsResponse,
   type DecisionChatResponse,
-  type DecisionContextResponse
+  type DecisionCompletionsResponse,
+  type DecisionContextResponse,
+  type DirectContactRevealResponse
 } from "@commerce/contracts";
 
 import { SESSION_COOKIE } from "../identity/api";
@@ -173,6 +178,80 @@ export async function readContactChannels(
     { session }
   );
   return status === 200 ? contactChannelsSchema.parse(payload) : null;
+}
+
+/**
+ * Initiating the Affiliate Handoff (§10.2).
+ *
+ * The response says where the person is being sent; making that the active
+ * destination is the browser's part. Every gate is checked inside the request
+ * that would record the initiation, so a refusal here means nothing was
+ * recorded and §18's "no Completion occurs" holds without this file arranging
+ * it.
+ */
+export async function initiateHandoff(
+  decisionFlowId: string
+): Promise<{ destination: string | null; refusal: string | null }> {
+  const { payload, status } = await call(
+    "POST",
+    `/decision/flows/${decisionFlowId}/affiliate-handoff`
+  );
+  if (status === 200)
+    return {
+      destination: affiliateHandoffSchema.parse(payload).destination,
+      refusal: null
+    };
+  return { destination: null, refusal: codeOf(payload) };
+}
+
+/**
+ * Revealing one channel (§11.4).
+ *
+ * The only Decision call that requires a session. A Guest is refused with
+ * `401`, which §11.2 turns into a trip through UX-0008 — and the request they
+ * repeat afterwards is this exact one, so every gate is re-evaluated simply by
+ * being asked again.
+ */
+export async function revealContact(
+  decisionFlowId: string,
+  channel: DirectContactRevealResponse["channel"],
+  session: string
+): Promise<{
+  refusal: string | null;
+  reveal: DirectContactRevealResponse | null;
+  /**
+   * Carried out because `401` is not a refusal of the reveal — it is the
+   * interruption §11.2 describes, and the two are answered differently. The
+   * status says which, where the body's code cannot: an unauthenticated
+   * response publishes no code to read.
+   */
+  status: number;
+}> {
+  const { payload, status } = await call(
+    "POST",
+    `/decision/flows/${decisionFlowId}/direct-contact`,
+    { body: { channel }, session }
+  );
+  if (status === 200)
+    return {
+      refusal: null,
+      reveal: directContactRevealSchema.parse(payload),
+      status
+    };
+  return { refusal: codeOf(payload), reveal: null, status };
+}
+
+/// The two Completions, as the platform recorded them (§12). A read: there is
+/// nothing to confirm, because the initiation and the reveal were themselves
+/// the Completions.
+export async function readCompletions(
+  decisionFlowId: string
+): Promise<DecisionCompletionsResponse | null> {
+  const { payload, status } = await call(
+    "GET",
+    `/decision/flows/${decisionFlowId}/completion`
+  );
+  return status === 200 ? decisionCompletionsSchema.parse(payload) : null;
 }
 
 function codeOf(payload: unknown): string {

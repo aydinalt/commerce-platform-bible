@@ -3,19 +3,25 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { revealContactSchema } from "@commerce/contracts";
+
 import {
   DECISION_FLOW_COOKIE,
   DECISION_FLOW_MAX_AGE_SECONDS,
   askDecision,
   enterDecision,
+  initiateHandoff,
   readDecisionFlowId,
+  revealContact,
   selectOffering
 } from "../../decision/flow";
+import { handoffRefusal } from "../../decision/copy";
 import {
   chatRefusal,
   selectionRefusal,
   type DecisionActionState
 } from "../../decision/state";
+import { AUTH_ROUTES, SESSION_COOKIE } from "../../identity/session";
 
 /**
  * The Decision actions (UX-0009).
@@ -97,6 +103,87 @@ export async function chooseSelection(
   if (context === null)
     return { kind: "REFUSED", message: selectionRefusal(refusal ?? "") };
   return { kind: "DONE" };
+}
+
+/**
+ * Affiliate Handoff (§10.2, §10.3).
+ *
+ * The redirect *is* the completion. §10.3 asks for no additional confirmation
+ * and no registration, so there is no interstitial page, no "you are leaving"
+ * step and no account prompt on the way out — the person chose the action and
+ * the platform makes the destination active.
+ *
+ * The destination is never rendered before this: §16 keeps an unavailable
+ * path from exposing where it would have led, and a link would have shown it
+ * to everyone including the people the path is unavailable to.
+ *
+ * A refusal returns instead, so §18 holds: no Completion was recorded, and the
+ * Selected Offering is still identifiable on the page they stayed on.
+ */
+export async function startAffiliateHandoff(
+  _previous: DecisionActionState,
+  _form: FormData
+): Promise<DecisionActionState> {
+  const decisionFlowId = await currentFlowId();
+  if (decisionFlowId === null)
+    return {
+      kind: "REFUSED",
+      message: handoffRefusal("DECISION_FLOW_NOT_FOUND")
+    };
+
+  const { destination, refusal } = await initiateHandoff(decisionFlowId);
+  if (destination === null)
+    return { kind: "REFUSED", message: handoffRefusal(refusal ?? "") };
+  redirect(destination);
+}
+
+/**
+ * Revealing one contact channel (§11.2, §11.4).
+ *
+ * A Guest is sent to UX-0008 naming this flow's return, and comes back to
+ * repeat this exact request. Every gate is re-evaluated because the request is
+ * simply made again — which is also §18's "authentication return invalid": an
+ * eligibility that changed while they were away produces an ordinary refusal
+ * rather than a reveal.
+ */
+export async function revealChannel(
+  _previous: DecisionActionState,
+  form: FormData
+): Promise<DecisionActionState> {
+  const decisionFlowId = await currentFlowId();
+  if (decisionFlowId === null)
+    return {
+      kind: "REFUSED",
+      message: handoffRefusal("DECISION_FLOW_NOT_FOUND")
+    };
+
+  const parsed = revealContactSchema.safeParse({
+    channel: form.get("channel")
+  });
+  if (!parsed.success) return { kind: "IDLE" };
+
+  const jar = await cookies();
+  const session = jar.get(SESSION_COOKIE)?.value;
+  if (session === undefined) redirect(`${AUTH_ROUTES.login}?return=decision`);
+
+  const { refusal, reveal, status } = await revealContact(
+    decisionFlowId,
+    parsed.data.channel,
+    session
+  );
+  // A session the API no longer accepts is the same interruption as having
+  // none, and is answered the same way rather than as a failure of the reveal.
+  if (status === 401) redirect(`${AUTH_ROUTES.login}?return=decision`);
+  if (reveal === null)
+    return { kind: "REFUSED", message: handoffRefusal(refusal ?? "") };
+  // §11.4. The value is carried back rather than re-read, because there is
+  // nowhere to re-read it from: the record holds the channel and not the
+  // information, which is what keeps it in one place.
+  return {
+    channel: reveal.channel,
+    kind: "REVEALED",
+    value: reveal.value
+  };
 }
 
 /**

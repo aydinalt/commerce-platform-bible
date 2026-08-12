@@ -469,13 +469,36 @@ export class PgDecisionRepository implements OnModuleDestroy {
         ? null
         : await this.offering(client, flow.selectedOfferingId);
 
+    const handoffAvailable = valid && selected !== null;
+
     return {
+      /*
+       * `US-DEC-F05-001` AC-1, answered before the person acts rather than
+       * only when they do.
+       *
+       * The same join the initiation performs, asked as a question instead of
+       * as a change — so a path this read offers is one that read would
+       * honour, and a path it withholds is one that would have been refused.
+       * The address itself stays inside the initiation: this says whether, not
+       * where.
+       */
+      affiliateAvailable:
+        handoffAvailable &&
+        (
+          await client.query(
+            `select 1
+             from offering_search_projection p
+             join affiliate_destination a on a.offering_id = p.offering_id
+             where p.offering_id = $1 and a.handoff_eligibility = 'ELIGIBLE'`,
+            [flow.selectedOfferingId]
+          )
+        ).rowCount === 1,
       comparison,
       decisionFlowId,
       // AC-7. One answer for both handoffs, and it needs a valid context *and*
       // a current eligible selection — a valid context with nothing chosen
       // offers nothing.
-      handoffAvailable: valid && selected !== null,
+      handoffAvailable,
       invalidity: valid
         ? null
         : flow.offeringId === null

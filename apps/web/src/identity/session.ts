@@ -43,3 +43,26 @@ export const AUTH_ROUTES = {
   register: "/register",
   reset: "/recover/reset"
 } as const;
+
+/**
+ * Where an interrupted journey may be sent back to (UX-0009 §11.2).
+ *
+ * A closed vocabulary of destinations rather than a URL carried through the
+ * login form. A `next=` parameter holding an address would be an open redirect
+ * waiting to be validated correctly forever; a name that this map turns into a
+ * path cannot point anywhere this application does not already own.
+ *
+ * The Decision return needs nothing more than the name. What was selected and
+ * which action was interrupted live in the flow the person still holds, so the
+ * "exact return context" §11.2 asks for is already on the server — and every
+ * gate is re-evaluated on arrival because the page simply reads it again.
+ */
+export const RETURN_DESTINATIONS = { decision: "/decision" } as const;
+
+export type ReturnDestination = keyof typeof RETURN_DESTINATIONS;
+
+export function returnPath(raw: string | undefined): string | null {
+  return raw !== undefined && raw in RETURN_DESTINATIONS
+    ? RETURN_DESTINATIONS[raw as ReturnDestination]
+    : null;
+}

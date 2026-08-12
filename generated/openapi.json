@@ -587,6 +587,10 @@
         "additionalProperties": false,
         "description": "The current Decision Context: exactly one eligible Offering or one Comparison Set, never both. `valid` is separate from the contents because a context can be well-formed and still unusable — the Offering may have been retired, or the set may have fallen below two members. Decision Chat and every handoff action are unavailable while it is invalid. There is no field for a previous decision, a saved context or anything the person did before.",
         "properties": {
+          "affiliateAvailable": {
+            "description": "Whether the Affiliate path may be offered right now: a valid context, a current eligible Selected Offering, and an eligible Affiliate Destination. A boolean and not a destination — the address is read inside the initiation and never before, so an unavailable path cannot expose where it would have led and neither can an available one.",
+            "type": "boolean"
+          },
           "comparison": {
             "oneOf": [
               { "$ref": "#/components/schemas/ComparisonSet" },
@@ -630,6 +634,7 @@
           "valid": { "type": "boolean" }
         },
         "required": [
+          "affiliateAvailable",
           "comparison",
           "decisionFlowId",
           "handoffAvailable",

@@ -4,7 +4,11 @@ import Link from "next/link";
 import type { ListingCardResponse } from "@commerce/contracts";
 
 import {
+  AFFILIATE_COMPLETION,
+  AFTER_COMPLETION,
+  CHANNEL_COPY,
   CLEAR_SELECTION,
+  DIRECT_CONTACT_COMPLETION,
   INVALIDITY_COPY,
   REPAIR_COPY,
   REPAIR_HREF,
@@ -15,12 +19,20 @@ import {
 import {
   DECISION_FLOW_COOKIE,
   readChat,
+  readCompletions,
+  readContactChannels,
   readDecision,
   readDecisionFlowId
 } from "../../decision/flow";
 import { SESSION_COOKIE } from "../../identity/session";
-import { askAssistant, chooseSelection } from "./actions";
+import {
+  askAssistant,
+  chooseSelection,
+  revealChannel,
+  startAffiliateHandoff
+} from "./actions";
 import { DecisionChat } from "./chat";
+import { HandoffChoice } from "./handoff";
 import { SelectionButton } from "./selection";
 
 /**
@@ -54,9 +66,11 @@ export default async function DecisionPage() {
       </main>
     );
 
-  const [context, chat] = await Promise.all([
+  const [context, chat, channels, completions] = await Promise.all([
     readDecision(decisionFlowId, session),
-    readChat(decisionFlowId)
+    readChat(decisionFlowId),
+    readContactChannels(decisionFlowId, session),
+    readCompletions(decisionFlowId)
   ]);
 
   // §16, "No eligible context" — including the case where the flow itself has
@@ -147,6 +161,37 @@ export default async function DecisionPage() {
           <p>{SELECT_PROMPT}</p>
         ) : null}
       </section>
+
+      {/* §9. The paths appear only after an explicit selection, because that
+          is what §8 makes them wait for. Neither is preferred and neither is
+          chosen for the person. */}
+      {context.handoffAvailable ? (
+        <HandoffChoice
+          affiliateAction={startAffiliateHandoff}
+          affiliateAvailable={context.affiliateAvailable}
+          channels={channels}
+          contactAction={revealChannel}
+        />
+      ) : null}
+
+      {/* §12. Each Completion appears only where its own evidence exists, and
+          the two are said as two — PRD-0006 counts them separately and a
+          single "done" would merge two different ends to a journey. No
+          purchase, booking, reply or delivery is claimed, and no account is
+          asked for afterwards. */}
+      {completions?.affiliateHandoff || completions?.directContact ? (
+        <section aria-labelledby="completion" role="status">
+          <h2 id="completion">Neler oldu</h2>
+          {completions.affiliateHandoff ? <p>{AFFILIATE_COMPLETION}</p> : null}
+          {completions.directContact ? (
+            <p>
+              {DIRECT_CONTACT_COMPLETION} (
+              {CHANNEL_COPY[completions.directContact.channel]})
+            </p>
+          ) : null}
+          <p>{AFTER_COMPLETION}</p>
+        </section>
+      ) : null}
 
       {/* §7.1. Public, and rendered for a Guest exactly as for anyone else.
           Disabled only where §6 makes the context unusable — not because of

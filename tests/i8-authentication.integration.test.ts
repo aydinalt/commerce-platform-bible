@@ -15,6 +15,12 @@ import registerPage from "../apps/web/src/app/register/page";
 import { REFUSAL_COPY } from "../apps/web/src/identity/outcome";
 import { AUTH_ROUTES } from "../apps/web/src/identity/session";
 
+/// Login is a server component that resolves its search parameters, so a
+/// render in a test has to hand it the same promise Next would.
+const emptyParams = (): Promise<
+  Record<string, string | string[] | undefined>
+> => Promise.resolve({});
+
 const enabled = Boolean(process.env.DATABASE_URL);
 const suite = enabled ? describe : describe.skip;
 
@@ -347,9 +353,12 @@ suite("Increment I8 Authentication", () => {
     expect(session.adminContext).toBe(false);
   });
 
-  it("puts no secret in any page it renders", () => {
+  it("puts no secret in any page it renders", async () => {
+    // Login resolves its search parameters, so the element is awaited before
+    // it is rendered. UX-0009 §11.2 is why it reads them at all: an
+    // interrupted Direct Contact names where it resumes.
     const rendered = [
-      renderToStaticMarkup(loginPage()),
+      renderToStaticMarkup(await loginPage({ searchParams: emptyParams() })),
       renderToStaticMarkup(registerPage())
     ].join("");
 
@@ -361,8 +370,10 @@ suite("Increment I8 Authentication", () => {
     expect(rendered).not.toMatch(/type="password"[^>]*value=/u);
   });
 
-  it("offers recovery from Login without having to fail first", () => {
-    const rendered = renderToStaticMarkup(loginPage());
+  it("offers recovery from Login without having to fail first", async () => {
+    const rendered = renderToStaticMarkup(
+      await loginPage({ searchParams: emptyParams() })
+    );
 
     // §14 leaves somebody who failed able to retry *or* begin recovery. Making
     // the second route appear only after a failure would hide it from the
