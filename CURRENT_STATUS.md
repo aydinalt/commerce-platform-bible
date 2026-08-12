@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.17
-Last Updated: 2026-08-11
+Version:      2.18
+Last Updated: 2026-08-12
 -->
 
 # CURRENT STATUS
@@ -14,8 +14,8 @@ Last Updated: 2026-08-11
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I6 Business Management — closed |
-| Development | Identity baseline, the catalog and Offering write model, the publication-to-Discovery read path, the public web journey, the complete Compare-and-Decision journey through to its two Completions, and the Business owner's side — moderation, Dashboard, management entries and the bounded correction response — implemented |
+| Current phase | M12 Increment I7 Admin Operations — closed. All 50 Frozen Generated Stories implemented |
+| Development | Every Frozen Generated Story implemented: the Identity baseline, the catalog and Offering write model, the publication-to-Discovery read path, the public web journey, the Compare-and-Decision journey through to its two Completions, the Business owner's side, and the Admin side — Panel, moderation cases, all seven General Moderation actions, Affiliate Destination administration and Basic Analytics |
 | Delivery Status of all Frozen Stories | Not Started — implementation is recorded in closure records, and advancing any Delivery Status is a separate Owner decision |
 
 ## Canonical Layer Status
@@ -160,13 +160,32 @@ increment's organizing idea is that an offered entry is one the write path
 would honour: the Dashboard and the refusal read the same rule twice, and every
 entry is proven both ways — absent from the offer and refused by the route.
 
+## I7 Closure Evidence
+
+Eight Stories delivered across eight commits: `US-PLT-F01-001` through
+`US-PLT-F07-001` and `US-PLT-F10-001`. `US-PLT-F08-001` and `US-PLT-F09-001`
+were closed in I2. Two migrations, and a suite of 618 tests. Per-Story
+coverage, the delivery decisions and the deferrals are recorded in
+`docs/implementation/I7_ADMIN_OPERATIONS_CLOSURE.md`.
+
+Every Acceptance Criterion of all ten Platform Stories is covered, which closes
+the fiftieth and final Frozen Generated Story. The increment's organizing idea
+is that a moderation case is workflow and workflow is not any target's product
+state: opening, reviewing and closing a case move nothing, and the actions that
+do move something live in their own Stories under their own gates.
+
+Three corrections to existing code were made along the way and are recorded in
+that document — a case-matching bug that silently recorded no Offering action,
+a missing source-state requirement on Business moderation, and a composed
+eligibility that was enacted without being recorded.
+
 ## Remaining Work
 
-1. Begin I7 Admin Operations, starting with the seven-action General Moderation set in `US-PLT-F02-001`.
-2. Close `US-OFR-F02-001` AC-9 against the correction case `US-BUS-F07-001` introduced.
-3. Build the Business Dashboard surface; UX-0005 has no screen yet.
-4. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
-5. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
+1. Build the surfaces. The Business Dashboard (UX-0005), the Admin Dashboard (UX-0006) and the Decision flow beyond Compare (UX-0009) are complete as contracts and have no screens.
+2. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
+3. Select a Decision Chat assistant vendor and add its adapter.
+4. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
+5. Advance Delivery Status from `Not Started` where the Owner judges the recorded evidence sufficient — a separate decision from implementation.
 
 ## Known Boundaries
 
@@ -187,6 +206,10 @@ entry is proven both ways — absent from the offer and refused by the route.
 - Discovery results are unpaged. No Frozen Discovery Story specifies a page size, a cursor or a "load more" affordance, and `US-DSC-F07-001` AC-3 and AC-5 require a stable deterministic order that a guessed pagination scheme could contradict.
 - Discovery Starts are recorded but unread. PRD-0006 Basic Analytics is their only consumer and does not exist; the occurrences are captured now because they cannot be reconstructed afterwards.
 - Affiliate Destination Review, Validate, Enable and Disable are implemented as an Admin surface with Handoff Eligibility derived by a database biconditional over the authored pair, so no administration path can leave a changed destination eligible under an earlier validation. The Handoff itself belongs to `US-DEC-F05-001` in I5.
+- A moderation case may be opened by any Admin against any target. Surfacing something for review is deliberately the cheap, safe act, so the case list is as disciplined as the people using it.
+- An approved action is recorded against whatever Open case its target has, and against none where there is none. Moderation applied outside a case is a real situation and inventing a case for it would be worse — but an action taken while a case happened to be open is recorded against that case either way.
+- Basic Analytics bounds occurrences by period and current state by nothing. Three of six core-flow indicators carry a Domain; a Search Discovery Start with no selected leaf Category has none at all, so that breakdown does not sum to its total. The gap is the truth rather than a defect, and a reader who does not know it will misread the figures.
+- Admin authorization provisioning, and suspending or reinstating an Admin-authorized account, remain direct database operations reserved to the Product Owner. There is no route, parameter or flag that reaches either.
 - Business Public Exposure Input cannot be written directly. A trigger refuses any update that contradicts the moderation status, so exposure changes by moderating the Business and by nothing else.
 - Restriction is enforced per owner intent, and the intent is supplied by the calling route. The database cannot know what a caller is about to do, so this gate is code and tests rather than a constraint.
 - Only three of PRD-0006's seven General Moderation actions exist: Restrict, Restore and Request Correction. The rest, along with case re-review, approved action, no-action decision and closure, belong to I7 — the `closed_by` and `closed_at` columns are present and nothing writes them.
@@ -212,6 +235,7 @@ entry is proven both ways — absent from the offer and refused by the route.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.18 | 2026-08-12 | Closed I7: the Admin Panel, General Moderation case management, all seven moderation actions across Offering, Business and User Account targets, Request Correction with enforced re-review, Affiliate Destination administration with its derived workload, and Basic Analytics. Recorded three corrections to existing code and the boundaries of case opening and analytics Domain association. This closes the fiftieth and final Frozen Generated Story. Delivery Status unchanged. |
 | 2.17 | 2026-08-11 | Closed I6: Business moderation with exposure input bound to it in the datamodel, the Business Dashboard and context selection, the Offering and Affiliate Destination management entries, and the correction notice with its bounded correction-edit path. Recorded that restriction is enforced per owner intent and that only three of the seven General Moderation actions exist. Delivery Status unchanged. |
 | 2.16 | 2026-08-11 | Closed I5: the Comparison Set and Compare, the Decision Context, Decision Chat behind a vendorless port, explicit Offering selection, Affiliate Handoff, Direct Contact and the two Decision Completions. Recorded that the assistant has no vendor and that its invented-value guard is numeric only. Delivery Status unchanged. |
 | 2.15 | 2026-08-11 | Closed I4: the Homepage entry, Discovery Results and Listing Cards, the Offering Presentation handoff, complete public Offering Presentation with its `Offering Presentation Open` occurrence, and the Compare-preparation Discovery return. Recorded that Discovery criteria are carried in a transient cookie rather than the address, and that `US-OFR-F05-001` AC-3 waits on a governed Attribute grouping. Delivery Status unchanged. |
