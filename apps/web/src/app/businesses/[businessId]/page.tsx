@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { fetchDashboard } from "../../../business/api";
@@ -53,6 +54,16 @@ export default async function BusinessDashboardPage({
             : "This Business is Unrestricted."}
         </p>
       </header>
+
+      {/* §7. Managing Business Information is available whatever the
+          moderation status: `US-BUS-F03-001` AC-5 leaves it with the owner,
+          and a Restricted Business is often exactly the one that needs to
+          correct something. */}
+      <p>
+        <Link href={`/businesses/${business.id}/information`}>
+          Business information
+        </Link>
+      </p>
 
       <h2>Offerings</h2>
       {empty ? (
