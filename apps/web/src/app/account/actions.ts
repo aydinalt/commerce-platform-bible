@@ -48,5 +48,8 @@ export async function enterAdmin(): Promise<never> {
 
   const outcome = await enterAdminContext(session);
   if (outcome.status >= 400) redirect("/account?entry=refused");
-  redirect("/account");
+  // UX-0006 §5.1. Entering the context and arriving at the Dashboard are one
+  // act from the person's side, and the Dashboard re-evaluates all three entry
+  // conditions on arrival rather than trusting that this redirect happened.
+  redirect("/admin");
 }
