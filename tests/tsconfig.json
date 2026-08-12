@@ -4,10 +4,15 @@
     "baseUrl": "..",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    // The suite renders web components directly, so it has to understand JSX
+    // the same way the web application's own build does. Without this a page
+    // imported from `apps/web` resolves to an unusable type and every render
+    // in a test reads as an unchecked call.
+    "jsx": "react-jsx",
     "noEmit": true,
     "paths": {
       "@commerce/*": ["modules/*/src/index.ts", "packages/*/src/index.ts"]
     }
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "../apps/web/src/**/*.tsx"]
 }
