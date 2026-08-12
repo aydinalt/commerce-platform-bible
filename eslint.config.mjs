@@ -36,5 +36,21 @@ export default tseslint.config(
   {
     files: ["apps/web/**/*.{ts,tsx}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } }
+  },
+  {
+    rules: {
+      /*
+       * A leading underscore marks a parameter that exists because a signature
+       * requires it, not because the body wants it. React's `useActionState`
+       * hands every action a previous state and a form; an action that changes
+       * a lifecycle takes neither, and inventing a use for them would be worse
+       * than declaring them unused. The pattern is deliberately narrow: only
+       * arguments, and only ones named to say so.
+       */
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
+      ]
+    }
   }
 );

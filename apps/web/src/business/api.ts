@@ -46,6 +46,70 @@ export async function fetchDashboard(
 }
 
 /**
+ * One Offering action, sent to the route that owns it.
+ *
+ * Every action names its Business *and* its Offering in the address, so a
+ * request cannot arrive at a different Offering because a context moved
+ * somewhere else — UX-0005 §6.2's "never silently applies an action to another
+ * Business", made structural rather than remembered.
+ *
+ * Nothing here decides whether the action is permitted. `US-BUS-F05-001`
+ * already composed that from the two authorities the write path consults, and
+ * a second opinion in the browser would eventually be a different one.
+ */
+export async function actOnOffering(
+  session: string,
+  businessId: string,
+  offeringId: string,
+  action: "publication" | "retirement"
+): Promise<{ code: string; status: number }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/${action}`,
+    { cache: "no-store", headers: ownerHeaders(session), method: "POST" }
+  );
+  return { code: await codeOf(response), status: response.status };
+}
+
+export async function createOffering(
+  session: string,
+  businessId: string,
+  input: { categoryId: string; slug: string; title: string }
+): Promise<{ code: string; id: string | null; status: number }> {
+  const response = await fetch(
+    `${apiBaseUrl()}/businesses/${businessId}/offerings`,
+    {
+      body: JSON.stringify(input),
+      cache: "no-store",
+      headers: { ...ownerHeaders(session), "content-type": "application/json" },
+      method: "POST"
+    }
+  );
+  const text = await response.text();
+  const body = text === "" ? {} : (JSON.parse(text) as Record<string, unknown>);
+  return {
+    code: typeof body.code === "string" ? body.code : "",
+    id: typeof body.id === "string" ? body.id : null,
+    status: response.status
+  };
+}
+
+/**
+ * The refusal's own code, or an empty string.
+ *
+ * Read rather than inferred from the status, because two different refusals
+ * can share a status and mean different things to the person — a Restricted
+ * Business and an already-Archived Offering are both `409` and need different
+ * sentences.
+ */
+async function codeOf(response: Response): Promise<string> {
+  if (response.ok) return "";
+  const text = await response.text();
+  if (text === "") return "";
+  const body = JSON.parse(text) as Record<string, unknown>;
+  return typeof body.code === "string" ? body.code : "";
+}
+
+/**
  * The complete Business Information set (UX-0005 §7).
  *
  * It carries protected Direct Contact alongside public identity, which is what

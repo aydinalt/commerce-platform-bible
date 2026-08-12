@@ -6,6 +6,8 @@ import { fetchDashboard } from "../../../business/api";
 import { LIFECYCLE_GROUPS, offersCreate } from "../../../business/inventory";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import { logout } from "../../login/actions";
+import { createDraftOffering } from "./actions";
+import { CreateOffering } from "./create-offering";
 import { InventoryGroup } from "./inventory-group";
 
 /**
@@ -67,23 +69,24 @@ export default async function BusinessDashboardPage({
 
       <h2>Offerings</h2>
       {empty ? (
-        <p>
-          {/* §14. Create is offered where it is permitted and simply absent
-              where it is not — the emptiest screen is where an unavailable
-              action is most tempting to show and least honest. */}
-          {offersCreate(business.moderationStatus)
-            ? "You have no Offerings yet. You can create one."
-            : "You have no Offerings yet."}
-        </p>
+        <p>You have no Offerings yet.</p>
       ) : (
         LIFECYCLE_GROUPS.map((group) => (
           <InventoryGroup
+            businessId={business.id}
             group={group}
             key={group}
             offerings={inventory[group]}
           />
         ))
       )}
+
+      {/* §14. Create is present where it is permitted and simply absent where
+          it is not — the emptiest screen is where an unavailable action is
+          most tempting to show and least honest. */}
+      {offersCreate(business.moderationStatus) ? (
+        <CreateOffering action={createDraftOffering.bind(null, business.id)} />
+      ) : null}
 
       {/* §5.1. Logout is requested here and executed by UX-0008, which owns
           it wherever it is asked for. */}
