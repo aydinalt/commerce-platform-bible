@@ -1,8 +1,11 @@
 import {
   adminPanelSchema,
   analyticsSchema,
+  moderationCaseSchema,
+  moderationCasesSchema,
   type AdminPanel,
-  type Analytics
+  type Analytics,
+  type ModerationCase
 } from "@commerce/contracts";
 
 import { SESSION_COOKIE } from "../identity/api";
@@ -41,6 +44,66 @@ export async function fetchAdminPanel(
   });
   if (!response.ok) return null;
   return adminPanelSchema.parse(await response.json());
+}
+
+/**
+ * The case queue (§7).
+ *
+ * `status` filters the workflow and nothing else. A case carries no target
+ * state, so there is nothing else to filter by — and a filter that pretended
+ * otherwise would suggest cases and the things they concern are the same.
+ */
+export async function fetchModerationCases(
+  session: string,
+  status: "OPEN" | "CLOSED" | null
+): Promise<ModerationCase[] | null> {
+  const response = await fetch(
+    `${apiBaseUrl()}/admin/moderation-cases${status === null ? "" : `?status=${status}`}`,
+    { cache: "no-store", headers: adminHeaders(session) }
+  );
+  if (!response.ok) return null;
+  return moderationCasesSchema.parse(await response.json()).cases;
+}
+
+export async function fetchModerationCase(
+  session: string,
+  caseId: string
+): Promise<ModerationCase | null> {
+  const response = await fetch(
+    `${apiBaseUrl()}/admin/moderation-cases/${caseId}`,
+    { cache: "no-store", headers: adminHeaders(session) }
+  );
+  if (!response.ok) return null;
+  return moderationCaseSchema.parse(await response.json());
+}
+
+/**
+ * One write against the Admin surface.
+ *
+ * Deliberately general: the seven General Moderation actions live on seven
+ * different routes owned by the Stories that define their consequences, and
+ * this carries a request to whichever one the case named. It performs no
+ * transition itself and knows what none of them mean.
+ */
+export async function adminPost(
+  session: string,
+  path: string,
+  body?: unknown
+): Promise<{ body: unknown; status: number }> {
+  const response = await fetch(`${apiBaseUrl()}${path}`, {
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    cache: "no-store",
+    headers: {
+      ...adminHeaders(session),
+      ...(body === undefined ? {} : { "content-type": "application/json" })
+    },
+    method: "POST"
+  });
+  const text = await response.text();
+  return {
+    body: text === "" ? {} : (JSON.parse(text) as unknown),
+    status: response.status
+  };
 }
 
 /**
