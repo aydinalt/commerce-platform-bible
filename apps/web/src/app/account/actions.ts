@@ -27,7 +27,11 @@ export async function enterBusiness(form: FormData): Promise<never> {
   // A refusal leaves the person exactly where they were, with the context they
   // had. `US-BUS-F04-001` AC-11 keeps a failed switch from moving anything.
   if (outcome.status >= 400) redirect("/account?entry=refused");
-  redirect("/account");
+  // §8.2. UX-0008 hands UX-0005 the authenticated context and the exact
+  // selected Business, and UX-0005 re-evaluates its own entry conditions on
+  // arrival — which it does by naming the Business in the address rather than
+  // by reading whichever context happens to be selected.
+  redirect(`/businesses/${businessId}`);
 }
 
 /**
