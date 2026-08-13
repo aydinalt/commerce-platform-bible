@@ -6,6 +6,7 @@ import { fetchAdminPanel, fetchAnalytics } from "../../platform/api";
 import {
   ACTIONABLE_HEADING,
   ANALYTICS_UNAVAILABLE,
+  FUNCTION_HREFS,
   FUNCTION_LABELS,
   NO_DESTINATION_WORKLOAD,
   NO_OPEN_CASES,
@@ -102,7 +103,17 @@ export default async function AdminDashboardPage({
         <h2 id="functions">What you can do here</h2>
         <ul>
           {panel.functions.map((entry) => (
-            <li key={entry}>{FUNCTION_LABELS[entry]}</li>
+            <li key={entry}>
+              {/* Linked where the function has a place of its own; named
+                  where it is something done to a target you arrived at. */}
+              {FUNCTION_HREFS[entry] === null ? (
+                FUNCTION_LABELS[entry]
+              ) : (
+                <Link href={FUNCTION_HREFS[entry]}>
+                  {FUNCTION_LABELS[entry]}
+                </Link>
+              )}
+            </li>
           ))}
         </ul>
       </section>

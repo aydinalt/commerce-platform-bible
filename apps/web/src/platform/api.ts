@@ -1,11 +1,15 @@
 import {
   adminPanelSchema,
   analyticsSchema,
+  attributesSchema,
+  categoriesSchema,
   destinationWorkloadSchema,
   moderationCaseSchema,
   moderationCasesSchema,
   type AdminPanel,
   type Analytics,
+  type AttributeResponse,
+  type CategoryResponse,
   type DestinationWorkloadItem,
   type ModerationCase
 } from "@commerce/contracts";
@@ -95,6 +99,57 @@ export async function fetchDestinationWorkload(
   );
   if (!response.ok) return null;
   return destinationWorkloadSchema.parse(await response.json()).items;
+}
+
+/// The Category tree (§10). Every Category, active and retired: retirement is
+/// not deletion, and an Admin managing the catalogue has to see both.
+export async function fetchCategories(
+  session: string
+): Promise<CategoryResponse[] | null> {
+  const response = await fetch(`${apiBaseUrl()}/admin/categories`, {
+    cache: "no-store",
+    headers: adminHeaders(session)
+  });
+  if (!response.ok) return null;
+  return categoriesSchema.parse(await response.json()).categories;
+}
+
+/// Every Attribute definition (§11), with its applicable Categories and its
+/// allowed values.
+export async function fetchAttributes(
+  session: string
+): Promise<AttributeResponse[] | null> {
+  const response = await fetch(`${apiBaseUrl()}/admin/attributes`, {
+    cache: "no-store",
+    headers: adminHeaders(session)
+  });
+  if (!response.ok) return null;
+  return attributesSchema.parse(await response.json()).attributes;
+}
+
+/**
+ * One write against the Admin surface, by `PUT`.
+ *
+ * Category rename and reparent, and every Attribute property, are statements
+ * of what something *is* rather than acts performed on it — so they are `PUT`s
+ * and share one carrier with `adminPost`'s counterpart below.
+ */
+export async function adminPut(
+  session: string,
+  path: string,
+  body: unknown
+): Promise<{ body: unknown; status: number }> {
+  const response = await fetch(`${apiBaseUrl()}${path}`, {
+    body: JSON.stringify(body),
+    cache: "no-store",
+    headers: { ...adminHeaders(session), "content-type": "application/json" },
+    method: "PUT"
+  });
+  const text = await response.text();
+  return {
+    body: text === "" ? {} : (JSON.parse(text) as unknown),
+    status: response.status
+  };
 }
 
 /**

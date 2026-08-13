@@ -42,6 +42,26 @@ export const FUNCTION_LABELS: Record<PanelFunction, string> = {
  * answer the question an Admin actually has: is this happening now, this week,
  * this month, or at all.
  */
+/**
+ * Where a Panel function is worked, where one exists.
+ *
+ * `null` for the functions that are performed inside a case or a Business
+ * rather than at an address of their own — moderating an Offering is something
+ * you do to a target you arrived at, not a place you go. A link to a page that
+ * would have to ask "which one?" would be a worse answer than none.
+ */
+export const FUNCTION_HREFS: Record<PanelFunction, string | null> = {
+  ADMINISTER_AFFILIATE_DESTINATIONS: "/admin/destinations",
+  MANAGE_ATTRIBUTE_DEFINITIONS: "/admin/attributes",
+  MANAGE_CATEGORIES: "/admin/categories",
+  MANAGE_MODERATION_CASES: "/admin/moderation-cases",
+  MODERATE_BUSINESSES: null,
+  MODERATE_OFFERINGS: null,
+  MODERATE_USER_ACCESS: null,
+  READ_OFFERING_HISTORY: null,
+  REQUEST_CORRECTION: null
+};
+
 export const PERIODS: readonly Period[] = [
   "TODAY",
   "LAST_7_DAYS",
