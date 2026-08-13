@@ -1,10 +1,12 @@
 import {
   adminPanelSchema,
   analyticsSchema,
+  destinationWorkloadSchema,
   moderationCaseSchema,
   moderationCasesSchema,
   type AdminPanel,
   type Analytics,
+  type DestinationWorkloadItem,
   type ModerationCase
 } from "@commerce/contracts";
 
@@ -75,6 +77,24 @@ export async function fetchModerationCase(
   );
   if (!response.ok) return null;
   return moderationCaseSchema.parse(await response.json());
+}
+
+/**
+ * The Affiliate Destination workload (§9).
+ *
+ * On the collection rather than under one Offering, because the question it
+ * answers is "what is waiting for me" rather than "what about this one". A
+ * read: looking at the queue moves nothing in it.
+ */
+export async function fetchDestinationWorkload(
+  session: string
+): Promise<DestinationWorkloadItem[] | null> {
+  const response = await fetch(
+    `${apiBaseUrl()}/admin/offerings/affiliate-destinations/workload`,
+    { cache: "no-store", headers: adminHeaders(session) }
+  );
+  if (!response.ok) return null;
+  return destinationWorkloadSchema.parse(await response.json()).items;
 }
 
 /**
