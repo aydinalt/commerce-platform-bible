@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.18
-Last Updated: 2026-08-12
+Version:      2.19
+Last Updated: 2026-08-14
 -->
 
 # CURRENT STATUS
@@ -14,8 +14,8 @@ Last Updated: 2026-08-12
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I7 Admin Operations — closed. All 50 Frozen Generated Stories implemented |
-| Development | Every Frozen Generated Story implemented: the Identity baseline, the catalog and Offering write model, the publication-to-Discovery read path, the public web journey, the Compare-and-Decision journey through to its two Completions, the Business owner's side, and the Admin side — Panel, moderation cases, all seven General Moderation actions, Affiliate Destination administration and Basic Analytics |
+| Current phase | M12 Increment I8 Experience Surfaces — closed. Every Frozen Generated Story and every Frozen UX document implemented |
+| Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-one routes, none of which composes an availability rule of its own |
 | Delivery Status of all Frozen Stories | Not Started — implementation is recorded in closure records, and advancing any Delivery Status is a separate Owner decision |
 
 ## Canonical Layer Status
@@ -160,6 +160,23 @@ increment's organizing idea is that an offered entry is one the write path
 would honour: the Dashboard and the refusal read the same rule twice, and every
 entry is proven both ways — absent from the offer and refused by the route.
 
+## I8 Closure Evidence
+
+Nine Frozen UX documents delivered across thirteen commits and thirteen test
+files, ending on a suite of 722 tests. UX-0001 through UX-0004 were surfaced in
+I4 and I5; I8 adds UX-0005, UX-0006, UX-0008 and UX-0009 and wires the Decision
+entries of the earlier ones to a live flow. UX-0007 Messaging is not in V1, and
+two screens state its absence where a message box would otherwise be invented.
+The delivery decisions, the recorded gaps and the deferrals are in
+`docs/implementation/I8_EXPERIENCE_SURFACES_CLOSURE.md`.
+
+The increment's organizing idea is that a screen offers what the write path
+would honour, because both read the same answer. No page holds an availability
+rule; where one seemed necessary, the API was made to say it instead — the
+owner's Offering read now carries its Category's applicable Attributes, and the
+Decision Context now says whether an Affiliate path exists. Both are answered by
+the same conjunction the corresponding write enforces.
+
 ## I7 Closure Evidence
 
 Eight Stories delivered across eight commits: `US-PLT-F01-001` through
@@ -235,6 +252,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.19 | 2026-08-14 | Closed I8: every Frozen UX document now has a surface — authentication and context entry, the Business Dashboard with Offering actions, editing, correction notices, the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard with moderation cases, destination administration, Category and Attribute management and Basic Analytics. Added two API answers so that no screen composes an availability rule, and recorded three gaps where a screen can only be as honest as the read it was given. Delivery Status unchanged. |
 | 2.18 | 2026-08-12 | Closed I7: the Admin Panel, General Moderation case management, all seven moderation actions across Offering, Business and User Account targets, Request Correction with enforced re-review, Affiliate Destination administration with its derived workload, and Basic Analytics. Recorded three corrections to existing code and the boundaries of case opening and analytics Domain association. This closes the fiftieth and final Frozen Generated Story. Delivery Status unchanged. |
 | 2.17 | 2026-08-11 | Closed I6: Business moderation with exposure input bound to it in the datamodel, the Business Dashboard and context selection, the Offering and Affiliate Destination management entries, and the correction notice with its bounded correction-edit path. Recorded that restriction is enforced per owner intent and that only three of the seven General Moderation actions exist. Delivery Status unchanged. |
 | 2.16 | 2026-08-11 | Closed I5: the Comparison Set and Compare, the Decision Context, Decision Chat behind a vendorless port, explicit Offering selection, Affiliate Handoff, Direct Contact and the two Decision Completions. Recorded that the assistant has no vendor and that its invented-value guard is numeric only. Delivery Status unchanged. |
