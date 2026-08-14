@@ -1,9 +1,11 @@
 import {
+  assignableCategoriesSchema,
   businessDashboardSchema,
   businessInformationSchema,
   correctionNoticesSchema,
   destinationManagementEntrySchema,
   editableOfferingContentSchema,
+  type AssignableCategory,
   type AuthorAffiliateDestination,
   type BusinessDashboardResponse,
   type BusinessInformationResponse,
@@ -71,12 +73,13 @@ export async function actOnOffering(
   businessId: string,
   offeringId: string,
   action: "publication" | "retirement"
-): Promise<{ code: string; status: number }> {
+): Promise<{ code: string; shortfalls: string[]; status: number }> {
   const response = await fetch(
     `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/${action}`,
     { cache: "no-store", headers: ownerHeaders(session), method: "POST" }
   );
-  return { code: await codeOf(response), status: response.status };
+  const refusal = await refusalOf(response);
+  return { ...refusal, status: response.status };
 }
 
 export async function createOffering(
@@ -103,19 +106,54 @@ export async function createOffering(
 }
 
 /**
- * The refusal's own code, or an empty string.
+ * The refusal's own code and, where it published them, its shortfalls.
  *
- * Read rather than inferred from the status, because two different refusals
- * can share a status and mean different things to the person — a Restricted
- * Business and an already-Archived Offering are both `409` and need different
- * sentences.
+ * The code is read rather than inferred from the status, because two different
+ * refusals can share a status and mean different things to the person — a
+ * Restricted Business and an already-Archived Offering are both `409` and need
+ * different sentences.
+ *
+ * `fieldErrors.publicationMinimum` carries the Universal Publication Minimum's
+ * own shortfall list. Relaying it is not redefining the minimum — it is the
+ * opposite: the platform decided which conditions failed, and this hands its
+ * answer on rather than the screen composing one.
  */
-async function codeOf(response: Response): Promise<string> {
-  if (response.ok) return "";
+async function refusalOf(
+  response: Response
+): Promise<{ code: string; shortfalls: string[] }> {
+  if (response.ok) return { code: "", shortfalls: [] };
   const text = await response.text();
-  if (text === "") return "";
-  const body = JSON.parse(text) as Record<string, unknown>;
-  return typeof body.code === "string" ? body.code : "";
+  if (text === "") return { code: "", shortfalls: [] };
+  const body = JSON.parse(text) as {
+    code?: unknown;
+    fieldErrors?: Record<string, unknown>;
+  };
+  const published = body.fieldErrors?.publicationMinimum;
+  return {
+    code: typeof body.code === "string" ? body.code : "",
+    shortfalls: Array.isArray(published)
+      ? published.filter((entry): entry is string => typeof entry === "string")
+      : []
+  };
+}
+
+/**
+ * Where an Offering could be put (UX-0005 §9, `US-OFR-F01-001` AC-4).
+ *
+ * Public, like the catalogue it comes from, so it carries no session. The list
+ * is the same predicate creation enforces, which is the point: a Category the
+ * picker offers is one creation would accept, and this is what replaces asking
+ * somebody to find an identifier somewhere else and type it.
+ */
+export async function fetchAssignableCategories(): Promise<
+  AssignableCategory[] | null
+> {
+  const response = await fetch(`${apiBaseUrl()}/categories/assignable`, {
+    cache: "no-store",
+    headers: { accept: "application/json" }
+  });
+  if (!response.ok) return null;
+  return assignableCategoriesSchema.parse(await response.json()).categories;
 }
 
 /**

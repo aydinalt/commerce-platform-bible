@@ -13,6 +13,7 @@ import {
   REPAIR_COPY,
   REPAIR_HREF,
   SELECTED,
+  SELECTION_LOST,
   SELECT_ONE,
   SELECT_PROMPT
 } from "../../decision/copy";
@@ -157,6 +158,11 @@ export default async function DecisionPage() {
             })}
           </ul>
         )}
+        {/* §16. Said only where the platform knows it happened: something was
+            chosen and stopped being eligible. Both halves are stated — the
+            selection is gone, and nothing was completed — because the second
+            is the one somebody would otherwise assume. */}
+        {context.selectionLost ? <p role="status">{SELECTION_LOST}</p> : null}
         {context.selected === null && members.length > 0 ? (
           <p>{SELECT_PROMPT}</p>
         ) : null}

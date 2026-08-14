@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import type { AssignableCategory } from "@commerce/contracts";
+
 import {
   ACTION_IDLE,
   type ActionState
@@ -15,15 +17,19 @@ import {
  * action to be *absent* where it is unavailable rather than shown disabled,
  * and a Restricted owner never reaches this form.
  *
- * The Category is typed rather than chosen from a list, which is a real gap:
- * `US-DSC-F02-001`'s Category tree exists and the picker that would use it is
- * not built yet. An identifier a person has to find elsewhere is honest about
- * being unfinished in a way a broken picker would not be.
+ * The Category is chosen from the Categories an Offering may currently be
+ * assigned to — the same predicate creation enforces, so a choice offered here
+ * is one creation would accept. Each is shown by its whole path, because two
+ * Categories may share a leaf name in different parts of the catalogue and a
+ * list of bare names would ask somebody to choose between two identical
+ * options.
  */
 export function CreateOffering({
-  action
+  action,
+  categories
 }: {
   action: (previous: ActionState, form: FormData) => Promise<ActionState>;
+  categories: readonly AssignableCategory[];
 }) {
   const [state, dispatch, pending] = useActionState(action, ACTION_IDLE);
   const fields = state.kind === "INVALID" ? state.fields : {};
@@ -62,14 +68,19 @@ export function CreateOffering({
         </p>
 
         <p>
-          <label htmlFor="categoryId">Category identifier</label>
-          <input
+          <label htmlFor="categoryId">Category</label>
+          <select
             aria-invalid={fields.categoryId ? true : undefined}
             id="categoryId"
             name="categoryId"
             required
-            type="text"
-          />
+          >
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.path.join(" › ")}
+              </option>
+            ))}
+          </select>
           {fields.categoryId ? (
             <span role="alert">{fields.categoryId.join(" ")}</span>
           ) : null}

@@ -683,6 +683,11 @@ const document = {
               { type: "null" }
             ]
           },
+          selectionLost: {
+            description:
+              "Whether a selection was made and has stopped being usable. `selected` alone cannot say this: nothing chosen yet and something chosen that fell away both read as null. It says nothing about Completion — a selection falling away produces none.",
+            type: "boolean"
+          },
           valid: { type: "boolean" }
         },
         required: [
@@ -694,6 +699,7 @@ const document = {
           "offering",
           "repairs",
           "selected",
+          "selectionLost",
           "valid"
         ],
         type: "object"
@@ -1243,6 +1249,37 @@ const document = {
         properties: {
           categories: {
             items: { $ref: "#/components/schemas/Category" },
+            type: "array"
+          }
+        },
+        required: ["categories"],
+        type: "object"
+      },
+      AssignableCategories: {
+        additionalProperties: false,
+        description:
+          "Every Category an Offering may be assigned to right now: active, with no active child. The same predicate creation enforces, asked as a question — so a Category listed here is one creation would accept.",
+        properties: {
+          categories: {
+            items: {
+              additionalProperties: false,
+              properties: {
+                domain: {
+                  enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+                  type: "string"
+                },
+                id: { format: "uuid", type: "string" },
+                name: { type: "string" },
+                path: {
+                  description:
+                    "The whole ancestry, root first. Two Categories may share a leaf name in different parts of the catalogue.",
+                  items: { type: "string" },
+                  type: "array"
+                }
+              },
+              required: ["domain", "id", "name", "path"],
+              type: "object"
+            },
             type: "array"
           }
         },
@@ -2958,6 +2995,24 @@ const document = {
           "422": errorResponse("It is the last allowed value")
         },
         tags: ["Platform"]
+      }
+    },
+    "/api/v1/categories/assignable": {
+      get: {
+        description:
+          "Every Category an Offering may currently be assigned to, each with its whole path. Public, like the catalogue it comes from: it answers where an Offering could go, which Browse already answers publicly.",
+        operationId: "listAssignableCategories",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AssignableCategories" }
+              }
+            },
+            description: "Assignable Categories"
+          }
+        },
+        tags: ["Catalog"]
       }
     },
     "/api/v1/admin/categories": {

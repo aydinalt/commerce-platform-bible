@@ -509,6 +509,17 @@ export class PgDecisionRepository implements OnModuleDestroy {
         ? []
         : contextRepairs({ hasComparisonSet: flow.comparisonSetId !== null }),
       selected,
+      /*
+       * UX-0009 §16. The column still holds an identifier and the Offering no
+       * longer resolves — which is exactly "something was chosen and has
+       * stopped being eligible", and is a different state from never having
+       * chosen. Both were already known here; only one of them was published.
+       *
+       * The removal case is cleared by the database, so it does not reach
+       * this: a member removed from a Comparison Set leaves the column null
+       * and the person sees the ordinary prompt to choose again.
+       */
+      selectionLost: flow.selectedOfferingId !== null && selected === null,
       valid
     };
   }

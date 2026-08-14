@@ -51,7 +51,10 @@ export async function publishOffering(
     return {
       code: outcome.code,
       kind: "REFUSED",
-      message: refusalMessage(outcome.code)
+      message: refusalMessage(outcome.code),
+      // §9's "validation feedback without redefining the minimum": the
+      // platform decided which conditions failed, and this carries its answer.
+      shortfalls: outcome.shortfalls
     };
   return { kind: "DONE" };
 }
@@ -83,7 +86,8 @@ export async function retireOffering(
     return {
       code: outcome.code,
       kind: "REFUSED",
-      message: refusalMessage(outcome.code)
+      message: refusalMessage(outcome.code),
+      shortfalls: outcome.shortfalls
     };
   return { kind: "DONE" };
 }
@@ -124,7 +128,10 @@ export async function createDraftOffering(
     return {
       code: outcome.code,
       kind: "REFUSED",
-      message: refusalMessage(outcome.code)
+      message: refusalMessage(outcome.code),
+      // Creation cannot fail the publication minimum — a Draft is not held to
+      // it — so there is never a shortfall to carry here.
+      shortfalls: []
     };
   return { kind: "DONE" };
 }

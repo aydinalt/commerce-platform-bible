@@ -6,6 +6,7 @@ import type { EditableOfferingContent } from "@commerce/contracts";
 
 import {
   ACTION_IDLE,
+  shortfallMessages,
   type ActionState
 } from "../../../../../business/action-outcome";
 import { CONTENT_AREA_COPY } from "../../../../../business/corrections";
@@ -141,7 +142,20 @@ export function CorrectionForm({
         <button type="submit">{pending ? "Saving…" : "Save"}</button>
       </fieldset>
 
-      {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
+      {state.kind === "REFUSED" ? (
+        <div role="alert">
+          <p>{state.message}</p>
+          {/* The conditions the platform named, relayed rather than composed.
+              Absent for every refusal that published none. */}
+          {state.shortfalls.length === 0 ? null : (
+            <ul>
+              {shortfallMessages(state.shortfalls).map((sentence) => (
+                <li key={sentence}>{sentence}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
       {/* §11. Saved, and still open — said in the same breath, because the two
           facts are true at the same time and separating them is how a person
           comes to believe the second one is not true. */}

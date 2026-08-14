@@ -2,7 +2,11 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { fetchCorrectionNotices, fetchDashboard } from "../../../business/api";
+import {
+  fetchAssignableCategories,
+  fetchCorrectionNotices,
+  fetchDashboard
+} from "../../../business/api";
 import { LIFECYCLE_GROUPS, offersCreate } from "../../../business/inventory";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import { logout } from "../../login/actions";
@@ -34,9 +38,10 @@ export default async function BusinessDashboardPage({
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const [dashboard, notices] = await Promise.all([
+  const [dashboard, notices, categories] = await Promise.all([
     fetchDashboard(session, businessId),
-    fetchCorrectionNotices(session, businessId)
+    fetchCorrectionNotices(session, businessId),
+    fetchAssignableCategories()
   ]);
   if (dashboard === null) notFound();
 
@@ -98,8 +103,17 @@ export default async function BusinessDashboardPage({
       {/* §14. Create is present where it is permitted and simply absent where
           it is not — the emptiest screen is where an unavailable action is
           most tempting to show and least honest. */}
-      {offersCreate(business.moderationStatus) ? (
-        <CreateOffering action={createDraftOffering.bind(null, business.id)} />
+      {/* Creation needs somewhere to put the Offering. Where the catalogue
+          could not be read, or offers nothing assignable, the form is absent
+          rather than shown with an empty list — a picker with no options is a
+          dead end dressed as a choice. */}
+      {offersCreate(business.moderationStatus) &&
+      categories !== null &&
+      categories.length > 0 ? (
+        <CreateOffering
+          action={createDraftOffering.bind(null, business.id)}
+          categories={categories}
+        />
       ) : null}
 
       {/* §5.1. Logout is requested here and executed by UX-0008, which owns

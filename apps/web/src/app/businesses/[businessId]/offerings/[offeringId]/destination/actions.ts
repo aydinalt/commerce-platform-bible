@@ -61,7 +61,8 @@ export async function saveDestinationReference(
     return {
       code: "DESTINATION_NOT_MANAGEABLE",
       kind: "REFUSED",
-      message: refusalMessage("DESTINATION_NOT_MANAGEABLE")
+      message: refusalMessage("DESTINATION_NOT_MANAGEABLE"),
+      shortfalls: []
     };
 
   const outcome = await saveDestination(
@@ -77,7 +78,14 @@ export async function saveDestinationReference(
   if (outcome.status >= 400) {
     const body = outcome.body as { code?: unknown };
     const code = typeof body.code === "string" ? body.code : "";
-    return { code, kind: "REFUSED", message: refusalMessage(code) };
+    // A destination refusal is never about the publication minimum, so there
+    // is nothing to explain beyond the sentence itself.
+    return {
+      code,
+      kind: "REFUSED",
+      message: refusalMessage(code),
+      shortfalls: []
+    };
   }
   return { kind: "DONE" };
 }

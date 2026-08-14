@@ -50,6 +50,54 @@ export class PgCatalogRepository implements OnModuleDestroy {
   }
 
   /**
+   * Every Category an Offering may be assigned to right now
+   * (`US-OFR-F01-001` AC-4).
+   *
+   * The predicate is the one `assertAssignable` enforces on creation — active,
+   * and with no active child — asked as a question rather than as a refusal.
+   * Written out here rather than shared as a function because the two are
+   * different shapes of the same sentence: one locks a row and throws, this one
+   * scans and lists. What must not drift is the condition, and a test compares
+   * this list against what creation actually accepts.
+   *
+   * The path is the full ancestry, root first. Two Categories may share a leaf
+   * name in different parts of the catalogue, and a picker of bare names would
+   * ask somebody to choose between two identical options.
+   */
+  async assignable(): Promise<
+    { domain: string; id: string; name: string; path: string[] }[]
+  > {
+    const result = await this.pool.query<{
+      domain: string;
+      id: string;
+      name: string;
+      path: string[];
+    }>(
+      `with recursive walk as (
+         select c.id as leaf_id, c.id, c.parent_id, c.name, 0 as depth
+         from category c
+         where c.active = true
+           and not exists (
+             select 1 from category child
+             where child.parent_id = c.id and child.active = true
+           )
+         union all
+         select walk.leaf_id, parent.id, parent.parent_id, parent.name,
+           walk.depth + 1
+         from category parent join walk on walk.parent_id = parent.id
+       )
+       select leaf.id, leaf.name, d.stable_key as domain,
+         array_agg(walk.name order by walk.depth desc) as path
+       from category leaf
+       join walk on walk.leaf_id = leaf.id
+       join domain d on d.id = leaf.domain_id
+       group by leaf.id, leaf.name, d.stable_key
+       order by d.stable_key, path`
+    );
+    return result.rows;
+  }
+
+  /**
    * A root Category names exactly one V1 Domain (AC-1, AC-6). The Domain is
    * resolved from its stable key inside the insert, so an unknown Domain
    * inserts nothing rather than defaulting to something.

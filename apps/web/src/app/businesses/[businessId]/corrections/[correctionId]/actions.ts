@@ -73,9 +73,20 @@ export async function saveCorrectionResponse(
   revalidatePath(`/businesses/${businessId}/corrections/${correctionId}`);
   revalidatePath(`/businesses/${businessId}`);
   if (outcome.status >= 400) {
-    const body = outcome.body as { code?: unknown };
+    const body = outcome.body as {
+      code?: unknown;
+      fieldErrors?: Record<string, unknown>;
+    };
     const code = typeof body.code === "string" ? body.code : "";
-    return { code, kind: "REFUSED", message: correctionRefusalMessage(code) };
+    const published = body.fieldErrors?.publicationMinimum;
+    return {
+      code,
+      kind: "REFUSED",
+      message: correctionRefusalMessage(code),
+      shortfalls: Array.isArray(published)
+        ? published.filter((e): e is string => typeof e === "string")
+        : []
+    };
   }
   return { kind: "DONE" };
 }

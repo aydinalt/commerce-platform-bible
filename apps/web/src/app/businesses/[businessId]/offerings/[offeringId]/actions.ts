@@ -48,7 +48,8 @@ export async function saveOffering(
     return {
       code: "OFFERING_NOT_FOUND",
       kind: "REFUSED",
-      message: editRefusalMessage("OFFERING_NOT_FOUND")
+      message: editRefusalMessage("OFFERING_NOT_FOUND"),
+      shortfalls: []
     };
 
   const parsed = editOfferingSchema.safeParse({
@@ -76,9 +77,23 @@ export async function saveOffering(
   revalidatePath(`/businesses/${businessId}/offerings/${offeringId}`);
   revalidatePath(`/businesses/${businessId}`);
   if (outcome.status >= 400) {
-    const body = outcome.body as { code?: unknown; fieldErrors?: unknown };
+    const body = outcome.body as {
+      code?: unknown;
+      fieldErrors?: Record<string, unknown>;
+    };
     const code = typeof body.code === "string" ? body.code : "";
-    return { code, kind: "REFUSED", message: editRefusalMessage(code) };
+    const published = body.fieldErrors?.publicationMinimum;
+    // The same shortfall list the publication refusal carries. A save that
+    // would leave a Published Offering incomplete is refused for named
+    // reasons, and the person is owed them.
+    return {
+      code,
+      kind: "REFUSED",
+      message: editRefusalMessage(code),
+      shortfalls: Array.isArray(published)
+        ? published.filter((e): e is string => typeof e === "string")
+        : []
+    };
   }
   return { kind: "DONE" };
 }

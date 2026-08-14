@@ -88,17 +88,15 @@ export const SELECTED = "Seçildi";
 export const CLEAR_SELECTION = "Seçimi kaldırın";
 
 /**
- * §16, "Selection becomes ineligible" — and a recorded gap.
+ * §16, "Selection becomes ineligible".
  *
- * The context read says what is selected now; it does not say that something
- * *was* selected and stopped being eligible. So this screen cannot tell that
- * case apart from "nothing has been selected yet", and a sentence claiming the
- * first would sometimes be false. The person is asked to select, which is true
- * in both cases, and no Completion is claimed anywhere — which is the half of
- * §16 that matters most and is kept.
+ * Shown only where `selectionLost` says so. The context distinguishes "nothing
+ * chosen yet" from "something chosen that fell away", so this sentence is
+ * never guessed — a screen that inferred it would sometimes tell somebody
+ * their choice was withdrawn when they never made one.
  *
- * Closing the gap properly means the context saying so, and that belongs to
- * `US-DEC-F04-001` rather than to this file inferring it.
+ * Both halves are stated. The second is the one somebody would otherwise
+ * assume: a handoff they were about to take did not quietly happen.
  */
 export const SELECTION_LOST =
   "Seçtiğiniz ilan artık uygun değil, bu yüzden seçim kaldırıldı. Hiçbir işlem tamamlanmadı.";

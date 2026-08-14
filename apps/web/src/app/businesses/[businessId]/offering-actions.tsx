@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import {
   ACTION_IDLE,
+  shortfallMessages,
   type ActionState
 } from "../../../business/action-outcome";
 
@@ -34,7 +35,20 @@ export function OfferingAction({
       {/* §15. A refusal says what did not happen. It never says the Offering
           moved, because it did not — the message is the API's own reason,
           repeated rather than reinterpreted. */}
-      {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
+      {state.kind === "REFUSED" ? (
+        <div role="alert">
+          <p>{state.message}</p>
+          {/* The conditions the platform named, relayed rather than composed.
+              Absent for every refusal that published none. */}
+          {state.shortfalls.length === 0 ? null : (
+            <ul>
+              {shortfallMessages(state.shortfalls).map((sentence) => (
+                <li key={sentence}>{sentence}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
     </form>
   );
 }

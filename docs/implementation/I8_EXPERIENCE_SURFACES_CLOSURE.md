@@ -4,7 +4,7 @@
 - **Status:** Draft — awaiting Owner acceptance
 - **Maintenance Mode:** Living
 - **Version:** 0.1
-- **Last Updated:** 2026-08-14
+- **Last Updated:** 2026-08-14 (amended after the recorded gaps were closed)
 - **Scope:** Implementation record only. No Frozen Story is edited and no Delivery Status changes.
 
 ## What this increment delivered
@@ -62,26 +62,32 @@ second opinion grow in the browser.
 
 ## Where the guarantees are weaker than they look
 
-**A screen can only be as honest as the read it was given.** Three gaps are
+**A screen can only be as honest as the read it was given.** One gap is
 load-bearing and recorded in the code:
 
-- The Decision Context says what is selected now, not that something *was*
-  selected and stopped being eligible. So UX-0009 §16's sentence for that case
-  is not shown — it would sometimes be false. No Completion is claimed either
-  way, which is the half of §16 that matters.
 - `applicableAttributes` carries active options only, because those are the ones
   a save may choose. An Offering holding a since-retired option therefore has a
   value the form cannot offer back, and the next save drops it. The screen names
   the value rather than rendering an empty cell, but the loss is real and
   belongs to the write path.
-- The API's error envelope publishes a code and a message and drops the rest, so
-  a publication-minimum refusal cannot say *which* condition failed. The person
-  is told what to do next, not exactly what is missing.
 
-**The Offering create form takes a Category identifier as text.** The Category
-tree exists and the picker that would use it does not. An identifier somebody
-has to find elsewhere is honest about being unfinished in a way a broken picker
-would not be.
+Three others were recorded here and have since been closed. Two were the same
+mistake in different places — the platform knew something and had not published
+it — and the third was an error in this record:
+
+- The Decision Context now carries `selectionLost`, so UX-0009 §16's sentence
+  is shown where it is true and nowhere else. It was always derivable: the flow
+  still held the identifier while the Offering no longer resolved.
+- The Offering create form now offers the Categories an Offering may be
+  assigned to, read through the same predicate creation enforces. It took a
+  typed identifier before.
+- **This record claimed the error envelope drops everything but a code and a
+  message. That was wrong.** The envelope has always carried `fieldErrors`, and
+  the publication path was already publishing the Universal Publication
+  Minimum's shortfalls there. The web client was discarding them, and the
+  bounded correction path was sending its own shortfalls at the top level where
+  the envelope could not carry them. Both are fixed; the shortfalls now reach
+  the person in the platform's own terms.
 
 **Every "the screen offers what the write path honours" claim rests on the API
 composing correctly.** The web application checks nothing twice on purpose,
@@ -94,7 +100,6 @@ tested where they are.
 
 | Item | Reason |
 |---|---|
-| Category picker on Offering create | Needs `US-DSC-F02-001`'s tree in a selection control. Deferred rather than approximated |
 | Attribute value-kind change from the Admin screen | Recorded above. Belongs to a screen that can say when it would work |
 | Any visual design | Every surface is semantic HTML with no styling beyond the existing stylesheet. UX documents specify behaviour, not appearance, and inventing appearance would put decisions in code that no document owns |
 | Outbound email vendor adapter | The port exists and the development adapter refuses to construct in production. Choosing a vendor is an Owner decision |

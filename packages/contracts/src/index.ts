@@ -979,6 +979,43 @@ export const categoriesSchema = z
   .strict();
 
 /**
+ * One Category an Offering may currently be assigned to
+ * (`US-OFR-F01-001` AC-4).
+ *
+ * A narrower thing than `categorySchema`, and narrower on purpose: an owner
+ * choosing where an Offering belongs needs to recognise the place, not to
+ * inspect its identity. `parentId` and `slug` are absent because a picker that
+ * exposed them would invite something other than picking.
+ *
+ * `path` is the whole ancestry, root first. Two Categories may share a leaf
+ * name in different parts of the catalogue, and a list of bare names would ask
+ * somebody to choose between two identical options.
+ */
+export const assignableCategorySchema = z
+  .object({
+    domain: z.enum(V1_DOMAINS),
+    id: z.string().uuid(),
+    name: z.string(),
+    path: z.array(z.string())
+  })
+  .strict();
+
+/**
+ * Every Category an Offering may be assigned to right now.
+ *
+ * The list is the same predicate the write path enforces — active, with no
+ * active child — asked as a question instead of as a refusal. So a Category
+ * offered here is one creation would accept, and one missing is one it would
+ * have refused.
+ */
+export const assignableCategoriesSchema = z
+  .object({ categories: z.array(assignableCategorySchema) })
+  .strict();
+
+export type AssignableCategory = z.infer<typeof assignableCategorySchema>;
+export type AssignableCategories = z.infer<typeof assignableCategoriesSchema>;
+
+/**
  * The wire spelling of the five V1 Attribute value kinds. Owned by the Catalog
  * module and restated here for the same reason as the Domain list, with a test
  * keeping the two honest.
@@ -1521,6 +1558,19 @@ export const decisionContextSchema = z
     /// The explicitly Selected Offering, or nothing. `null` is the ordinary
     /// starting state and the state a cleared selection returns to.
     selected: listingCardSchema.nullable(),
+    /**
+     * Whether a selection was made and has stopped being usable (UX-0009 §16).
+     *
+     * `selected` alone cannot say this: nothing selected yet and something
+     * selected that fell away both read as `null`, and a screen that guessed
+     * would sometimes tell somebody their choice was withdrawn when they never
+     * made one. The flow still holds the identifier, so the difference is a
+     * fact the platform has and only had to publish.
+     *
+     * It says nothing about Completion. `US-DEC-F07-001` composes those from
+     * their own evidence, and a selection falling away produces none.
+     */
+    selectionLost: z.boolean(),
     repairs: z.array(
       z.enum([
         "REPAIR_COMPARISON_SET",

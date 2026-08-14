@@ -12,7 +12,19 @@
 export type ActionState =
   | { kind: "IDLE" }
   | { kind: "DONE" }
-  | { kind: "REFUSED"; code: string; message: string }
+  | {
+      kind: "REFUSED";
+      code: string;
+      message: string;
+      /**
+       * The conditions the platform said were unmet, where it said so.
+       *
+       * Empty for every refusal that is not about the Universal Publication
+       * Minimum, and empty is the ordinary case — a refusal carries an
+       * explanation only where the authority produced one.
+       */
+      shortfalls: string[];
+    }
   | { kind: "INVALID"; fields: Record<string, string[]> };
 
 export const ACTION_IDLE: ActionState = { kind: "IDLE" };
@@ -22,15 +34,9 @@ export const ACTION_IDLE: ActionState = { kind: "IDLE" };
  *
  * `PUBLICATION_MINIMUM_NOT_SATISFIED` is the one worth being careful about.
  * UX-0005 §9 requires the experience to present validation feedback *without
- * redefining the minimum*, so this says the Offering is not ready and points
- * at the edit screen — it does not list conditions, because listing them here
- * would be a second definition of PRD-0001 §6.1.1 that could drift from the
- * one the API enforces.
- *
- * The API's error envelope publishes a code and a message and drops everything
- * else, so the specific shortfall is not available to show even if the screen
- * wanted to. That is a real limitation and is recorded rather than papered
- * over: the person is told what to do next, not exactly what is missing.
+ * redefining the minimum*. This sentence therefore states no condition of its
+ * own; the conditions that actually failed arrive from the platform as
+ * shortfalls and are relayed by `SHORTFALL_COPY` below.
  */
 export const ACTION_REFUSALS: Record<string, string> = {
   AFFILIATE_DESTINATION_EXISTS:
@@ -63,6 +69,34 @@ export function refusalMessage(code: string): string {
     ACTION_REFUSALS[code] ??
     "That could not be done. Nothing about this Offering has changed."
   );
+}
+
+/**
+ * The Universal Publication Minimum's own shortfalls, in words.
+ *
+ * These are not a second definition of PRD-0001 §6.1.1. The platform evaluated
+ * the minimum, decided which conditions failed and published the list; this
+ * turns each name it sent into a sentence and adds nothing. A shortfall the
+ * platform did not send is not shown, and a shortfall it sends that this map
+ * does not know is shown by its own name rather than swallowed — an
+ * unrecognised condition is still something the person needs to see.
+ *
+ * `BUSINESS_DISPLAY_NAME_MISSING` is the one that is not about this Offering
+ * at all, and says so: an owner staring at a complete Offering needs to know
+ * the problem is somewhere else entirely.
+ */
+export const SHORTFALL_COPY: Record<string, string> = {
+  BUSINESS_DISPLAY_NAME_MISSING:
+    "Your Business has no display name. Add one in Business information — this is not about the Offering itself.",
+  CATEGORY_NOT_ACTIVE_LEAF:
+    "This Offering's Category is no longer one an Offering can sit in. Choose another.",
+  REQUIRED_ATTRIBUTE_MISSING:
+    "An Attribute its Category requires has no value yet.",
+  TITLE_MISSING: "It has no title."
+};
+
+export function shortfallMessages(shortfalls: readonly string[]): string[] {
+  return shortfalls.map((entry) => SHORTFALL_COPY[entry] ?? entry);
 }
 
 /**

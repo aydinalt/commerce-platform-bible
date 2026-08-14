@@ -9,7 +9,10 @@ import { BusinessService } from "./business/business.service.js";
 import { CorrectionService } from "./business/correction.service.js";
 import { AttributeController } from "./catalog/attribute.controller.js";
 import { AttributeService } from "./catalog/attribute.service.js";
-import { CatalogController } from "./catalog/catalog.controller.js";
+import {
+  AssignableCategoryController,
+  CatalogController
+} from "./catalog/catalog.controller.js";
 import { CatalogService } from "./catalog/catalog.service.js";
 import { ChatService, DECISION_ASSISTANT } from "./decision/chat.service.js";
 import {
@@ -87,6 +90,7 @@ function allowedOrigins(): readonly string[] {
     AffiliateDestinationController,
     AttributeController,
     BusinessController,
+    AssignableCategoryController,
     CatalogController,
     DecisionChatController,
     DecisionController,

@@ -155,10 +155,15 @@ export class CorrectionService {
       if (error instanceof PublicationMinimumError)
         // AC-11. A correction that left the Offering below the minimum would
         // leave something publicly promised and incomplete.
+        //
+        // The shortfalls travel in `fieldErrors`, which is where the error
+        // envelope carries them. A top-level `shortfalls` key was dropped in
+        // transit, so the caller was told the minimum failed and never which
+        // part of it — the same explanation the ordinary edit path publishes.
         throw new UnprocessableEntityException({
           code: "PUBLICATION_MINIMUM_NOT_SATISFIED",
-          message: "The saved correction must keep the Offering publishable",
-          shortfalls: error.shortfalls
+          fieldErrors: { publicationMinimum: error.shortfalls },
+          message: "The saved correction must keep the Offering publishable"
         });
       if (error instanceof AttributeValueMismatchError)
         throw new UnprocessableEntityException({

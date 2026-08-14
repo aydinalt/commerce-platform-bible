@@ -14,6 +14,7 @@ import type { FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import {
+  assignableCategoriesSchema,
   categoriesSchema,
   categorySchema,
   createCategorySchema,
@@ -24,7 +25,32 @@ import {
 
 import { OriginValidator } from "../security/origin.guard.js";
 import { PrincipalResolver } from "../security/principal-resolver.js";
+import { PgCatalogRepository } from "../persistence/pg-catalog.repository.js";
 import { CatalogService } from "./catalog.service.js";
+
+/**
+ * The Categories an Offering may be assigned to (`US-OFR-F01-001` AC-4).
+ *
+ * Its own controller, and public, because it is neither Category management
+ * nor Offering management: it answers "where could this go", which the same
+ * catalogue already answers publicly through Browse. Putting it under
+ * `admin/categories` would have made a Business owner's picker depend on an
+ * Admin gate they will never pass.
+ *
+ * A read, and the same predicate creation enforces — so a Category offered
+ * here is one creation would accept.
+ */
+@Controller("categories")
+export class AssignableCategoryController {
+  constructor(private readonly catalog: PgCatalogRepository) {}
+
+  @Get("assignable")
+  async assignable() {
+    return assignableCategoriesSchema.parse({
+      categories: await this.catalog.assignable()
+    });
+  }
+}
 
 const uuidParam = (name: string) =>
   new ParseUUIDPipe({
