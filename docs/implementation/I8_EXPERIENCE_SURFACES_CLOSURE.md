@@ -12,15 +12,16 @@
 I1 through I7 built everything the platform can do. I8 builds every place a
 person can ask it to.
 
-Thirteen commits, twenty-two routes and thirteen test files, ending on 722
+Fifteen commits, twenty-two routes and fourteen test files, ending on 727
 tests. UX-0001 through UX-0009 now all have surfaces. This closes the last body
 of Frozen work that was not a Story.
 
 The organizing idea, stated once and applied everywhere: **a screen offers what
 the write path would honour, because both read the same answer.** No page in
 this increment holds an availability rule. Where one seemed to be needed, the
-answer was to make the API say it — twice, recorded below — rather than to let a
-second opinion grow in the browser.
+answer was to make the API say it — four times, recorded below — rather than to
+let a second opinion grow in the browser. Each time the platform already knew
+the thing and had simply never published it.
 
 ## Per-document coverage
 
@@ -39,6 +40,8 @@ second opinion grow in the browser.
 |---|---|
 | Public journey in Turkish, entered contexts in English | The Owner's decision. Discovery, the Offering Presentation, Compare and Decision are one continuous journey and `html lang` is `tr`; changing language mid-journey reads as having left the platform. Authentication, the Business Dashboard and Admin are rooms you sign in to work in |
 | The owner's Offering read carries the Category's applicable Attributes | A form's fields and the definitions governing them must be answered at one instant against one Category. Two reads would let a Category change between them and produce a form offering inputs the write path then refuses |
+| The Decision Context carries `selectionLost` | `selected` alone reads `null` both for "nothing chosen yet" and for "chosen and since withdrawn". UX-0009 §16 has a sentence for the second and none for the first, so a screen that guessed would sometimes tell somebody their choice was taken away when they never made one |
+| `GET /categories/assignable` lists where an Offering may go | The create form took a typed identifier before. The list is the same predicate creation enforces — active, no active child — so a Category offered is one creation would accept, and each carries its whole path because two Categories may share a leaf name |
 | The Decision Context carries `affiliateAvailable` | §9 offers only the paths currently available, and the context could not say whether the Selected Offering's destination was eligible. It is answered by the same conjunction the initiation enforces, so an offered path is one the platform would honour |
 | The Affiliate destination appears in no read | §16 keeps an unavailable path from exposing where it would have led, which only holds if the available path does not expose it either. So Affiliate is a submission rather than a link, and the address is read inside the initiation |
 | The authentication return names a destination, not a URL | `returnPath` maps a name through a closed list. An open redirect is not defended against — it is unspeakable. What was selected and which action was interrupted already live in the flow on the server |
@@ -58,6 +61,8 @@ second opinion grow in the browser.
 | The owner content read returned no Attribute definitions | Without them the edit screen cannot choose an input control, so the Universal Publication Minimum could never be satisfied through the UI |
 | The Decision Context could not say whether an Affiliate path existed | The screen would have had to offer the path always and let the refusal explain, which §9 forbids |
 | `SaveState` and three other state types lived beside their server actions | A `"use server"` module may export only async functions. Caught by the build, and each now records the rule where it was moved |
+| The bounded correction path sent its shortfalls where the envelope could not carry them | The publication path used `fieldErrors`, which the envelope publishes; the correction path used a top-level key, which it drops. One path explained itself and the other silently could not |
+| The `nanoid` override pinned exactly `3.3.17` | GHSA-2v37-7h3g-55p8 later named that version. Because the pin was ours, `npm audit fix` could not move it — the repo's own gate was held closed by its own lockfile. Loosened to `^3.3.18`, inside postcss's range, so Next stays where it is |
 | ESLint gained `argsIgnorePattern: "^_"` | `useActionState` hands every action a previous state and a form; an action that moves a lifecycle wants neither. Inventing a use for them would be worse than declaring them unused |
 
 ## Where the guarantees are weaker than they look
