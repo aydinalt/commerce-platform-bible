@@ -970,10 +970,307 @@ visible.
 
 No Decision criterion is covered by absence.
 
-## Remaining domains
+## Platform — `US-0006`
 
-Platform is not advanced by this document. Their criteria are recorded here as work continues, one domain per
-change, on the same standard: read the criterion, read the test, and where
-nothing reaches it, write one.
+Ten Stories, 133 Acceptance Criteria — the largest domain, and the one the
+opening scan misread most badly: it credited zero citations to
+`US-PLT-F10-001` while eleven tests already covered all eighteen of its
+criteria. The I2 and I7 suites reach 132 of the 133.
 
-The ten `US-PLT` Platform Stories remain `Delivery Status: Not Started`.
+**One criterion had no test**, and it is the hardest kind to write one for. It
+is proved by the three tests in `i9-platform-delivery.integration.test.ts`.
+
+### `US-PLT-F01-001` — Admin Panel Access and Baseline
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Enabled, authorized and explicitly entered before the Panel opens | Covered | `i7-admin-panel` *opens only for an Enabled, authorized, entered account*; `i8-admin-dashboard` *opens for none of the three conditions on its own* |
+| AC-2 | Authorization attaches to the existing account; no separate Admin identity | Covered | `i7-admin-panel` *uses the existing account and publishes no separate Admin identity* |
+| AC-3 | Status and authorization re-evaluated on every entry | Covered | `i7-admin-panel` *closes the moment the authorization is removed* |
+| AC-4 | The Guest and User baseline inherited inside Admin context | Covered | `i7-admin-panel` *takes nothing away by being entered* |
+| AC-5 | Admin behaviour available only while the context is active | Covered | `i7-admin-panel` *keeps Admin behaviour unavailable outside the context*; `i2-category-management` *refuses management to an authorized Admin who has not entered the context* |
+| AC-6 | No Business ownership or management authority from authorization alone | Covered | `i7-admin-panel` *grants no Business ownership from authorization alone*; `i8-admin-dashboard` *creates no Business ownership by authorizing an account* |
+| AC-7 | No grant, remove, transfer, delegate, tier or self-service provisioning in the Panel | Covered | `i7-admin-panel` *offers no way to grant, remove, transfer or delegate Admin*; `i8-admin-dashboard` *offers no way to grant or remove Admin authority* |
+| AC-8 | An ordinary Admin cannot provision another Admin | Covered | The same tests — there is no route, so the case is unreachable rather than refused |
+| AC-9 | First-Admin and grant or removal reserved to the Owner outside the Panel | Covered | `i7-admin-panel` *reserves authorization changes to an operational path outside the Panel* |
+| AC-10 | A Suspended account denied entry, public behaviour preserved | Covered | `i7-admin-panel` *denies a Suspended Admin while leaving public behaviour alone*; `i9-identity-delivery` *leaves a Suspended account everything a Guest has* |
+| AC-11 | Logout handed to UX-0008, ending the context without removing authorization | Covered | `i7-admin-panel` *ends the context on logout and keeps the authorization*; `i9-identity-delivery` *logs out of an Admin context and keeps the authorization* |
+
+### `US-PLT-F02-001` — General Moderation Case Management
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Exactly `Open` and `Closed` | Covered | `i7-moderation-case` *has exactly two statuses and starts Open* |
+| AC-2 | A surfaced or newly opened case is `Open` | Covered | The same test, and *answers a second surfacing with the case that already exists* |
+| AC-3 | Opening or reviewing changes no target state | Covered | `i7-moderation-case` *changes no target state by opening or reading* |
+| AC-4 | Exactly the seven General Moderation actions | Covered | `i7-moderation-case` *publishes exactly the seven General Moderation actions* |
+| AC-5 | Only actions valid for the target state and authority | Covered | `i7-moderation-case` *offers only actions valid for this target right now* and *offers every action that has a path, and would offer no more* |
+| AC-6 | The case stays `Open` after Request Correction | Covered | `i7-moderation-case` *keeps the case Open after Request Correction* |
+| AC-7 | Closure only after an approved action or recorded no-action decision | Covered | `i7-moderation-case` *closes only after an approved action or a recorded no-action decision* |
+| AC-8 | Closing changes no target state | Covered | `i7-moderation-case` *changes no target state by closing* |
+| AC-9 | Case status distinct from every target state | Covered | `i7-moderation-case` *carries no target product state at all* — the case table holds none, so the two cannot be conflated |
+| AC-10 | Destination Administration kept separate from General Moderation | Covered | `i7-destination-administration` *is a separate family from General Moderation* |
+| AC-11 | No closure claimed when the operation fails | Covered | `i7-moderation-case` *claims no closure when the closure fails* |
+
+### `US-PLT-F03-001` — Offering Moderation Actions
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Hide available only for a `Published` Offering | Covered | `i7-offering-moderation` *hides only a Published Offering, and records the exact transition* |
+| AC-2 | Hide applied as the PRD-0001 transition | Covered | The same test |
+| AC-3 | Restore available only for a `Hidden` Offering | Covered | `i7-offering-moderation` *restores only a Hidden Offering, and records the exact transition* |
+| AC-4 | Restore applied as the PRD-0001 transition | Covered | The same test |
+| AC-5 | Lifecycle and eligibility ownership stays with PRD-0001 | Covered | `i7-offering-moderation` *leaves the composed eligibility to PRD-0001* |
+| AC-6 | No Archive, un-archive, Hidden-to-Draft or publish action | Covered | `i7-offering-moderation` *has no Archive, un-archive, Hidden-to-Draft or publish-for-Business action* |
+| AC-7 | No unrelated state changed by Hide or Restore | Covered | `i7-offering-moderation` *changes no unrelated state* and *keeps the first publication moment through both transitions* |
+| AC-8 | No public eligibility claimed merely because Restore returns `Published` | Covered | `i7-offering-moderation` *promises no public eligibility just by restoring* |
+| AC-9 | The case stays Open until explicit closure | Covered | `i7-offering-moderation` *leaves the case Open and cites the action that was applied* |
+| AC-10 | No transition claimed when the action fails | Covered | `i7-offering-moderation` *claims no transition when the action fails* |
+
+### `US-PLT-F04-001` — Business Moderation Actions
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Restrict available only for an `Unrestricted` Business | Covered | `i7-business-moderation` *restricts only an Unrestricted Business, and produces both outcomes* |
+| AC-2 | `Restricted` and exposure `Ineligible` consumed after restriction | Covered | The same test |
+| AC-3 | No Offering lifecycle changed by restriction | Covered | `i7-business-moderation` *moves no Offering lifecycle in either direction* |
+| AC-4 | Published Offerings lose eligibility only through PRD-0001 composition | Covered | `i7-business-moderation` *records the composed result rather than only acting on it* |
+| AC-5 | Restore available only for a `Restricted` Business | Covered | `i7-business-moderation` *restores only a Restricted Business, and produces both outcomes* |
+| AC-6 | `Unrestricted` and exposure `Eligible` consumed after restoration | Covered | The same test |
+| AC-7 | No Draft, Hidden or Archived lifecycle restored | Covered | `i7-business-moderation` *moves no Offering lifecycle in either direction*; `i6-business-restriction` *publishes nothing and un-hides nothing on restoration* |
+| AC-8 | Only Published Offerings regain eligibility through composition | Covered | `i7-business-moderation` *gives no eligibility back to a Draft, Hidden or Archived Offering* |
+| AC-9 | No destination, account or ownership change through either action | Covered | `i7-business-moderation` *reaches no Affiliate Destination, account or ownership row* |
+| AC-10 | The case stays Open until explicit closure | Covered | `i7-business-moderation` *leaves the case Open and cites the action that was applied* |
+| AC-11 | No transition claimed when the action fails | Covered | `i7-business-moderation` *claims no transition when the action fails* |
+
+### `US-PLT-F05-001` — User Access Moderation Actions
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Suspend available to an ordinary Admin only for an Enabled non-Admin account | Covered | `i7-access-moderation` *suspends only an Enabled account, and consumes the exact transition* and *refuses an Admin-authorized account whatever state it is in* |
+| AC-2 | `Enabled → Suspended` consumed after suspension | Covered | The same test |
+| AC-3 | Reinstate available only for a Suspended non-Admin account | Covered | `i7-access-moderation` *reinstates only a Suspended account, and consumes the exact transition* |
+| AC-4 | `Suspended → Enabled` consumed after reinstatement | Covered | The same test |
+| AC-5 | An ordinary-Admin attempt against an Admin-authorized account is rejected | Covered | `i7-access-moderation` *refuses an Admin-authorized account whatever state it is in* |
+| AC-6 | Suspend or Reinstate of an Admin-authorized account reserved to the Owner | Covered by absence | No route accepts it; `m12-admin-context` *publishes no way to grant or remove Admin authorization* records the same boundary for authorization itself |
+| AC-7 | Admin authorization preserved when such an account is Suspended | Covered | `i7-access-moderation` *preserves Admin authorization through suspension* |
+| AC-8 | No Business, Offering, destination or eligibility change from either action | Covered | `i7-access-moderation` *leaves the account's Business, Offering and destination alone* |
+| AC-9 | No User Account Request Correction target | Covered | `i7-access-moderation` *offers no User Account correction target*; `i6-correction-notice` *has no way to name a User Account as a target* |
+| AC-10 | The case stays Open until explicit closure | Covered | `i7-access-moderation` *leaves the case Open and cites the action that was applied* |
+| AC-11 | No transition claimed when the action fails | Covered | `i7-access-moderation` *claims no transition when the action fails* |
+
+### `US-PLT-F06-001` — Request Correction and Re-review
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Exactly four correction targets | Covered | `i7-correction-re-review` *accepts the exact four targets and no account correction* |
+| AC-2 | User Account excluded from V1 | Covered | The same test |
+| AC-3 | The case stays `Open` after Request Correction | Covered | `i7-correction-re-review` *keeps the case Open and changes nothing by requesting a correction* |
+| AC-4 | No state changed solely through Request Correction | Covered | The same test |
+| AC-5 | A bounded notice created in UX-0005 without Messaging | Covered | `i7-correction-re-review` *creates a notice and no conversation*; `i6-correction-notice` *creates no message, conversation or reply* |
+| AC-6 | The bounded path only for an Open case on an exact owned Published or Hidden Offering | Covered | `i6-correction-notice` *opens the bounded path only when every condition holds* |
+| AC-7 | Limited to the exact Offering and content area | Covered | `i6-correction-notice` *limits the edit to the exact targeted content area* and *limits the edit to the exact Offering* |
+| AC-8 | No creation, publication, unrelated edit, status change, closure or Messaging granted | Covered | `i7-correction-re-review` *grants the owner nothing beyond the bounded edit* |
+| AC-9 | The saved correction preserves the Universal Publication Minimum | Covered | `i7-correction-re-review` *requires the saved correction to keep the Offering publishable* |
+| AC-10 | The case stays Open after the edit and requires re-review | Covered | `i7-correction-re-review` *refuses closure while the owner's answer is unread* and *allows closure once the answer has been read* |
+| AC-11 | Business Restricted, exposure Ineligible and the Offering ineligible until re-review | Covered | `i7-correction-re-review` *keeps everything where it was through the whole exchange* |
+| AC-12 | Closure after re-review only on an approved action or no-action decision | Covered | `i7-correction-re-review` *will not let one review stand in for a later answer* |
+| AC-13 | No target state changed solely by closing | Covered | `i7-moderation-case` *changes no target state by closing* |
+| AC-14 | The bounded response is part of Request Correction, not an eighth action | Covered | `i7-correction-re-review` *is not an eighth General Moderation action* |
+
+### `US-PLT-F07-001` — Affiliate Destination Administration
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Kept separate from General Moderation | Covered | `i7-destination-administration` *is a separate family from General Moderation* |
+| AC-2 | Exactly Review, Validate, Enable and Disable | Covered | `i7-destination-administration` and `i8-admin-destinations` publish the same four and no fifth |
+| AC-3 | Review alone changes nothing | Covered | `i7-destination-administration` *changes nothing through Review alone*; `i3-affiliate-governance` *leaves every result unchanged when Review alone is completed* |
+| AC-4 | `Valid` or `Invalid` consumed while status is preserved | Covered | `i7-destination-administration` *consumes Valid or Invalid while preserving the status* |
+| AC-5 | Enable only when validation is `Valid` | Covered | `i7-destination-administration` *enables only a Valid destination, and composes eligibility from the pair* |
+| AC-6 | `Enabled` and `Eligible` consumed after Enable | Covered | The same test |
+| AC-7 | `Disabled` and `Ineligible` consumed after Disable, validation preserved | Covered | `i7-destination-administration` *disables while preserving the validation result* |
+| AC-8 | `Needs Validation` derived from Draft plus Not Validated | Covered | `i7-destination-administration` *derives each workload category from the pair that produces it* |
+| AC-9 | `Business Correction Needed` derived from Draft plus Invalid | Covered | The same test |
+| AC-10 | `Ready to Enable` derived from Draft plus Valid | Covered | The same test |
+| AC-11 | No pending item for Enabled or Disabled | Covered | `i7-destination-administration` *produces no pending item for an Enabled or Disabled destination* |
+| AC-12 | No new destination state created from a workload category | Covered | `i7-destination-administration` *stores no workload category anywhere* and *composes the category without a database* |
+| AC-13 | No lifecycle, moderation, access status or eligibility changed by administration | Covered | `i7-destination-administration` *reaches no Offering, Business or account*; `i3-affiliate-governance` *changes no Offering lifecycle, Business moderation or account status* |
+| AC-14 | No Messaging, network integration, attribution, commission, settlement or conversion tracking | Covered | `i7-destination-administration` *creates no Messaging or commercial behaviour* |
+| AC-15 | No result claimed when an action fails | Covered | `i7-destination-administration` *claims no result when an action fails* |
+
+### `US-PLT-F08-001` — Category and Domain Management
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | A root Category created with exactly one V1 Domain | Covered | `i2-category-management` *creates a root under one V1 Domain*, *refuses a root outside the three V1 Domains* and *seeds exactly the three V1 Domains* |
+| AC-2 | A child created under one valid parent | Covered | `i2-category-management` *refuses a Category that is both a root and a child* |
+| AC-3 | Rename preserves identity | Covered | `i2-category-management` *preserves identity across a rename* |
+| AC-4 | Reparenting only within a valid same-Domain hierarchy | Covered | `i2-category-management` *reparents within the same Domain* |
+| AC-5 | A Category cannot become its own ancestor | Covered | `i2-category-management` *refuses a Category as its own parent* and *refuses a parent from inside its own subtree* |
+| AC-6 | Every root has exactly one V1 Domain | Covered | `i2-category-management` *refuses a root outside the three V1 Domains* |
+| AC-7 | Children inherit their root Domain | Covered | `i2-category-management` *makes a child inherit its parent's Domain*; `i8-admin-catalog` *gives a child its parent's Domain and no way to change it* |
+| AC-8 | Offering assignment only to an active leaf | Covered | `i2-category-management` *assigns an Offering only to an active leaf*; `i8-recorded-gaps` *offers exactly the Categories creation would accept* |
+| AC-9 | An Offering's Domain derived from its leaf | Covered | `i2-category-management` *derives the Offering's Domain from its leaf Category* |
+| AC-10 | Cross-Domain reparenting prevented | Covered | `i2-category-management` *refuses a parent in another Domain*; `i8-admin-catalog` *refuses a cross-Domain move and leaves the hierarchy alone* |
+| AC-11 | Root Domain fixed once a child or Offering exists beneath it | Covered | `i2-category-management` *keeps a used root's Domain fixed* |
+| AC-12 | Retirement only with no active child and no live Offering assigned | Covered | `i2-category-management` *retires a Category with no active dependencies*, *refuses retirement while an active child remains* and *refuses retirement while a Draft Offering remains assigned* |
+| AC-13 | Archived history does not block retirement | Covered | `i2-category-management` *lets Archived history keep its Category association*; `i8-admin-catalog` *ARCHIVED_DOES_NOT_BLOCK* is said on the screen before the attempt |
+| AC-14 | A retired Category takes no new Offering and leaves active Browse | Covered | `i2-category-management` *refuses a new Offering on a retired Category* and *refuses a child under a retired parent*; `i3-browse` *excludes retired Categories from every destination* |
+| AC-15 | No deletion, merge, automated replacement or cross-Domain migration | Covered | `i2-category-management` *offers no way to delete a Category*; the other three have no route and no shape to be expressed in |
+| AC-16 | No result claimed when a save fails | Covered | `i2-category-management` *claims no result when an action fails* |
+
+### `US-PLT-F09-001` — Attribute Definition Management
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | The complete property set required | Covered | `i2-attribute-definitions` *creates a definition with the complete property set* |
+| AC-2 | Exactly five V1 value kinds | Covered | `i2-attribute-definitions` *supports exactly the five V1 value kinds* |
+| AC-3 | Number may define at most one optional unit | Covered | `i2-attribute-definitions` *keeps the unit with Number* |
+| AC-4 | Select kinds require at least one allowed value | Covered | `i2-attribute-definitions` *requires a Select kind to have an allowed value* and *refuses to retire the last allowed value of a Select* |
+| AC-5 | Text cannot be filterable | Covered | `i2-attribute-definitions` *prevents Text from being filterable*; `i8-admin-catalog` *TEXT_IS_NOT_FILTERABLE* states it beside the control |
+| AC-6 | Applicability may be added where the definition stays valid | Covered | `i2-attribute-definitions` *adds applicability freely* |
+| AC-7 | Required-for-publication only when every live Offering already has a value | Covered | `i2-attribute-definitions` *allows required-for-publication only when every live Offering has a value* and *never blocks turning required-for-publication off* |
+| AC-8 | Applicability removal blocked while a live Offering holds a value | Covered | `i2-attribute-definitions` *blocks removing applicability that an Offering relies on* and *allows removing applicability once only Archived history remains* |
+| AC-9 | Value-kind change blocked while a live Offering holds a value | Covered | `i2-attribute-definitions` *blocks a value-kind change while a value exists* and *allows a value-kind change while nothing depends on it* |
+| AC-10 | Allowed-value removal or change blocked while in use | Covered | `i2-attribute-definitions` *blocks relabelling and retiring an allowed value in use* |
+| AC-11 | Archived values retained as historical and readable | Covered | `i2-attribute-definitions` *retires an unused allowed value while keeping it readable* and *allows removing applicability once only Archived history remains* |
+| AC-12 | No existing Offering value silently deleted | Covered | AC-8, AC-9 and AC-10 together: every path that could have deleted one is refused while it exists |
+| AC-13 | Filterable or comparable changes affect presentation without touching lifecycle | Covered | `i2-attribute-definitions` *changes filterable and comparable without touching an Offering* |
+| AC-14 | Values, Filters and Compare left to their owning PRDs | Covered | `i3-attribute-filtering` and `i5-comparison-set` own those behaviours and are tested there |
+| AC-15 | No deletion, merge, replacement, deprecation state or automated migration | Covered | `i2-attribute-definitions` *offers no way to delete a definition*; retirement of an allowed value is the only removal-shaped act and it preserves readability |
+| AC-16 | No change claimed when a save fails | Covered | `i2-attribute-definitions` *claims no change when a save fails* |
+
+### `US-PLT-F10-001` — Basic Analytics
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Available only in an authorized active Admin context | Covered | `i7-basic-analytics` *opens only in an authorized active Admin context* |
+| AC-2 | Exactly four selectable periods | Covered | `i7-basic-analytics` *offers exactly four periods and no custom range* |
+| AC-3 | Overall and by Domain only where the source supplies one | Covered | `i7-basic-analytics` *breaks down by Domain only where the source records one*; `i8-admin-dashboard` *shows a figure with no Domain as having none* |
+| AC-4 | A Search Start without a leaf counted only overall | Covered | `i7-basic-analytics` *counts a Search without a leaf Category overall and in no Domain* |
+| AC-5 | No Domain inferred from free-text wording | Covered | The same test |
+| AC-6 | User Accounts by Enabled and Suspended | Covered | `i7-basic-analytics` *shows every current-state indicator by its authoritative result* |
+| AC-7 | Businesses by Unrestricted and Restricted | Covered | The same test |
+| AC-8 | Offerings by lifecycle and final eligibility | Covered | The same test |
+| AC-9 | Destinations by status, validation result and Handoff Eligibility | Covered | The same test |
+| AC-10 | Moderation cases by status and Open cases by target type | Covered | The same test |
+| AC-11 | Destination workload by its three categories | Covered | `i7-basic-analytics` *counts the workload with the same rule the queue uses* |
+| AC-12 | The six core-flow indicators | Covered | `i7-basic-analytics` *keeps the two Completions separate and calls neither a sale* asserts the `coreFlow` keys equal `CORE_FLOW_INDICATORS` exactly, which is the Story's six |
+| AC-13 | The two Completions consumed without redefinition | Covered | The same test |
+| AC-14 | No Completion presented as an external success | Covered | The same test; `i8-admin-dashboard` *names a Completion for what the platform did and nothing more* |
+| AC-15 | Actionable workload indicators open their queue | Covered | `i7-basic-analytics` *points actionable indicators at their queues and nothing else at all* |
+| AC-16 | Informational indicators require no interaction | Covered | The same test |
+| AC-17 | No moderation or management action performed automatically | Covered | `i7-basic-analytics` *does nothing by being read* |
+| AC-18 | No advanced or predictive analytics, recommendation, report builder, Business-facing analytics, billing, CRM, advertising, transaction, attribution or conversion tracking | **Newly verified** | `i9-platform-delivery` *answers with exactly the groups the Story names and nothing derived*, *counts nothing per Business and offers no Business a figure* and *keeps the period the only thing a reader may choose* |
+
+## Testing a criterion that forbids ten futures
+
+`US-PLT-F10-001` AC-18 names ten things Basic Analytics must never become. Three
+clauses were already held: a custom date range is refused, the words that would
+turn a Completion into a sale appear nowhere in the response, and
+`i6-business-dashboard` *reports no metric, ranking or trend of any kind* covers
+the Business-facing clause from the other side.
+
+The rest were carried by nothing, and the reason is instructive: **none of the
+forbidden things exists, so there is nothing to call and watch refuse.** Writing
+ten assertions that ten absent features are absent would produce ten tests that
+pass for as long as nobody adds them and say nothing about why.
+
+The assertion that earns its place is about *shape*:
+
+- The snapshot's top-level keys are asserted as an equality against the nine
+  groups the Story names. A forecast, a trend, a score or a recommendation
+  would each arrive as a tenth key, and this is the line it would break.
+- No Business identifier or name appears anywhere in the Admin figures. The
+  platform counts Businesses by moderation status; it does not count *a*
+  Business. That is the difference between Basic Analytics and the
+  Business-facing analytics AC-18 excludes, and it is worth asserting because
+  the two would look similar in a diff.
+- A `groupBy` or `businessId` parameter is either refused or ignored — never
+  honoured. A report builder grows along that axis, and the answer cannot be
+  steered into one by asking differently.
+
+## Platform advancement
+
+| Story | Criteria | Delivery Status |
+|---|---|---|
+| `US-PLT-F01-001` Admin Panel Access and Baseline | 11 of 11 verified | Not Started → **Done** |
+| `US-PLT-F02-001` General Moderation Case Management | 11 of 11 verified | Not Started → **Done** |
+| `US-PLT-F03-001` Offering Moderation Actions | 10 of 10 verified | Not Started → **Done** |
+| `US-PLT-F04-001` Business Moderation Actions | 11 of 11 verified | Not Started → **Done** |
+| `US-PLT-F05-001` User Access Moderation Actions | 11 of 11 verified | Not Started → **Done** |
+| `US-PLT-F06-001` Request Correction and Re-review | 14 of 14 verified | Not Started → **Done** |
+| `US-PLT-F07-001` Affiliate Destination Administration | 15 of 15 verified | Not Started → **Done** |
+| `US-PLT-F08-001` Category and Domain Management | 16 of 16 verified | Not Started → **Done** |
+| `US-PLT-F09-001` Attribute Definition Management | 16 of 16 verified | Not Started → **Done** |
+| `US-PLT-F10-001` Basic Analytics | 18 of 18 verified | Not Started → **Done** |
+
+One Platform criterion is covered by absence: `US-PLT-F05-001` AC-6.
+
+## Closure
+
+All six domains are recorded. **526 Acceptance Criteria across 50 Frozen
+Generated Stories**, each matched to the test that verifies it by reading both.
+
+| | |
+|---|---|
+| `Done` | 49 Stories |
+| `In Progress` | 1 Story — `US-OFR-F05-001` |
+| `Not Started` | none |
+
+`US-OFR-F05-001` AC-3 asks for Attribute values organized into understandable
+groups, and PRD-0006 defines no group, section or ordering key to organize them
+by. Eight of its nine criteria are verified. It completes when a governed
+grouping exists, which is a controlled revision of a Frozen PRD and an Owner
+decision rather than a delivery one.
+
+**Seventeen criteria had no test at all** — twelve in Identity, two in
+Business, and one each in Discovery, Decision and Platform. Offering needed
+none. They were closed by nineteen tests across five new files, and they fall
+into recognisable kinds:
+
+- **What an action leaves alone.** Eleven of the twelve Identity gaps. Logging
+  out is easy to assert; logging out without dropping a Business ownership is
+  the part nobody checked.
+- **A gate that already works.** Both Business gaps. Writing the first found
+  that `BusinessService.create`'s Enabled check cannot be reached over HTTP,
+  because suspension invalidates the session first.
+- **An ending.** `US-DSC-F09-001` AC-3. A responsibility that finishes produces
+  no row and no field; it shows only as things that stop happening.
+- **A case the existing tests could not construct.** `US-DEC-F03-001` AC-5's
+  comparable differences — every Chat test entered with one Offering, and a
+  difference needs two.
+- **A criterion that forbids futures.** `US-PLT-F10-001` AC-18. None of the ten
+  excluded things exists, so the assertion had to be about the answer's shape
+  rather than about ten absences.
+
+**One criterion was not merely untested — it was unmet.** `US-IDN-F09-001` AC-2
+requires the authentication return to carry the explicitly chosen contact
+channel, and it was carried nowhere: somebody who pressed "Telephone", was asked
+to sign in, and came back found their own question unanswered. It now travels in
+a flow-keyed cookie holding two names from closed vocabularies. The same
+requirement is `US-DEC-F06-001` AC-7 and AC-8 from the other side, so one change
+closed three criteria — and read alone, AC-7 had looked satisfied by the `401`
+that interrupts the Guest.
+
+Ten criteria are recorded as **covered by absence** rather than by assertion,
+because they forbid something no route, contract or shape can express:
+`US-IDN-F06-001` AC-11, `US-IDN-F07-001` AC-5, `US-IDN-F08-001` AC-2, AC-3 and
+AC-4, `US-BUS-F01-001` AC-9 and AC-10, `US-BUS-F02-001` AC-14,
+`US-BUS-F05-001` AC-12, and `US-PLT-F05-001` AC-6. That is weaker evidence and
+is marked as such throughout; a reviewer challenging one of them should look for
+the absent route, not for a missing test.
+
+### What the opening scan got wrong
+
+The first pass counted citations and reported 71 of 526. Read as coverage, that
+number was badly wrong — the tests were written from the Stories and reach
+almost all of them, they simply cite the UX section they were written from
+rather than the Story's AC numbering. `US-PLT-F10-001` showed zero citations
+while eleven tests covered all eighteen of its criteria.
+
+The scan was still worth running: it said where to look, not what was there.
+Every row in this document was settled by reading the criterion and the test
+together, which is the only method that would have found the twenty gaps or the
+one unmet criterion.
+

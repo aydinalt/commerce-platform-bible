@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.25
+Version:      2.26
 Last Updated: 2026-08-15
 -->
 
@@ -14,9 +14,9 @@ Last Updated: 2026-08-15
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I9 Delivery Status Advancement — in progress. Five domains advanced; Platform remains |
+| Current phase | M12 Increment I9 Delivery Status Advancement — closed. All 526 Acceptance Criteria of all 50 Frozen Stories recorded against the tests that verify them |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
-| Delivery Status of Frozen Stories | 39 of 50 `Done` and 1 `In Progress`, each advanced against per-criterion evidence in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` is the exception: eight of its nine criteria are verified and AC-3 asks for an Attribute grouping no document governs. The remaining 10, all `US-PLT`, stay `Not Started` |
+| Delivery Status of Frozen Stories | 49 of 50 `Done`, 1 `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` is the exception: eight of its nine are verified and AC-3 asks for an Attribute grouping no document governs |
 
 ## Canonical Layer Status
 
@@ -188,10 +188,10 @@ the code and tests had existed since I1, and the evidence had not. It is now in
 `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`, one Acceptance Criterion
 at a time.
 
-Reading all 81 Identity criteria against the suite found eight that nothing
-asserted, all of the same shape: each is about what an action leaves alone.
+Reading all 81 Identity criteria against the suite found twelve that nothing
+asserted, eleven of the same shape: each is about what an action leaves alone.
 Logging out is easy to prove; logging out without quietly dropping a Business
-ownership is the part nobody had checked. They are proved by
+ownership is the part nobody had checked. They are proved by the eight tests in
 `tests/i9-identity-delivery.integration.test.ts`.
 
 It also found one criterion the code did not meet. `US-IDN-F09-001` AC-2 puts
@@ -246,17 +246,32 @@ comparable Attribute differences, undemonstrated because every existing Chat
 test enters a flow holding one Offering and a difference needs two. It sits
 directly against AC-6, which forbids a ranking, a winner and a recommendation,
 so the platform's answer is to put both authoritative values where a person can
-hold them side by side and stop. Asked outright which car to buy, and handed a
-priority pointing at one of them, the reply still reports.
+hold them side by side and stop.
 
-Two Decision criteria were closed by the Identity increment rather than this
-one. `US-DEC-F06-001` AC-7 and AC-8 are `US-IDN-F09-001` AC-2 seen from the
-other end, and none of the three was met before the resume cookie existed —
-which is the case for working domain by domain, since AC-7 read alone looks
-satisfied by the `401` that interrupts the Guest.
+Platform's 133 needed one, and it is the hardest kind to write: AC-18 forbids
+ten things Basic Analytics must never become, none of which exists, so there
+was nothing to call and watch refuse. The assertion that earns its place is
+about shape — the snapshot's nine top-level keys asserted as an equality, no
+Business named anywhere in the Admin figures, and a `groupBy` parameter either
+refused or ignored but never honoured.
 
-Nine of the 393 criteria recorded so far are covered by absence. The remaining
-ten Stories, all Platform, stay `Not Started`.
+**Seventeen criteria had no test at all**, closed by nineteen tests across five
+new files. Offering needed none: its 64 criteria were already reached by suites
+written from the Stories rather than from the code. Ten criteria are covered by
+absence rather than assertion, and are marked as such.
+
+**One criterion was not merely untested — it was unmet.** `US-IDN-F09-001` AC-2
+requires the authentication return to carry the explicitly chosen contact
+channel, and it was carried nowhere. The same requirement is `US-DEC-F06-001`
+AC-7 and AC-8 from the other side, so one change closed three criteria — and
+read alone, AC-7 had looked satisfied by the `401` that interrupts the Guest.
+
+The opening scan counted citations and reported 71 of 526. Read as coverage
+that was badly wrong: the tests were written from the Stories and reach almost
+all of them, citing the UX section rather than the AC numbering.
+`US-PLT-F10-001` showed zero citations while eleven tests covered all eighteen
+of its criteria. The scan said where to look, not what was there; every row was
+settled by reading the criterion and the test together.
 
 ## I7 Closure Evidence
 
@@ -332,6 +347,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.26 | 2026-08-15 | Closed I9. Advanced the ten `US-PLT` Platform Stories to `Done`, completing the pass: 49 of 50 Stories are `Done`, one is `In Progress`, none is `Not Started`. All 526 Acceptance Criteria are now recorded against the tests that verify them. Seventeen had no test and were closed by nineteen new tests; one, `US-IDN-F09-001` AC-2, was unmet and is now implemented; ten are covered by absence and marked as such. |
 | 2.25 | 2026-08-15 | Advanced the seven `US-DEC` Decision Stories to `Done`. Seventy-one of 72 criteria were already reached; the exception is `US-DEC-F03-001` AC-5's clause about comparable Attribute differences, which no Chat test could show because they all enter with one Offering. Also records that `US-DEC-F06-001` AC-7 and AC-8 were closed by the Identity increment — they are the same requirement as `US-IDN-F09-001` AC-2 from the other side, and read alone AC-7 looks satisfied by the interruption itself. |
 | 2.24 | 2026-08-15 | Advanced the ten `US-DSC` Discovery Stories to `Done`. Eighty of 81 criteria were already reached by the I3 and I4 suites; the one exception, `US-DSC-F09-001` AC-3, is a criterion about an ending rather than an action, and is now asserted both from the path that stays unchanged and from the occurrence table's schema, which has no column that could name a Discovery path. |
 | 2.23 | 2026-08-15 | Advanced six of the seven `US-OFR` Offering Stories to `Done` and `US-OFR-F05-001` to `In Progress`. Offering needed no new test: its 64 criteria were already reached by the I2 and I3 suites, which were written from the Stories rather than from the code. It produced the first Story that cannot be `Done` — AC-3 asks for an Attribute grouping PRD-0006 does not define, and grouping by a field that happens to be available would be a classification nobody governs. |

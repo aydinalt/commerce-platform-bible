@@ -27,7 +27,7 @@
 | Experience Owner | `UX-0006-admin-dashboard.md` §§5–6; `UX-0008-authentication.md` §8.3 |
 | Owner | Product Owner / Architecture Owner |
 | Status | Frozen |
-| Delivery Status | Not Started |
+| Delivery Status | Done |
 | Priority | Must |
 | Story Size | M |
 | Version | 1.0 |
