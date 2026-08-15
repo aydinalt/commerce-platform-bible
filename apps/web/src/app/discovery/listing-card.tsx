@@ -20,9 +20,13 @@ export function ListingCard({ card }: { card: ListingCardResponse }) {
           control that acts here: AC-7 forbids the card from performing
           Presentation, Compare, Decision Chat, Handoff or Direct Contact, and
           a link goes somewhere instead of doing something. */}
-      <h3>
+      {/* `h2`, because a card is content directly beneath the page's `h1` —
+          Search Results and the Compare recovery list both put them there, and
+          an `h3` under an `h1` skips a level. Somebody navigating by heading
+          hears the gap as a missing section rather than as nothing. */}
+      <h2>
         <a href={`/offerings/${card.slug}`}>{card.title}</a>
-      </h3>
+      </h2>
       <p className="listing-card-facts">
         <span>{card.categoryName}</span>
         <span aria-hidden="true">·</span>

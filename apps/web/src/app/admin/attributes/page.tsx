@@ -26,6 +26,10 @@ import {
   RetireOption
 } from "./attribute-forms";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Attributes" };
+
 /**
  * Attribute management (UX-0006 §11).
  *
@@ -56,14 +60,14 @@ export default async function AttributesPage() {
 
   if (attributes === null || categories === null)
     return (
-      <main>
+      <main lang="en">
         <h1>Attributes</h1>
         <p role="alert">The catalogue could not be loaded.</p>
       </main>
     );
 
   return (
-    <main>
+    <main lang="en">
       <p>
         <Link href="/admin">Platform administration</Link>
       </p>

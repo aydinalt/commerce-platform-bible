@@ -9,6 +9,10 @@ import {
 
 import { BrowseResultsView, SearchResultsView } from "./discovery-view";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Sonuçlar" };
+
 /**
  * Discovery (`US-DSC-F06-001`).
  *

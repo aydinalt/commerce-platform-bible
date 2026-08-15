@@ -22,6 +22,10 @@ import {
   RetireCategory
 } from "./category-forms";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Categories" };
+
 /**
  * Category and Domain management (UX-0006 §10).
  *
@@ -46,7 +50,7 @@ export default async function CategoriesPage() {
   const categories = await fetchCategories(session);
 
   return (
-    <main>
+    <main lang="en">
       <p>
         <Link href="/admin">Platform administration</Link>
       </p>
@@ -77,6 +81,7 @@ export default async function CategoriesPage() {
                     <>
                       <RenameCategory
                         action={renameCategory.bind(null, category.id)}
+                        categoryId={category.id}
                         name={category.name}
                       />
                       <ReparentCategory

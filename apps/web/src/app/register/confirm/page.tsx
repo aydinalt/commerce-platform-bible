@@ -4,6 +4,10 @@ import { REFUSAL_COPY } from "../../../identity/outcome";
 import { AUTH_ROUTES } from "../../../identity/session";
 import { confirm } from "../actions";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Finish creating your account" };
+
 /**
  * The proof link's destination (UX-0008 §6.2, §6.3).
  *
@@ -28,7 +32,7 @@ export default async function ConfirmRegistrationPage({
       : await confirm(token);
 
   return (
-    <main>
+    <main lang="en">
       <h1>Finish creating your account</h1>
       <p role="alert">
         {state.kind === "REFUSED"

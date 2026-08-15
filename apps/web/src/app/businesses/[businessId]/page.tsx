@@ -15,6 +15,10 @@ import { CorrectionNotices } from "./correction-notices";
 import { CreateOffering } from "./create-offering";
 import { InventoryGroup } from "./inventory-group";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Business dashboard" };
+
 /**
  * The Business Dashboard (UX-0005).
  *
@@ -52,7 +56,7 @@ export default async function BusinessDashboardPage({
   );
 
   return (
-    <main>
+    <main lang="en">
       {/* §6.3. The active Business and its Moderation Status stay identifiable
           throughout, so no management action is ever taken without the person
           being able to see which Business it lands on and what standing that

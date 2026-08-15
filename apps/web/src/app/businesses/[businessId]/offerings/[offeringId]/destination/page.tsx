@@ -18,6 +18,10 @@ import {
 import { saveDestinationReference } from "./actions";
 import { DestinationForm } from "./destination-form";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Affiliate Destination" };
+
 /**
  * Affiliate Destination management (UX-0005 §13).
  *
@@ -54,7 +58,7 @@ export default async function DestinationPage({
   const editable = creating || offers(entries, "EDIT");
 
   return (
-    <main>
+    <main lang="en">
       <p>
         <Link href={`/businesses/${businessId}/offerings/${offeringId}`}>
           {offering.title}

@@ -18,6 +18,10 @@ import { AUTH_ROUTES, SESSION_COOKIE } from "../../../../../identity/session";
 import { saveOffering } from "./actions";
 import { ContentForm } from "./content-form";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Offering" };
+
 /**
  * One Offering, as its owner (UX-0005 §9 Edit, §8's View).
  *
@@ -54,7 +58,7 @@ export default async function OfferingPage({
   if (managed === undefined) notFound();
 
   return (
-    <main>
+    <main lang="en">
       <p>
         <Link href={`/businesses/${businessId}`}>
           {dashboard.business.name}

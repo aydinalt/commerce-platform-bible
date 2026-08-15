@@ -95,9 +95,12 @@ export function CreateCategory({
 /// AC-3. A name and nothing else — identity cannot travel with it.
 export function RenameCategory({
   action,
+  categoryId,
   name
 }: {
   action: Action;
+  /// Only so the field's label can name a control unique on a page of many.
+  categoryId: string;
   name: string;
 }) {
   const [state, dispatch, pending] = useActionState(action, ADMIN_IDLE);
@@ -106,7 +109,18 @@ export function RenameCategory({
     <form action={dispatch}>
       <fieldset disabled={pending}>
         <legend>Rename</legend>
-        <input defaultValue={name} name="name" required type="text" />
+        {/* A `legend` names the group, not the control inside it. One field in
+            one fieldset is exactly where that is easiest to miss and easiest
+            to hear: without this, the box is announced as "edit text" and the
+            Admin has to guess from the button beside it. */}
+        <label htmlFor={`rename-${categoryId}`}>New name</label>
+        <input
+          defaultValue={name}
+          id={`rename-${categoryId}`}
+          name="name"
+          required
+          type="text"
+        />
         <button type="submit">{pending ? "Saving…" : "Rename"}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
@@ -137,7 +151,12 @@ export function ReparentCategory({
     <form action={dispatch}>
       <fieldset disabled={pending}>
         <legend>Move</legend>
-        <select defaultValue={category.parentId ?? ""} name="parentId">
+        <label htmlFor={`parent-${category.id}`}>New parent</label>
+        <select
+          defaultValue={category.parentId ?? ""}
+          id={`parent-${category.id}`}
+          name="parentId"
+        >
           <option value="">Nothing — make it a root</option>
           {categories
             .filter(

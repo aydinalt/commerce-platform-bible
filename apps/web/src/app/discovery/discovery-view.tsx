@@ -30,8 +30,11 @@ function CategoryChoices({
 }) {
   if (categories.length === 0) return null;
   return (
-    <nav>
-      <h2>{heading}</h2>
+    // Named, because a page may hold two of these — children and ancestors —
+    // and a landmark list of two unlabelled "navigation" entries tells
+    // somebody moving by landmark nothing about which is which.
+    <nav aria-labelledby={`category-nav-${heading}`}>
+      <h2 id={`category-nav-${heading}`}>{heading}</h2>
       {/* Selecting stays a submission, exactly as it is on Home: a Category
           chosen by being linked to could be chosen by a prefetch. */}
       <form action={selectCategory}>

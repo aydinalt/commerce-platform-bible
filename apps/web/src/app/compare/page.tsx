@@ -9,6 +9,10 @@ import {
 
 import { ComparisonTable } from "./comparison-table";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Karşılaştırma" };
+
 /**
  * The Compare route.
  *
@@ -60,9 +64,11 @@ export default async function ComparePage() {
           <ul className="listing-cards">
             {set.members.map((member) => (
               <li className="listing-card" key={member.offeringId}>
-                <h3>
+                {/* `h2` for the same reason as a Listing Card: this list is
+                    the page's content, directly under its `h1`. */}
+                <h2>
                   <a href={`/offerings/${member.slug}`}>{member.title}</a>
-                </h3>
+                </h2>
                 <p className="listing-card-facts">
                   <span>{member.businessName}</span>
                 </p>

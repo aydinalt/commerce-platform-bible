@@ -4,6 +4,10 @@ import { CredentialForm } from "../register/credential-form";
 import { AUTH_ROUTES, returnPath } from "../../identity/session";
 import { login } from "./actions";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Sign in" };
+
 /**
  * Sign in (UX-0008 §7).
  *
@@ -25,7 +29,7 @@ export default async function LoginPage({
     typeof raw === "string" && returnPath(raw) !== null ? raw : undefined;
 
   return (
-    <main>
+    <main lang="en">
       <h1>Sign in</h1>
       <CredentialForm
         action={login}

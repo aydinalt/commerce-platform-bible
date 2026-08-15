@@ -8,6 +8,10 @@ import { AUTH_ROUTES, SESSION_COOKIE } from "../../../../identity/session";
 import { saveBusinessInformation } from "./actions";
 import { InformationForm } from "./information-form";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Business information" };
+
 /**
  * Managing Business Information (UX-0005 §7).
  *
@@ -36,7 +40,7 @@ export default async function BusinessInformationPage({
   const save = saveBusinessInformation.bind(null, businessId);
 
   return (
-    <main>
+    <main lang="en">
       {/* §6.3. The active Business stays identifiable in every subarea, so a
           save is never made against a Business the person has lost track of. */}
       <p>

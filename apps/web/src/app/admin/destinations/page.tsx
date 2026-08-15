@@ -26,6 +26,10 @@ import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import { administerDestination } from "./actions";
 import { DestinationAction } from "./destination-actions";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Affiliate Destinations" };
+
 /**
  * Affiliate Destination Administration (UX-0006 §9).
  *
@@ -102,7 +106,7 @@ export default async function DestinationWorkloadPage() {
   const pending = items?.filter((item) => item.category !== null) ?? [];
 
   return (
-    <main>
+    <main lang="en">
       <p>
         <Link href="/admin">Platform administration</Link>
       </p>

@@ -4,6 +4,10 @@ import { AUTH_ROUTES } from "../../identity/session";
 import { register } from "./actions";
 import { CredentialForm } from "./credential-form";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Create an account" };
+
 /**
  * Register (UX-0008 §6).
  *
@@ -14,7 +18,7 @@ import { CredentialForm } from "./credential-form";
  */
 export default function RegisterPage() {
   return (
-    <main>
+    <main lang="en">
       <h1>Create an account</h1>
       <CredentialForm
         action={register}

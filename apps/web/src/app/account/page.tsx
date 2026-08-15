@@ -7,6 +7,10 @@ import { AUTH_ROUTES, SESSION_COOKIE } from "../../identity/session";
 import { logout } from "../login/actions";
 import { enterAdmin, enterBusiness } from "./actions";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Your account" };
+
 /**
  * The authenticated-context entries (UX-0008 §8.1).
  *
@@ -41,7 +45,7 @@ export default async function AccountPage({
   const { entry } = await searchParams;
 
   return (
-    <main>
+    <main lang="en">
       <h1>Your account</h1>
 
       {entry === "refused" ? (

@@ -23,6 +23,10 @@ import {
   RequestCorrection
 } from "../case-actions";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Moderation case" };
+
 /**
  * One General Moderation case (UX-0006 §7, §8).
  *
@@ -57,7 +61,7 @@ export default async function ModerationCasePage({
     found.availableActions.includes("REQUEST_CORRECTION");
 
   return (
-    <main>
+    <main lang="en">
       <p>
         <Link href="/admin/moderation-cases">Moderation cases</Link>
       </p>

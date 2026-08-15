@@ -10,6 +10,10 @@ import {
 } from "../../../platform/moderation";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Moderation cases" };
+
 const FILTERS = ["OPEN", "CLOSED"] as const;
 
 /**
@@ -43,7 +47,7 @@ export default async function ModerationCasesPage({
   const cases = await fetchModerationCases(session, status);
 
   return (
-    <main>
+    <main lang="en">
       <p>
         <Link href="/admin">Platform administration</Link>
       </p>

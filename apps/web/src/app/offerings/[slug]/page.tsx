@@ -9,6 +9,10 @@ import {
 
 import { OfferingPresentation } from "./offering-presentation";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "İlan" };
+
 /**
  * The Offering a Listing Card opens (`US-DSC-F09-001`).
  *

@@ -40,6 +40,10 @@ import { DecisionChat } from "./chat";
 import { HandoffChoice } from "./handoff";
 import { SelectionButton } from "./selection";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Karar" };
+
 /**
  * The Decision flow (UX-0009).
  *

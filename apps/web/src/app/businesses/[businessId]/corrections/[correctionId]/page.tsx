@@ -15,6 +15,10 @@ import { AUTH_ROUTES, SESSION_COOKIE } from "../../../../../identity/session";
 import { saveCorrectionResponse } from "./actions";
 import { CorrectionForm } from "./correction-form";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Correction notice" };
+
 /**
  * The bounded correction-edit path (UX-0005 §11).
  *
@@ -61,7 +65,7 @@ export default async function CorrectionPage({
     notice.contentArea === null
   )
     return (
-      <main>
+      <main lang="en">
         {back}
         <h1>Correction notice</h1>
         <p>{TARGET_COPY[notice.target]}</p>
@@ -77,7 +81,7 @@ export default async function CorrectionPage({
   if (content === null) notFound();
 
   return (
-    <main>
+    <main lang="en">
       {back}
       <h1>{content.title}</h1>
       <p>{TARGET_COPY[notice.target]}</p>

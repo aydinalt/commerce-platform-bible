@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.26
+Version:      2.27
 Last Updated: 2026-08-15
 -->
 
@@ -14,7 +14,7 @@ Last Updated: 2026-08-15
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I9 Delivery Status Advancement — closed. All 526 Acceptance Criteria of all 50 Frozen Stories recorded against the tests that verify them |
+| Current phase | M12 Increment I10 Accessibility — closed. All twenty-two routes read against WCAG 2.1 AA and the findings closed |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | 49 of 50 `Done`, 1 `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` is the exception: eight of its nine are verified and AC-3 asks for an Attribute grouping no document governs |
 
@@ -179,6 +179,42 @@ withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
 
+## I10 Accessibility
+
+Every surface was already semantic HTML with no invented styling, so this
+increment changed almost nothing a sighted person sees — two heading levels and
+one label — and a great deal of what the platform says about itself to software
+that reads it aloud. Findings and boundaries are in
+`docs/implementation/I10_ACCESSIBILITY_CLOSURE.md`.
+
+The largest was the page title. **All twenty-two routes returned `Commerce
+Platform`**, so a person restoring a session, reading a history list or hearing
+the page announced on arrival learned nothing about where they were. Each route
+now carries its own `h1` as its title, which invents no copy.
+
+The second came out of the Owner's own language decision. The public journey is
+Turkish and the entered contexts are English, and `<html lang="tr">` therefore
+described seventeen of twenty-two routes wrongly — a screen reader applies
+Turkish pronunciation to English words, which is nearer noise than accent. Each
+English surface now declares `lang="en"` on its own `main`.
+
+Three further findings were real: Listing Cards rendered `h3` directly under an
+`h1`, two Category controls had only a `legend` to name them, and one navigation
+landmark of two rendered together had no accessible name.
+
+**Three of the first six findings were mistakes in the audit rather than in the
+code** — a Homepage `h1` that lives in a component, table `scope` attributes
+that were all present, and seven of nine "unlabelled" controls that use template
+identifiers the first detector could not see. Recorded in the closure, because
+a scan that reads files instead of rendered output will always find component
+boundaries invisible.
+
+Six tests assert the properties across every route and each was verified to
+fail: five regressions were introduced at once and each was caught by its own
+test and no other.
+
+No Story's behaviour, criteria or Delivery Status changed.
+
 ## I9 Delivery Status Advancement
 
 Nine `US-IDN` Identity Stories advanced from `Not Started` to `Done` — the first
@@ -294,10 +330,11 @@ eligibility that was enacted without being recorded.
 
 ## Remaining Work
 
-1. Record the per-criterion evidence for Platform, and advance the ten Delivery Statuses that evidence supports. One domain per change, on the Identity standard: read the criterion, read the test, and where nothing reaches it, write one.
+1. Decide `US-OFR-F05-001` AC-3, the one criterion no delivery can satisfy: either give PRD-0006 a governed Attribute grouping through a controlled revision, or read the criterion as met by one ordered set. Either closes the last Story, and the second changes no code.
 2. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
 3. Select a Decision Chat assistant vendor and add its adapter.
 4. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
+5. Test with a real screen reader. `I10_ACCESSIBILITY_CLOSURE.md` closes what could be read from the source; nothing there substitutes for hearing a page.
 
 ## Known Boundaries
 
@@ -347,6 +384,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.27 | 2026-08-15 | Closed I10 Accessibility. Read all twenty-two routes against WCAG 2.1 AA and closed five findings: twenty-two pages sharing one title, seventeen English routes declaring `lang="tr"`, Listing Cards at `h3` directly under an `h1`, two Category controls named only by a `legend`, and an unnamed navigation landmark. Six tests assert the properties across every route, each verified to fail against its own regression. Three of the first six findings were errors in the audit rather than the code, and are recorded as such. No visual design added; no Story touched. |
 | 2.26 | 2026-08-15 | Closed I9. Advanced the ten `US-PLT` Platform Stories to `Done`, completing the pass: 49 of 50 Stories are `Done`, one is `In Progress`, none is `Not Started`. All 526 Acceptance Criteria are now recorded against the tests that verify them. Seventeen had no test and were closed by nineteen new tests; one, `US-IDN-F09-001` AC-2, was unmet and is now implemented; ten are covered by absence and marked as such. |
 | 2.25 | 2026-08-15 | Advanced the seven `US-DEC` Decision Stories to `Done`. Seventy-one of 72 criteria were already reached; the exception is `US-DEC-F03-001` AC-5's clause about comparable Attribute differences, which no Chat test could show because they all enter with one Offering. Also records that `US-DEC-F06-001` AC-7 and AC-8 were closed by the Identity increment — they are the same requirement as `US-IDN-F09-001` AC-2 from the other side, and read alone AC-7 looks satisfied by the interruption itself. |
 | 2.24 | 2026-08-15 | Advanced the ten `US-DSC` Discovery Stories to `Done`. Eighty of 81 criteria were already reached by the I3 and I4 suites; the one exception, `US-DSC-F09-001` AC-3, is a criterion about an ending rather than an action, and is now asserted both from the path that stays unchanged and from the occurrence table's schema, which has no column that could name a Discovery path. |

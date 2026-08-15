@@ -18,6 +18,10 @@ import { AUTH_ROUTES, SESSION_COOKIE } from "../../identity/session";
 import { logout } from "../login/actions";
 import { AnalyticsTable } from "./analytics-table";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Platform administration" };
+
 /**
  * The Admin Dashboard (UX-0006).
  *
@@ -61,7 +65,7 @@ export default async function AdminDashboardPage({
   ).reduce((total, count) => total + count, 0);
 
   return (
-    <main>
+    <main lang="en">
       <h1>Platform administration</h1>
 
       {/* §6. The queues that are waiting for an Admin, kept apart from the
