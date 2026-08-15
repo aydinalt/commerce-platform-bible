@@ -11,7 +11,8 @@ import {
   DIRECT_CONTACT_LABEL,
   HANDOFF_CHOICE,
   NO_AFFILIATE,
-  NO_CONTACT_CHANNEL
+  NO_CONTACT_CHANNEL,
+  RESUMED_CHANNEL
 } from "../../decision/copy";
 import { DECISION_IDLE, type DecisionActionState } from "../../decision/state";
 
@@ -57,23 +58,43 @@ function AffiliatePath({ action }: { action: Action }) {
  */
 function DirectContactPath({
   action,
-  channels
+  channels,
+  resumedChannel
 }: {
   action: Action;
   channels: ContactChannelsResponse;
+  resumedChannel: ContactChannelsResponse["available"][number] | null;
 }) {
   const [state, dispatch, pending] = useActionState(action, DECISION_IDLE);
+  // `US-IDN-F09-001` AC-2 and AC-6. The channel they chose before signing in is
+  // marked as the one they were asking for — but only while it is still on
+  // offer. A channel the Business withdrew in the meantime is not in this list,
+  // so it is not marked and there is nothing to press.
+  const resumed =
+    resumedChannel !== null && channels.available.includes(resumedChannel)
+      ? resumedChannel
+      : null;
 
   return (
     <div>
       <h3>{DIRECT_CONTACT_LABEL}</h3>
       {channels.revealable ? null : <p>{CONTACT_NEEDS_ACCOUNT}</p>}
+      {resumed === null ? null : <p role="status">{RESUMED_CHANNEL}</p>}
       <form action={dispatch}>
         <fieldset disabled={pending}>
           <legend>Hangi yolla?</legend>
           {channels.available.map((channel) => (
             <p key={channel}>
-              <button name="channel" type="submit" value={channel}>
+              {/* Still a submission, never an automatic reveal. AC-5 wants
+                  every gate re-evaluated before protected information appears,
+                  and a button that pressed itself on arrival would turn a
+                  question into an answer nobody asked for twice. */}
+              <button
+                autoFocus={channel === resumed}
+                name="channel"
+                type="submit"
+                value={channel}
+              >
                 {CHANNEL_COPY[channel]}
               </button>
             </p>
@@ -130,12 +151,15 @@ export function HandoffChoice({
   affiliateAction,
   affiliateAvailable,
   channels,
-  contactAction
+  contactAction,
+  resumedChannel = null
 }: {
   affiliateAction: Action;
   affiliateAvailable: boolean;
   channels: ContactChannelsResponse | null;
   contactAction: Action;
+  /// The channel an interrupted person was asking for, if they were.
+  resumedChannel?: ContactChannelsResponse["available"][number] | null;
 }) {
   return (
     <section aria-labelledby="handoff">
@@ -150,7 +174,11 @@ export function HandoffChoice({
       {channels === null || channels.available.length === 0 ? (
         <p>{NO_CONTACT_CHANNEL}</p>
       ) : (
-        <DirectContactPath action={contactAction} channels={channels} />
+        <DirectContactPath
+          action={contactAction}
+          channels={channels}
+          resumedChannel={resumedChannel}
+        />
       )}
     </section>
   );

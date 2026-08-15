@@ -25,7 +25,11 @@ import {
   readDecision,
   readDecisionFlowId
 } from "../../decision/flow";
-import { SESSION_COOKIE } from "../../identity/session";
+import {
+  RESUME_COOKIE,
+  SESSION_COOKIE,
+  readResume
+} from "../../identity/session";
 import {
   askAssistant,
   chooseSelection,
@@ -89,6 +93,23 @@ export default async function DecisionPage() {
 
   const members: ListingCardResponse[] =
     context.comparison?.members ?? (context.offering ? [context.offering] : []);
+
+  /*
+   * `US-IDN-F09-001` AC-2 and AC-4. Somebody sent to UX-0008 mid-request comes
+   * back to the question they were asked, still unanswered. Nothing is acted
+   * on: the context above was re-read, the channel is offered again, and
+   * pressing it makes the request afresh — which is AC-5's reevaluation and
+   * AC-6's refusal where the channel stopped being available.
+   *
+   * Dropped once this flow has a Direct Contact Completion. The intent outlives
+   * its own answer otherwise, and a page that kept saying "carry on where you
+   * left off" to somebody who already finished would be describing a journey
+   * they are no longer on.
+   */
+  const resumed =
+    completions?.directContact == null
+      ? readResume(jar.get(RESUME_COOKIE)?.value, decisionFlowId)
+      : null;
 
   return (
     <main>
@@ -177,6 +198,7 @@ export default async function DecisionPage() {
           affiliateAvailable={context.affiliateAvailable}
           channels={channels}
           contactAction={revealChannel}
+          resumedChannel={resumed?.channel ?? null}
         />
       ) : null}
 

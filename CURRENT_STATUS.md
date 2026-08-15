@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.20
-Last Updated: 2026-08-14
+Version:      2.21
+Last Updated: 2026-08-15
 -->
 
 # CURRENT STATUS
@@ -14,9 +14,9 @@ Last Updated: 2026-08-14
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I8 Experience Surfaces — closed. Every Frozen Generated Story and every Frozen UX document implemented |
-| Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-one routes, none of which composes an availability rule of its own |
-| Delivery Status of all Frozen Stories | Not Started — implementation is recorded in closure records, and advancing any Delivery Status is a separate Owner decision |
+| Current phase | M12 Increment I9 Delivery Status Advancement — in progress. Identity advanced; five domains remain |
+| Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
+| Delivery Status of Frozen Stories | 9 of 50 `Done` — the nine `US-IDN` Identity Stories, each advanced against per-criterion evidence in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. The remaining 41 stay `Not Started` until their criteria are recorded the same way |
 
 ## Canonical Layer Status
 
@@ -179,6 +179,35 @@ withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
 
+## I9 Delivery Status Advancement
+
+Nine `US-IDN` Identity Stories advanced from `Not Started` to `Done` — the first
+Delivery Statuses to move in the repository's life. `DELIVERY_SEQUENCE.md`
+allows the move only in a change carrying code, tests and traceability evidence;
+the code and tests had existed since I1, and the evidence had not. It is now in
+`docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`, one Acceptance Criterion
+at a time.
+
+Reading all 81 Identity criteria against the suite found eight that nothing
+asserted, all of the same shape: each is about what an action leaves alone.
+Logging out is easy to prove; logging out without quietly dropping a Business
+ownership is the part nobody had checked. They are proved by
+`tests/i9-identity-delivery.integration.test.ts`.
+
+It also found one criterion the code did not meet. `US-IDN-F09-001` AC-2 puts
+the explicitly chosen contact channel in the authentication return context, and
+the channel was carried nowhere — somebody who pressed "Telephone", was asked to
+sign in and came back found the question unanswered. It now travels in a
+flow-keyed cookie holding two names from closed vocabularies, which is a
+resumed request rather than a grant: the person returns to a button, and
+pressing it re-evaluates every gate.
+
+Five criteria are recorded as covered by absence rather than by assertion,
+because they forbid something no route, contract or shape can express. That is
+weaker evidence and is marked as such.
+
+The remaining 41 Stories stay `Not Started`.
+
 ## I7 Closure Evidence
 
 Eight Stories delivered across eight commits: `US-PLT-F01-001` through
@@ -200,11 +229,10 @@ eligibility that was enacted without being recorded.
 
 ## Remaining Work
 
-1. Build the surfaces. The Business Dashboard (UX-0005), the Admin Dashboard (UX-0006) and the Decision flow beyond Compare (UX-0009) are complete as contracts and have no screens.
+1. Record the per-criterion evidence for Business, Offering, Discovery, Decision and Platform, and advance the 41 Delivery Statuses that evidence supports. One domain per change, on the Identity standard: read the criterion, read the test, and where nothing reaches it, write one.
 2. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
 3. Select a Decision Chat assistant vendor and add its adapter.
 4. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
-5. Advance Delivery Status from `Not Started` where the Owner judges the recorded evidence sufficient — a separate decision from implementation.
 
 ## Known Boundaries
 
@@ -254,6 +282,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.21 | 2026-08-15 | Advanced the nine `US-IDN` Identity Stories from `Not Started` to `Done`, each against per-criterion evidence recorded in `DELIVERY_STATUS_ADVANCEMENT.md`. Reading all 81 criteria against the tests found eight nothing asserted — every one of them about what an action leaves alone — and one, `US-IDN-F09-001` AC-2, that the code did not meet: the channel an interrupted person had chosen was carried nowhere, so they returned from signing in to an unanswered question. It now travels in a flow-keyed cookie holding two names from closed vocabularies. Also corrected two stale claims in this document: twenty-two routes, not twenty-one, and the surfaces I8 built are no longer listed as unbuilt. |
 | 2.20 | 2026-08-14 | Closed the three gaps I8 recorded. Two were the same mistake — the platform knew something and had not published it — and are now `selectionLost` on the Decision Context and `GET /categories/assignable` behind the Offering create picker. The third was an error in the closure record: the error envelope does carry `fieldErrors`, and the Universal Publication Minimum's shortfalls now reach the person from both the publication and the bounded correction paths. Also loosened the `nanoid` override, which pinned the exact version GHSA-2v37-7h3g-55p8 names. Delivery Status unchanged. |
 | 2.19 | 2026-08-14 | Closed I8: every Frozen UX document now has a surface — authentication and context entry, the Business Dashboard with Offering actions, editing, correction notices, the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard with moderation cases, destination administration, Category and Attribute management and Basic Analytics. Added two API answers so that no screen composes an availability rule, and recorded three gaps where a screen can only be as honest as the read it was given. Delivery Status unchanged. |
 | 2.18 | 2026-08-12 | Closed I7: the Admin Panel, General Moderation case management, all seven moderation actions across Offering, Business and User Account targets, Request Correction with enforced re-review, Affiliate Destination administration with its derived workload, and Basic Analytics. Recorded three corrections to existing code and the boundaries of case opening and analytics Domain association. This closes the fiftieth and final Frozen Generated Story. Delivery Status unchanged. |

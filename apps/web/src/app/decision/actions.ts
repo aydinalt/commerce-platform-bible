@@ -21,7 +21,12 @@ import {
   selectionRefusal,
   type DecisionActionState
 } from "../../decision/state";
-import { AUTH_ROUTES, SESSION_COOKIE } from "../../identity/session";
+import {
+  AUTH_ROUTES,
+  RESUME_COOKIE,
+  SESSION_COOKIE,
+  writeResume
+} from "../../identity/session";
 
 /**
  * The Decision actions (UX-0009).
@@ -145,6 +150,13 @@ export async function startAffiliateHandoff(
  * simply made again — which is also §18's "authentication return invalid": an
  * eligibility that changed while they were away produces an ordinary refusal
  * rather than a reveal.
+ *
+ * The channel travels with them. `US-IDN-F09-001` AC-2 puts it in the return
+ * context, and it is the one part of that context the server does not already
+ * hold: the flow is in their cookie and the selection is held against it, but
+ * which channel they chose was known only to the submission being interrupted.
+ * It goes out as a name from the contract's own list, so the round trip cannot
+ * carry anything addressable back.
  */
 export async function revealChannel(
   _previous: DecisionActionState,
@@ -163,8 +175,27 @@ export async function revealChannel(
   if (!parsed.success) return { kind: "IDLE" };
 
   const jar = await cookies();
+  const interrupt = (): never => {
+    jar.set(
+      RESUME_COOKIE,
+      writeResume({
+        action: "direct-contact",
+        channel: parsed.data.channel,
+        decisionFlowId
+      }),
+      {
+        httpOnly: true,
+        maxAge: DECISION_FLOW_MAX_AGE_SECONDS,
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production"
+      }
+    );
+    redirect(`${AUTH_ROUTES.login}?return=decision`);
+  };
+
   const session = jar.get(SESSION_COOKIE)?.value;
-  if (session === undefined) redirect(`${AUTH_ROUTES.login}?return=decision`);
+  if (session === undefined) return interrupt();
 
   const { refusal, reveal, status } = await revealContact(
     decisionFlowId,
@@ -173,7 +204,7 @@ export async function revealChannel(
   );
   // A session the API no longer accepts is the same interruption as having
   // none, and is answered the same way rather than as a failure of the reveal.
-  if (status === 401) redirect(`${AUTH_ROUTES.login}?return=decision`);
+  if (status === 401) return interrupt();
   if (reveal === null)
     return { kind: "REFUSED", message: handoffRefusal(refusal ?? "") };
   // §11.4. The value is carried back rather than re-read, because there is

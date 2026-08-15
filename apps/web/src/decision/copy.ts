@@ -157,6 +157,19 @@ export const CHANNEL_COPY: Record<"EMAIL" | "TELEPHONE" | "URL", string> = {
 export const CONTACT_NEEDS_ACCOUNT =
   "Doğrudan iletişim bilgisini görmek için giriş yapmanız gerekiyor. Giriş yaptıktan sonra tam olarak buraya dönersiniz.";
 
+/**
+ * Said to somebody who has just come back from signing in
+ * (`US-IDN-F09-001` AC-2, AC-4).
+ *
+ * It names what they asked for and says it is still waiting, because the
+ * alternative is arriving at a page that looks exactly as it did before they
+ * left and wondering whether the round trip did anything. It stops short of
+ * saying the information is theirs: nothing has been revealed yet, and the
+ * button beside this sentence is the request being made again.
+ */
+export const RESUMED_CHANNEL =
+  "Kaldığınız yerden devam edebilirsiniz: seçtiğiniz iletişim yolu aşağıda hazır.";
+
 export const HANDOFF_REFUSALS: Record<string, string> = {
   DECISION_FLOW_NOT_FOUND: "Bu karar akışının süresi doldu.",
   NOTHING_SELECTED: "Önce bir ilan seçin.",
