@@ -26,7 +26,7 @@
 | Experience Owner | `UX-0002-discovery.md`; `UX-0003-offering-detail.md`; `UX-0004-compare.md` |
 | Owner | Product Owner / Architecture Owner |
 | Status | Frozen |
-| Delivery Status | Not Started |
+| Delivery Status | Done |
 | Priority | Must |
 | Story Size | M |
 | Version | 1.0 |

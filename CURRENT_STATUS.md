@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.23
+Version:      2.24
 Last Updated: 2026-08-15
 -->
 
@@ -14,9 +14,9 @@ Last Updated: 2026-08-15
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I9 Delivery Status Advancement — in progress. Identity, Business and Offering advanced; three domains remain |
+| Current phase | M12 Increment I9 Delivery Status Advancement — in progress. Identity, Business, Offering and Discovery advanced; two domains remain |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
-| Delivery Status of Frozen Stories | 22 of 50 `Done` and 1 `In Progress`, each advanced against per-criterion evidence in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` is the exception: eight of its nine criteria are verified and AC-3 asks for an Attribute grouping no document governs. The remaining 27 stay `Not Started` |
+| Delivery Status of Frozen Stories | 32 of 50 `Done` and 1 `In Progress`, each advanced against per-criterion evidence in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` is the exception: eight of its nine criteria are verified and AC-3 asks for an Attribute grouping no document governs. The remaining 17 stay `Not Started` |
 
 ## Canonical Layer Status
 
@@ -232,8 +232,17 @@ governs. The Presentation shows one ordered set, which is the whole of what can
 be said truthfully, and the Story moves to `In Progress` — delivered,
 evidenced, and blocked on a decision that does not belong to delivery.
 
-Nine of the 240 criteria recorded so far are covered by absence. The remaining
-27 Stories stay `Not Started`.
+Discovery's ten Stories needed one test. Eighty of its 81 criteria were already
+reached — `US-DSC-F05-001`'s twelve Filter rules have twelve tests — and the
+exception is a criterion about an *ending*: `US-DSC-F09-001` AC-3 ends
+Discovery's responsibility for an open once the Offering is handed on. An
+ending is only observable as things that stop happening, which is why it was
+easy to leave unasserted. It is now checked from both visible sides: the path
+answers identically before and after, and `offering_presentation_open` is
+asserted against the schema to have no column that could name a Discovery path.
+
+Nine of the 321 criteria recorded so far are covered by absence. The remaining
+17 Stories stay `Not Started`.
 
 ## I7 Closure Evidence
 
@@ -256,7 +265,7 @@ eligibility that was enacted without being recorded.
 
 ## Remaining Work
 
-1. Record the per-criterion evidence for Discovery, Decision and Platform, and advance the 27 Delivery Statuses that evidence supports. One domain per change, on the Identity standard: read the criterion, read the test, and where nothing reaches it, write one.
+1. Record the per-criterion evidence for Decision and Platform, and advance the 17 Delivery Statuses that evidence supports. One domain per change, on the Identity standard: read the criterion, read the test, and where nothing reaches it, write one.
 2. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
 3. Select a Decision Chat assistant vendor and add its adapter.
 4. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
@@ -309,6 +318,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.24 | 2026-08-15 | Advanced the ten `US-DSC` Discovery Stories to `Done`. Eighty of 81 criteria were already reached by the I3 and I4 suites; the one exception, `US-DSC-F09-001` AC-3, is a criterion about an ending rather than an action, and is now asserted both from the path that stays unchanged and from the occurrence table's schema, which has no column that could name a Discovery path. |
 | 2.23 | 2026-08-15 | Advanced six of the seven `US-OFR` Offering Stories to `Done` and `US-OFR-F05-001` to `In Progress`. Offering needed no new test: its 64 criteria were already reached by the I2 and I3 suites, which were written from the Stories rather than from the code. It produced the first Story that cannot be `Done` — AC-3 asks for an Attribute grouping PRD-0006 does not define, and grouping by a field that happens to be available would be a classification nobody governs. |
 | 2.22 | 2026-08-15 | Advanced the seven `US-BUS` Business Stories to `Done`. The Business Stories were the best-covered in the repository — the four I6 suites line up almost one to one with their criteria — and only two of the 95 had nothing behind them, both gates rather than actions. Writing the first found something worth recording: `BusinessService.create` refuses a suspended holder and audits it, but that branch cannot be reached over HTTP, because suspension invalidates the session and authentication answers first. The record cites the gate that actually runs. |
 | 2.21 | 2026-08-15 | Advanced the nine `US-IDN` Identity Stories from `Not Started` to `Done`, each against per-criterion evidence recorded in `DELIVERY_STATUS_ADVANCEMENT.md`. Reading all 81 criteria against the tests found eight nothing asserted — every one of them about what an action leaves alone — and one, `US-IDN-F09-001` AC-2, that the code did not meet: the channel an interrupted person had chosen was carried nowhere, so they returned from signing in to an unanswered question. It now travels in a flow-keyed cookie holding two names from closed vocabularies. Also corrected two stale claims in this document: twenty-two routes, not twenty-one, and the surfaces I8 built are no longer listed as unbuilt. |

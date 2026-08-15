@@ -608,11 +608,195 @@ this domain. Both facts are worth recording together: the I2 and I3 suites were
 built from these Stories rather than from the code they were testing, and it
 shows.
 
+## Discovery — `US-0002`
+
+Ten Stories, 81 Acceptance Criteria. The I3 and I4 suites reach 80 of them,
+often criterion for criterion: `US-DSC-F05-001`'s twelve Filter rules have
+twelve tests, and `US-DSC-F07-001`'s seven ordering rules have seven.
+
+**One criterion had no test**, and it is a criterion about an *ending* rather
+than an action. It is proved by the two tests in
+`i9-discovery-delivery.integration.test.ts`.
+
+### `US-DSC-F01-001` — Homepage Discovery Entry
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | The exact prompt "Bugün ne yapmak istiyorsunuz?" | Covered | `i4-homepage-entry` *presents the exact approved prompt as the label of the Search field* |
+| AC-2 | The exact non-empty query passed only after explicit submission | Covered | `i4-homepage-entry` *passes the query exactly, trimming only its edges* |
+| AC-3 | The exact selected active root Category passed only after explicit selection | Covered | `i4-homepage-entry` *makes selecting a Category a submission rather than a link* and *refuses a Category it never offered rather than opening another* |
+| AC-4 | No authentication required for either entry | Covered | `i4-homepage-entry` *sends no principal with that read* |
+| AC-5 | Whitespace-only input does not start Search | Covered | `i4-homepage-entry` *does not start Search from whitespace alone* and *does not start Search from a missing query* |
+| AC-6 | The same behaviour for Guest, User, Business, Admin and a Suspended holder | Covered | `i4-homepage-entry` *sends no principal with that read* — the page carries no cookie and no authorization header, so there is nothing that could tell the five apart |
+| AC-7 | No hidden route, Autocomplete, invented Category, featured Offering, recommendation, history or personalization | Covered | `i4-homepage-entry` *exposes no Autocomplete, featured Offering or remembered activity*, *offers every active root Category and invents none* and *asks the API for nothing but the active root Categories* |
+| AC-8 | Query or Category preserved when the route cannot begin, and no Start claimed | Covered | `i4-homepage-entry` *keeps Search available when the Categories cannot be read* and *says so plainly when no Category is active* |
+
+### `US-DSC-F02-001` — Search
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | One Search Discovery Start per valid explicit submission | Covered | `i3-search` *creates one Search Discovery Start with no Domain* and *refuses an empty query as an invalid submission* |
+| AC-2 | Search begins without a leaf and may span several | Covered | `i3-search` *spans several leaf Categories with no Category selected* |
+| AC-3 | Meaningful relationships evaluated only against the five approved fields | Covered | `i3-search` *matches each approved kind of information and levels it* and *matches an Attribute by the label a person reads* |
+| AC-4 | Contact, Affiliate, owner-only, Admin-only, historical and ineligible excluded from matching | Covered | `i3-search` *excludes protected contact and Affiliate information from matching* and *excludes Draft, Hidden and Archived Offerings* |
+| AC-5 | An Offering matching none of the approved information is excluded | Covered | `i3-search` *excludes an Offering that matches none of the searchable information* and *requires every term to relate to something* |
+| AC-6 | The exact current query retained as visible criteria | Covered | `i3-search` *retains the exact query as visible criteria* |
+| AC-7 | The highest applicable match level identified, without defining a ranking algorithm | Covered | `i3-search` *prefers the highest applicable level when several apply*; the ordering itself belongs to `US-DSC-F07-001` and is tested there |
+| AC-8 | The same matching behaviour regardless of login or role | Covered | `i3-search` *behaves identically with and without a session* |
+
+### `US-DSC-F03-001` — Browse
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | One Browse Start on the first Category of a new path | Covered | `i3-browse` *creates one Discovery Start carrying the Category's Domain* |
+| AC-2 | The Start carries the Domain inherited from the Category | Covered | The same test |
+| AC-3 | Navigation through root, child, parent and alternative branches | Covered | `i3-browse` *navigates children, parents and alternative branches* |
+| AC-4 | Retired Categories excluded from destinations | Covered | `i3-browse` *excludes retired Categories from every destination* |
+| AC-5 | Results withheld while the Category is non-leaf | Covered | `i3-browse` *withholds Results while the Category is a branch* |
+| AC-6 | Results presented only after an active leaf is selected | Covered | `i3-browse` *presents Results only once an active leaf is selected* and *treats a Category as a leaf once its only child retires* |
+| AC-7 | No aggregation of descendant Results into a parent | Covered | `i3-browse` *withholds Results while the Category is a branch*; `i4-listing-cards` *withholds Results on a branch instead of gathering descendants* |
+| AC-8 | No further Start for descendants within the same path | Covered | `i3-browse` *creates no further Start for descendants of the same path* and *creates a separate Start for a new path* |
+
+### `US-DSC-F04-001` — Search Category Narrowing
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Narrowing available when the result context spans more than one leaf | Covered | `i3-search-narrowing` *offers narrowing when the query reaches more than one leaf* and *offers no narrowing when the query reaches one leaf* |
+| AC-2 | The exact current query retained | Covered | `i3-search-narrowing` *retains the exact query and narrows the candidate set* |
+| AC-3 | The candidate set narrowed to the selected leaf | Covered | The same test, and *refuses to narrow to a branch or a retired Category* |
+| AC-4 | The route stays Search and creates no Browse Start | Covered | `i3-search-narrowing` *stays a Search and creates no Browse Start* |
+| AC-5 | The existing Search Start gains the leaf's Domain once available | Covered | `i3-search-narrowing` *gives the existing Search Start its Domain once one is available* and *keeps the Domain the Start first gained* |
+| AC-6 | Attribute Filters available only after a leaf, and only through F05 | Covered | `i3-search-narrowing` *opens the Attribute Filter gate only on a leaf*; `i3-attribute-filtering` *offers no Filters on a branch* |
+| AC-7 | The current ordering mode preserved for F07 | Covered | `i3-search-narrowing` *preserves the Search ordering mode across narrowing* |
+
+### `US-DSC-F05-001` — Attribute Filtering
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | A Filter offered only on a leaf, for an applicable filterable Attribute | Covered | `i3-attribute-filtering` *offers a Filter only for an applicable filterable Attribute* and *offers no Filters on a branch* |
+| AC-2 | Text and non-applicable or non-filterable Attributes excluded | Covered | `i3-attribute-filtering` *never offers a Text Attribute* |
+| AC-3 | Number bounds inclusive; a missing value rejected | Covered | `i3-attribute-filtering` *applies inclusive Number bounds and rejects a missing value* |
+| AC-4 | Boolean matched exactly; a missing value rejected | Covered | `i3-attribute-filtering` *matches Boolean exactly and rejects a missing value* |
+| AC-5 | Values within one Single Select combined with OR | Covered | `i3-attribute-filtering` *combines values within one Single Select using OR* |
+| AC-6 | Multi Select matched on intersection | Covered | `i3-attribute-filtering` *matches a Multi Select on any intersection* |
+| AC-7 | Different Attribute Filters combined with AND | Covered | `i3-attribute-filtering` *combines different Filters using AND* |
+| AC-8 | Search match, leaf Category and all Filters combined with AND | Covered | `i3-attribute-filtering` *combines the Search match, the Category and the Filters* |
+| AC-9 | An Offering without a value for an applied Filter does not satisfy it | Covered | `i3-attribute-filtering` *applies inclusive Number bounds and rejects a missing value* and *matches Boolean exactly and rejects a missing value* |
+| AC-10 | Applying a Filter narrows or preserves Results | Covered | `i3-attribute-filtering` *narrows on applying a Filter and expands on removing it* |
+| AC-11 | Removing a Filter expands or preserves Results | Covered | The same test |
+| AC-12 | Query and leaf retained when all Filters are cleared | Covered | `i3-attribute-filtering` *keeps the query and the Category when Filters are cleared* |
+
+### `US-DSC-F06-001` — Discovery Results and Listing Cards
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Only eligible, currently matching Offerings in Results | Covered | `i3-browse` *shows only publicly eligible Offerings*; `i2-public-eligibility` decides the result the projection carries |
+| AC-2 | Exactly one Listing Card per Result | Covered | `i4-listing-cards` *represents every Result with exactly one card* |
+| AC-3 | Title, leaf Category name, Business name and an open affordance on every card | Covered | `i4-listing-cards` *presents the title, Category, Business and a way to open the Offering* |
+| AC-4 | The supplied primary visual where available, with nothing invented | Covered | `i4-listing-cards` *invents no media when none was supplied* |
+| AC-5 | Contact, Affiliate, owner-only and Admin-only information excluded | Covered | `i4-listing-cards` *carries no contact or Affiliate Destination information*; `i3-browse` *carries no protected or Affiliate information on a Listing Card* |
+| AC-6 | No purchase, transaction, Completion or external-success claim | Covered | `i4-listing-cards` *claims no purchase, transaction or completion* |
+| AC-7 | The card executes no Presentation, Compare, Chat, Handoff or Direct Contact | Covered | `i4-listing-cards` *opens the Offering by going somewhere rather than acting here* |
+| AC-8 | The same behaviour regardless of login or role | Covered | `i4-listing-cards` *shows the same markup whatever the role, because it holds no role* |
+
+### `US-DSC-F07-001` — Default Result Ordering
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Search ordered by Best Match across the named fields | Covered | `i3-result-ordering` *orders Search by the four Best Match levels* |
+| AC-2 | Later Initial Published At first within one match level | Covered | `i3-result-ordering` *places the later Initial Published At first within one level* |
+| AC-3 | A stable deterministic order for remaining Search ties | Covered | `i3-result-ordering` *breaks a remaining Search tie the same way every time* |
+| AC-4 | Browse ordered by later Initial Published At first | Covered | `i3-result-ordering` *orders Browse by later Initial Published At first*; `i3-browse` asserts the same from the Browse side |
+| AC-5 | A stable deterministic order for remaining Browse ties | Covered | `i3-result-ordering` *breaks a remaining Browse tie the same way every time* |
+| AC-6 | The ordering mode preserved across Filters | Covered | `i3-result-ordering` *keeps each ordering mode after a Filter is applied* |
+| AC-7 | No Sort control, paid placement, sponsorship, override or role advantage | Covered | `i3-result-ordering` *offers no way to ask for a different order* and *gives an owner and an Admin no ordering advantage* |
+
+### `US-DSC-F08-001` — Zero Results Recovery
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Zero Results when nothing eligible matches valid criteria | Covered | `i3-zero-results` *states Zero Results when a Search matches nothing* and *says nothing about Zero Results when something matched* |
+| AC-2 | The absence stated, with the query, Category and Filters kept understandable | Covered | `i3-zero-results` *preserves the query, the Category and every Filter* and *names the chosen allowed values rather than their identifiers* |
+| AC-3 | One or more Filters removable, and all clearable | Covered | `i3-zero-results` *offers removing one Filter only when more than one is applied* |
+| AC-4 | The query changeable or clearable | Covered | `i3-zero-results` *offers changing or clearing the query only in a Search* |
+| AC-5 | Movement to a parent or another active Category | Covered | `i3-zero-results` *offers a parent Category only when there is one* and *always offers another Category and the Homepage* |
+| AC-6 | Return to the Homepage entry | Covered | The same test |
+| AC-7 | No criterion silently removed and no mode switched | Covered | `i3-zero-results` *removes no criterion and switches no mode* |
+| AC-8 | No Recommendations, sponsorship, ineligible Offerings, Saved Search, History, Notification, Favorites or Messaging | Covered | `i3-zero-results` *invents nothing beyond the bounded recovery set* |
+
+### `US-DSC-F09-001` — Offering Presentation Handoff
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | One eligible Listing Card may be opened | Covered | `i4-presentation-handoff` *opens one eligible Offering* |
+| AC-2 | The exact selected identity supplied to UX-0003 | Covered | The same test — the slug the card carried resolves to the same Offering, unchanged |
+| AC-3 | Discovery responsibility for that open action ends | **Newly verified** | `i9-discovery-delivery` *leaves the Discovery path exactly where it was when an Offering opens* and *records the open against the Offering and not against the path* |
+| AC-4 | Presentation begins only while eligibility remains Eligible | Covered | `i4-presentation-handoff` *refuses to open an Offering that stopped being eligible* and *does not open a Draft that was never published* |
+| AC-5 | The open action is not a Completion | Covered | `i4-presentation-handoff` *begins no Discovery path and no Decision by being opened* |
+| AC-6 | No Compare, Chat, Handoff, Direct Contact or transaction begins automatically | Covered | The same test |
+| AC-7 | Criteria preserved when the Offering cannot be opened, and no occurrence produced | Covered | `i4-presentation-handoff` *says the same thing about an Offering that never existed*; `i4-offering-presentation` *produces no occurrence when Presentation cannot begin* |
+
+### `US-DSC-F10-001` — Compare Preparation Discovery Return
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | A return carrying exactly one eligible preparation Offering and its leaf | Covered | `i4-compare-preparation` *accepts one eligible preparation Offering with its leaf Category* and *discards a return carrying no usable Offering* |
+| AC-2 | The result context constrained to that same leaf | Covered | `i4-compare-preparation` *constrains the context to the one leaf while the return is in force* and *discards a return that names a different Category* |
+| AC-3 | The context transient, unsaved, non-restorable and absent from URL state | Covered | `i4-compare-preparation` *keeps the context out of anything durable or shareable* |
+| AC-4 | No new Search or Browse Start merely because the return opens | Covered | `i4-compare-preparation` *continues the same Discovery path rather than beginning one* |
+| AC-5 | The newly opened Offering and unchanged context passed to UX-0003 | Covered | `i4-compare-preparation` *carries the unchanged context through to Presentation* |
+| AC-6 | Nothing added to a Comparison Set and no Compare Start claimed | Covered | `i4-compare-preparation` *adds nothing to a Comparison Set and claims no Compare Start* |
+| AC-7 | The context cleared when the person leaves the flow | Covered | `i4-compare-preparation` *offers a way out, and leaving is a submission rather than a link* and *says nothing about preparation when there is none* |
+| AC-8 | Normal eligibility, card, ordering, Filter and Zero Results rules apply inside the constraint | Covered | `i4-compare-preparation` *applies the ordinary Result rules inside the constraint* |
+
+## The criterion that was about an ending
+
+`US-DSC-F09-001` AC-3 — "the system shall end Discovery responsibility for that
+current open action" — is the only Discovery criterion nothing asserted, and the
+reason is worth keeping.
+
+**An ending is only observable as things that stop happening.** Every other
+criterion in this domain names something the platform must do or must refuse,
+and both are straightforward to assert. A responsibility that finishes produces
+no row, no field and no response to check; it shows up as the absence of a
+second Start, an unchanged path, and an occurrence that belongs somewhere else.
+
+Two tests, from the two sides that can be seen:
+
+- The path is asked the same question before and after an Offering is opened
+  and gives the same answer, and still holds its one Start. Opening is not a
+  step in the path.
+- The occurrence is asserted against the *schema*: `offering_presentation_open`
+  holds the Offering and the Domain it happened in, and has no column that
+  could name a Discovery path. Nothing downstream can attribute an open back to
+  the route that led there, even by accident. That is a stronger claim than one
+  row not carrying the association, because it says the association cannot be
+  made.
+
+## Discovery advancement
+
+| Story | Criteria | Delivery Status |
+|---|---|---|
+| `US-DSC-F01-001` Homepage Discovery Entry | 8 of 8 verified | Not Started → **Done** |
+| `US-DSC-F02-001` Search | 8 of 8 verified | Not Started → **Done** |
+| `US-DSC-F03-001` Browse | 8 of 8 verified | Not Started → **Done** |
+| `US-DSC-F04-001` Search Category Narrowing | 7 of 7 verified | Not Started → **Done** |
+| `US-DSC-F05-001` Attribute Filtering | 12 of 12 verified | Not Started → **Done** |
+| `US-DSC-F06-001` Discovery Results and Listing Cards | 8 of 8 verified | Not Started → **Done** |
+| `US-DSC-F07-001` Default Result Ordering | 7 of 7 verified | Not Started → **Done** |
+| `US-DSC-F08-001` Zero Results Recovery | 8 of 8 verified | Not Started → **Done** |
+| `US-DSC-F09-001` Offering Presentation Handoff | 7 of 7 verified | Not Started → **Done** |
+| `US-DSC-F10-001` Compare Preparation Discovery Return | 8 of 8 verified | Not Started → **Done** |
+
+No Discovery criterion is covered by absence. Every one is asserted against
+behaviour, and the closest to an exception — AC-3's second test — is asserted
+against the schema, which is checkable rather than merely believable.
+
 ## Remaining domains
 
-Discovery, Decision and Platform are not advanced by this document. Their criteria are recorded here as work continues, one domain per
+Decision and Platform are not advanced by this document. Their criteria are recorded here as work continues, one domain per
 change, on the same standard: read the criterion, read the test, and where
 nothing reaches it, write one.
 
-All 27 Stories outside Identity, Business and Offering remain
+All 17 Stories outside Identity, Business, Offering and Discovery remain
 `Delivery Status: Not Started`.
