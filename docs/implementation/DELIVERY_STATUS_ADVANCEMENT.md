@@ -1207,6 +1207,42 @@ The assertion that earns its place is about *shape*:
 
 One Platform criterion is covered by absence: `US-PLT-F05-001` AC-6.
 
+## What this record superseded
+
+Advancing a Delivery Status made a sentence false in fourteen other documents.
+Each said, in its own words, that all 50 Generated Stories remain
+`Not Started` — true when written, and true until I9. They divide three ways,
+and the division is the point: a record, a snapshot and a Frozen baseline each
+want a different repair.
+
+**Twelve are Living, and now carry a superseding note beside the claim rather
+than a rewrite.** What a record asserted at its close is part of what it
+records; a closure record edited to agree with a later state stops being
+evidence of anything. They are `I1` through `I8`,
+`IMPLEMENTATION_BACKLOG.md`, `FIRST_VERTICAL_SLICE_READINESS.md`,
+`M11_SLICE_SCOPE_RECONCILIATION.md` and `M11_STORY_LINK_PROPOSAL.md`.
+
+**The thirteenth is `docs/repository/REPOSITORY_INDEX.md`, and it was corrected
+rather than annotated.** Its Repository Health table describes the present by
+design, so a note saying "this was true once" would be the wrong repair for a
+row whose whole job is to say what is true now. Its Development row also still
+named M9; it now names M12 and the current counts.
+
+**The fourteenth is `docs/traceability.md`, and this record cannot correct it.**
+It is Frozen v1.0, and its §5 validation results assert:
+
+> all 50 Generated Stories are `Frozen` with Delivery Status `Not Started`;
+
+That line is now wrong in its second half and still right in its first: the
+Stories are all Frozen, and 49 are `Done` with one `In Progress`. Editing a
+Frozen document in place is what `DOCUMENT_LIFECYCLE.md` forbids, so it stays
+as it is until a controlled superseding revision the Owner calls for.
+
+This is the same open action `implementation/README.md` already records for
+folding the M11 implementation links into that baseline. It is now two
+corrections waiting on one revision rather than one, which is worth knowing
+before deciding when to make it.
+
 ## Closure
 
 All six domains are recorded. **526 Acceptance Criteria across 50 Frozen

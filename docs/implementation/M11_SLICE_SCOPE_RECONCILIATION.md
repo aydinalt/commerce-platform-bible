@@ -109,3 +109,9 @@ increments this slice does not implement.
 Frozen Stories remain `Delivery Status: Not Started`. This record changes no
 Story intent, no Acceptance Criteria and no Delivery Status. Advancing any Story
 requires a separate change with Product Owner review and green CI evidence.
+
+> **Superseded (2026-08-15):** true when this record closed, and no longer.
+> I9 advanced 49 Stories to `Done` and `US-OFR-F05-001` to `In Progress`,
+> each against per-criterion evidence in `DELIVERY_STATUS_ADVANCEMENT.md`.
+> The sentence above is left as it was written, because what a record claimed
+> at its close is part of what it records.

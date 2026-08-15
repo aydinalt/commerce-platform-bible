@@ -119,3 +119,9 @@ CI evidence. This record extends the implementation links in
 `I4_PUBLIC_WEB_JOURNEY_CLOSURE.md`,
 `I5_COMPARE_AND_DECISION_CLOSURE.md` and
 `I6_BUSINESS_MANAGEMENT_CLOSURE.md`.
+
+> **Superseded (2026-08-15):** true when this record closed, and no longer.
+> I9 advanced 49 Stories to `Done` and `US-OFR-F05-001` to `In Progress`,
+> each against per-criterion evidence in `DELIVERY_STATUS_ADVANCEMENT.md`.
+> The sentence above is left as it was written, because what a record claimed
+> at its close is part of what it records.

@@ -13,6 +13,12 @@ This backlog orders delivery; it does not redefine Story behaviour or acceptance
 criteria. Every implementation item references the canonical Story file. All
 Stories remain `Delivery Status: Not Started` at this planning stage.
 
+> **Superseded (2026-08-15):** true when this record closed, and no longer.
+> I9 advanced 49 Stories to `Done` and `US-OFR-F05-001` to `In Progress`,
+> each against per-criterion evidence in `DELIVERY_STATUS_ADVANCEMENT.md`.
+> The sentence above is left as it was written, because what a record claimed
+> at its close is part of what it records.
+
 ## I0 — Repository Foundation
 
 Engineering work with no product Story claim:

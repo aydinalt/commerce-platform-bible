@@ -13,6 +13,12 @@
 > acceptance changes no Story behaviour, no Acceptance Criterion and no Delivery
 > Status; all 50 Generated Stories remain `Not Started`.
 
+> **Superseded (2026-08-15):** true when this record closed, and no longer.
+> I9 advanced 49 Stories to `Done` and `US-OFR-F05-001` to `In Progress`,
+> each against per-criterion evidence in `DELIVERY_STATUS_ADVANCEMENT.md`.
+> The sentence above is left as it was written, because what a record claimed
+> at its close is part of what it records.
+
 ## Purpose
 
 The roadmap requires the first slice to "record implementation links without
