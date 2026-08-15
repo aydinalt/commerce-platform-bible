@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.21
+Version:      2.22
 Last Updated: 2026-08-15
 -->
 
@@ -14,9 +14,9 @@ Last Updated: 2026-08-15
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I9 Delivery Status Advancement — in progress. Identity advanced; five domains remain |
+| Current phase | M12 Increment I9 Delivery Status Advancement — in progress. Identity and Business advanced; four domains remain |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
-| Delivery Status of Frozen Stories | 9 of 50 `Done` — the nine `US-IDN` Identity Stories, each advanced against per-criterion evidence in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. The remaining 41 stay `Not Started` until their criteria are recorded the same way |
+| Delivery Status of Frozen Stories | 16 of 50 `Done` — the nine `US-IDN` Identity and seven `US-BUS` Business Stories, each advanced against per-criterion evidence in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. The remaining 34 stay `Not Started` until their criteria are recorded the same way |
 
 ## Canonical Layer Status
 
@@ -202,11 +202,25 @@ flow-keyed cookie holding two names from closed vocabularies, which is a
 resumed request rather than a grant: the person returns to a button, and
 pressing it re-evaluates every gate.
 
-Five criteria are recorded as covered by absence rather than by assertion,
-because they forbid something no route, contract or shape can express. That is
-weaker evidence and is marked as such.
+Five Identity criteria are recorded as covered by absence rather than by
+assertion, because they forbid something no route, contract or shape can
+express. That is weaker evidence and is marked as such.
 
-The remaining 41 Stories stay `Not Started`.
+Business followed on the same standard. Its seven Stories were the best-covered
+in the repository — the four I6 suites line up almost criterion for criterion —
+and only two of the 95 had nothing behind them. Both are gates rather than
+actions, which is the kind of thing that keeps working until somebody removes
+it and nothing notices.
+
+Writing the first found something worth recording. `BusinessService.create`
+refuses a suspended holder and audits the denial, but that branch cannot be
+reached over HTTP: suspension invalidates the session, so authentication
+answers `401` before any Business rule is consulted. Both gates are correct and
+the record cites the outer one, because citing a branch nothing can reach would
+be evidence that reads as strong and is not.
+
+Nine of the 176 criteria recorded so far are covered by absence. The remaining
+34 Stories stay `Not Started`.
 
 ## I7 Closure Evidence
 
@@ -229,7 +243,7 @@ eligibility that was enacted without being recorded.
 
 ## Remaining Work
 
-1. Record the per-criterion evidence for Business, Offering, Discovery, Decision and Platform, and advance the 41 Delivery Statuses that evidence supports. One domain per change, on the Identity standard: read the criterion, read the test, and where nothing reaches it, write one.
+1. Record the per-criterion evidence for Offering, Discovery, Decision and Platform, and advance the 34 Delivery Statuses that evidence supports. One domain per change, on the Identity standard: read the criterion, read the test, and where nothing reaches it, write one.
 2. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
 3. Select a Decision Chat assistant vendor and add its adapter.
 4. Fold the recorded implementation links into the Frozen cross-tier traceability baseline through a controlled superseding revision when the Owner chooses to.
@@ -282,6 +296,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.22 | 2026-08-15 | Advanced the seven `US-BUS` Business Stories to `Done`. The Business Stories were the best-covered in the repository — the four I6 suites line up almost one to one with their criteria — and only two of the 95 had nothing behind them, both gates rather than actions. Writing the first found something worth recording: `BusinessService.create` refuses a suspended holder and audits it, but that branch cannot be reached over HTTP, because suspension invalidates the session and authentication answers first. The record cites the gate that actually runs. |
 | 2.21 | 2026-08-15 | Advanced the nine `US-IDN` Identity Stories from `Not Started` to `Done`, each against per-criterion evidence recorded in `DELIVERY_STATUS_ADVANCEMENT.md`. Reading all 81 criteria against the tests found eight nothing asserted — every one of them about what an action leaves alone — and one, `US-IDN-F09-001` AC-2, that the code did not meet: the channel an interrupted person had chosen was carried nowhere, so they returned from signing in to an unanswered question. It now travels in a flow-keyed cookie holding two names from closed vocabularies. Also corrected two stale claims in this document: twenty-two routes, not twenty-one, and the surfaces I8 built are no longer listed as unbuilt. |
 | 2.20 | 2026-08-14 | Closed the three gaps I8 recorded. Two were the same mistake — the platform knew something and had not published it — and are now `selectionLost` on the Decision Context and `GET /categories/assignable` behind the Offering create picker. The third was an error in the closure record: the error envelope does carry `fieldErrors`, and the Universal Publication Minimum's shortfalls now reach the person from both the publication and the bounded correction paths. Also loosened the `nanoid` override, which pinned the exact version GHSA-2v37-7h3g-55p8 names. Delivery Status unchanged. |
 | 2.19 | 2026-08-14 | Closed I8: every Frozen UX document now has a surface — authentication and context entry, the Business Dashboard with Offering actions, editing, correction notices, the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard with moderation cases, destination administration, Category and Attribute management and Basic Analytics. Added two API answers so that no screen composes an availability rule, and recorded three gaps where a screen can only be as honest as the read it was given. Delivery Status unchanged. |

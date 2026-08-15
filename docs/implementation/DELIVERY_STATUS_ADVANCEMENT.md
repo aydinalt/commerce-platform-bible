@@ -234,7 +234,7 @@ re-evaluation and AC-6's refusal automatic rather than remembered. A channel
 the Business withdrew while they were away is not in `channels.available`, so
 it is not marked and the sentence saying they may carry on is not shown.
 
-## Advancement
+## Identity advancement
 
 | Story | Criteria | Delivery Status |
 |---|---|---|
@@ -261,11 +261,195 @@ This is a weaker kind of evidence than an assertion and is marked as such rather
 than counted as an ordinary pass. A reviewer who wants to challenge one of these
 should look for the absent route, not for a missing test.
 
+## Business — `US-0005`
+
+Seven Stories, 95 Acceptance Criteria. The Business Stories are the
+best-covered in the repository: `i6-business-dashboard`,
+`i6-offering-management`, `i6-destination-management` and
+`i6-correction-notice` were each written criterion by criterion in I6 and line
+up almost one to one, and `i2-business-creation`, `i2-business-information`,
+`i2-public-business-identity` and `i6-business-restriction` cover the rest.
+
+**Two criteria had no test.** They are proved by the three tests in
+`i9-business-delivery.integration.test.ts`. Both are about a gate rather than
+an action — the kind of thing that works until somebody removes it, and that
+nothing notices when they do.
+
+### `US-BUS-F01-001` — Business Creation and Ownership
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | An Enabled authenticated account before creation may begin | **Newly verified** | `i9-business-delivery` *creates no Business for an account that is not Enabled* and *refuses the suspended holder exactly as it refuses a stranger*. See the note below on where the gate actually is |
+| AC-2 | An owning account and a non-empty display name | Covered | `i2-business-creation` *refuses a Business without a display name* and *requires an authenticated account* |
+| AC-3 | No prior Admin approval | Covered | `i2-business-creation` *creates a Business with no Admin approval in between* |
+| AC-4 | Created `Unrestricted` | Covered | `i2-business-creation` *creates a Business with no Admin approval in between* asserts `business_moderation_state.status` is `UNRESTRICTED` at creation |
+| AC-5 | Created with exposure input `Eligible` | Covered | The same test asserts `publicExposure: "ELIGIBLE"` on the created Business |
+| AC-6 | Immediately available to its owner | Covered | `i2-business-creation` *makes the Business immediately available to its owner* |
+| AC-7 | One account may own several Businesses | Covered | `i2-business-creation` *lets one person own several Businesses* |
+| AC-8 | Exactly one owner per Business in V1 | Covered | `i2-business-creation` *assigns exactly one owner, enforced by the database* — the constraint, not the code path, which is what makes it hold for writes nobody has written yet |
+| AC-9 | The same account for both contexts; no separate Business identity | Covered by absence | No credential, session or route exists for a Business as such. `m12-business-context` *requires an authenticated session to choose a context at all* |
+| AC-10 | No transfer, co-owner, delegation, team member, invitation or internal role | Covered by absence | `business_owner` admits one owner per Business and there is no route that adds a second, changes the first, or names a role |
+| AC-11 | No dedicated public Business Profile page | **Newly verified** | `i9-business-delivery` *gives a Business no public address of its own* — every address naming a Business is a management address and answers a Guest as one |
+
+### `US-BUS-F02-001` — Business Information and Exposure
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | The owner sees every field for the exact owned Business | Covered | `i2-business-information` *shows the owner every Business Information field* and *hides another person's Business rather than forbidding it* |
+| AC-2 | The owner edits name, logo, description, telephone, email and contact URL | Covered | `i2-business-information` *saves the complete information set* |
+| AC-3 | A save that empties the display name is rejected | Covered | `i2-business-information` *refuses a save that empties the display name* |
+| AC-4 | Optional fields may be added, changed or removed | Covered | `i2-business-information` *lets every optional field be added, changed and removed* |
+| AC-5 | A Business may exist with zero contact channels | Covered | `i2-business-information` *accepts a Business with no Direct Contact channel at all* |
+| AC-6 | The public identity set is name plus supplied logo and description only | Covered | `i2-public-business-identity` *contains display name, logo and short description only* and *carries a supplied name even when the optional fields are absent* |
+| AC-7 | Available to PRD-0001 only when exposure input and final eligibility are both `Eligible` | Covered | Both arms: `i2-public-business-identity` *composes nothing at all while exposure is Ineligible*, and `i2-public-eligibility` *is Eligible only for a Published Offering of an Eligible Business* |
+| AC-8 | No Business Information exposed through an owned Offering while exposure is `Ineligible` | Covered | `i2-public-business-identity` *composes nothing at all while exposure is Ineligible*; `i6-business-restriction` *withdraws public eligibility on restriction and returns it on restoration* |
+| AC-9 | Telephone, email and contact URL unavailable to Guests and outside the identity set | Covered | `i2-public-business-identity` *excludes every Direct Contact channel*; `i4-offering-presentation` *excludes protected contact information from the Business identity* |
+| AC-10 | Contact information available only through PRD-0004 to an Enabled authenticated User | Covered | `i5-direct-contact` *reveals the chosen channel to an Enabled authenticated User* and *reveals nothing to a Guest* |
+| AC-11 | Direct Contact unavailable where no approved channel exists | Covered | `i5-direct-contact` *says a Business with no channel cannot be contacted*; `i2-public-business-identity` *is unavailable when no channel is supplied* |
+| AC-12 | Editing valid information changes no status, lifecycle, eligibility or Completion | Covered | `i2-business-information` *changes no moderation status or exposure input by itself* |
+| AC-13 | Owner and Admin visibility stay separate from public exposure | Covered | `i2-business-information` *keeps management visibility open while public exposure is closed* |
+| AC-14 | No inbox, conversation, response workflow or Messaging | Covered by absence | The information contract holds six fields and no collection. `i5-direct-contact` *creates no message, conversation or response state* |
+
+### `US-BUS-F03-001` — Business Moderation and Public Exposure Input
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Exactly `Unrestricted` and `Restricted` | Covered | `i6-business-restriction` *uses exactly two moderation values and maps each to one exposure input* |
+| AC-2 | `Unrestricted` maps to exposure input `Eligible` | Covered | The same test, and *refuses to let the two disagree* — the mapping is a database constraint rather than a convention |
+| AC-3 | `Restricted` maps to exposure input `Ineligible` | Covered | As AC-2 |
+| AC-4 | Restrict produces `Restricted` and `Ineligible` | Covered | `i6-business-restriction` *withdraws public eligibility on restriction and returns it on restoration* |
+| AC-5 | A Restricted owner may manage information and Drafts and view the rest | Covered | `i6-business-restriction` *lets a Restricted owner manage Business Information and existing Drafts* and *lets a Restricted owner see what they own* |
+| AC-6 | A Restricted Business creates no Offering and publishes no Draft | Covered | `i6-business-restriction` *stops a Restricted owner creating an Offering or publishing a Draft* |
+| AC-7 | No normal editing of Published or Hidden while Restricted, except the bounded path | Covered | `i6-business-restriction` *stops normal editing of a Published Offering while Restricted*; `i6-correction-notice` *opens the bounded path only when every condition holds* |
+| AC-8 | Retirement allowed while Restricted where PRD-0001 permits | Covered | `i6-business-restriction` *allows retirement while Restricted* |
+| AC-9 | Destination viewing or editing while Restricted only where the Offering stays owner-manageable | Covered | `i6-business-restriction` *allows an Affiliate Destination only where the Offering is still owner-manageable* |
+| AC-10 | Restriction alone moves no lifecycle, destination, access status or ownership | Covered | `i6-business-restriction` *moves nothing else by restricting* |
+| AC-11 | Restore produces `Unrestricted` and `Eligible` | Covered | `i6-business-restriction` *withdraws public eligibility on restriction and returns it on restoration* |
+| AC-12 | Restoration publishes no Draft and restores no Hidden or Archived Offering | Covered | `i6-business-restriction` *publishes nothing and un-hides nothing on restoration* |
+| AC-13 | Restoration alone moves no destination status or Handoff Eligibility | Covered | `i6-business-restriction` *moves no Affiliate Destination state by restoring* |
+| AC-14 | Only lifecycle-Published Offerings regain final eligibility after restoration | Covered | `i6-business-restriction` *publishes nothing and un-hides nothing on restoration* read with *withdraws public eligibility on restriction and returns it on restoration* |
+| AC-15 | Moderation status and exposure input unchanged when the owner is Suspended | Covered | `i6-business-restriction` *leaves moderation and exposure alone when the owner is suspended* |
+| AC-16 | Context entry blocked during owner suspension without changing public eligibility | Covered | The same test asserts the `401` and that the published Offering stays findable |
+
+### `US-BUS-F04-001` — Business Dashboard and Context Selection
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | An Enabled owner of that exact Business before the Dashboard opens | Covered | `i6-business-dashboard` *opens only for an Enabled owner of that exact Business* |
+| AC-2 | The active Business name and Moderation Status identifiable throughout | Covered | `i6-business-dashboard` *names the Business and its Moderation Status* |
+| AC-3 | Direct entry to a sole owned Business without a second identity | Covered | `i6-business-dashboard` *enters the sole owned Business without inventing a second identity* |
+| AC-4 | Explicit selection where more than one Business is owned | Covered | `i6-business-dashboard` *requires an explicit choice where more than one Business is owned* |
+| AC-5 | A switch changes only the active management context | Covered | `i6-business-dashboard` *changes only the active context when switching* |
+| AC-6 | No management action applied silently to another Business | Covered | `i6-business-dashboard` *applies no management action to the Business that is not active*; `m11-authorization` *does not read back an Offering through a different owned Business* |
+| AC-7 | Status and authorization re-evaluated on entry and after a switch | Covered | `i6-business-dashboard` *re-evaluates the account on entry and after a switch* |
+| AC-8 | Admin authorization alone is insufficient | Covered | `i6-business-dashboard` *treats Admin authorization as no kind of ownership* |
+| AC-9 | Only by-reference management areas and authoritative states, without redefinition | Covered | `i6-business-dashboard` *organizes the inventory by lifecycle and adds nothing to it* |
+| AC-10 | No analytics, metrics, revenue, ranking, trends, CRM, Messaging or transactions | Covered | `i6-business-dashboard` *reports no metric, ranking or trend of any kind* |
+| AC-11 | The last confirmed active Business survives a failed switch | Covered | `i6-business-dashboard` *keeps the last confirmed Business when a switch fails* |
+
+### `US-BUS-F05-001` — Offering Management Entry
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Inventory organized by the four authoritative lifecycle states | Covered | `i6-offering-management` *organizes the inventory by the authoritative lifecycle states* |
+| AC-2 | Only actions currently permitted by PRD-0001 and PRD-0005 | Covered | `i6-offering-management` *keeps the offer and the refusal the same rule*; `i8-offering-actions` binds the same answer to the buttons |
+| AC-3 | Create only for an Unrestricted active Business | Covered | `i6-business-restriction` *stops a Restricted owner creating an Offering or publishing a Draft* |
+| AC-4 | A created Offering begins `Draft` | Covered | `i6-offering-management` *begins a created Offering as a Draft* |
+| AC-5 | Edit only where lifecycle and access rules both permit | Covered | `i6-offering-management` *keeps the offer and the refusal the same rule*; `i2-offering-editing` holds the lifecycle half |
+| AC-6 | Publish only for an owned Draft, Unrestricted, minimum satisfied | Covered | `i6-offering-management` *offers Publish only where the minimum is already satisfied* |
+| AC-7 | Validation feedback without redefining the minimum | Covered | `i8-offering-actions` relays the shortfalls the API publishes; `i8-recorded-gaps` *publishes which conditions of the minimum failed* |
+| AC-8 | Retire from Draft, Published or Hidden where PRD-0001 permits | Covered | `i6-offering-management` *offers Retire from every state that permits it* |
+| AC-9 | `Archived` consumed as the retirement result | Covered | `i2-offering-retirement` writes and reads `ARCHIVED`; no other result exists in the lifecycle enum |
+| AC-10 | The owner cannot restore a Hidden Offering to Published | Covered | `i6-offering-management` *offers no way to restore a Hidden Offering and no way to delete* |
+| AC-11 | An Archived Offering is view-only | Covered | `i6-offering-management` *makes an Archived Offering view-only* |
+| AC-12 | No permanent deletion | Covered by absence | No delete route exists for an Offering. `i6-offering-management` *offers no way to restore a Hidden Offering and no way to delete* |
+| AC-13 | Lifecycle `Published` distinguished from final public eligibility | Covered | `i6-offering-management` *distinguishes lifecycle Published from public eligibility* |
+| AC-14 | A Restricted Business manages Drafts, views the rest, retires, and uses only the bounded path | Covered | `i6-offering-management` *narrows the entries a Restricted Business is offered* |
+| AC-15 | A Restricted Business creates nothing, publishes nothing, edits Published or Hidden normally never | Covered | `i6-offering-management` *lets a Restricted owner still publish nothing at all* |
+| AC-16 | No lifecycle transition claimed when an action fails | Covered | `i6-offering-management` *claims no lifecycle transition when an action fails* |
+
+### `US-BUS-F06-001` — Affiliate Destination Management Entry
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Entry only for an applicable owned Offering that is currently owner-manageable | Covered | `i6-destination-management` *gives the entry only for an owned Offering* and *composes the entry from the Offering's condition and nothing else* |
+| AC-2 | Create entry where the Offering has no destination | Covered | `i6-destination-management` *offers Create where the Offering has no destination* |
+| AC-3 | Edit entry for the existing destination where access rules permit | Covered | `i6-destination-management` *offers Edit once a destination exists, and Create no longer* |
+| AC-4 | Authoritative status, validation result and Handoff Eligibility without recalculation | Covered | `i6-destination-management` *reports the authoritative results without recalculating them* |
+| AC-5 | Association, consequences, status, validation and eligibility stay owned by PRD-0001 | Covered | `i3-affiliate-governance` owns those transitions; `i6-destination-management` *gives the Business no administration action anywhere* |
+| AC-6 | A Restricted Business edits only where the Offering stays owner-manageable | Covered | `i6-destination-management` *lets a Restricted Business manage a Draft's destination and no other* |
+| AC-7 | An Offering-content correction notice grants no destination authority | Covered | `i6-correction-notice` *opens no management area the owner is not currently authorized for* and *grants no creation, publication or unrelated edit* |
+| AC-8 | No destination correction notice bypasses the ordinary access gate | Covered | As AC-7 |
+| AC-9 | The Business cannot Review, Validate, Enable, Disable or recalculate eligibility | Covered | `i6-destination-management` *gives the Business no administration action anywhere* |
+| AC-10 | An Archived Offering's destination is view-only | Covered | `i6-destination-management` *makes an Archived Offering's destination view-only* |
+| AC-11 | No validation, enablement, status or eligibility change claimed when a save fails | Covered | `i6-destination-management` *claims no result when a save fails* |
+| AC-12 | No affiliate network, attribution, tracking, commission, settlement or conversion behaviour | Covered | `i6-destination-management` *creates no commercial behaviour by being used* |
+
+### `US-BUS-F07-001` — Correction Notice and Owner Response
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Exactly four V1 correction targets for Business response | Covered | `i6-correction-notice` *accepts exactly the four Business-owned targets* |
+| AC-2 | User Account excluded from the Business target set | Covered | `i6-correction-notice` *has no way to name a User Account as a target*; `i7-access-moderation` *offers no User Account correction target* |
+| AC-3 | The notice identifies the exact approved target area | Covered | `i6-correction-notice` *identifies the exact target and where it opens* |
+| AC-4 | Only the applicable currently authorized management area opens | Covered | `i6-correction-notice` *opens no management area the owner is not currently authorized for* |
+| AC-5 | The notice's existence changes nothing | Covered | `i6-correction-notice` *changes nothing by existing or by being read* |
+| AC-6 | No message, conversation, ticket discussion, reply, inbox or Messaging | Covered | `i6-correction-notice` *creates no message, conversation or reply* |
+| AC-7 | The owner edits only what is normally authorized under current rules | Covered | `i6-correction-notice` *opens no management area the owner is not currently authorized for* |
+| AC-8 | The bounded path only for an Open case on an exact Published or Hidden owned Offering | Covered | `i6-correction-notice` *opens the bounded path only when every condition holds* and *refuses a bounded edit once the case is closed* |
+| AC-9 | The bounded correction is limited to the exact Offering and content area | Covered | `i6-correction-notice` *limits the edit to the exact targeted content area* and *limits the edit to the exact Offering* |
+| AC-10 | No creation, publication, unrelated edit, status change or automatic closure | Covered | `i6-correction-notice` *grants no creation, publication or unrelated edit* |
+| AC-11 | The saved correction preserves the Universal Publication Minimum | Covered | `i6-correction-notice` *requires the saved correction to preserve the publication minimum*; `i8-recorded-gaps` *carries a correction's shortfalls where the envelope can hold them* |
+| AC-12 | The case stays `Open` after an owner edit | Covered | `i6-correction-notice` *keeps everything where it was after the owner responds* |
+| AC-13 | The Business stays Restricted, ineligible, and the Offering publicly ineligible until re-review | Covered | The same test |
+| AC-14 | Platform re-review required after a bounded correction | Covered | `i7-correction-re-review` holds the re-review path |
+| AC-15 | Approved action, no-action decision and closure left to PRD-0006 | Covered | `i6-correction-notice` *leaves approved action, no-action and closure to Platform* |
+
+## Where AC-1's gate actually is
+
+`US-BUS-F01-001` AC-1 asks for an *Enabled* authenticated account before
+creation may begin. Being authenticated was the only half anything asserted, so
+the test was written — and writing it found something worth recording.
+
+`BusinessService.create` refuses a suspended holder with `ACCOUNT_NOT_ACTIVE`
+and audits the denial. **That branch cannot be reached over HTTP.** Suspending
+an account invalidates its sessions, so the request is answered `401` by
+authentication before any Business rule is consulted. The first draft of the
+test asserted the audited denial and failed, which is how this surfaced.
+
+Both gates are correct and the criterion is met by the outer one. The record
+cites the outer one, because citing a branch nothing can reach would be
+evidence that reads as strong and is not.
+
+The test asserts the outcome rather than the mechanism: no Business row is
+written, and a suspended holder is refused in exactly the same words as a
+stranger. That last part matters on its own — `US-IDN-F03-001` AC-4 refuses a
+Suspended account identically to an unknown one, and a creation endpoint that
+answered a suspended holder differently would be a way of learning that
+somebody has been suspended.
+
+## Business advancement
+
+| Story | Criteria | Delivery Status |
+|---|---|---|
+| `US-BUS-F01-001` Business Creation and Ownership | 11 of 11 verified | Not Started → **Done** |
+| `US-BUS-F02-001` Business Information and Exposure | 14 of 14 verified | Not Started → **Done** |
+| `US-BUS-F03-001` Business Moderation and Public Exposure Input | 16 of 16 verified | Not Started → **Done** |
+| `US-BUS-F04-001` Business Dashboard and Context Selection | 11 of 11 verified | Not Started → **Done** |
+| `US-BUS-F05-001` Offering Management Entry | 16 of 16 verified | Not Started → **Done** |
+| `US-BUS-F06-001` Affiliate Destination Management Entry | 12 of 12 verified | Not Started → **Done** |
+| `US-BUS-F07-001` Correction Notice and Owner Response | 15 of 15 verified | Not Started → **Done** |
+
+Four Business criteria are covered by absence on the same terms recorded for
+Identity: `US-BUS-F01-001` AC-9 and AC-10, `US-BUS-F02-001` AC-14, and
+`US-BUS-F05-001` AC-12.
+
 ## Remaining domains
 
-Business, Offering, Discovery, Decision and Platform are not advanced by this
+Offering, Discovery, Decision and Platform are not advanced by this
 document. Their criteria are recorded here as work continues, one domain per
 change, on the same standard: read the criterion, read the test, and where
 nothing reaches it, write one.
 
-All 41 Stories outside Identity remain `Delivery Status: Not Started`.
+All 34 Stories outside Identity and Business remain
+`Delivery Status: Not Started`.

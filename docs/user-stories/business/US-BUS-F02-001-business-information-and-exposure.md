@@ -27,7 +27,7 @@
 | Experience Owner | `UX-0005-business-dashboard.md` §7; `UX-0003-offering-detail.md` §8.5; `UX-0009-decision-flow.md` §11 |
 | Owner | Product Owner / Architecture Owner |
 | Status | Frozen |
-| Delivery Status | Not Started |
+| Delivery Status | Done |
 | Priority | Must |
 | Story Size | L |
 | Version | 1.0 |

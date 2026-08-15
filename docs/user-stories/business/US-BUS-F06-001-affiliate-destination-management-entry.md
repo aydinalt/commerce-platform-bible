@@ -27,7 +27,7 @@
 | Experience Owner | `UX-0005-business-dashboard.md` §13 |
 | Owner | Product Owner / Architecture Owner |
 | Status | Frozen |
-| Delivery Status | Not Started |
+| Delivery Status | Done |
 | Priority | Must |
 | Story Size | M |
 | Version | 1.0 |
