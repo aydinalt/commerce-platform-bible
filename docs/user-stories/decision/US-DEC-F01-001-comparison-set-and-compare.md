@@ -27,7 +27,7 @@
 | Experience Owner | `UX-0004-compare.md` |
 | Owner | Product Owner / Architecture Owner |
 | Status | Frozen |
-| Delivery Status | Not Started |
+| Delivery Status | Done |
 | Priority | Must |
 | Story Size | L |
 | Version | 1.0 |

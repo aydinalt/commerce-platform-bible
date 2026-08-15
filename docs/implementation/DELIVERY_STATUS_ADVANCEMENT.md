@@ -792,11 +792,188 @@ No Discovery criterion is covered by absence. Every one is asserted against
 behaviour, and the closest to an exception — AC-3's second test — is asserted
 against the schema, which is checkable rather than merely believable.
 
+## Decision — `US-0004`
+
+Seven Stories, 72 Acceptance Criteria. The I5 suites reach 71 of them, and the
+seventy-second is `US-DEC-F03-001` AC-5's clause about **comparable Attribute
+differences** — undemonstrated for a structural reason rather than an oversight:
+every existing Chat test enters a flow holding one Offering, and a difference
+needs two. It is proved by the three tests in
+`i9-decision-delivery.integration.test.ts`.
+
+Two of this domain's criteria were closed by the Identity increment rather than
+by this one. `US-DEC-F06-001` AC-7 and AC-8 are the same requirement as
+`US-IDN-F09-001` AC-2 seen from the other side, and before the resume cookie
+existed neither was met.
+
+### `US-DEC-F01-001` — Comparison Set and Compare
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Compare optional; no set required for a single-Offering path | Covered | `i5-decision-context` *enters with one eligible Offering and no Compare*; `i5-offering-selection` *selects the single-Offering context without Compare* |
+| AC-2 | A set accepted only at two to five publicly eligible Offerings | Covered | `i5-comparison-set` *begins a set that cannot yet be opened*, *refuses to open a set of one and records nothing* and *refuses a sixth member until one is explicitly replaced* |
+| AC-3 | Every member shares the same active leaf Category | Covered | `i5-comparison-set` *refuses a member from another leaf Category and leaves the set alone* |
+| AC-4 | An ineligible or wrong-leaf Offering rejected without altering the valid set | Covered | The same test, and *refuses an Offering that is not publicly eligible* |
+| AC-5 | Explicit add or remove while the set stays valid | Covered | `i5-comparison-set` *lets a member be removed and the set stay usable* |
+| AC-6 | Explicit removal or replacement before a sixth may enter | Covered | `i5-comparison-set` *refuses a sixth member until one is explicitly replaced* |
+| AC-7 | Only applicable comparable Attributes for the shared leaf | Covered | `i5-comparison-set` *compares only the Attributes marked comparable* and *keeps every comparable Attribute applicable to every member* |
+| AC-8 | The authoritative value where supplied, `Not provided` where missing | Covered | `i5-comparison-set` *states an absent comparable value rather than filling it in* |
+| AC-9 | No `Not applicable` result for a same-leaf set | Covered | `i5-comparison-set` *keeps every comparable Attribute applicable to every member* — sharing the leaf makes the case unreachable rather than handled |
+| AC-10 | No invented value, default, normalization, ranking, winner or recommendation | Covered | `i5-comparison-set` *ranks nothing, scores nothing and recommends nothing* |
+| AC-11 | Compare Start when a valid set is successfully opened | Covered | `i5-comparison-set` *opens Compare on two members and records the occurrence once* and *refuses to open a set of one and records nothing* |
+| AC-12 | The unchanged valid set available to F02 | Covered | `i5-decision-context` *enters with the Comparison Set exactly as Compare left it* |
+
+### `US-DEC-F02-001` — Decision Context
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Exactly one eligible Offering or one valid Comparison Set | Covered | `i5-decision-context` *refuses a context that is both, or neither* |
+| AC-2 | One eligible Offering accepted without Compare | Covered | `i5-decision-context` *enters with one eligible Offering and no Compare* |
+| AC-3 | The unchanged valid set from F01 accepted | Covered | `i5-decision-context` *enters with the Comparison Set exactly as Compare left it* |
+| AC-4 | The context limited to the current Decision flow | Covered | `i5-decision-context` *keeps two flows apart*; `i5-decision-chat` *keeps the conversation to this flow and no other* |
+| AC-5 | No unrelated Offering, set or prior decision merged in | Covered | `i5-decision-context` *keeps two flows apart*; `i9-decision-delivery` *carries only what the current context contains* |
+| AC-6 | No persistent history, cross-decision memory or personal profile | Covered | `i5-decision-context` *stores nothing that ties a flow to a person*; `i5-decision-chat` *takes the conversation with the flow when it expires* |
+| AC-7 | Chat and handoff unavailable when no valid context exists | Covered | `i5-decision-chat` *produces no occurrence and no answer on an invalid context*; `i5-offering-selection` *closes the handoff when the context itself becomes invalid* |
+| AC-8 | Chat prevented from claiming information of an invalid or removed Offering | Covered | `i5-decision-chat` *withholds a reply that states a figure the context never contained* |
+| AC-9 | Repair through UX-0004, another eligible Offering, or leaving | Covered | `i5-decision-context` *offers repairing the set only where there is a set* and *offers no repair while the context is valid* |
+
+### `US-DEC-F03-001` — Decision Chat
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Public to Guest, User, Business, Admin and a Suspended holder's Guest baseline | Covered | `i5-decision-chat` *answers a Guest without an account, and an account no differently* — the route takes no principal, so there is nothing that could tell the five apart |
+| AC-2 | No account creation before, during or after Guest Chat | Covered | The same test; `i5-affiliate-handoff` *hands a Guest off without an account before or after* holds the same property at the other end |
+| AC-3 | Decision Chat Start only when Chat begins on a valid context | Covered | `i5-decision-chat` *produces Decision Chat Start once, however many questions follow* and *produces no occurrence and no answer on an invalid context* |
+| AC-4 | Only authoritative information belonging to the current context | Covered | `i5-decision-chat` *withholds a reply that states a figure the context never contained* and *carries no telephone, email or contact URL into the conversation*; `i9-decision-delivery` *carries only what the current context contains* |
+| AC-5 | Explanation of Offering information, comparable differences, authoritative values, `Not provided` and stated priorities | **Newly verified** | Four clauses by `i5-decision-chat` *explains the authoritative values and states what is missing* and *repeats the stated priorities without turning them into an order*; the fifth by `i9-decision-delivery` *puts both members' comparable values where the difference is visible*. See the note below on what explaining a difference means here |
+| AC-6 | No invented value, fact, ranking, winner or recommendation | Covered | `i5-decision-chat` *withholds a reply that states a figure the context never contained* and *repeats the stated priorities without turning them into an order*; `i9-decision-delivery` *explains the difference without saying which is better* |
+| AC-7 | Chat selects no Offering and begins no handoff | Covered | `i5-decision-chat` *selects nothing and begins nothing*; `i5-offering-selection` *gives Decision Chat no way to select, change or clear* |
+| AC-8 | Chat selects no channel and reveals nothing protected to a Guest | Covered | `i5-decision-chat` *carries no telephone, email or contact URL into the conversation* |
+| AC-9 | Context kept to the current flow; no saved history, profile, memory, Watch or forced account | Covered | `i5-decision-chat` *keeps the conversation to this flow and no other*, *takes the conversation with the flow when it expires* and *keeps the record that Chat began after the flow is gone* |
+| AC-10 | No purchase, sale, contract, contact response or external success claimed | Covered | `i5-decision-chat` *makes no claim about a purchase, a reply or an external result* |
+
+### `US-DEC-F04-001` — Explicit Offering Selection
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Explicit selection before any handoff becomes available | Covered | `i5-offering-selection` *offers no handoff until something is explicitly selected*; `i8-decision-handoff` *offers no path at all until something is selected* |
+| AC-2 | The single Offering selectable without Compare | Covered | `i5-offering-selection` *selects the single-Offering context without Compare* |
+| AC-3 | A selection from a set must be a current eligible member | Covered | `i5-offering-selection` *refuses an Offering the context does not contain* |
+| AC-4 | Non-selected members stay in the set | Covered | `i5-offering-selection` *selects a current member and leaves the others in the set* |
+| AC-5 | The person may explicitly change or clear the selection | Covered | `i5-offering-selection` *lets the person change and clear the selection* |
+| AC-6 | Selection clears on removal, ineligibility or context replacement | Covered | `i5-offering-selection` *clears the selection when its member is removed from the set* and *clears the selection when its Offering stops being eligible* |
+| AC-7 | Handoff and Direct Contact unavailable while no eligible selection exists | Covered | `i5-offering-selection` *offers no handoff until something is explicitly selected*; `i5-direct-contact` *refuses while nothing is selected* |
+| AC-8 | Chat cannot select, confirm, change or clear | Covered | `i5-offering-selection` *gives Decision Chat no way to select, change or clear* |
+| AC-9 | No Completion when selection clears or becomes invalid before initiation | Covered | `i5-decision-completion` *produces neither Completion before anything has happened*; `i8-recorded-gaps` *tells a selection that fell away apart from one never made* |
+
+### `US-DEC-F05-001` — Affiliate Handoff
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Public, without authentication | Covered | `i5-affiliate-handoff` *hands a Guest off without an account before or after* |
+| AC-2 | Both eligibility results required | Covered | `i5-affiliate-handoff` *refuses when the Offering has no eligible Affiliate Destination* and *refuses once the Offering stops being publicly eligible* |
+| AC-3 | Both results consumed without recalculation | Covered | `i5-affiliate-handoff` *refuses once the destination is disabled again* — the answer changes because `US-OFR-F07-001` changed it, not because Decision re-derived it |
+| AC-4 | Unavailable when either result is Ineligible | Covered | As AC-2, from both sides |
+| AC-5 | The person explicitly chooses the action | Covered | `i5-affiliate-handoff` *refuses while nothing is selected, and records nothing*; `i8-decision-handoff` renders it as a submission rather than a link |
+| AC-6 | The exact eligible destination becomes the active destination | Covered | `i5-affiliate-handoff` *makes the exact eligible destination active* and *keeps the address that was made active even after it is re-authored* |
+| AC-7 | No Registration before or after a Guest handoff | Covered | `i5-affiliate-handoff` *hands a Guest off without an account before or after* |
+| AC-8 | One initiation result for F07 | Covered | `i5-affiliate-handoff` *records one initiation for each successful handoff* |
+| AC-9 | No result when initiation fails | Covered | `i5-affiliate-handoff` *refuses while nothing is selected, and records nothing*; `i8-decision-handoff` *claims no Completion when a handoff is refused* |
+| AC-10 | No Favorites, Messaging, history, destination authoring or success claim | Covered | `i5-affiliate-handoff` *claims nothing about what happens at the destination* and *outlives the flow it belonged to* |
+
+### `US-DEC-F06-001` — Direct Contact
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Enabled status and an authenticated User context required | Covered | `i5-direct-contact` *reveals nothing to a Guest, and says nothing about the values* and *reveals the chosen channel to an Enabled authenticated User* |
+| AC-2 | The Selected Offering must remain publicly eligible | Covered | `i5-direct-contact` *refuses once the Selected Offering stops being publicly eligible* |
+| AC-3 | At least one approved supplied channel required | Covered | `i5-direct-contact` *says a Business with no channel cannot be contacted* |
+| AC-4 | Only telephone, email and contact URL in V1 | Covered | `i5-direct-contact` *supports exactly telephone, email and contact URL* and *refuses a channel the Business never supplied* |
+| AC-5 | Explicit selection where more than one channel is available | Covered | `i5-direct-contact` *requires the person to name which channel* |
+| AC-6 | Protected information unavailable to a Guest | Covered | `i5-direct-contact` *reveals nothing to a Guest*; `i8-decision-handoff` *tells a Guest nothing protected and asks nothing of the Business* |
+| AC-7 | A Guest sent to UX-0008 with the exact interrupted context | Covered | `i9-identity-delivery` *brings the interrupted channel back and asks it again* — the same requirement as `US-IDN-F09-001` AC-2, and unmet until the resume cookie was added |
+| AC-8 | Account, Offering, channel and eligibility re-evaluated after the return | Covered | `i9-identity-delivery` *resumes nothing that stopped being on offer*; the resumed request is an ordinary submission and meets the AC-1 to AC-5 gates again |
+| AC-9 | Information revealed and the channel made available only after every gate passes | Covered | `i5-direct-contact` *reveals the chosen channel to an Enabled authenticated User* |
+| AC-10 | One reveal-and-availability result for F07 | Covered | `i5-direct-contact` *records one reveal result, and not the value it revealed* |
+| AC-11 | Nothing continued or revealed when the return or eligibility is invalid | Covered | `i5-direct-contact` *refuses once the Selected Offering stops being publicly eligible*; `i9-identity-delivery` *resumes nothing that stopped being on offer* |
+| AC-12 | No message, inbox, conversation, reply, delivery, answer, response state or success confirmation | Covered | `i5-direct-contact` *creates no message, conversation or response state* |
+
+### `US-DEC-F07-001` — Decision Completion
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Affiliate Handoff Completion from a successful initiation | Covered | `i5-decision-completion` *produces Affiliate Handoff Completion from a successful initiation* |
+| AC-2 | Direct Contact Completion from a successful reveal | Covered | `i5-decision-completion` *produces Direct Contact Completion from a successful reveal* |
+| AC-3 | No additional confirmation after the evidence occurs | Covered | `i5-decision-completion` *stores no Completion of its own* — the Completion is composed from the evidence, so there is no second step it could wait for |
+| AC-4 | The two Completions stay separate results | Covered | `i5-decision-completion` *keeps the two Completions apart when both happened*; `i8-decision-handoff` *counts the two Completions as two* |
+| AC-5 | Completion means only the end of V1 Decision-support responsibility | Covered | `i5-decision-completion` *claims no purchase, reply or external result* |
+| AC-6 | No purchase, sale, booking, contract, call, reply, transaction or external success claimed | Covered | The same test; `i8-decision-handoff` *claims nothing about what happened after the handoff* |
+| AC-7 | No Completion when anything required is invalid or unsuccessful | Covered | `i5-decision-completion` *produces no Completion from a refused handoff* and *produces no Completion from a refused reveal* |
+| AC-8 | PRD-0006 consumes the results without redefining them | Covered | `i5-decision-completion` *leaves the evidence for Basic Analytics to consume*; `i7-basic-analytics` *keeps the two Completions separate and calls neither a sale* |
+| AC-9 | No persistent history, Favorites, Messaging or outcome tracking | Covered | `i5-decision-completion` *stores no Completion of its own*; `i5-affiliate-handoff` *claims nothing about what happens at the destination* |
+| AC-10 | The same meaning across all three Domains | Covered | `i5-decision-completion` *means the same thing in every Domain* |
+
+## What "explaining a difference" means here
+
+`US-DEC-F03-001` AC-5 permits Chat to explain five things. Four are
+straightforward. The fifth — comparable Attribute differences — sits directly
+against AC-6, which forbids a ranking, a winner and a recommendation, and the
+two together leave a narrow band.
+
+**The platform's answer is to put both authoritative values where a person can
+hold them side by side, and to stop there.** Asked for the mileages of two
+compared cars, the reply carries 42000 km and 130000 km, each under the title it
+belongs to. The difference is present and legible; nothing says which is
+preferable, because that would be the conclusion AC-6 refuses.
+
+The second test asks the harder question outright — *hangisini almalıyım?* —
+while handing the assistant a priority that points at one of the two. The reply
+still reports: the stated priority comes back as something the person said, and
+no comparative or superlative appears. That is asserted against a vocabulary
+rather than a sentence, because a recommendation can be phrased many ways and
+all of them need those words.
+
+**What this does not claim.** V1 has no assistant vendor. The shipped adapter
+restates the brief, and the brief carries every comparable value of every
+member, which is why the fifth clause is satisfiable at all. A vendor adapter
+would be handed exactly the same brief and would face exactly the same two
+tests. The Story is `Done` on the behaviour the platform has, not on a
+capability it is waiting for — and if a vendor is ever fitted, these are the
+tests that say whether it stayed inside AC-6.
+
+## The criteria the Identity increment closed
+
+`US-DEC-F06-001` AC-7 and AC-8 ask Direct Contact to send an interrupted Guest
+to UX-0008 with the exact context, and to re-evaluate everything on the way
+back. They are the same requirement as `US-IDN-F09-001` AC-2 from the other
+end, and **before the resume cookie was added, none of the three was met**: the
+chosen channel was carried nowhere, so a person came back to their own question
+unanswered.
+
+Worth recording because it is the case for doing this domain by domain rather
+than Story by Story. Read alone, `US-DEC-F06-001` AC-7 looks satisfied by the
+`401` that interrupts the Guest. It is only when the criterion on the other side
+names the four things the context must contain that the missing one becomes
+visible.
+
+## Decision advancement
+
+| Story | Criteria | Delivery Status |
+|---|---|---|
+| `US-DEC-F01-001` Comparison Set and Compare | 12 of 12 verified | Not Started → **Done** |
+| `US-DEC-F02-001` Decision Context | 9 of 9 verified | Not Started → **Done** |
+| `US-DEC-F03-001` Decision Chat | 10 of 10 verified | Not Started → **Done** |
+| `US-DEC-F04-001` Explicit Offering Selection | 9 of 9 verified | Not Started → **Done** |
+| `US-DEC-F05-001` Affiliate Handoff | 10 of 10 verified | Not Started → **Done** |
+| `US-DEC-F06-001` Direct Contact | 12 of 12 verified | Not Started → **Done** |
+| `US-DEC-F07-001` Decision Completion | 10 of 10 verified | Not Started → **Done** |
+
+No Decision criterion is covered by absence.
+
 ## Remaining domains
 
-Decision and Platform are not advanced by this document. Their criteria are recorded here as work continues, one domain per
+Platform is not advanced by this document. Their criteria are recorded here as work continues, one domain per
 change, on the same standard: read the criterion, read the test, and where
 nothing reaches it, write one.
 
-All 17 Stories outside Identity, Business, Offering and Discovery remain
-`Delivery Status: Not Started`.
+The ten `US-PLT` Platform Stories remain `Delivery Status: Not Started`.
