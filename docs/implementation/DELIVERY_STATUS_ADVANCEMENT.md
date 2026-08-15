@@ -4,7 +4,7 @@
 - **Status:** Draft — awaiting Owner acceptance
 - **Maintenance Mode:** Living
 - **Version:** 0.1
-- **Last Updated:** 2026-08-14
+- **Last Updated:** 2026-08-15
 - **Scope:** Delivery Status only. No Frozen Story's behaviour, Acceptance Criteria, BDD, dependencies, size, scope, Epic, Feature, relationship classification, Capability reference or UX reference is edited.
 
 ## Why this document exists
@@ -35,6 +35,12 @@ behaviour, Acceptance Criteria, BDD, dependency, size, scope, Epic, Feature,
 relationship classification, Capability reference, UX reference — and Delivery
 Status is deliberately absent from that list, because `DELIVERY_SEQUENCE.md`
 expects it to move.
+
+The Handbook names four planning values — Not Started, Ready, In Progress and
+Done. This document uses two of them. `Done` claims §18 in full. `In Progress`
+is used exactly once, for a Story whose work is delivered and evidenced but
+which has one criterion nothing in delivery can satisfy; it says what is true
+where both of the other values would say something false.
 
 ## How the evidence was gathered
 
@@ -444,12 +450,169 @@ Four Business criteria are covered by absence on the same terms recorded for
 Identity: `US-BUS-F01-001` AC-9 and AC-10, `US-BUS-F02-001` AC-14, and
 `US-BUS-F05-001` AC-12.
 
+## Offering — `US-0001`
+
+Seven Stories, 64 Acceptance Criteria. **No new test was needed.** The I2 and I3
+suites were written criterion by criterion against these Stories and reach all
+64 — which is what a domain looks like when the tests were written from the
+Story rather than from the implementation.
+
+**One Story cannot be Done.** `US-OFR-F05-001` AC-3 asks for something no
+document governs, and that has been recorded since I4. It is the first Story to
+be advanced short of `Done`, and the reason is below.
+
+### `US-OFR-F01-001` — Offering Creation
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | An authorized owner of an Unrestricted Business creates one Offering | Covered | `i2-offering-creation` *creates one Draft for the Business whose context is selected*; `m11-authorization` *refuses a suspended account holder* and *refuses a suspended Business* |
+| AC-2 | Associated with exactly the authorized Business context | Covered | `i2-offering-creation` *requires the Business context to be selected* and *hides another Business's inventory*; `m11-authorization` *does not read back an Offering through a different owned Business* |
+| AC-3 | Placed in lifecycle state Draft | Covered | `i2-offering-creation` *creates one Draft for the Business whose context is selected* |
+| AC-4 | Final eligibility Ineligible for the new Draft | Covered | `i2-offering-creation` *records the new Draft as Ineligible* — a written evaluation rather than an absence, so nothing has to infer it |
+| AC-5 | Available in the owning Business management inventory | Covered | `i2-offering-creation` *shows the new Draft in the owning Business inventory* |
+| AC-6 | Creation denied while the Business is Restricted | Covered | `i2-offering-creation` *denies creation while the Business is Restricted*; `m11-authorization` *refuses a moderation-restricted Business* |
+| AC-7 | Creation neither publishes nor exposes publicly | Covered | `i2-offering-creation` *exposes the new Draft to no public surface* |
+
+### `US-OFR-F02-001` — Offering Editing
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | An authorized owner edits one exact owned Draft | Covered | `i2-offering-editing` *edits an owned Draft and keeps its Business* and *hides another Business's Offering from editing* |
+| AC-2 | Every successful edit stays with the same owning Business | Covered | `i2-offering-editing` *edits an owned Draft and keeps its Business* |
+| AC-3 | A Published edit only where the access gate permits and the minimum holds | Covered | `i2-offering-editing` *saves a Published edit that keeps the publication minimum* |
+| AC-4 | A Hidden edit on the same two conditions | Covered | `i2-offering-editing` *saves a Hidden edit that keeps the publication minimum* |
+| AC-5 | A Published or Hidden edit violating the minimum is rejected | Covered | `i2-offering-editing` *rejects a Published edit that drops a required Attribute value* and *rejects a Published edit onto a Category that is not an active leaf* |
+| AC-6 | Lifecycle and immutable Initial Published At preserved | Covered | `i2-offering-editing` *preserves lifecycle and Initial Published At across an edit* |
+| AC-7 | Editing an Archived Offering denied | Covered | `i2-offering-editing` *denies editing an Archived Offering*; `i2-offering-retirement` asserts the same from the retirement side |
+| AC-8 | Normal Published or Hidden editing denied for a Restricted Business | Covered | `i2-offering-editing` *keeps Draft management but denies Published editing for a Restricted Business* |
+| AC-9 | The bounded correction path only for the exact Open target and content area | Covered | `i6-correction-notice` *opens the bounded path only when every condition holds*, *limits the edit to the exact targeted content area* and *limits the edit to the exact Offering* |
+| AC-10 | Saving an edit creates, publishes, retires, hides, restores, validates, enables or disables nothing | Covered | `i2-offering-editing` *changes no lifecycle, publication or eligibility by saving an edit*; `i2-affiliate-destination` *leaves an administered destination alone when nothing changed* |
+
+### `US-OFR-F03-001` — Offering Retirement
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | An authorized owner retires one owned Draft, Published or Hidden Offering | Covered | `i2-offering-retirement` *retires a Draft, a Published and a Hidden Offering* and *hides another Business's Offering from retirement* |
+| AC-2 | The retired Offering becomes Archived | Covered | The same test |
+| AC-3 | Final eligibility Ineligible for the Archived Offering | Covered | `i2-offering-retirement` *records a fresh Ineligible evaluation without erasing the earlier one* |
+| AC-4 | Unavailable to Discovery, Presentation, Compare, Decision selection, Direct Contact and Affiliate Handoff | Covered | One test per surface, and all six exist: `i2-offering-retirement` *leaves nothing for Discovery to find*; `i4-presentation-handoff` *refuses to open an Offering that stopped being eligible*; `i5-comparison-set` *refuses an Offering that is not publicly eligible*; `i5-offering-selection` *clears the selection when its Offering stops being eligible*; `i5-direct-contact` *refuses once the Selected Offering stops being publicly eligible*; `i5-affiliate-handoff` *refuses once the Offering stops being publicly eligible* |
+| AC-5 | Historical Category, Domain, Attribute values and destination preserved | Covered | `i2-offering-retirement` *keeps the Category, Domain and Attribute values as history* |
+| AC-6 | Viewable as a historical record to the owner and an authorized Admin | Covered | `i2-offering-retirement` *stays viewable to its owner and to an authorized Admin* and *hides the Admin read from anyone not in an Admin context* |
+| AC-7 | Editing and restoration denied in V1 | Covered | `i2-offering-retirement` *denies editing an Archived Offering*; `i6-offering-management` *offers no way to restore a Hidden Offering and no way to delete* |
+| AC-8 | An associated destination becomes view-only | Covered | `i2-affiliate-destination` *makes an Archived Offering's destination view-only* and *refuses a destination on an Archived Offering* |
+| AC-9 | Admin-initiated archive denied, and no second retirement from Archived | Covered | `i2-offering-retirement` *offers an Admin no way to archive an Offering* and *denies a second retirement* |
+
+### `US-OFR-F04-001` — Offering Publication
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Publication only for an exact owned Draft under an authorized owner | Covered | `i3-offering-publication` *publishes only a Draft* and *hides another Business's Offering from publication* |
+| AC-2 | Business Moderation Status Unrestricted required | Covered | `i3-offering-publication` *refuses publication while the Business is Restricted* |
+| AC-3 | The Universal Publication Minimum required | Covered | `i3-offering-publication` *refuses publication below the Universal Publication Minimum*; `i2-publication-minimum` names each shortfall separately |
+| AC-4 | A valid target moves Draft → Published | Covered | `i3-offering-publication` *publishes an owned Draft and stamps Initial Published At* |
+| AC-5 | Immutable Initial Published At on the first transition | Covered | `i3-offering-publication` *never moves Initial Published At once it is set* |
+| AC-6 | Eligibility evaluated after publication, without assuming every Published Offering is public | Covered | `i3-offering-publication` *evaluates eligibility after publication rather than assuming it*; `i2-public-eligibility` *is Eligible only for a Published Offering of an Eligible Business* |
+| AC-7 | The Offering stays Draft when any gate is unsatisfied | Covered | `i3-offering-publication` *refuses publication while the Business is Restricted* and *refuses publication below the Universal Publication Minimum*, both asserting the state afterwards |
+| AC-8 | Business-owned Published → Draft and Hidden → Draft denied | Covered | `i3-offering-publication` *offers no way back to Draft* |
+
+### `US-OFR-F05-001` — Full Offering Detail Presentation
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Complete Presentation begins only when eligibility is Eligible | Covered | `i4-presentation-handoff` *opens one eligible Offering*, *refuses to open an Offering that stopped being eligible* and *does not open a Draft that was never published* |
+| AC-2 | Title, Category context, description, Attribute values, public identity, visual set | Covered | `i4-offering-presentation` *presents the product minimum* for title, Category path, description and identity; *keeps the governed unit and the allowed-value labels* for the values; *continues without inventing absent media, description or values* for the visual set |
+| AC-3 | Understandable groups, preserving units, allowed-value meaning and missing-value treatment | **Half met** | The preserving half is covered: `i4-offering-presentation` *keeps the governed unit and the allowed-value labels* and *distinguishes an unanswered Attribute from an answered one*. The grouping half has no governed input. See below |
+| AC-4 | No media or copy invented where optional content is absent | Covered | `i4-offering-presentation` *continues without inventing absent media, description or values* |
+| AC-5 | Protected telephone, email, website and contact URL excluded from public identity | Covered | `i4-offering-presentation` *excludes protected contact information from the Business identity*; `i2-public-business-identity` *excludes every Direct Contact channel* |
+| AC-6 | Compare and single-Offering Decision entries presented without executing them | Covered | `i4-compare-preparation` *adds nothing to a Comparison Set and claims no Compare Start*; `i4-presentation-handoff` *begins no Discovery path and no Decision by being opened* |
+| AC-7 | The exact eligible Offering and any transient Compare-preparation context passed on | Covered | `i4-compare-preparation` *carries the unchanged context through to Presentation* and *says nothing about preparation when there is none* |
+| AC-8 | Offering Presentation Open only when eligible Presentation begins | Covered | `i4-offering-presentation` *produces one occurrence for each successful Presentation* and *produces no occurrence for an owner's management view* |
+| AC-9 | Content, entries and the occurrence withheld when Presentation cannot begin | Covered | `i4-offering-presentation` *produces no occurrence when Presentation cannot begin*; `i4-presentation-handoff` *says the same thing about an Offering that never existed* |
+
+### `US-OFR-F06-001` — Affiliate Destination Configuration
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | One destination created for an applicable owned Draft, Published or Hidden Offering when none exists | Covered | `i2-affiliate-destination` *creates a destination that begins Draft, Not Validated and Ineligible* |
+| AC-2 | Associated with exactly one Offering and never shared | Covered | `i2-affiliate-destination` *allows one destination per Offering and never a shared one* — a uniqueness constraint, so it holds for writes nobody has written yet |
+| AC-3 | Created Draft, Not Validated, Ineligible | Covered | `i2-affiliate-destination` *creates a destination that begins Draft, Not Validated and Ineligible* |
+| AC-4 | The owner edits where the Offering and Business gates permit | Covered | `i2-affiliate-destination` *refuses authoring to a Restricted Business but still shows it* and *hides another Business's destination* |
+| AC-5 | An edited Draft, Enabled or Disabled destination resets to Draft, Not Validated, Ineligible | Covered | `i2-affiliate-destination` *resets an Enabled destination when its reference changes*, *resets a Disabled destination too* and *resets the results even when the reset is not asked for* |
+| AC-6 | The owner sees status, validation result and Handoff Eligibility | Covered | `i2-affiliate-destination` *shows the owner the status, validation result and Handoff Eligibility* |
+| AC-7 | View-only once the Offering is Archived | Covered | `i2-affiliate-destination` *makes an Archived Offering's destination view-only* |
+| AC-8 | Review, Validate, Enable, Disable and recalculation denied to the owner | Covered | `i2-affiliate-destination` *offers the owner no Review, Validate, Enable or Disable action*; `i6-destination-management` *gives the Business no administration action anywhere* |
+| AC-9 | Treated as a Handoff destination, not a Direct Contact channel | Covered | `i2-affiliate-destination` *keeps the destination out of the Business's Direct Contact channels* |
+
+### `US-OFR-F07-001` — Affiliate Destination Eligibility Governance
+
+| AC | Requirement | State | Evidence |
+|---|---|---|---|
+| AC-1 | Only an authorized Admin may Review, Validate, Enable or Disable | Covered | `i3-affiliate-governance` *admits only an authorized Admin in an entered context* |
+| AC-2 | Review alone changes nothing | Covered | `i3-affiliate-governance` *leaves every result unchanged when Review alone is completed* |
+| AC-3 | Validate produces exactly one current result, Valid or Invalid | Covered | `i3-affiliate-governance` *produces one current result and leaves the status alone* |
+| AC-4 | Validate leaves destination status unchanged | Covered | The same test |
+| AC-5 | Handoff Eligibility stays Ineligible after Valid until Enable | Covered | `i3-affiliate-governance` *keeps a Valid destination Ineligible until it is enabled* |
+| AC-6 | Enable only when the result is Valid | Covered | `i3-affiliate-governance` *refuses Enable unless the destination is Valid* |
+| AC-7 | Enabling a Valid destination produces Enabled and Eligible | Covered | `i3-affiliate-governance` *produces Enabled and Eligible for a Valid destination* |
+| AC-8 | Disabling an Enabled destination produces Disabled and Ineligible | Covered | `i3-affiliate-governance` *produces Disabled and Ineligible while keeping the verdict* and *refuses Disable unless the destination is Enabled* |
+| AC-9 | Disable preserves the current validation result | Covered | `i3-affiliate-governance` *produces Disabled and Ineligible while keeping the verdict* |
+| AC-10 | Eligible only when Enabled and Valid | Covered | `i3-affiliate-governance` *permits no other combination of status and result* and *drops eligibility when an Enabled destination is re-validated as Invalid* |
+| AC-11 | Handoff Eligibility separate from final Offering Public Eligibility | Covered | `i3-affiliate-governance` *keeps Handoff Eligibility separate from final Offering Public Eligibility* |
+| AC-12 | Destination administration changes no lifecycle, moderation or access status | Covered | `i3-affiliate-governance` *changes no Offering lifecycle, Business moderation or account status* |
+
+## Why `US-OFR-F05-001` stops short of Done
+
+AC-3 asks for applicable Attribute values "organized into understandable groups
+while preserving authoritative units, allowed-value meaning, and missing
+optional-value treatment". The second half is met and tested. The first half
+has no input to work from, and this was recorded in
+`I4_PUBLIC_WEB_JOURNEY_CLOSURE.md` when the Presentation was built.
+
+PRD-0006 owns Attribute definition properties and gives each definition a name,
+a unit, a value kind, comparability, filterability and
+required-for-publication. **There is no group, no section and no ordering key.**
+UX-0003 owns visual hierarchy but cannot invent a taxonomy the datamodel does
+not hold, so grouping by value kind — or by any other field that happens to be
+available — would be a classification nobody governs, presented to the public as
+though somebody did.
+
+Presenting one ordered set is the whole of what can be said truthfully. That is
+what the Presentation does, and it is why eight of the nine criteria are met.
+
+**This is not a gap a test can close.** AC-3 completes when a governed Attribute
+grouping exists, which means a controlled revision of a Frozen PRD — an Owner
+decision, not an implementation one. The alternatives are to add the grouping
+input upstream, or for the Owner to read AC-3 as satisfied by a single ordered
+set, in which case the Story advances with no code change at all.
+
+The Story therefore moves to `In Progress` rather than `Done`. The Handbook
+records delivery status as an operational planning signal, and `In Progress`
+says what is true: the work is delivered, evidenced and blocked on one decision
+that does not belong to delivery. Leaving it at `Not Started` would say the
+opposite of what happened.
+
+## Offering advancement
+
+| Story | Criteria | Delivery Status |
+|---|---|---|
+| `US-OFR-F01-001` Offering Creation | 7 of 7 verified | Not Started → **Done** |
+| `US-OFR-F02-001` Offering Editing | 10 of 10 verified | Not Started → **Done** |
+| `US-OFR-F03-001` Offering Retirement | 9 of 9 verified | Not Started → **Done** |
+| `US-OFR-F04-001` Offering Publication | 8 of 8 verified | Not Started → **Done** |
+| `US-OFR-F05-001` Full Offering Detail Presentation | 8 of 9 verified; AC-3 half met | Not Started → **In Progress** |
+| `US-OFR-F06-001` Affiliate Destination Configuration | 9 of 9 verified | Not Started → **Done** |
+| `US-OFR-F07-001` Affiliate Destination Eligibility Governance | 12 of 12 verified | Not Started → **Done** |
+
+No Offering criterion is covered by absence, and no new test was written for
+this domain. Both facts are worth recording together: the I2 and I3 suites were
+built from these Stories rather than from the code they were testing, and it
+shows.
+
 ## Remaining domains
 
-Offering, Discovery, Decision and Platform are not advanced by this
-document. Their criteria are recorded here as work continues, one domain per
+Discovery, Decision and Platform are not advanced by this document. Their criteria are recorded here as work continues, one domain per
 change, on the same standard: read the criterion, read the test, and where
 nothing reaches it, write one.
 
-All 34 Stories outside Identity and Business remain
+All 27 Stories outside Identity, Business and Offering remain
 `Delivery Status: Not Started`.
