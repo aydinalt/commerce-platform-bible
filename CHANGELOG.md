@@ -10,6 +10,57 @@ This project follows the principles of:
 
 ---
 
+## [3.0.0] - 2026-08-17
+
+### Note on the gap
+
+**This file stopped being maintained at `[2.8.0]` on 2026-07-25, before the
+first increment closed.** Everything between — fifteen increments, all 50
+Generated Stories delivered, two vendors chosen — was recorded contemporaneously
+in `CURRENT_STATUS.md`'s Revision History and in one closure record per
+increment, and nowhere here.
+
+This entry does not reconstruct those months as dated releases. Writing
+retrospective entries from a record written elsewhere would produce a second
+account to keep in step with the first, and this repository's own principle is
+Reference Never Redefine. What follows is the milestone-level change and a
+pointer to where the detail actually lives.
+
+### Added
+
+- Fifteen delivery increments, I0 through I14, each closed with green CI on the
+  target runner. Per-increment detail is in
+  `docs/implementation/I*_*_CLOSURE.md` and in `CURRENT_STATUS.md` §Revision
+  History, versions 2.9 through 2.36.
+- An executable platform against the Frozen baseline: identity and sessions,
+  the catalog and write model, publication and Discovery, the public web
+  journey, Compare and the Decision flow, Business management, Admin
+  operations, and every Frozen UX document's surface.
+- Outbound email through Postmark and Decision Chat through Anthropic, both
+  chosen by the Owner on 2026-08-17 and both reached through a port that was
+  written and tested before either was named.
+
+### Changed
+
+- All 50 Generated Stories moved `Not Started` → `Done`, each against
+  per-criterion evidence recorded in
+  `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. 526 Acceptance Criteria
+  are matched to the tests that verify them.
+
+### Verified
+
+- 84 test files, 790 tests, module boundaries, type checking, formatting,
+  linting, dependency audit, reproducible OpenAPI and a Next.js production
+  build, plus the migration and schema-drift gates that run only in CI.
+
+### Known
+
+- `docs/traceability.md` remains Frozen v1.0; its superseding revision is
+  written as a Draft candidate and awaits Owner review.
+- Neither vendor has received a real request.
+
+---
+
 ## [2.8.0] - 2026-07-25
 
 ### Added
