@@ -91,6 +91,10 @@ contain the conversation is the one explaining why the conversation failed.
 | Retrying a failed question | Nothing retries a person. They are told it did not work, which is true and is theirs to act on |
 | Rate limiting Chat per flow | Worth having and not this increment's; no Story governs a limit, and inventing one here would be a product rule in a transport change |
 
+> **Superseded (2026-08-17):** the Owner chose Anthropic; the adapter is written
+> and `buildAssistant` constructs it. The accepted transport value was `http`
+> and is now `anthropic`. See `I13_VENDOR_SELECTION_CLOSURE.md`.
+
 ## The tests
 
 `i12-chat-transport.test.ts` — eight tests, no database, no vendor.

@@ -1,8 +1,9 @@
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 
-import { loadChatConfig } from "@commerce/config";
+import { loadChatConfig, loadRuntimeConfig } from "@commerce/config";
 import type { DecisionAssistant } from "@commerce/decision";
+import { createLogger } from "@commerce/observability";
 
 import {
   AdminBusinessController,
@@ -23,6 +24,8 @@ import {
   DecisionController,
   DecisionFlowController
 } from "./decision/decision.controller.js";
+import { anthropicProvider } from "./decision/anthropic.provider.js";
+import { HttpDecisionAssistant } from "./decision/http.assistant.js";
 import { RestatingDecisionAssistant } from "./decision/restating.assistant.js";
 import { AccessModerationController } from "./platform/access-moderation.controller.js";
 import { AdminPanelController } from "./platform/admin-panel.controller.js";
@@ -85,13 +88,11 @@ function allowedOrigins(): readonly string[] {
 /**
  * The assistant the deployment asked for.
  *
- * The vendor arrives as configuration rather than as an import. `loadChatConfig`
- * has already refused a production deployment that named `http` without a
- * credential or a model, so what is left here is the one thing configuration
- * cannot supply: an adapter for the vendor named. There is none yet, and this
- * says so with the name it was given rather than falling back to the stub —
- * a production Chat answered by a brief-restating adapter would be the platform
- * pretending to have an assistant.
+ * The vendor arrives as configuration rather than as an import.
+ * `loadChatConfig` has already refused a production deployment that named a
+ * vendor without a credential or a model, so the values exist by the time this
+ * runs. There is no fallback to the brief-restating adapter: a production Chat
+ * answered by it would be the platform pretending to have an assistant.
  */
 function buildAssistant(): DecisionAssistant {
   const config = loadChatConfig();
@@ -99,7 +100,17 @@ function buildAssistant(): DecisionAssistant {
     return new RestatingDecisionAssistant(
       process.env.NODE_ENV ?? "development"
     );
-  throw new Error(`CHAT_PROVIDER_NOT_IMPLEMENTED: ${config.transport}`);
+
+  return new HttpDecisionAssistant({
+    // The same level the rest of the process logs at, so an assistant outage
+    // is not the one thing a quiet deployment still prints.
+    logger: createLogger("api", loadRuntimeConfig("api").logLevel),
+    provider: anthropicProvider({
+      apiKey: config.apiKey ?? "",
+      model: config.model ?? ""
+    }),
+    timeoutMs: config.timeoutMs
+  });
 }
 
 @Module({
@@ -152,9 +163,8 @@ function buildAssistant(): DecisionAssistant {
     PgPresentationRepository,
     PrincipalResolver,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
-    // V1 has no assistant vendor, and which one it will be is a deployment
-    // decision rather than a source-file one. `buildAssistant` reads it from
-    // configuration validated at boot.
+    // Which assistant answers is a deployment decision rather than a source-file
+    // one. `buildAssistant` reads it from configuration validated at boot.
     { provide: DECISION_ASSISTANT, useFactory: buildAssistant },
     {
       provide: OriginValidator,

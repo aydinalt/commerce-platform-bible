@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.33
+Version:      2.34
 Last Updated: 2026-08-17
 -->
 
@@ -14,7 +14,7 @@ Last Updated: 2026-08-17
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I12 Decision Chat Transport — closed. Both outbound integrations are now written with no vendor in them; each is three or four values away from a real one |
+| Current phase | M12 Increment I13 Vendor Selection — closed. Postmark delivers the email and Anthropic answers Decision Chat. Nothing on the roadmap now waits on a decision except the traceability candidate's approval |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,37 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I13 Vendor Selection
+
+The Owner chose Postmark for outbound email and Anthropic for the Decision Chat
+assistant on 2026-08-17, closing the last two items no implementation could
+reach. Findings and boundaries are in
+`docs/implementation/I13_VENDOR_SELECTION_CLOSURE.md`.
+
+Both adapters were exactly what I11 and I12 promised: four values and three,
+plus one judgement each. Nothing about the timeout, the secret handling, the
+prompt, the ceiling or what a person is told had to move, which was the point
+of writing those first.
+
+**The email judgement is which refusals are permanent.** `REFUSED` stops the
+outbox for good, so it must mean asking again gets the same answer about this
+recipient: an inactive address and a malformed one. Everything else retries,
+including things that look permanent — an unconfirmed sender signature is
+permanent about the *deployment* rather than the message, and dead-lettering
+queued registrations because of a five-minute configuration mistake would be the
+wrong trade. The ceiling handles those.
+
+**The assistant judgement is what counts as an answer.** A refusal could be read
+from `stop_reason` and deliberately is not: that vocabulary belongs to the vendor
+and can gain members, so code matching a list would hand an unfamiliar refusal to
+a person as an answer. The text is what was asked for, so the question is whether
+there is any.
+
+One assertion in the new tests turned out to be worthless — a `toMatchObject`
+with a regular expression against a discriminated union, passing against a
+pattern that could never match. The mutation check found it, and it is recorded
+rather than quietly repaired.
 
 ## I12 Decision Chat Transport
 
@@ -400,8 +431,8 @@ eligibility that was enacted without being recorded.
 ## Remaining Work
 
 1. ~~Decide `US-OFR-F05-001` AC-3.~~ **Done 2026-08-17.** The Owner read the criterion as met by one ordered set; all 50 Stories are `Done`. See `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md`.
-2. Select an outbound email vendor and write its `EmailProvider`: a name, the request it wants, and how to read its answer. The transport, timeout, secret handling and retry decision are written and tested — `buildDispatcher` in `apps/worker/src/main.ts` is where the chosen one is constructed.
-3. Select a Decision Chat assistant vendor and write its `ChatProvider`: a name, the request it wants, and how to read its answer. The prompt, timeout, secret handling and the two ways of not answering are written and tested — `buildAssistant` in `apps/api/src/app.module.ts` is where the chosen one is constructed.
+2. ~~Select an outbound email vendor.~~ **Done 2026-08-17.** Postmark, wired in `buildDispatcher`. The first real send has still not happened.
+3. ~~Select a Decision Chat assistant vendor.~~ **Done 2026-08-17.** Anthropic, wired in `buildAssistant`. The first real question has still not happened.
 4. Review, approve and — if decided — freeze `docs/traceability-v1.1-candidate.md`. The superseding revision is written and carries both queued corrections plus the implementation tier; it deliberately holds no Approval or Freeze note, because neither decision is mine to record. Frozen v1.0 stays the authoritative baseline until then. `docs/implementation/TRACEABILITY_V1_1_REVISION_RECORD.md` lists the four remaining Owner steps.
 5. Test with a real screen reader. `I10_ACCESSIBILITY_CLOSURE.md` closes what could be read from the source; nothing there substitutes for hearing a page.
 
@@ -453,6 +484,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.34 | 2026-08-17 | Closed I13 Vendor Selection. The Owner chose Postmark and Anthropic; both adapters were the four and three values I11 and I12 said they would be, plus one judgement each. Email: only an inactive or malformed address refuses permanently, because everything else is permanent about the deployment rather than the message and the ceiling should handle it. Assistant: a refusal is recognised by there being no text rather than by a `stop_reason` enum, because that vocabulary belongs to the vendor and can gain members. Renamed the `http` transport values to the vendors, since `http` named the transport rather than the choice. Found and recorded one assertion of my own that asserted nothing. |
 | 2.33 | 2026-08-17 | Answered a `deepmerge-ts` advisory that appeared between two verification runs on an unchanged dependency tree — `npm audit` asks the registry, so the previous commit would fail the same way. `npm audit fix --force` proposes downgrading Prisma across a major version, and there is no fixed 7.x, so `deepmerge-ts` is pinned to `^8.0.0` as six other transitive dependencies already are. Verified that `@prisma/config` still loads its config under the new major, which is the only thing it uses the library for. `db:validate`, `db:deploy` and `db:drift` remain covered by CI rather than here: the sandbox cannot reach the Prisma engine host, and this was checked to fail identically without the override rather than assumed. |
 | 2.32 | 2026-08-17 | Prepared the superseding revision of Frozen `docs/traceability.md` as a Draft v1.1 candidate beside it. Two corrections had been queued against that baseline for weeks and could not be applied, because editing a Frozen document in place is what the lifecycle forbids; this is the sanctioned route, taken as far as it goes without the Owner. §5 and §7 no longer assert `Not Started`; §6 records the implementation tier and subsumes the three M11 links; §9 drops lifecycle work its own freeze had completed. The candidate is a separate file on purpose — writing a Draft into the Frozen path would have left the repository with no traceability baseline the moment it was committed. No approval or freeze is claimed. |
 | 2.31 | 2026-08-17 | Closed I12 Decision Chat Transport. Wrote the assistant's HTTP path with no vendor in it — the prompt composed in the domain from the brief alone, a bounded wait, nothing logged but the outcome, and the vendor read from configuration validated at boot. Found and fixed something email did not have: the whole act ran inside one database transaction, so a slow vendor held one of the pool's ten connections across a call to somebody else's service and would have presented as a database outage. Separated an assistant that will not answer from a reply the platform refuses; neither records a turn. Eleven tests, each verified to fail against what it replaced. No vendor chosen, no Story touched. |

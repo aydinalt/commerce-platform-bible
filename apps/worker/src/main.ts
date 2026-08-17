@@ -2,8 +2,10 @@ import { loadEmailConfig, loadRuntimeConfig } from "@commerce/config";
 import type { EmailDispatcher } from "@commerce/notification";
 import { createLogger } from "@commerce/observability";
 
+import { HttpEmailDispatcher } from "./http.dispatcher.js";
 import { LoggingEmailDispatcher } from "./logging.dispatcher.js";
 import { OutboxProcessor } from "./outbox.processor.js";
+import { postmarkProvider } from "./postmark.provider.js";
 
 const POLL_INTERVAL_MS = 2000;
 
@@ -15,24 +17,30 @@ const email = loadEmailConfig(environment);
 /**
  * Builds the dispatcher the configuration names.
  *
- * `http` is deliberately unreachable until a provider exists. The transport,
- * the timeout, the secret handling and the retry decision are all written and
- * tested; what is missing is the four small provider-specific things
- * `EmailProvider` asks for, and this is where the chosen one is constructed.
+ * `loadEmailConfig` has already refused a production deployment naming a vendor
+ * without a credential or a sender, so by the time this runs the values exist.
+ * Adding a second vendor is a second branch and a second `EmailProvider`;
+ * nothing else here moves.
  *
- * It throws rather than falling back to the development adapter. A deployment
- * that asked for real delivery and silently got none would look healthy while
- * every registration expired unanswered — the worst of the three possible
- * outcomes, and the only one nobody would notice.
+ * There is no fallback to the development adapter. A deployment that asked for
+ * real delivery and silently got none would look healthy while every
+ * registration expired unanswered — the worst of the outcomes, and the only one
+ * nobody would notice.
  */
 function buildDispatcher(): EmailDispatcher {
   if (email.transport === "development")
     return new LoggingEmailDispatcher(logger, environment);
 
-  throw new Error(
-    "EMAIL_PROVIDER_NOT_IMPLEMENTED: set EMAIL_TRANSPORT=development, or " +
-      "supply an EmailProvider to HttpEmailDispatcher here"
-  );
+  return new HttpEmailDispatcher({
+    logger,
+    provider: postmarkProvider({
+      // Non-null because `loadEmailConfig` throws without them, which is where
+      // the operator gets an error naming the setting rather than a stack.
+      apiKey: email.apiKey ?? "",
+      sender: email.sender ?? ""
+    }),
+    timeoutMs: email.timeoutMs
+  });
 }
 
 const processor = new OutboxProcessor({

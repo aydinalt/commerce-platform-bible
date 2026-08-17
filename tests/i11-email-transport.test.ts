@@ -178,7 +178,7 @@ describe("Increment I11 email transport", () => {
   });
 
   it("refuses a deployment that asked for delivery it cannot do", () => {
-    vi.stubEnv("EMAIL_TRANSPORT", "http");
+    vi.stubEnv("EMAIL_TRANSPORT", "postmark");
     vi.stubEnv("EMAIL_API_KEY", "");
     vi.stubEnv("EMAIL_SENDER", "noreply@example.test");
 
@@ -206,7 +206,9 @@ describe("Increment I11 email transport", () => {
   });
 
   it("names an unknown transport rather than starting without one", () => {
-    vi.stubEnv("EMAIL_TRANSPORT", "postmark");
+    // `sendgrid` because `postmark` is now a transport somebody wrote. The
+    // point of the test is the name nobody wrote, so it has to keep being one.
+    vi.stubEnv("EMAIL_TRANSPORT", "sendgrid");
 
     // A deployment naming an adapter nobody wrote fails with the name it was
     // given, instead of falling back to something that delivers nothing.

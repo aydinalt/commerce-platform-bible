@@ -86,6 +86,10 @@ every registration into a retry nobody is watching.
 An unknown transport name fails with the name it was given, rather than falling
 back to something that delivers nothing.
 
+> **Superseded (2026-08-17):** the accepted value was `http`, and is now
+> `postmark`. `http` named the transport rather than the vendor and would have
+> made a second provider unnameable. See `I13_VENDOR_SELECTION_CLOSURE.md`.
+
 ## What is not logged, and why
 
 Not the request headers — they carry the credential. Not the request body or the

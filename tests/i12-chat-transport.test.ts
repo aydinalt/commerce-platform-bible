@@ -198,7 +198,7 @@ describe("Increment I12 Decision Chat transport", () => {
   });
 
   it("refuses a deployment that asked for an assistant it cannot reach", () => {
-    vi.stubEnv("CHAT_TRANSPORT", "http");
+    vi.stubEnv("CHAT_TRANSPORT", "anthropic");
     vi.stubEnv("CHAT_API_KEY", "");
     vi.stubEnv("CHAT_MODEL", "some-model");
 
@@ -225,7 +225,8 @@ describe("Increment I12 Decision Chat transport", () => {
   });
 
   it("names an unknown transport rather than starting without one", () => {
-    vi.stubEnv("CHAT_TRANSPORT", "anthropic");
+    // `openai` because `anthropic` is now a transport somebody wrote.
+    vi.stubEnv("CHAT_TRANSPORT", "openai");
 
     expect(() => loadChatConfig("production")).toThrow();
   });

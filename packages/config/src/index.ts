@@ -25,8 +25,12 @@ export interface RuntimeConfig {
  * adapter, and adding one extends this list — so a deployment that names an
  * adapter nobody wrote fails at boot with the name it was given, rather than
  * starting and quietly delivering nothing.
+ *
+ * The Owner chose Postmark on 2026-08-17. The value used to be `http`, which
+ * named the transport rather than the vendor and would have made a second
+ * provider unnameable.
  */
-export const EMAIL_TRANSPORTS = ["development", "http"] as const;
+export const EMAIL_TRANSPORTS = ["development", "postmark"] as const;
 
 export type EmailTransport = (typeof EMAIL_TRANSPORTS)[number];
 
@@ -47,7 +51,7 @@ export interface EmailConfig {
  * configuration, and the shape of it is checked before the process is running
  * rather than at the first registration.
  *
- * A production deployment that names `http` without a credential or a sender
+ * A production deployment that names a vendor without a credential or a sender
  * fails here. That is deliberate and it is the whole point of validating at
  * boot: the alternative is a worker that starts, looks healthy, and turns every
  * registration into a retry nobody is watching.
@@ -91,8 +95,9 @@ export function loadEmailConfig(
  *
  * `development` is the adapter that restates the brief and adds nothing, and it
  * refuses to construct in production. Every other value names a vendor adapter.
+ * The Owner chose Anthropic on 2026-08-17.
  */
-export const CHAT_TRANSPORTS = ["development", "http"] as const;
+export const CHAT_TRANSPORTS = ["development", "anthropic"] as const;
 
 export type ChatTransport = (typeof CHAT_TRANSPORTS)[number];
 
