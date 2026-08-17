@@ -17,8 +17,12 @@ This roadmap records execution order. It does not define product, UX, Story, or 
 The Marketplace Bible and V1 Software Architecture baselines are Frozen.
 Development is complete against the Frozen baseline: **all 50 Generated Stories
 carry Delivery Status `Done`**, each matched criterion by criterion to the test
-that verifies it, and fifteen increments (I0–I14) have closed with green CI.
-Both outbound integrations have a chosen vendor.
+that verifies it, across fifteen increments, I0 through I14. Both outbound
+integrations have a chosen vendor.
+
+Every increment through I13 was proven green on the target runner before the
+next one opened. I14 and the documentation changes after it have passed the full
+chain locally and have not yet had a target-CI result recorded here.
 
 `CURRENT_STATUS.md` is the operational source-state report and is more detailed
 and more current than this file; this roadmap records execution order only.
@@ -95,4 +99,4 @@ guessed at.
 | 3.6 | 2026-07-25 | Accepted ADR-0010–ADR-0014 and advanced the Final Review PASS architecture package to Owner Approval. |
 | 3.7 | 2026-07-25 | Recorded Owner Approval and separate Freeze of V1 Software Architecture v1.0; closed M8. |
 | 3.8 | 2026-07-25 | Opened M9 with the implementation backlog, delivery sequence, and monorepo foundation; no Generated Story delivery state changed. |
-| 3.9 | 2026-08-17 | Closed M9 and brought Current Position up to date after fifteen increments; the file had said all 50 Stories were Not Started since 2026-07-25 and they have all been `Done` since 2026-08-15. Replaced an Immediate Sequence whose first item was completing I0. Recorded, rather than resolved, that implementation records name Milestones 11 and 12 which this table has no rows for. |
+| 3.9 | 2026-08-17 | Closed M9 and brought Current Position up to date after fifteen increments, without claiming a CI result for the last one that nothing here has seen; the file had said all 50 Stories were Not Started since 2026-07-25 and they have all been `Done` since 2026-08-15. Replaced an Immediate Sequence whose first item was completing I0. Recorded, rather than resolved, that implementation records name Milestones 11 and 12 which this table has no rows for. |

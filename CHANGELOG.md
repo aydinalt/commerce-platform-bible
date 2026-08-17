@@ -28,8 +28,9 @@ pointer to where the detail actually lives.
 
 ### Added
 
-- Fifteen delivery increments, I0 through I14, each closed with green CI on the
-  target runner. Per-increment detail is in
+- Fifteen delivery increments, I0 through I14. Each through I13 was proven green
+  on the target runner before the next opened; I14 has passed the full chain
+  locally and its CI result is not recorded here. Per-increment detail is in
   `docs/implementation/I*_*_CLOSURE.md` and in `CURRENT_STATUS.md` §Revision
   History, versions 2.9 through 2.36.
 - An executable platform against the Frozen baseline: identity and sessions,
@@ -51,7 +52,8 @@ pointer to where the detail actually lives.
 
 - 84 test files, 790 tests, module boundaries, type checking, formatting,
   linting, dependency audit, reproducible OpenAPI and a Next.js production
-  build, plus the migration and schema-drift gates that run only in CI.
+  build. The migration and schema-drift gates run only in CI and are the one
+  part of the chain no local run has ever executed.
 
 ### Known
 
