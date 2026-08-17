@@ -42,6 +42,7 @@ export default async function DiscoveryPage() {
     return <SearchResultsView view={await fetchSearchView(entry)} />;
   return (
     <BrowseResultsView
+      applied={entry.filters ?? []}
       preparation={entry.preparation}
       view={await fetchBrowseView(entry)}
     />

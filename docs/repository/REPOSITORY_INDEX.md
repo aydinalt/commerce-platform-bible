@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.10
+Version:      1.11
 Last Updated: 2026-08-17
 -->
 
@@ -134,7 +134,7 @@ Software Architecture v1.0 baseline.
 | Current Frozen Story total | 56 |
 | Feature Registries | 5 present; Offering uses Capability Architecture |
 | ADR sequence | ADR-0001–ADR-0014 present and Accepted |
-| Development | M12 Increment I14 closed; all 50 Generated Stories `Done`, none `In Progress`, none `Not Started` |
+| Development | M12 Increment I15 closed; all 50 Generated Stories `Done`, none `In Progress`, none `Not Started` |
 
 ## Revision History
 
@@ -148,5 +148,6 @@ Software Architecture v1.0 baseline.
 | 1.6 | 2026-07-25 | Registered Accepted ADR-0010–ADR-0014 and the V1 Software Architecture Final Review evidence. |
 | 1.7 | 2026-07-25 | Registered Owner Approval and the separate V1 Software Architecture v1.0 Freeze. |
 | 1.8 | 2026-07-25 | Registered the implementation backlog, delivery sequence, and TypeScript monorepo foundation. |
-| 1.10 | 2026-08-17 | Registered `docs/glossary.md` and moved the Development row from I13 to I14. |
 | 1.9 | 2026-08-17 | Brought the Repository Health row up to date across three corrections that had been applied without a version bump, and registered the Draft traceability v1.1 candidate. The Development row named M9 while the repository was at M12, and claimed 49 Stories `Done` with one `In Progress`; all 50 are now `Done`. The candidate is listed as carrying no authority, because it has none until the Owner approves it. |
+| 1.10 | 2026-08-17 | Registered `docs/glossary.md` and moved the Development row from I13 to I14. |
+| 1.11 | 2026-08-17 | Moved the Development row to I15. The 1.10 entry sat above 1.9 in a table that is otherwise ascending; the order is repaired here. |

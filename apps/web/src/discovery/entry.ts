@@ -12,6 +12,11 @@
  * are what create it.
  */
 
+import {
+  appliedFilterSchema,
+  type AppliedFilterInput
+} from "@commerce/contracts";
+
 export const DISCOVERY_ENTRY_COOKIE = "discovery_entry";
 
 /**
@@ -77,6 +82,16 @@ export interface PreparationContext {
 
 export interface BrowseEntry extends PathContinuation {
   readonly categoryId: string;
+  /**
+   * Applied Attribute Filters (UX-0002 §9).
+   *
+   * They travel in the carrier the criteria already use, for the reason §4
+   * gives: persistent or shareable URL state is outside V1, and a Filter in a
+   * query string is that state. A Filter is part of what a person is asking
+   * for, so it belongs beside the query and the Category rather than in a
+   * second mechanism with different lifetime rules.
+   */
+  readonly filters?: readonly AppliedFilterInput[];
   readonly kind: "BROWSE";
   readonly preparation?: PreparationContext;
 }
@@ -117,13 +132,38 @@ export function readDiscoveryEntry(
     const entry = readBrowseEntry(value.categoryId);
     if (!entry) return null;
     const preparation = readPreparation(value.preparation, entry.categoryId);
+    const filters = readFilters(value.filters);
     return {
       ...entry,
       ...pathId,
+      ...(filters.length === 0 ? {} : { filters }),
       ...(preparation === null ? {} : { preparation })
     };
   }
   return null;
+}
+
+/**
+ * Applied Filters read back from the carrier.
+ *
+ * Parsed against the published contract rather than trusted, for the reason
+ * the rest of this file gives: a person can edit a cookie. A Filter that does
+ * not read back as one of the three shapes is dropped and the others are kept
+ * — one unreadable entry is not a reason to discard criteria the person did
+ * supply, and the API re-checks every one of them against the Category anyway.
+ *
+ * Availability is not decided here. UX-0002 §9.1 makes it a property of the
+ * Category and the Attribute definition, which only the API can see, so a
+ * Filter that is well-formed but not offered is refused there and named.
+ */
+function readFilters(raw: unknown): AppliedFilterInput[] {
+  if (!Array.isArray(raw)) return [];
+  const filters: AppliedFilterInput[] = [];
+  for (const entry of raw.slice(0, 50)) {
+    const parsed = appliedFilterSchema.safeParse(entry);
+    if (parsed.success) filters.push(parsed.data);
+  }
+  return filters;
 }
 
 /**

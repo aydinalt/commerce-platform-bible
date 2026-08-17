@@ -107,6 +107,11 @@ export async function fetchBrowseView(
 ): Promise<BrowseViewResponse> {
   return browseViewSchema.parse(
     await post(`/discovery/browse/categories/${entry.categoryId}`, {
+      // Sent whenever the person has any, so the API applies UX-0002 §9.6 —
+      // OR within a Select, AND across Attributes — rather than the page
+      // filtering a full result set after the fact, which would be a second
+      // implementation of the same rule and eventually a different one.
+      ...(entry.filters === undefined ? {} : { filters: entry.filters }),
       ...(entry.pathId === undefined ? {} : { discoveryPathId: entry.pathId })
     })
   );

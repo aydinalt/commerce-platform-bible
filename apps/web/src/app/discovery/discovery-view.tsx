@@ -3,9 +3,12 @@ import type {
   SearchViewResponse
 } from "@commerce/contracts";
 
+import type { AppliedFilterInput } from "@commerce/contracts";
+
 import type { PreparationContext } from "../../discovery/entry";
 import { leavePreparation, selectCategory } from "../actions";
 
+import { FilterControls } from "./filter-controls";
 import { ListingCards } from "./listing-card";
 
 /**
@@ -117,9 +120,11 @@ function PreparationNotice({
 }
 
 export function BrowseResultsView({
+  applied = [],
   preparation,
   view
 }: {
+  applied?: readonly AppliedFilterInput[];
   preparation?: PreparationContext | undefined;
   view: BrowseViewResponse;
 }) {
@@ -145,6 +150,17 @@ export function BrowseResultsView({
             heading="Alt kategoriler"
           />
         ) : null}
+
+        {/* UX-0002 §9.1. Offered on a leaf and absent on a branch, which is a
+            property of what the API returned rather than a decision made here.
+            They stay available inside a preparation return: §9 does not except
+            it, and narrowing a leaf is exactly what somebody looking for a
+            second Offering to compare is doing. */}
+        <FilterControls
+          applied={applied}
+          categoryId={view.category.id}
+          filters={view.filters}
+        />
 
         {/* AC-8. Inside the constraint the ordinary rules still apply: the same
             eligibility, the same Listing Cards, the same ordering and the same

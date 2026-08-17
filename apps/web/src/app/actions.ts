@@ -5,6 +5,9 @@ import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { fetchBrowseView } from "../discovery/api";
+import { readAppliedFilters } from "../discovery/filters";
+
 import {
   DISCOVERY_ENTRY_COOKIE,
   DISCOVERY_ENTRY_MAX_AGE_SECONDS,
@@ -118,6 +121,49 @@ export async function returnToPreparation(form: FormData): Promise<void> {
     pathId: (await currentPathId()) ?? randomUUID(),
     preparation
   });
+}
+
+/**
+ * Applying Attribute Filters (UX-0002 §9).
+ *
+ * The offered Filters are fetched again here rather than carried through the
+ * form. §9.1 makes availability a property of the Category and the Attribute
+ * definition, and a list of what may be applied, submitted by the browser,
+ * would be a list the browser could edit — the form would be deciding its own
+ * validity. Asking the API costs one request and removes the question.
+ *
+ * §9.7: applying narrows or preserves. The query and the active leaf Category
+ * are untouched, and the path identifier is kept, because changing a Filter is
+ * the same person still looking at the same thing.
+ */
+export async function applyFilters(form: FormData): Promise<void> {
+  const entry = readBrowseEntry(form.get("categoryId"));
+  if (!entry) return;
+  const pathId = (await currentPathId()) ?? randomUUID();
+
+  const view = await fetchBrowseView({ ...entry, pathId });
+  const filters = readAppliedFilters(form, view.filters);
+
+  await handOff({
+    ...entry,
+    ...(filters.length === 0 ? {} : { filters }),
+    pathId
+  });
+}
+
+/**
+ * Clearing them (§9.7).
+ *
+ * "Clearing all Filters preserves the current query and active leaf Category
+ * unless the person separately changes them" — so this drops one field and
+ * nothing else. It is a separate action rather than an empty apply, because an
+ * empty apply is indistinguishable from a form that failed to submit its
+ * values.
+ */
+export async function clearFilters(form: FormData): Promise<void> {
+  const entry = readBrowseEntry(form.get("categoryId"));
+  if (!entry) return;
+  await handOff({ ...entry, pathId: (await currentPathId()) ?? randomUUID() });
 }
 
 /**
