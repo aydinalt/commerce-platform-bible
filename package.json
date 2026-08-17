@@ -27,7 +27,8 @@
       "postcss": "8.5.23",
       "sharp": "0.35.3"
     },
-    "valibot": "1.4.2"
+    "valibot": "1.4.2",
+    "deepmerge-ts": "^8.0.0"
   },
   "scripts": {
     "admin:grant": "node scripts/admin.mjs grant",

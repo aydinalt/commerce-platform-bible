@@ -37,6 +37,13 @@ record therefore sits alongside it and does not amend the cross-tier baseline.
 Folding these links into that baseline requires a controlled superseding
 revision under `DOCUMENT_LIFECYCLE.md`, which remains an open Owner action.
 
+> **Update (2026-08-17):** that revision is now written, as Draft
+> `docs/traceability-v1.1-candidate.md`, and its §6 subsumes these three partial
+> links — every Story named here, and every other, carries complete
+> per-criterion coverage. **It is still an open Owner action**, because a
+> candidate is not an approval: Frozen v1.0 remains the baseline until the Owner
+> reviews, approves and separately decides whether to freeze.
+
 ## Linked Stories
 
 Derived from `IMPLEMENTATION_BACKLOG.md`. The slice touches three Stories, all

@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.8
-Last Updated: 2026-07-25
+Version:      1.9
+Last Updated: 2026-08-17
 -->
 
 # REPOSITORY INDEX
@@ -24,6 +24,7 @@ Last Updated: 2026-07-25
 | `docs/repository/REPOSITORY_INDEX.md` | Canonical document inventory |
 | `docs/repository/DOCUMENT_DEPENDENCY_MAP.md` | Documentation dependency direction |
 | `docs/traceability.md` | Frozen v1.0 cross-tier traceability baseline |
+| `docs/traceability-v1.1-candidate.md` | Draft superseding revision of the baseline; carries no authority until approved |
 
 ## Governance and Standards
 
@@ -146,3 +147,4 @@ Software Architecture v1.0 baseline.
 | 1.6 | 2026-07-25 | Registered Accepted ADR-0010–ADR-0014 and the V1 Software Architecture Final Review evidence. |
 | 1.7 | 2026-07-25 | Registered Owner Approval and the separate V1 Software Architecture v1.0 Freeze. |
 | 1.8 | 2026-07-25 | Registered the implementation backlog, delivery sequence, and TypeScript monorepo foundation. |
+| 1.9 | 2026-08-17 | Brought the Repository Health row up to date across three corrections that had been applied without a version bump, and registered the Draft traceability v1.1 candidate. The Development row named M9 while the repository was at M12, and claimed 49 Stories `Done` with one `In Progress`; all 50 are now `Done`. The candidate is listed as carrying no authority, because it has none until the Owner approves it. |
