@@ -198,6 +198,18 @@ export class PgPresentationRepository implements OnModuleDestroy {
    * belong to this Category cannot appear (UX-0003 §8.4), and one that does
    * appears even when unanswered — which is how a missing optional value gets
    * distinguished instead of silently vanishing.
+   *
+   * **One ordered set, by the governed name.** `US-OFR-F05-001` AC-3 asks for
+   * "understandable groups", and PRD-0006 gives an Attribute definition no
+   * group, section or ordering property — so a grouping composed here would be
+   * a classification nobody governs, shown to the public as though somebody
+   * did. The Owner's recorded reading is that one ordered set is what can be
+   * said truthfully, which is what this is.
+   *
+   * `d.id` breaks the tie because `attribute_definition.name` is not unique —
+   * only `stable_key` is. Ordering by name alone leaves two same-named
+   * Attributes in whatever order the plan produced, and "one ordered set" has
+   * to mean the same set in the same order on every read to be worth saying.
    */
   private async attributes(
     client: PoolClient,
@@ -224,7 +236,7 @@ export class PgPresentationRepository implements OnModuleDestroy {
        where ca.category_id = $2 and d.active = true
        group by d.id, d.name, d.unit, d.value_kind,
          v.text_value, v.number_value, v.boolean_value
-       order by d.name`,
+       order by d.name, d.id`,
       [row.offeringId, row.categoryId]
     );
     return result.rows;

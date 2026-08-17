@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.29
-Last Updated: 2026-08-15
+Version:      2.30
+Last Updated: 2026-08-17
 -->
 
 # CURRENT STATUS
@@ -16,7 +16,7 @@ Last Updated: 2026-08-15
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
 | Current phase | M12 Increment I11 Email Transport — closed. The delivery path is written and tested; only the vendor remains, and it is four values |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
-| Delivery Status of Frozen Stories | 49 of 50 `Done`, 1 `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` is the exception: eight of its nine are verified and AC-3 asks for an Attribute grouping no document governs |
+| Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
 ## Canonical Layer Status
 
@@ -303,6 +303,12 @@ governs. The Presentation shows one ordered set, which is the whole of what can
 be said truthfully, and the Story moves to `In Progress` — delivered,
 evidenced, and blocked on a decision that does not belong to delivery.
 
+**Since answered.** The Owner read AC-3 as satisfied by one ordered set, and
+`US-OFR-F05-001` is `Done`. Accepting that reading made the order load-bearing
+and found it was not actually ordered — `attribute_definition.name` is not
+unique, so two same-named Attributes could swap places between two reads. See
+`docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md`.
+
 Discovery's ten Stories needed one test. Eighty of its 81 criteria were already
 reached — `US-DSC-F05-001`'s twelve Filter rules have twelve tests — and the
 exception is a criterion about an *ending*: `US-DSC-F09-001` AC-3 ends
@@ -419,6 +425,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.30 | 2026-08-17 | Answered the one open Owner decision. `US-OFR-F05-001` AC-3 is read as satisfied by one ordered set, so all **50 Stories are `Done`**. Accepting that reading made the order load-bearing, and it was not one: `attribute_definition.name` is not unique, and three queries ordered by name alone, so two same-named Attributes could swap places between two reads of the same Offering, Comparison Set or Chat brief. All three now break the tie. `category_attribute.sort_order` was deliberately left unused — no PRD names it and nothing writes it, so reading a public order out of it would be the ungoverned classification the decision declines to invent, while looking governed. |
 | 2.29 | 2026-08-15 | Closed I11 Email Transport. Choosing a vendor turned out to be one of four missing things rather than the only one; the other three are now written. Bounded every delivery attempt, because an unanswering provider could stall the worker in a way the outbox cannot detect. Separated a permanent refusal from an outage, because everything was retried forever and a suppressed address came back every three minutes indefinitely. Moved the vendor from a source file to configuration validated at boot. Twelve tests, each verified to fail against what it replaced. No vendor chosen, no Story touched. |
 | 2.28 | 2026-08-15 | Marked the claim I9 falsified. Fourteen documents said all 50 Stories remain `Not Started`, and each wanted a different repair. Twelve are records and now carry a superseding note beside the sentence rather than a rewrite, because what a record asserted at its close is part of what it records. One, `REPOSITORY_INDEX.md`, is a health snapshot describing the present and was corrected outright — it also still named M9. The fourteenth, Frozen `docs/traceability.md`, is left untouched and named precisely: its §5 validation line is now half wrong, and correcting it needs the controlled revision that was already waiting for the M11 links. |
 | 2.27 | 2026-08-15 | Closed I10 Accessibility. Read all twenty-two routes against WCAG 2.1 AA and closed five findings: twenty-two pages sharing one title, seventeen English routes declaring `lang="tr"`, Listing Cards at `h3` directly under an `h1`, two Category controls named only by a `legend`, and an unnamed navigation landmark. Six tests assert the properties across every route, each verified to fail against its own regression. Three of the first six findings were errors in the audit rather than the code, and are recorded as such. No visual design added; no Story touched. |

@@ -132,7 +132,7 @@ Software Architecture v1.0 baseline.
 | Current Frozen Story total | 56 |
 | Feature Registries | 5 present; Offering uses Capability Architecture |
 | ADR sequence | ADR-0001–ADR-0014 present and Accepted |
-| Development | M12 Increment I10 closed; 49 Generated Stories `Done`, 1 `In Progress`, none `Not Started` |
+| Development | M12 Increment I11 closed; all 50 Generated Stories `Done`, none `In Progress`, none `Not Started` |
 
 ## Revision History
 

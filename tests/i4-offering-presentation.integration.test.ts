@@ -404,4 +404,71 @@ suite("Increment I4 complete Offering Presentation", () => {
     // reading their own Offering is not a stranger evaluating it.
     expect(await opens(offeringId)).toBe(0);
   });
+
+  /*
+   * Placed last on purpose: it adds two Attributes to the shared leaf Category,
+   * and every test above asserts against the set that Category held.
+   */
+  it("returns one ordered set, and the same one on every read", async () => {
+    const twin = async (name: string) =>
+      (
+        await send("POST", "/admin/attributes", {
+          body: {
+            categoryIds: [leafId],
+            comparable: false,
+            filterable: false,
+            name,
+            stableKey: key(),
+            valueKind: "TEXT"
+          },
+          cookie: admin.cookie
+        })
+      ).json<{ id: string }>().id;
+
+    /*
+     * Several Attributes sharing one display name, until their identifiers
+     * disagree with the order the rows were written in.
+     *
+     * `attribute_definition` makes only `stable_key` unique, so a name is not
+     * a decidable ordering. A pair created in one order and identified in the
+     * other is the pair that can tell an ordered answer from an arbitrary one:
+     * without the tie-break the rows come back however they were scanned,
+     * which for a fresh table is the order they arrived.
+     */
+    const created: string[] = [];
+    while (created.length < 6) {
+      created.push(await twin("Aynı ad"));
+      if (created.some((id, at) => created.slice(at + 1).some((l) => l < id)))
+        break;
+    }
+    const { offeringSlug } = await publish({});
+
+    const once = (await present(offeringSlug)).view.attributes;
+    const again = (await present(offeringSlug)).view.attributes;
+
+    /*
+     * AC-3, as the Owner reads it.
+     *
+     * PRD-0006 gives an Attribute definition no group, section or ordering
+     * property, so a grouping composed here would be a classification nobody
+     * governs. What can be said truthfully is one ordered set — and a set is
+     * only ordered if the same question gets the same answer.
+     */
+    const twins = once.filter((a) => created.includes(a.attributeId));
+    expect(twins.map((a) => a.attributeId)).toEqual([...created].sort());
+    expect(again.map((a) => a.attributeId)).toEqual(
+      once.map((a) => a.attributeId)
+    );
+
+    // And the set is ordered by the governed name, which is the only ordering
+    // input any document gives. The same-named ones sit together, ahead of the
+    // three the Category already had, in the order those were named.
+    const rest = once.filter((a) => !created.includes(a.attributeId));
+    expect(rest.map((a) => a.name)).toEqual([
+      "Kilometre",
+      "Servis bakımlı",
+      "Yakıt"
+    ]);
+    expect(once.slice(0, created.length)).toEqual(twins);
+  });
 });

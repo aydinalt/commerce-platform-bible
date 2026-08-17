@@ -314,7 +314,10 @@ export class PgComparisonRepository implements OnModuleDestroy {
          and m.comparison_set_id = $2
        group by d.id, d.name, d.unit, d.value_kind, m.offering_id,
          v.text_value, v.number_value, v.boolean_value
-       order by d.name`,
+       -- A definition name is not unique; only its stable key is. Without the
+       -- tie-break, rows of a comparison table could swap places between two
+       -- reads of the same Set, which is the one thing a comparison must not do.
+       order by d.name, d.id`,
       [set.categoryId, set.comparisonSetId]
     );
 

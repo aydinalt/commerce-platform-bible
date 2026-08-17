@@ -104,7 +104,9 @@ export class PgChatRepository implements OnModuleDestroy {
        where f.id = $1
        group by p.offering_id, p.title, p.business_name, c.name, d.id, d.name,
          d.unit, d.value_kind, v.text_value, v.number_value, v.boolean_value
-       order by p.offering_id, d.name`,
+       -- Same tie-break as Compare, for the same reason and so the two cannot
+       -- disagree about the order of the set they are both describing.
+       order by p.offering_id, d.name, d.id`,
       [decisionFlowId]
     );
 

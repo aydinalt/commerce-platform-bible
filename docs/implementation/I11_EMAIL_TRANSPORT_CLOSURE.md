@@ -172,6 +172,10 @@ No Story's behaviour, Acceptance Criteria or Delivery Status changed. The 49
 `Done` and 1 `In Progress` recorded in `DELIVERY_STATUS_ADVANCEMENT.md` stand
 unaltered.
 
+> **Superseded (2026-08-17):** true when this record closed. The Owner's AC-3
+> decision advanced the last Story, so the count is now 50 `Done`. Nothing in
+> this increment moved it — see `AC3_ATTRIBUTE_GROUPING_DECISION.md`.
+
 `US-IDN-F02-001` AC-2 — registration stays incomplete until control of the
 address is proven — is unaffected in either direction: a refused or undelivered
 message leaves the registration incomplete, which is what that criterion already

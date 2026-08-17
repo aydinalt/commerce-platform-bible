@@ -562,6 +562,13 @@ be advanced short of `Done`, and the reason is below.
 
 ## Why `US-OFR-F05-001` stops short of Done
 
+> **Superseded 2026-08-17.** The open question below was answered by the Owner:
+> AC-3 is read as satisfied by one ordered set, which is the second of the two
+> alternatives this section names. `US-OFR-F05-001` is now `Done` and all 50
+> Generated Stories are `Done`. See `AC3_ATTRIBUTE_GROUPING_DECISION.md`. The
+> section is left as written, because it records what was true at this record's
+> close.
+
 AC-3 asks for applicable Attribute values "organized into understandable groups
 while preserving authoritative units, allowed-value meaning, and missing
 optional-value treatment". The second half is met and tested. The first half
@@ -1253,6 +1260,10 @@ Generated Stories**, each matched to the test that verifies it by reading both.
 | `Done` | 49 Stories |
 | `In Progress` | 1 Story — `US-OFR-F05-001` |
 | `Not Started` | none |
+
+> **Superseded 2026-08-17.** The Owner answered the AC-3 question described
+> below. `US-OFR-F05-001` is `Done` and the table now reads 50 `Done`. See
+> `AC3_ATTRIBUTE_GROUPING_DECISION.md`.
 
 `US-OFR-F05-001` AC-3 asks for Attribute values organized into understandable
 groups, and PRD-0006 defines no group, section or ordering key to organize them

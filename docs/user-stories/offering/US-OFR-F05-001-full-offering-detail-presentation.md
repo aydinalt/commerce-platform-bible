@@ -28,7 +28,7 @@
 | Experience Owner | `UX-0003-offering-detail.md` |
 | Owner | Product Owner / Architecture Owner |
 | Status | Frozen |
-| Delivery Status | In Progress |
+| Delivery Status | Done |
 | Priority | Must |
 | Story Size | M |
 | Version | 2.1 |
