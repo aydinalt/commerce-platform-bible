@@ -18,15 +18,42 @@ const suite = enabled ? describe : describe.skip;
 const ORIGIN = "http://localhost:3000";
 const PASSWORD = "correct horse battery staple";
 
-/** Answers however the test asks it to, and counts how often it was asked. */
+/** The address prefix this file mints, and the only one it speaks for. */
+const PREFIX = "ob-";
+
+/**
+ * Answers however the test asks it to — for this file's addresses only.
+ *
+ * Every suite shares one database and `processBatch` claims whatever is
+ * pending, which includes registrations an earlier file requested and never
+ * drained. Two things follow, and both were got wrong first time round: a
+ * counter that counts every delivery counts somebody else's, and a script that
+ * refuses every delivery dead-letters somebody else's message.
+ *
+ * So the script applies to the addresses minted here, everything else is
+ * delivered as any worker would have delivered it, and the count is per
+ * recipient rather than global.
+ */
 class ScriptedDispatcher implements EmailDispatcher {
-  attempts = 0;
   answer: () => void = () => undefined;
 
-  deliver(_message: EmailMessage): Promise<void> {
-    this.attempts += 1;
+  private readonly asked: string[] = [];
+
+  /** How often delivery was attempted for one address. */
+  attemptsFor(recipient: string): number {
+    return this.asked.filter((asked) => asked === recipient).length;
+  }
+
+  deliver(message: EmailMessage): Promise<void> {
+    if (!message.recipient.startsWith(PREFIX)) return Promise.resolve();
+    this.asked.push(message.recipient);
     this.answer();
     return Promise.resolve();
+  }
+
+  reset(): void {
+    this.asked.length = 0;
+    this.answer = () => undefined;
   }
 }
 
@@ -44,7 +71,7 @@ suite("Increment I11 outbox dead letters", () => {
   let app: NestFastifyApplication;
   let processor: OutboxProcessor;
 
-  const address = () => `ob-${randomUUID()}@example.test`;
+  const address = () => `${PREFIX}${randomUUID()}@example.test`;
 
   const send = (method: "POST", url: string, body: unknown) =>
     app.inject({
@@ -64,7 +91,7 @@ suite("Increment I11 outbox dead letters", () => {
        where p.email = $1`,
       [email]
     );
-    return row.rows[0]?.id ?? "";
+    return { email, id: row.rows[0]?.id ?? "" };
   };
 
   const eventRow = async (id: string) =>
@@ -95,8 +122,7 @@ suite("Increment I11 outbox dead letters", () => {
 
   beforeEach(async () => {
     await pool.query("delete from auth_throttle");
-    dispatcher.attempts = 0;
-    dispatcher.answer = () => undefined;
+    dispatcher.reset();
   });
 
   afterAll(async () => {
@@ -106,7 +132,7 @@ suite("Increment I11 outbox dead letters", () => {
   });
 
   it("stops asking once the provider has refused", async () => {
-    const id = await requestRegistration();
+    const { email, id } = await requestRegistration();
     dispatcher.answer = () => {
       throw new EmailRefusedError("suppressed recipient");
     };
@@ -120,13 +146,13 @@ suite("Increment I11 outbox dead letters", () => {
     // refusal is the same answer every time it is asked for, so asking again is
     // load without information — and the person waiting for the email is no
     // closer either way.
-    expect(dispatcher.attempts).toBe(1);
+    expect(dispatcher.attemptsFor(email)).toBe(1);
     expect(afterRefusal?.attempts).toBe(MAX_DELIVERY_ATTEMPTS);
     expect(afterRefusal?.processed).toBe(false);
   });
 
   it("keeps asking while the provider is merely unavailable", async () => {
-    const id = await requestRegistration();
+    const { email, id } = await requestRegistration();
     dispatcher.answer = () => {
       throw new Error("EMAIL_UNAVAILABLE: provider timed out");
     };
@@ -137,13 +163,13 @@ suite("Increment I11 outbox dead letters", () => {
     const row = await eventRow(id);
 
     // The distinction the whole change exists for: this one comes back.
-    expect(dispatcher.attempts).toBe(2);
+    expect(dispatcher.attemptsFor(email)).toBe(2);
     expect(row?.attempts).toBe(2);
     expect(row?.processed).toBe(false);
   });
 
   it("gives up after the ceiling and leaves the row as the evidence", async () => {
-    const id = await requestRegistration();
+    const { email, id } = await requestRegistration();
     dispatcher.answer = () => {
       throw new Error("EMAIL_UNAVAILABLE: still down");
     };
@@ -157,20 +183,20 @@ suite("Increment I11 outbox dead letters", () => {
     // A dead letter is a row that stopped, not a row that vanished and not a
     // new lifecycle state: unprocessed, at the ceiling, and still there to be
     // found by anyone asking what never went out.
-    expect(dispatcher.attempts).toBe(MAX_DELIVERY_ATTEMPTS);
+    expect(dispatcher.attemptsFor(email)).toBe(MAX_DELIVERY_ATTEMPTS);
     expect(row?.attempts).toBe(MAX_DELIVERY_ATTEMPTS);
     expect(row?.processed).toBe(false);
   });
 
   it("processes a message that succeeds, and asks once", async () => {
-    const id = await requestRegistration();
+    const { email, id } = await requestRegistration();
 
     await processor.processBatch();
     const row = await eventRow(id);
 
     // The ordinary path, asserted alongside the failures so the ceiling cannot
     // be satisfied by never delivering anything.
-    expect(dispatcher.attempts).toBe(1);
+    expect(dispatcher.attemptsFor(email)).toBe(1);
     expect(row?.processed).toBe(true);
   });
 });

@@ -3,8 +3,8 @@
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Draft — awaiting Owner acceptance
 - **Maintenance Mode:** Living
-- **Version:** 0.1
-- **Last Updated:** 2026-08-15
+- **Version:** 0.2
+- **Last Updated:** 2026-08-17
 - **Scope:** Implementation record only. No Frozen Story is edited, no Acceptance Criterion changes, and no Delivery Status moves. **No vendor is chosen.**
 
 ## What this increment delivered
@@ -120,6 +120,34 @@ outbox to retry everything failed the two tests asserting the new rule and left
 the two asserting unchanged behaviour passing. Widening the timeout to nearly
 forever hung the timeout test until vitest killed it. Adding the response body
 to the log line failed the secret test and nothing else.
+
+### The queue test was written wrongly first, and CI caught it
+
+The first version counted deliveries on one shared dispatcher and asserted the
+total. It passed here and failed in CI, on the first assertion: *expected 2 to
+be 1*.
+
+The count was right and the question was wrong. Every suite shares one database
+and `processBatch` claims whatever is pending, which includes registrations an
+earlier file requested and never drained — so the second delivery was somebody
+else's message, correctly attempted. **The test was measuring the queue rather
+than the event it created.**
+
+The same mistake had a worse half nobody had failed on yet: a dispatcher
+scripted to refuse *everything* refuses those foreign events too, and a refusal
+now jumps straight to the ceiling. This suite could therefore dead-letter a
+message another suite was waiting for, and the ordering that exposes it is
+whichever one CI happens to pick.
+
+Both are the same repair. The script applies to the addresses this file minted,
+everything else is delivered as any worker would have delivered it, and the
+count is per recipient. Verified by seeding an undrained event from another
+address and running the suite: it passes, the foreign event comes out delivered,
+and restoring the global count reproduces the CI failure exactly.
+
+`vitest.config.ts` already says this, in the comment explaining why file
+parallelism is off: "a suite draining the outbox would consume another's event."
+It was written about a hazard this test then walked into.
 
 ## Known boundaries
 
