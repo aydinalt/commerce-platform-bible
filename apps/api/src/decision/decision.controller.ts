@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   Req,
+  ServiceUnavailableException,
   UnprocessableEntityException
 } from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
@@ -33,6 +34,7 @@ import {
 } from "@commerce/contracts";
 import {
   AssistantInventedValueError,
+  AssistantUnavailableError,
   ComparisonMemberRefusedError,
   ComparisonSetNotFoundError,
   DecisionContextInvalidError,
@@ -537,6 +539,15 @@ export class DecisionChatController {
         throw new UnprocessableEntityException({
           code: "ASSISTANT_INVENTED_VALUE",
           message: "That question could not be answered from this Offering"
+        });
+      // Separate from the one above, and separate on purpose. That one is the
+      // platform declining a reply it received; this one is the assistant not
+      // answering at all. The person is told to try again, which is only true
+      // of this one, and the two are different lines in the log.
+      if (error instanceof AssistantUnavailableError)
+        throw new ServiceUnavailableException({
+          code: "ASSISTANT_UNAVAILABLE",
+          message: "The assistant is not available right now. Try again shortly"
         });
       throw error;
     }

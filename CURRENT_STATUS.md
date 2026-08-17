@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.30
+Version:      2.31
 Last Updated: 2026-08-17
 -->
 
@@ -14,7 +14,7 @@ Last Updated: 2026-08-17
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I11 Email Transport — closed. The delivery path is written and tested; only the vendor remains, and it is four values |
+| Current phase | M12 Increment I12 Decision Chat Transport — closed. Both outbound integrations are now written with no vendor in them; each is three or four values away from a real one |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,34 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I12 Decision Chat Transport
+
+The assistant had the same four things missing that email did — the prompt, the
+bound on the wait, the secret handling and the vendor as configuration — and one
+thing email did not. Findings and boundaries are in
+`docs/implementation/I12_CHAT_TRANSPORT_CLOSURE.md`.
+
+**The whole act ran inside one database transaction:** read the brief, ask the
+vendor, check the answer, record the turn. That held one of the connection
+pool's ten connections open across a call to somebody else's service. Ten people
+asking a slow assistant at once would have stopped every other request in the
+process — including every request that never goes near Chat — and a vendor that
+answered slowly rather than failing would have presented as a database outage.
+It is now three steps with the vendor call outside any transaction, and the
+integration test asks the database, from inside the vendor call, how many
+connections are sitting in an open transaction.
+
+The prompt is composed in `@commerce/decision` from the brief alone, which is
+what makes AC-4 a property of a function rather than a promise a vendor keeps.
+The two prohibitions AC-6 states are written into the text the vendor receives
+as well as enforced after it answers — a rule kept in a vendor's console is a
+rule no review sees and no test reaches.
+
+An assistant that will not answer is now separate from a reply the platform
+refuses. The person gets a different sentence for each and only one invites
+trying again; neither records a turn, because the invention check sits between
+the two transactions rather than after the write.
 
 ## I11 Email Transport
 
@@ -371,10 +399,10 @@ eligibility that was enacted without being recorded.
 
 ## Remaining Work
 
-1. Decide `US-OFR-F05-001` AC-3, the one criterion no delivery can satisfy: either give PRD-0006 a governed Attribute grouping through a controlled revision, or read the criterion as met by one ordered set. Either closes the last Story, and the second changes no code.
+1. ~~Decide `US-OFR-F05-001` AC-3.~~ **Done 2026-08-17.** The Owner read the criterion as met by one ordered set; all 50 Stories are `Done`. See `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md`.
 2. Select an outbound email vendor and write its `EmailProvider`: a name, the request it wants, and how to read its answer. The transport, timeout, secret handling and retry decision are written and tested — `buildDispatcher` in `apps/worker/src/main.ts` is where the chosen one is constructed.
-3. Select a Decision Chat assistant vendor and add its adapter.
-4. Revise the Frozen `docs/traceability.md` through a controlled superseding revision. Two corrections now wait on it: the M11 implementation links, and its §5 assertion that all 50 Stories carry Delivery Status `Not Started`, which I9 falsified. The twelve records carrying the same claim are noted rather than rewritten, and `REPOSITORY_INDEX.md`, which describes the present rather than a past close, was corrected outright.
+3. Select a Decision Chat assistant vendor and write its `ChatProvider`: a name, the request it wants, and how to read its answer. The prompt, timeout, secret handling and the two ways of not answering are written and tested — `buildAssistant` in `apps/api/src/app.module.ts` is where the chosen one is constructed.
+4. Revise the Frozen `docs/traceability.md` through a controlled superseding revision. Two corrections now wait on it: the M11 implementation links, and its §5 assertion that all 50 Stories carry Delivery Status `Not Started` — falsified by I9 and now further out of date, since all 50 are `Done`. The twelve records carrying the same claim are noted rather than rewritten, and `REPOSITORY_INDEX.md`, which describes the present rather than a past close, was corrected outright.
 5. Test with a real screen reader. `I10_ACCESSIBILITY_CLOSURE.md` closes what could be read from the source; nothing there substitutes for hearing a page.
 
 ## Known Boundaries
@@ -425,6 +453,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.31 | 2026-08-17 | Closed I12 Decision Chat Transport. Wrote the assistant's HTTP path with no vendor in it — the prompt composed in the domain from the brief alone, a bounded wait, nothing logged but the outcome, and the vendor read from configuration validated at boot. Found and fixed something email did not have: the whole act ran inside one database transaction, so a slow vendor held one of the pool's ten connections across a call to somebody else's service and would have presented as a database outage. Separated an assistant that will not answer from a reply the platform refuses; neither records a turn. Eleven tests, each verified to fail against what it replaced. No vendor chosen, no Story touched. |
 | 2.30 | 2026-08-17 | Answered the one open Owner decision. `US-OFR-F05-001` AC-3 is read as satisfied by one ordered set, so all **50 Stories are `Done`**. Accepting that reading made the order load-bearing, and it was not one: `attribute_definition.name` is not unique, and three queries ordered by name alone, so two same-named Attributes could swap places between two reads of the same Offering, Comparison Set or Chat brief. All three now break the tie. `category_attribute.sort_order` was deliberately left unused — no PRD names it and nothing writes it, so reading a public order out of it would be the ungoverned classification the decision declines to invent, while looking governed. |
 | 2.29 | 2026-08-15 | Closed I11 Email Transport. Choosing a vendor turned out to be one of four missing things rather than the only one; the other three are now written. Bounded every delivery attempt, because an unanswering provider could stall the worker in a way the outbox cannot detect. Separated a permanent refusal from an outage, because everything was retried forever and a suppressed address came back every three minutes indefinitely. Moved the vendor from a source file to configuration validated at boot. Twelve tests, each verified to fail against what it replaced. No vendor chosen, no Story touched. |
 | 2.28 | 2026-08-15 | Marked the claim I9 falsified. Fourteen documents said all 50 Stories remain `Not Started`, and each wanted a different repair. Twelve are records and now carry a superseding note beside the sentence rather than a rewrite, because what a record asserted at its close is part of what it records. One, `REPOSITORY_INDEX.md`, is a health snapshot describing the present and was corrected outright — it also still named M9. The fourteenth, Frozen `docs/traceability.md`, is left untouched and named precisely: its §5 validation line is now half wrong, and correcting it needs the controlled revision that was already waiting for the M11 links. |

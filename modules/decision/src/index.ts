@@ -257,6 +257,108 @@ export interface DecisionAssistant {
 }
 
 /**
+ * What an assistant answered, in the three shapes that matter here.
+ *
+ * `REFUSED` is the vendor declining — a safety filter, a rejected credential, a
+ * question it will not take. `UNAVAILABLE` is the vendor not answering. The
+ * distinction is not about retrying, as it is for email: nothing retries a
+ * person's question. It is about what the person is told, because "I cannot
+ * answer that" and "this is not working right now" are different sentences and
+ * only one of them invites trying again.
+ */
+export type ChatOutcome =
+  | { kind: "ANSWERED"; text: string }
+  | { kind: "REFUSED"; reason: string }
+  | { kind: "UNAVAILABLE"; reason: string };
+
+/**
+ * Everything an assistant vendor does differently, and nothing else.
+ *
+ * Three things, the same shape the email port took: what it is called, what
+ * request carries a prompt to it, and how its answer is read. The timeout, the
+ * credential handling, the prompt composition and the invention check are on
+ * this side of the line — which is where the mistakes that matter live.
+ */
+export interface ChatProvider {
+  readonly name: string;
+  read(status: number, body: string): ChatOutcome;
+  request(prompt: string): {
+    body: string;
+    headers: Record<string, string>;
+    url: string;
+  };
+}
+
+/**
+ * Raised when the assistant could not be reached or would not answer.
+ *
+ * Separate from `AssistantInventedValueError`, which is the platform refusing
+ * a reply it did receive. Both end with the person told that the question was
+ * not answered, and neither records a turn — but only one of them is about the
+ * platform's own judgement, and a log that confused the two would hide a vendor
+ * outage behind a safety refusal.
+ */
+export class AssistantUnavailableError extends Error {
+  constructor(reason: string, options?: ErrorOptions) {
+    super(`ASSISTANT_UNAVAILABLE: ${reason}`, options);
+    this.name = "AssistantUnavailableError";
+  }
+}
+
+/**
+ * The prompt, composed from the brief and nothing else.
+ *
+ * It lives here rather than in a vendor adapter deliberately. AC-4 says the
+ * assistant works from the Decision Context alone, and that is only enforceable
+ * if the text it receives is assembled in one place that has no database, no
+ * projection and no other reachable fact — this function is handed a brief and
+ * can produce nothing that was not in it.
+ *
+ * The instruction is part of the prompt rather than part of a vendor's
+ * configuration for the same reason: AC-6 forbids a ranking, a winner and a
+ * recommendation, and a rule kept in a vendor console is a rule nobody reviews.
+ */
+export function chatPrompt(input: {
+  brief: DecisionBrief;
+  question: string;
+  turns: readonly { question: string; reply: string }[];
+}): string {
+  const lines = [
+    "Aşağıdaki bilgilerle sınırlı kalarak yanıt ver.",
+    "Burada olmayan hiçbir değeri, sayıyı veya özelliği kullanma.",
+    "Sıralama yapma, kazanan seçme, öneride bulunma.",
+    ""
+  ];
+
+  for (const offering of input.brief.offerings) {
+    lines.push(
+      `${offering.title} — ${offering.businessName} (${offering.categoryName})`
+    );
+    for (const attribute of offering.attributes) {
+      const unit = attribute.unit === null ? "" : ` ${attribute.unit}`;
+      lines.push(
+        attribute.value === null
+          ? `- ${attribute.name}: Belirtilmemiş`
+          : `- ${attribute.name}: ${attribute.value}${unit}`
+      );
+    }
+    lines.push("");
+  }
+
+  if (input.brief.priorities.length > 0)
+    lines.push(
+      `Kişinin belirttiği öncelikler: ${input.brief.priorities.join(", ")}.`,
+      ""
+    );
+
+  for (const turn of input.turns)
+    lines.push(`Soru: ${turn.question}`, `Yanıt: ${turn.reply}`, "");
+
+  lines.push(`Soru: ${input.question}`);
+  return lines.join("\n");
+}
+
+/**
  * Every value the brief actually contains, as text.
  *
  * Used to check a reply before it reaches a person. It is a whitelist of what

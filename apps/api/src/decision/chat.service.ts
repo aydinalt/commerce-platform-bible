@@ -37,27 +37,51 @@ export class ChatService {
     priorities: readonly string[];
     question: string;
   }): Promise<DecisionChatResponse> {
-    return this.chats.transact(async (client) => {
+    /*
+     * Three steps, and the middle one is deliberately not in a transaction.
+     *
+     * It used to be. The whole act — read the brief, ask the vendor, check the
+     * answer, record it — ran inside one transaction, which meant a database
+     * connection was held open across a network call to somebody else's
+     * service. The pool holds ten. Ten people asking a slow assistant at once
+     * would have stopped every other request in the process, including the ones
+     * that never go near Chat, and a vendor that answered slowly rather than
+     * failing would have looked like a database outage.
+     *
+     * Nothing is lost by splitting it. The brief is a read, the turn is an
+     * append, and neither depends on the other being atomic with the vendor
+     * call. A flow that expires in between makes the third step fail, and the
+     * person is told the flow has gone — which is what happened.
+     */
+    const asked = await this.chats.transact(async (client) => {
       const brief = await this.chats.brief(
         client,
         input.decisionFlowId,
         input.priorities
       );
       const previous = await this.chats.turns(client, input.decisionFlowId);
-
-      const reply = await this.assistant.respond({
+      return {
         brief,
-        question: input.question,
         turns: previous.turns.map((turn) => ({
           question: turn.question,
           reply: turn.reply
         }))
-      });
+      };
+    });
 
-      // AC-6, enforced without trusting the adapter. A vendor that ignored its
-      // brief would fail here rather than reach a person.
-      if (inventsValue(reply, brief)) throw new AssistantInventedValueError();
+    const reply = await this.assistant.respond({
+      brief: asked.brief,
+      question: input.question,
+      turns: asked.turns
+    });
 
+    // AC-6, enforced without trusting the adapter. A vendor that ignored its
+    // brief would fail here rather than reach a person — and before anything is
+    // recorded, so a refused reply leaves no turn behind.
+    if (inventsValue(reply, asked.brief))
+      throw new AssistantInventedValueError();
+
+    return this.chats.transact(async (client) => {
       await this.chats.record(client, {
         decisionFlowId: input.decisionFlowId,
         question: input.question,

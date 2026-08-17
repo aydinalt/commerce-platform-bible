@@ -1,6 +1,9 @@
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 
+import { loadChatConfig } from "@commerce/config";
+import type { DecisionAssistant } from "@commerce/decision";
+
 import {
   AdminBusinessController,
   BusinessController
@@ -79,6 +82,26 @@ function allowedOrigins(): readonly string[] {
   return ["http://localhost:3000"];
 }
 
+/**
+ * The assistant the deployment asked for.
+ *
+ * The vendor arrives as configuration rather than as an import. `loadChatConfig`
+ * has already refused a production deployment that named `http` without a
+ * credential or a model, so what is left here is the one thing configuration
+ * cannot supply: an adapter for the vendor named. There is none yet, and this
+ * says so with the name it was given rather than falling back to the stub —
+ * a production Chat answered by a brief-restating adapter would be the platform
+ * pretending to have an assistant.
+ */
+function buildAssistant(): DecisionAssistant {
+  const config = loadChatConfig();
+  if (config.transport === "development")
+    return new RestatingDecisionAssistant(
+      process.env.NODE_ENV ?? "development"
+    );
+  throw new Error(`CHAT_PROVIDER_NOT_IMPLEMENTED: ${config.transport}`);
+}
+
 @Module({
   controllers: [
     AccessModerationController,
@@ -129,14 +152,10 @@ function allowedOrigins(): readonly string[] {
     PgPresentationRepository,
     PrincipalResolver,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
-    // V1 has no assistant vendor. The adapter refuses to construct in
-    // production, so a deployment without a real one fails loudly rather than
-    // quietly answering people with a stub.
-    {
-      provide: DECISION_ASSISTANT,
-      useFactory: () =>
-        new RestatingDecisionAssistant(process.env.NODE_ENV ?? "development")
-    },
+    // V1 has no assistant vendor, and which one it will be is a deployment
+    // decision rather than a source-file one. `buildAssistant` reads it from
+    // configuration validated at boot.
+    { provide: DECISION_ASSISTANT, useFactory: buildAssistant },
     {
       provide: OriginValidator,
       useFactory: () => new OriginValidator(allowedOrigins())

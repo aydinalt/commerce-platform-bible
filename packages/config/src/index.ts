@@ -86,6 +86,67 @@ export function loadEmailConfig(
   return config;
 }
 
+/**
+ * The Decision Chat transports, on the same terms as the email ones.
+ *
+ * `development` is the adapter that restates the brief and adds nothing, and it
+ * refuses to construct in production. Every other value names a vendor adapter.
+ */
+export const CHAT_TRANSPORTS = ["development", "http"] as const;
+
+export type ChatTransport = (typeof CHAT_TRANSPORTS)[number];
+
+export interface ChatConfig {
+  /** Absent for the development transport, required for any real one. */
+  readonly apiKey: string | undefined;
+  readonly model: string | undefined;
+  readonly timeoutMs: number;
+  readonly transport: ChatTransport;
+}
+
+/**
+ * Reads the assistant configuration, and refuses a deployment that cannot ask.
+ *
+ * The timeout defaults lower than email's. An undelivered message waits in a
+ * queue nobody is watching; an unanswered question has somebody sitting in
+ * front of it, and a wait long enough to be worth retrying is already long
+ * enough to have lost them.
+ */
+export function loadChatConfig(
+  environment = process.env.NODE_ENV ?? "development"
+): ChatConfig {
+  const transport = z
+    .enum(CHAT_TRANSPORTS)
+    .parse(process.env.CHAT_TRANSPORT ?? "development");
+
+  const config: ChatConfig = {
+    apiKey: process.env.CHAT_API_KEY,
+    model: process.env.CHAT_MODEL,
+    timeoutMs: z.coerce
+      .number()
+      .int()
+      .positive()
+      .parse(process.env.CHAT_TIMEOUT_MS ?? 8_000),
+    transport
+  };
+
+  if (transport === "development") {
+    if (environment === "production")
+      throw new Error("CHAT_TRANSPORT_DEVELOPMENT_IN_PRODUCTION");
+    return config;
+  }
+
+  if (config.apiKey === undefined || config.apiKey === "")
+    throw new Error("CHAT_API_KEY_MISSING");
+  // Named separately from the credential because a deployment that has the key
+  // and not the model is the likelier mistake, and one error saying "something
+  // is missing" makes an operator guess which.
+  if (config.model === undefined || config.model === "")
+    throw new Error("CHAT_MODEL_MISSING");
+
+  return config;
+}
+
 export function loadRuntimeConfig(processName: ProcessName): RuntimeConfig {
   const port = processName === "api" ? process.env.API_PORT : undefined;
 
