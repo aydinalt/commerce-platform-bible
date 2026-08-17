@@ -5,8 +5,23 @@ import { Pool } from "pg";
 import {
   PASSWORD_RESET_REQUESTED,
   REGISTRATION_REQUESTED,
+  isPermanentRefusal,
   type EmailDispatcher
 } from "@commerce/notification";
+
+/**
+ * How many times a message may be attempted before the outbox stops.
+ *
+ * A dead letter here is a row that is unprocessed and has stopped being
+ * claimed, which is a state the table can already express: `attempts` counts,
+ * and the claim excludes rows that have reached the ceiling. No new column and
+ * no new lifecycle — the evidence is the row that stayed.
+ *
+ * Eight attempts spans roughly fifteen minutes under the backoff below, which
+ * outlasts an ordinary provider incident without turning a permanent problem
+ * into a permanent load.
+ */
+export const MAX_DELIVERY_ATTEMPTS = 8;
 
 /** Matches the API's digesting so a delivered token resolves on confirmation. */
 function digest(value: string): string {
@@ -52,10 +67,20 @@ export class OutboxProcessor {
         }
         await this.markProcessed(event.id);
         handled += 1;
-      } catch {
-        // Leave the event unprocessed and let its attempt count grow; a later
-        // pass retries it rather than losing the message.
-        await this.recordFailure(event.id);
+      } catch (error) {
+        /*
+         * A refusal is not a failure to retry.
+         *
+         * An address the provider will never accept, a sender it does not
+         * recognise, a credential it rejects: each comes back identically on
+         * every attempt. Retrying one is the platform sending itself the same
+         * message every few minutes for as long as the deployment runs, and
+         * the person waiting for the email is no closer either way.
+         *
+         * Attempts are still counted so the row says how hard it was tried,
+         * and it is left unprocessed so it is still there to be found.
+         */
+        await this.recordFailure(event.id, isPermanentRefusal(error));
       }
     }
 
@@ -81,13 +106,15 @@ export class OutboxProcessor {
          set available_at = now() + interval '1 minute'
        where id in (
          select id from outbox_event
-         where processed_at is null and available_at <= now()
+         where processed_at is null
+           and available_at <= now()
+           and attempts < $2
          order by occurred_at
          limit $1
          for update skip locked
        )
        returning id, aggregate_id as "aggregateId", event_type as "eventType"`,
-      [limit]
+      [limit, MAX_DELIVERY_ATTEMPTS]
     );
     return result.rows;
   }
@@ -144,13 +171,21 @@ export class OutboxProcessor {
     );
   }
 
-  private async recordFailure(id: string): Promise<void> {
+  /**
+   * Counts the attempt, and decides whether there will be another.
+   *
+   * A permanent refusal jumps `attempts` straight to the ceiling rather than
+   * setting a separate flag. The claim already refuses to take rows at the
+   * ceiling, so one rule stops both kinds of dead letter and there is only one
+   * place that can be got wrong.
+   */
+  private async recordFailure(id: string, permanent: boolean): Promise<void> {
     await this.pool.query(
       `update outbox_event
-         set attempts = attempts + 1,
+         set attempts = case when $2 then $3 else attempts + 1 end,
              available_at = now() + (least(attempts + 1, 6) * interval '30 seconds')
        where id = $1`,
-      [id]
+      [id, permanent, MAX_DELIVERY_ATTEMPTS]
     );
   }
 }

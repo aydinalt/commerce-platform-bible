@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.28
+Version:      2.29
 Last Updated: 2026-08-15
 -->
 
@@ -14,7 +14,7 @@ Last Updated: 2026-08-15
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines; every increment closed so far proven green in target CI |
-| Current phase | M12 Increment I10 Accessibility — closed. All twenty-two routes read against WCAG 2.1 AA and the findings closed |
+| Current phase | M12 Increment I11 Email Transport — closed. The delivery path is written and tested; only the vendor remains, and it is four values |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | 49 of 50 `Done`, 1 `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` is the exception: eight of its nine are verified and AC-3 asks for an Attribute grouping no document governs |
 
@@ -179,6 +179,41 @@ withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
 
+## I11 Email Transport
+
+`CURRENT_STATUS.md` had said since I1 that choosing a vendor was the only thing
+blocking a deployable registration flow. **It was one of four, and the only one
+needing an Owner.** The other three are now written; findings and boundaries are
+in `docs/implementation/I11_EMAIL_TRANSPORT_CLOSURE.md`.
+
+A delivery could hang the worker. `processBatch` awaits the dispatcher and
+nothing bounded that wait, so a provider that accepted a connection and then
+said nothing would stop every message behind it — not by failing, which the
+outbox handles, but by never answering, which it cannot see. Every attempt is
+now bounded, and a timeout, a refused connection and a DNS failure are one
+answer: ask again later.
+
+Everything was retried forever. Nothing read `attempts` as a limit, so an
+address a provider will never accept came back every three minutes for the life
+of the deployment. There are now three outcomes rather than two — accepted,
+unavailable, refused — and a refusal stops. A dead letter is a row that stopped
+rather than a new lifecycle state: no column and no status were added, because
+"unprocessed, at the ceiling" already describes it.
+
+The vendor was a code decision despite the port saying otherwise: `main.ts`
+named its dispatcher in a source file. `loadEmailConfig` now reads it from the
+environment and validates at boot, so a production deployment asking for real
+delivery without a credential fails to start rather than starting healthy and
+turning every registration into an unwatched retry.
+
+What a provider differs by is four things — a name, where the request goes, what
+its body is called, and how its answer is read. `read` takes the response body
+as well as the status because providers disagree about where the verdict lives,
+and one that only read the status would call a suppressed address delivered.
+
+Twelve tests, each verified to fail against the behaviour it replaced. No vendor
+is chosen and no Story is touched.
+
 ## I10 Accessibility
 
 Every surface was already semantic HTML with no invented styling, so this
@@ -331,7 +366,7 @@ eligibility that was enacted without being recorded.
 ## Remaining Work
 
 1. Decide `US-OFR-F05-001` AC-3, the one criterion no delivery can satisfy: either give PRD-0006 a governed Attribute grouping through a controlled revision, or read the criterion as met by one ordered set. Either closes the last Story, and the second changes no code.
-2. Select an outbound email vendor and add its adapter; nothing else blocks a deployable registration flow.
+2. Select an outbound email vendor and write its `EmailProvider`: a name, the request it wants, and how to read its answer. The transport, timeout, secret handling and retry decision are written and tested — `buildDispatcher` in `apps/worker/src/main.ts` is where the chosen one is constructed.
 3. Select a Decision Chat assistant vendor and add its adapter.
 4. Revise the Frozen `docs/traceability.md` through a controlled superseding revision. Two corrections now wait on it: the M11 implementation links, and its §5 assertion that all 50 Stories carry Delivery Status `Not Started`, which I9 falsified. The twelve records carrying the same claim are noted rather than rewritten, and `REPOSITORY_INDEX.md`, which describes the present rather than a past close, was corrected outright.
 5. Test with a real screen reader. `I10_ACCESSIBILITY_CLOSURE.md` closes what could be read from the source; nothing there substitutes for hearing a page.
@@ -384,6 +419,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.29 | 2026-08-15 | Closed I11 Email Transport. Choosing a vendor turned out to be one of four missing things rather than the only one; the other three are now written. Bounded every delivery attempt, because an unanswering provider could stall the worker in a way the outbox cannot detect. Separated a permanent refusal from an outage, because everything was retried forever and a suppressed address came back every three minutes indefinitely. Moved the vendor from a source file to configuration validated at boot. Twelve tests, each verified to fail against what it replaced. No vendor chosen, no Story touched. |
 | 2.28 | 2026-08-15 | Marked the claim I9 falsified. Fourteen documents said all 50 Stories remain `Not Started`, and each wanted a different repair. Twelve are records and now carry a superseding note beside the sentence rather than a rewrite, because what a record asserted at its close is part of what it records. One, `REPOSITORY_INDEX.md`, is a health snapshot describing the present and was corrected outright — it also still named M9. The fourteenth, Frozen `docs/traceability.md`, is left untouched and named precisely: its §5 validation line is now half wrong, and correcting it needs the controlled revision that was already waiting for the M11 links. |
 | 2.27 | 2026-08-15 | Closed I10 Accessibility. Read all twenty-two routes against WCAG 2.1 AA and closed five findings: twenty-two pages sharing one title, seventeen English routes declaring `lang="tr"`, Listing Cards at `h3` directly under an `h1`, two Category controls named only by a `legend`, and an unnamed navigation landmark. Six tests assert the properties across every route, each verified to fail against its own regression. Three of the first six findings were errors in the audit rather than the code, and are recorded as such. No visual design added; no Story touched. |
 | 2.26 | 2026-08-15 | Closed I9. Advanced the ten `US-PLT` Platform Stories to `Done`, completing the pass: 49 of 50 Stories are `Done`, one is `In Progress`, none is `Not Started`. All 526 Acceptance Criteria are now recorded against the tests that verify them. Seventeen had no test and were closed by nineteen new tests; one, `US-IDN-F09-001` AC-2, was unmet and is now implemented; ten are covered by absence and marked as such. |
