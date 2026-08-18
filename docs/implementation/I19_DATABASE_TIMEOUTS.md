@@ -68,14 +68,27 @@ optional and not defaulted, because a default would be a silent swallow and a
 connection dying unexpectedly is precisely what an operator needs told.
 
 **The first attempt attached only `pool.on("error")`, and that was not enough.**
-`pg` has two cases: a connection sitting idle *in* the pool reports on the pool;
-one currently checked out reports on the client, and the pool never sees it. The
-idle-transaction test caught it — that test holds its client while the server
-kills the session — and the process still came down. Every client now gets the
-same handler as it is created.
+The idle-transaction test caught it — that test holds its client while the
+server kills the session — and the process still came down.
+
+**The explanation written at that point was also wrong, and was measured
+afterwards rather than left as reasoning.** The behaviour is:
+
+| When the connection dies | `pool` emits | `client` emits |
+|---|---|---|
+| checked out by a caller | no | yes |
+| idle inside the pool | yes | yes |
+
+So each listener is load-bearing for one case: the client's saves a
+checked-out connection, the pool's saves an idle one, because the pool emits
+independently there and an emission with no listener is what throws. The
+consequence is that an **idle death is reported twice**, once from each object —
+`pg`'s shape rather than a choice made here, and better than dropping a listener
+that is the only thing standing between one of the two cases and a crash.
 
 That is the second time in three increments that writing the test found
-something the implementation had assumed. Recorded rather than smoothed over.
+something the implementation had assumed, and the first time the correction
+itself needed correcting. Both are recorded rather than smoothed over.
 
 ## The tests
 

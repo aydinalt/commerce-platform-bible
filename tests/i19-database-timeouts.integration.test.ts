@@ -36,11 +36,11 @@ suite("Increment I19 database timeouts", () => {
   /**
    * Where the pool reports a connection that died while idle.
    *
-   * The idle-transaction case below makes PostgreSQL end a session the pool is
-   * holding, and `pg` re-emits that on the pool. Collecting it here is not
-   * tidiness: a `Pool` with no `error` listener throws, so without this the
-   * suite would take the whole process down — which is exactly what the API
-   * would have done in production.
+   * The idle-transaction case below makes PostgreSQL end a session while the
+   * client is checked out, and `pg` emits that on the **client** — the pool
+   * never sees it. Collecting it here is not tidiness: an emitter with no
+   * `error` listener throws, so without this the suite would take the whole
+   * process down, which is exactly what the API would have done in production.
    */
   const lost: Error[] = [];
   let pool: Pool;
@@ -118,11 +118,15 @@ suite("Increment I19 database timeouts", () => {
     /*
      * And the half that keeps the process alive.
      *
-     * `pg` re-emits a dead idle connection's failure on the pool. Node throws
-     * for an `error` event nobody listens to, so a factory that set this
-     * timeout without attaching a listener would have made the API crash on the
-     * very condition the timeout exists to survive. Waited for, because the
-     * server ends the session on its own schedule rather than on this one's.
+     * Node throws for an `error` event nobody listens to, so a factory that set
+     * this timeout without attaching a listener would have made the API crash
+     * on the very condition the timeout exists to survive.
+     *
+     * This case exercises the **client** listener specifically: the connection
+     * dies while checked out, and `pg` does not emit on the pool at all in that
+     * situation. The first implementation listened only on the pool and this is
+     * what caught it. Waited for, because the server ends the session on its own
+     * schedule rather than on this one's.
      */
     await new Promise((resolve) => setTimeout(resolve, budget * 2));
     expect(lost.length).toBeGreaterThan(0);

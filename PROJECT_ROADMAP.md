@@ -21,8 +21,11 @@ that verifies it, across fifteen increments, I0 through I14. Both outbound
 integrations have a chosen vendor.
 
 Every increment through I13 was proven green on the target runner before the
-next one opened. I14 and the documentation changes after it have passed the full
-chain locally and have not yet had a target-CI result recorded here.
+next one opened, on results recorded here run by run. I14 through I19 are green
+on the target runner too, **on the Owner's confirmation of 2026-08-18 rather
+than on a run recorded here** — how a claim about CI is known is part of the
+claim. That confirmation is also what closes the three database gates for those
+six increments; `db:validate`, `db:deploy` and `db:drift` cannot run locally.
 
 `CURRENT_STATUS.md` is the operational source-state report and is more detailed
 and more current than this file; this roadmap records execution order only.

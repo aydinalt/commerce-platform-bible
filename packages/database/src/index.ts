@@ -122,12 +122,25 @@ export function createDatabasePool(
    * would have made the API crash on exactly the condition the timeout exists to
    * survive: the server ends the session and nothing is listening.
    *
-   * **Two listeners, because `pg` has two cases and only one of them is the
-   * pool's.** A connection sitting idle *in* the pool reports on the pool; one
-   * currently checked out reports on the client, and the pool never sees it.
-   * The first attempt here attached only the pool listener, and the second case
-   * still brought the process down — which the idle-transaction test caught,
-   * because that test holds its client while the server kills it.
+   * **Two listeners, because `pg` emits on two objects and neither covers both
+   * cases.** Measured rather than assumed:
+   *
+   * | When the connection dies | `pool` emits | `client` emits |
+   * |---|---|---|
+   * | checked out by a caller | no | yes |
+   * | idle inside the pool | yes | yes |
+   *
+   * So the client listener is what saves the first case and the pool listener is
+   * what saves the second — the pool emits independently there, and an emission
+   * with no listener is what throws. The first attempt here attached only the
+   * pool listener and the checked-out case still brought the process down, which
+   * the idle-transaction test caught because it holds its client while the
+   * server kills the session.
+   *
+   * The consequence is that an idle death is reported **twice**, once from each
+   * object. That is `pg`'s shape rather than a choice made here, and it is
+   * better than the alternative of dropping a listener that is load-bearing for
+   * one of the two cases.
    *
    * Making the caller supply the handler is deliberate. A default would be a
    * silent swallow, and a connection dying unexpectedly is precisely what an
@@ -145,11 +158,11 @@ export function createDatabasePool(
     options: `-c statement_timeout=${timeouts.statementTimeoutMs} -c idle_in_transaction_session_timeout=${timeouts.idleTransactionTimeoutMs}`,
     max: poolMax()
   });
-  // An idle connection's failure arrives here.
+  // An idle connection's failure arrives here, and only an idle one's.
   pool.on("error", onError);
-  // A checked-out one's arrives on the client, so every client gets the same
-  // handler as it is created. `connect` fires once per new connection, not once
-  // per checkout, so this does not accumulate listeners.
+  // A checked-out connection's arrives on the client and nowhere else, so every
+  // client gets the same handler as it is created. `connect` fires once per new
+  // connection rather than once per checkout, so listeners do not accumulate.
   pool.on("connect", (client) => client.on("error", onError));
   return pool;
 }
