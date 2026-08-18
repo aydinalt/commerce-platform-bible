@@ -163,7 +163,7 @@ suite("Increment I2 Attribute definitions", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
     admin = await signUp();
     await pool.query(
       `insert into admin_authorization (user_id, granted_by) values ($1,'test')`,
@@ -179,7 +179,6 @@ suite("Increment I2 Attribute definitions", () => {
 
   afterAll(async () => {
     await app.close();
-    await processor.close();
     await pool.end();
   });
 

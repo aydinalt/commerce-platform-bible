@@ -87,6 +87,7 @@ suite("Milestone 12 identity baseline", () => {
     app = await createApiApp({ logLevel: "fatal" });
     processor = new OutboxProcessor({
       dispatcher,
+      pool,
       publicWebUrl: "http://localhost:3000"
     });
   });
@@ -101,7 +102,6 @@ suite("Milestone 12 identity baseline", () => {
 
   afterAll(async () => {
     await app.close();
-    await processor.close();
     await pool.end();
   });
 

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import {
@@ -53,14 +53,8 @@ const DEFINITION_QUERY = `
   from attribute_definition d`;
 
 @Injectable()
-export class PgAttributeRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgAttributeRepository {
+  constructor(private readonly pool: Pool) {}
 
   list(): Promise<AttributeDefinitionRecord[]> {
     return this.pool

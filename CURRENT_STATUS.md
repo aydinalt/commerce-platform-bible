@@ -14,7 +14,7 @@ Last Updated: 2026-08-17
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines. Every increment through I13 was proven green in target CI before the next opened; I14 and the documentation changes after it have passed the full chain locally and carry no recorded CI result |
-| Current phase | M12 Increment I17 Retention Sweep — closed. Eighteen increments, I0 through I17 |
+| Current phase | M12 Increment I18 Connection Budget — closed. Nineteen increments, I0 through I18 |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour and §7.2 Search narrowing had none until I15. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,28 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I18 Connection Budget
+
+Every repository built its own `Pool`. There were fifteen in the API and `pg`
+defaults `max` to ten, so **one instance could open a hundred and fifty
+connections against a database whose own default ceiling is a hundred.** A second
+instance was arithmetically impossible, one instance could exhaust a
+default-configured PostgreSQL by itself, and the pools could not lend each other
+anything — fourteen sat idle while the fifteenth queued. Findings and boundaries
+are in `docs/implementation/I18_CONNECTION_BUDGET.md`.
+
+`createDatabasePool()` in `@commerce/database` is now the only place a pool is
+built; the API registers it as a provider and the worker holds it in `main`.
+`DATABASE_POOL_MAX` exists because the ceiling is a property of the deployment.
+It is a factory rather than a singleton on purpose: `m11-health` proves readiness
+fails against an unreachable database by handing a repository a pool it closed,
+and only a dependency somebody passes in can be substituted that way.
+
+**It also corrected a comment that was wrong when it was written.**
+`chat.service.ts` said a saturated pool would stop every request in the process;
+Chat had its own pool then, so it starved only Chat. The sentence is true now,
+which is why the I12 fix matters more after this increment than before it.
 
 ## I17 Retention Sweep
 
@@ -525,6 +547,7 @@ eligibility that was enacted without being recorded.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
 - `prisma validate`, `prisma migrate deploy` and `prisma migrate diff` cannot run in the local verification environment: the Prisma engine host answers 403 there. **Nothing stands in for them locally.** An earlier version of this line claimed schema syntax was checked through `@prisma/prisma-schema-wasm`; no such check exists in this repository, and the claim is withdrawn rather than quietly dropped. All three are proven in target CI and nowhere else.
 - Authentication is application-owned: Argon2id credentials and server-managed opaque sessions, per `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`. ~~The `TestPrincipalAdapter` survives only as a development affordance.~~ **Deleted in I16.** The session cookie is now the only way to become a principal; `ENABLE_TEST_PRINCIPAL` is gone from the environment and `Principal.businessId` is required, so the "no selection, skip the context check" state the adapter needed no longer exists.
+- One PostgreSQL connection pool per process, built by `createDatabasePool()` and capped by `DATABASE_POOL_MAX` (default ten), added in I18. **Ten is a default, not a measurement** — nothing here has been load-tested, and the right number for a real deployment comes from watching one. The budget is proven for the API against `pg_stat_activity`; the worker's single pool is asserted only by construction, having no HTTP surface to drive. Nothing bounds how long one request may hold a connection.
 - Expired state is deleted by a retention sweep in the worker, every five minutes, added in I17 against ADR-0012 §3. The windows are Owner decisions of 2026-08-18: identity rows at expiry, processed outbox events after thirty days, dead letters never. **The sweep has never run against a table with a real backlog** — every statement is index-supported and none has been measured outside a test database. Occurrence tables are deliberately untouched: a retention policy for evidence is a separate decision and has not been asked.
 - Outbound email is delivered by Postmark, chosen by the Owner on 2026-08-17 and wired in `buildDispatcher`. **No message has been sent through it.** `LoggingEmailDispatcher` remains the development adapter and still refuses to construct in production.
 - Discovery criteria travel in a five-minute `httpOnly` cookie rather than the address, because UX-0002 §4 places persistent or shareable URL state outside V1. A Results page therefore cannot be bookmarked or shared, and refreshing loses the query — an accepted cost of not building something no Story promised.
@@ -552,6 +575,7 @@ eligibility that was enacted without being recorded.
 
 | Version | Date | Summary |
 |---|---|---|
+| 2.44 | 2026-08-18 | Closed I18 Connection Budget. Every repository built its own `Pool` — fifteen in the API, ten connections each by `pg`'s default — so one instance could open a hundred and fifty against a PostgreSQL whose default ceiling is a hundred, a second instance was arithmetically impossible, and fourteen pools sat idle while the fifteenth queued. One pool per process now, built by `createDatabasePool()` and passed in, with `DATABASE_POOL_MAX` for the deployment to set. The budget is asserted against `pg_stat_activity` rather than by counting `new Pool(` in the source. The test was wrong twice and both are recorded: it first drove one route, which cannot reveal a second pool and let the mutation pass, and its ceiling assertion would have been satisfied by zero. A comment in `chat.service.ts` claiming a saturated pool stopped every request in the process was false when written and is corrected. Delivery Status unchanged. |
 | 2.43 | 2026-08-18 | Closed I17 Retention Sweep, which implements the "session cleanup" ADR-0012 §3 has required since it was accepted. Six tables carried an `expires_at`, five indexed it, and nothing had ever used that index to delete a row — the sharpest consequence being that an abandoned `pending_registration` held an email address and a password hash indefinitely for somebody who never became a User. The windows are Owner decisions taken today, since no Frozen document states a retention policy: identity rows go at expiry, processed outbox events after thirty days, dead letters never. Writing it exposed a real defect: a Decision Flow built on a Comparison Set claimed sixty minutes while the set beneath it had less, and the deliberate `ON DELETE CASCADE` was going to end the flow mid-decision — `enterWithComparisonSet` now caps the flow at its set's expiry. Two of the eight tests were wrong first, both recorded rather than quietly fixed: one seeded a dead letter too fresh for its own mutation to bite, and one reproduced the statement it was checking instead of driving the repository. Delivery Status unchanged. |
 | 2.42 | 2026-08-18 | Closed I16 by deleting `TestPrincipalAdapter`, its resolver fallback, `ENABLE_TEST_PRINCIPAL` and the two contract tests that described it. It refused to construct in production and was therefore never a way in, but it was a second code path to who a request is, and I1 had recorded that it should go once nothing depended on it. `m11-http` now registers, confirms by the emailed link and carries a real session; its malformed-principal case presents a malformed session token, which still catches a resolver that admits an unresolvable session but no longer fails for the driver reason its name gives, because the token is hashed before it reaches SQL — recorded rather than renamed. The adapter had also left `Principal.businessId` optional, and every caller read absence as *skip the Business context check*; the field is required now, so that bypass is unrepresentable, and the nine `m11-authorization` cases that had been reaching their denials through it each select the Business they act in. Delivery Status unchanged. |
 | 1.9 | 2026-07-25 | Reconciled PRD, UX, ADR, Feature Registry, and all six Frozen Story-domain packages from the recovered ZIP set. |

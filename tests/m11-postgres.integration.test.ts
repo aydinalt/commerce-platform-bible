@@ -10,7 +10,7 @@ const suite = enabled ? describe : describe.skip;
 
 suite("Milestone 11 PostgreSQL integration", () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const repository = new PgCommerceRepository();
+  const repository = new PgCommerceRepository(pool);
   const userId = randomUUID();
   const businessId = randomUUID();
   const otherBusinessId = randomUUID();
@@ -52,7 +52,6 @@ suite("Milestone 11 PostgreSQL integration", () => {
   });
 
   afterAll(async () => {
-    await repository.onModuleDestroy();
     await pool.end();
   });
 

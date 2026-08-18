@@ -130,6 +130,7 @@ suite("Milestone 12 Business context", () => {
     app = await createApiApp({ logLevel: "fatal" });
     processor = new OutboxProcessor({
       dispatcher,
+      pool,
       publicWebUrl: ORIGIN
     });
   });
@@ -141,7 +142,6 @@ suite("Milestone 12 Business context", () => {
 
   afterAll(async () => {
     await app.close();
-    await processor.close();
     await pool.end();
   });
 

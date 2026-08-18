@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import {
@@ -144,14 +144,8 @@ function zeroResults(input: {
 }
 
 @Injectable()
-export class PgDiscoveryRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgDiscoveryRepository {
+  constructor(private readonly pool: Pool) {}
 
   /**
    * The active root Categories, grouped by Domain.

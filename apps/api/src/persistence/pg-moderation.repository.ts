@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
 import {
@@ -85,14 +85,8 @@ function isCheckViolation(error: unknown, constraint: string): boolean {
 }
 
 @Injectable()
-export class PgModerationRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgModerationRepository {
+  constructor(private readonly pool: Pool) {}
 
   /**
    * Surfaces a case, which is to say opens one (AC-2).

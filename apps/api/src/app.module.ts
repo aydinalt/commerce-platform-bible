@@ -1,7 +1,9 @@
-import { Module } from "@nestjs/common";
+import { Injectable, Module, type OnModuleDestroy } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
+import { Pool } from "pg";
 
 import { loadChatConfig, loadRuntimeConfig } from "@commerce/config";
+import { createDatabasePool } from "@commerce/database";
 import type { DecisionAssistant } from "@commerce/decision";
 import { createLogger } from "@commerce/observability";
 
@@ -113,6 +115,23 @@ function buildAssistant(): DecisionAssistant {
   });
 }
 
+/**
+ * Closes the pool once, when the application does.
+ *
+ * Each repository used to end its own pool in `onModuleDestroy`, which was
+ * correct while each owned one. With a shared pool the first repository
+ * destroyed would have closed it under the other fourteen, so the shutdown
+ * belongs to whoever owns the pool — which is now the module.
+ */
+@Injectable()
+export class DatabaseLifecycle implements OnModuleDestroy {
+  constructor(private readonly pool: Pool) {}
+
+  async onModuleDestroy(): Promise<void> {
+    await this.pool.end();
+  }
+}
+
 @Module({
   controllers: [
     AccessModerationController,
@@ -162,6 +181,18 @@ function buildAssistant(): DecisionAssistant {
     PgOfferingContentRepository,
     PgPresentationRepository,
     PrincipalResolver,
+    /*
+     * One pool, for the whole process.
+     *
+     * Every repository used to build its own — fifteen of them, ten connections
+     * each by `pg`'s default, so a single API instance could open a hundred and
+     * fifty connections against a database whose own default ceiling is a
+     * hundred. Registering it here makes the connection budget a property of
+     * the process rather than of how many repositories happen to exist, and
+     * makes the pool something a test can substitute.
+     */
+    { provide: Pool, useFactory: createDatabasePool },
+    DatabaseLifecycle,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
     // Which assistant answers is a deployment decision rather than a source-file
     // one. `buildAssistant` reads it from configuration validated at boot.

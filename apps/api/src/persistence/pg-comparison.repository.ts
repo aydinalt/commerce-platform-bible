@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import { EXPIRED_COMPARISON_SETS_SQL } from "@commerce/database";
@@ -57,14 +57,8 @@ interface ValueRow {
 }
 
 @Injectable()
-export class PgComparisonRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgComparisonRepository {
+  constructor(private readonly pool: Pool) {}
 
   /**
    * Begins a Comparison Set from one eligible Offering.

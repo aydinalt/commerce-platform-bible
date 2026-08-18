@@ -169,7 +169,7 @@ suite("Increment I3 Default result ordering", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
 
     admin = await signUp();
     await pool.query(
@@ -186,7 +186,6 @@ suite("Increment I3 Default result ordering", () => {
 
   afterAll(async () => {
     await app.close();
-    await processor.close();
     await pool.end();
   });
 

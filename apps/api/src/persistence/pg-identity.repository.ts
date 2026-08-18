@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
 import {
@@ -34,14 +34,8 @@ export interface CredentialRow {
  * keeping their queries in one small surface makes that surface reviewable.
  */
 @Injectable()
-export class PgIdentityRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgIdentityRepository {
+  constructor(private readonly pool: Pool) {}
 
   async accountExists(email: string): Promise<boolean> {
     const result = await this.pool.query(

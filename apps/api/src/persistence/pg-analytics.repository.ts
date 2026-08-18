@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
 import { periodStart, type AnalyticsPeriod } from "@commerce/analytics";
@@ -47,14 +47,8 @@ export interface AnalyticsSnapshot {
  * made structural rather than promised.
  */
 @Injectable()
-export class PgAnalyticsRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgAnalyticsRepository {
+  constructor(private readonly pool: Pool) {}
 
   async snapshot(period: AnalyticsPeriod): Promise<AnalyticsSnapshot> {
     const since = periodStart(period, new Date());

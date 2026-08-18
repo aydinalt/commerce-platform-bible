@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import type { Pool } from "pg";
 
 import {
   EXPIRED_COMPARISON_SETS_SQL,
@@ -71,15 +71,7 @@ export interface SweepCounts {
 }
 
 export class RetentionSweeper {
-  private readonly pool: Pool;
-
-  constructor() {
-    this.pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  }
-
-  async close(): Promise<void> {
-    await this.pool.end();
-  }
+  constructor(private readonly pool: Pool) {}
 
   /**
    * One pass. Returns what it removed, so a caller can log a sweep that did

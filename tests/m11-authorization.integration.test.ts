@@ -23,7 +23,7 @@ const suite = enabled ? describe : describe.skip;
  */
 suite("Milestone 11 negative authorization", () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const repository = new PgCommerceRepository();
+  const repository = new PgCommerceRepository(pool);
   const service = new OfferingService(repository);
 
   const ownerId = randomUUID();
@@ -133,7 +133,6 @@ suite("Milestone 11 negative authorization", () => {
   });
 
   afterAll(async () => {
-    await repository.onModuleDestroy();
     await pool.end();
   });
 

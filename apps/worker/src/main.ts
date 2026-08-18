@@ -1,4 +1,5 @@
 import { loadEmailConfig, loadRuntimeConfig } from "@commerce/config";
+import { createDatabasePool } from "@commerce/database";
 import type { EmailDispatcher } from "@commerce/notification";
 import { createLogger } from "@commerce/observability";
 
@@ -54,12 +55,21 @@ function buildDispatcher(): EmailDispatcher {
   });
 }
 
+/*
+ * One pool for the process, shared by both components that use it.
+ *
+ * The outbox and the sweep never run at once — they take turns in the same loop
+ * — so two pools bought nothing but two sets of idle connections.
+ */
+const pool = createDatabasePool();
+
 const processor = new OutboxProcessor({
   dispatcher: buildDispatcher(),
+  pool,
   publicWebUrl: process.env.PUBLIC_WEB_URL ?? "http://localhost:3000"
 });
 
-const sweeper = new RetentionSweeper();
+const sweeper = new RetentionSweeper(pool);
 let sweptAt = 0;
 
 /**
@@ -112,6 +122,5 @@ while (running) {
   }
 }
 
-await processor.close();
-await sweeper.close();
+await pool.end();
 process.exitCode = 0;

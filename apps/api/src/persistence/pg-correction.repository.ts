@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
 import {
@@ -63,14 +63,8 @@ const NOTICE_SELECT = `select r.id, r.case_id as "caseId",
  * nothing here that could.
  */
 @Injectable()
-export class PgCorrectionRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgCorrectionRepository {
+  constructor(private readonly pool: Pool) {}
 
   /**
    * Records Request Correction against an existing or newly opened case.

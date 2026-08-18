@@ -10,6 +10,47 @@ This project follows the principles of:
 
 ---
 
+## [3.3.0] - 2026-08-18
+
+### Fixed
+
+- One API instance could open a hundred and fifty PostgreSQL connections.
+  Every repository built its own `Pool` — fifteen of them, ten connections each
+  by `pg`'s default — against a database whose own default `max_connections` is
+  a hundred. A second instance was arithmetically impossible, one instance could
+  exhaust a default-configured database by itself, and the pools could not lend
+  each other anything: fourteen sat idle while the fifteenth queued.
+- A comment in `chat.service.ts` claimed a saturated pool would stop every
+  request in the process. Chat had its own pool when that was written, so it
+  starved only Chat. The sentence is true now.
+
+### Changed
+
+- `createDatabasePool()` in `@commerce/database` is the only place a pool is
+  built. The API registers it as its `Pool` provider and closes it once through
+  `DatabaseLifecycle`; the worker holds it in `main` and shares it between the
+  outbox and the retention sweep. Repositories take it as a dependency.
+- `DATABASE_POOL_MAX` sets the ceiling, defaulting to ten. The right number is a
+  property of the deployment: instances times max must stay under
+  `max_connections`.
+
+### Verified
+
+- 87 test files, 811 tests, plus formatting, linting, module boundaries, type
+  checking, reproducible OpenAPI with no drift, dependency audit and a Next.js
+  production build. The budget is asserted against `pg_stat_activity`, not by
+  counting `new Pool(` in the source. Three mutations run, each caught. The new
+  test was wrong twice — it drove a single route, which cannot reveal a second
+  pool, and its ceiling assertion would have been satisfied by zero — and both
+  corrections are recorded rather than quietly applied.
+
+### Known
+
+- Ten is a default, not a measurement. Nothing here has been load-tested.
+- Nothing bounds how long one request may hold a connection.
+
+---
+
 ## [3.2.0] - 2026-08-18
 
 ### Added

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
 import {
@@ -50,10 +50,8 @@ function isUniqueViolation(error: unknown, constraint: string): boolean {
  * a Hidden or Archived Offering stays where it was.
  */
 @Injectable()
-export class PgBusinessRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
+export class PgBusinessRepository {
+  constructor(private readonly pool: Pool) {}
 
   async moderate(
     businessId: string,
@@ -209,10 +207,6 @@ export class PgBusinessRepository implements OnModuleDestroy {
       [businessId, userId]
     );
     return result.rows[0] ?? null;
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
   }
 
   async isEnabled(userId: string): Promise<boolean> {

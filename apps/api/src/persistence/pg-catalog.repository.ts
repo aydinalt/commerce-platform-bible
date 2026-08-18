@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import {
@@ -40,14 +40,8 @@ function violates(error: unknown, code: string, constraint: string): boolean {
 }
 
 @Injectable()
-export class PgCatalogRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgCatalogRepository {
+  constructor(private readonly pool: Pool) {}
 
   /**
    * Every Category an Offering may be assigned to right now

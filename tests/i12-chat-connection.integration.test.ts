@@ -167,13 +167,13 @@ suite("Increment I12 Decision Chat and the connection pool", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
 
     // The application composes its assistant at boot from configuration, and
     // the suite has no way to substitute one without a testing container. So
     // the service is assembled here from the same two dependencies the module
     // gives it, which is the seam the vendor call actually sits on.
-    chats = new PgChatRepository();
+    chats = new PgChatRepository(pool);
     service = new ChatService(chats, assistant);
 
     admin = await signUp();
@@ -204,8 +204,6 @@ suite("Increment I12 Decision Chat and the connection pool", () => {
 
   afterAll(async () => {
     await app.close();
-    await chats.onModuleDestroy();
-    await processor.close();
     await pool.end();
   });
 

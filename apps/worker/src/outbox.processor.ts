@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 
-import { Pool } from "pg";
+import type { Pool } from "pg";
 
 import {
   PASSWORD_RESET_REQUESTED,
@@ -30,6 +30,13 @@ function digest(value: string): string {
 
 export interface OutboxProcessorOptions {
   dispatcher: EmailDispatcher;
+  /**
+   * The process's pool, handed in rather than built here.
+   *
+   * The worker holds two components that talk to PostgreSQL and used to open a
+   * pool each, which is the same mistake the API made fifteen times over.
+   */
+  pool: Pool;
   /** Base address the registration link points at. */
   publicWebUrl: string;
 }
@@ -46,11 +53,7 @@ export class OutboxProcessor {
   private readonly pool: Pool;
 
   constructor(private readonly options: OutboxProcessorOptions) {
-    this.pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  }
-
-  async close(): Promise<void> {
-    await this.pool.end();
+    this.pool = options.pool;
   }
 
   /** Returns how many events were handled, so a caller can drain deliberately. */

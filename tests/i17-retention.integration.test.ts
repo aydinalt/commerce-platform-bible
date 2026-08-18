@@ -32,8 +32,8 @@ const suite = enabled ? describe : describe.skip;
  */
 suite("Increment I17 retention sweep", () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const sweeper = new RetentionSweeper();
-  const decisions = new PgDecisionRepository();
+  const sweeper = new RetentionSweeper(pool);
+  const decisions = new PgDecisionRepository(pool);
 
   const userId = randomUUID();
   const liveSessionId = randomUUID();
@@ -80,8 +80,6 @@ suite("Increment I17 retention sweep", () => {
   });
 
   afterAll(async () => {
-    await decisions.onModuleDestroy();
-    await sweeper.close();
     await pool.end();
   });
 

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import type { AuditEntry, AuditWriter } from "@commerce/audit";
@@ -90,16 +90,9 @@ export class PgCommerceRepository
     IdentityReader,
     BusinessAccessReader,
     DraftOfferingRepository,
-    AuditWriter,
-    OnModuleDestroy
+    AuditWriter
 {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+  constructor(private readonly pool: Pool) {}
 
   /**
    * Readiness must reflect the dependency the process cannot serve without.

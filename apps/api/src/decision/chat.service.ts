@@ -43,10 +43,17 @@ export class ChatService {
      * It used to be. The whole act — read the brief, ask the vendor, check the
      * answer, record it — ran inside one transaction, which meant a database
      * connection was held open across a network call to somebody else's
-     * service. The pool holds ten. Ten people asking a slow assistant at once
-     * would have stopped every other request in the process, including the ones
-     * that never go near Chat, and a vendor that answered slowly rather than
-     * failing would have looked like a database outage.
+     * service. Ten people asking a slow assistant at once would have exhausted
+     * the pool, and a vendor that answered slowly rather than failing would have
+     * looked like a database outage.
+     *
+     * **That sentence used to say "every other request in the process", and it
+     * was wrong when it was written.** Every repository built its own pool then,
+     * so a saturated Chat pool starved Chat and nothing else. The reasoning
+     * overstated the blast radius while understating the real problem, which was
+     * the fifteen pools. They are one pool now — which is what finally makes the
+     * original sentence true, and is exactly why holding a connection across a
+     * vendor call had to stop.
      *
      * Nothing is lost by splitting it. The brief is a read, the turn is an
      * append, and neither depends on the other being atomic with the vendor

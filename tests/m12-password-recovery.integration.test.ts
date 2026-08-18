@@ -79,7 +79,11 @@ suite("Milestone 12 password recovery", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, publicWebUrl: WEB_URL });
+    processor = new OutboxProcessor({
+      dispatcher,
+      pool,
+      publicWebUrl: WEB_URL
+    });
   });
 
   beforeEach(async () => {
@@ -89,7 +93,6 @@ suite("Milestone 12 password recovery", () => {
 
   afterAll(async () => {
     await app.close();
-    await processor.close();
     await pool.end();
   });
 

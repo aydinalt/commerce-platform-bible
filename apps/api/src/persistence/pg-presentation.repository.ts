@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import type {
@@ -75,14 +75,8 @@ function present(row: AttributeRow): PresentedAttribute {
 }
 
 @Injectable()
-export class PgPresentationRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgPresentationRepository {
+  constructor(private readonly pool: Pool) {}
 
   /**
    * Begins complete public Presentation, or refuses to begin one.

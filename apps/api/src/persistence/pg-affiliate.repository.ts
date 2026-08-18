@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
 import {
@@ -25,14 +25,8 @@ const DESTINATION_COLUMNS = `d.id, d.offering_id as "offeringId", d.reference,
    d.version`;
 
 @Injectable()
-export class PgAffiliateRepository implements OnModuleDestroy {
-  private readonly pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-
-  async onModuleDestroy(): Promise<void> {
-    await this.pool.end();
-  }
+export class PgAffiliateRepository {
+  constructor(private readonly pool: Pool) {}
 
   /**
    * The destination for an owned Offering, if there is one.
