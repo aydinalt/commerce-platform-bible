@@ -5,15 +5,20 @@ export interface Principal {
   /** Admin context, entered explicitly and never inferred. */
   adminContext?: boolean;
   /**
-   * Three distinct states, and the difference matters:
+   * Two states, and the difference matters:
    *
    * - a Business identifier — that context was explicitly selected;
    * - `null` — a real session that is in the authenticated User baseline, so
-   *   acting in any Business must be refused (`US-IDN-F07-001` AC-3);
-   * - absent — the principal came from the header adapter, which has no session
-   *   to hold a selection and exists only outside production.
+   *   acting in any Business must be refused (`US-IDN-F07-001` AC-3).
+   *
+   * There used to be a third, absence, which meant the principal came from the
+   * header adapter and had no session to hold a selection. Every caller read
+   * that state as *skip the check* — so the field being optional was not a
+   * missing value but a bypass, one forgotten property away from any new
+   * caller. The adapter is gone and the field is required, which makes the
+   * bypass unrepresentable rather than merely unused.
    */
-  businessId?: string | null;
+  businessId: string | null;
   correlationId: string;
   sessionId: string;
   userId: string;
@@ -62,47 +67,22 @@ export interface SessionIssue {
   token: string;
 }
 
-/**
- * Every field of a `Principal` is carried into a PostgreSQL `uuid` column or
- * predicate. Admitting a malformed value would push the rejection down to the
- * driver, where a request that should have been refused becomes a server
- * error instead.
+/*
+ * A `TestPrincipalAdapter` stood here.
+ *
+ * It read `x-test-user-id`, `x-test-session-id` and `x-correlation-id` and
+ * built a `Principal` out of them, because M11 had an HTTP surface and no way
+ * to become anybody: identity was still two increments away. It refused to
+ * construct when `NODE_ENV` was `production`, so it was never a way in — but it
+ * was a second code path to the answer that decides who a request is, kept
+ * alive by one test suite.
+ *
+ * Session authentication superseded it in I1, and `I1_IDENTITY_BASELINE_CLOSURE`
+ * recorded that it should go once no workflow depended on it. The last
+ * dependant, `m11-http.integration.test.ts`, now registers and confirms an
+ * account like a person does. Nothing replaced this; the edge has one way to
+ * resolve a principal, and it is the session cookie.
  */
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
-
-export class TestPrincipalAdapter {
-  constructor(
-    private readonly environment: string,
-    private readonly enabled: boolean
-  ) {
-    if (environment === "production" && enabled) {
-      throw new Error("TEST_PRINCIPAL_FORBIDDEN_IN_PRODUCTION");
-    }
-  }
-
-  resolve(headers: Record<string, string | string[] | undefined>): Principal {
-    if (!this.enabled) throw new Error("TEST_PRINCIPAL_DISABLED");
-    const value = (name: string) => {
-      const item = headers[name];
-      return Array.isArray(item) ? item[0] : item;
-    };
-    const userId = value("x-test-user-id");
-    const sessionId = value("x-test-session-id");
-    const correlationId = value("x-correlation-id");
-    if (!userId || !sessionId || !correlationId) {
-      throw new Error("TEST_PRINCIPAL_INCOMPLETE");
-    }
-    if (
-      !UUID_PATTERN.test(userId) ||
-      !UUID_PATTERN.test(sessionId) ||
-      !UUID_PATTERN.test(correlationId)
-    ) {
-      throw new Error("TEST_PRINCIPAL_MALFORMED");
-    }
-    return { correlationId, sessionId, userId };
-  }
-}
 
 /**
  * The two User access moderation transitions and the states they start from

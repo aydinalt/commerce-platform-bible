@@ -131,7 +131,6 @@ suite("Increment I3 Affiliate Destination governance", () => {
     act(offeringId, "validation", { result: "VALID" });
 
   beforeAll(async () => {
-    process.env.ENABLE_TEST_PRINCIPAL = "false";
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });

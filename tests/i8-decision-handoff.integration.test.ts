@@ -182,7 +182,6 @@ suite("Increment I8 Decision handoff", () => {
     ).json<DecisionCompletionsResponse>();
 
   beforeAll(async () => {
-    process.env.ENABLE_TEST_PRINCIPAL = "false";
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });

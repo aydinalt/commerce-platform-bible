@@ -4,7 +4,6 @@ import {
   createDraftOfferingSchema,
   draftOfferingSchema
 } from "../packages/contracts/src/index.js";
-import { TestPrincipalAdapter } from "../modules/identity/src/index.js";
 
 const id = "11111111-1111-4111-8111-111111111111";
 
@@ -37,26 +36,16 @@ describe("Milestone 11 contracts", () => {
     ).toBe("DRAFT");
   });
 
-  it("fails closed when test principal is enabled in production", () => {
-    expect(() => new TestPrincipalAdapter("production", true)).toThrow(
-      "TEST_PRINCIPAL_FORBIDDEN_IN_PRODUCTION"
-    );
-  });
-
-  it("refuses a principal whose identifiers are not well formed", () => {
-    const adapter = new TestPrincipalAdapter("test", true);
-    const headers = {
-      "x-correlation-id": id,
-      "x-test-session-id": id,
-      "x-test-user-id": id
-    };
-
-    expect(adapter.resolve(headers)).toMatchObject({ userId: id });
-
-    for (const header of Object.keys(headers)) {
-      expect(() =>
-        adapter.resolve({ ...headers, [header]: "'; drop table x; --" })
-      ).toThrow("TEST_PRINCIPAL_MALFORMED");
-    }
-  });
+  /*
+   * Two cases stood here, both about `TestPrincipalAdapter`: that it refused to
+   * construct under `NODE_ENV=production`, and that it refused a malformed
+   * identifier rather than passing one to the driver.
+   *
+   * They are not moved or renamed, because the thing they described no longer
+   * exists — the adapter is deleted and the session cookie is the only way to
+   * become a principal. What they were protecting is still protected, one layer
+   * further in: `m11-http.integration.test.ts` presents a malformed session
+   * token over the wire and requires a `401` in the published envelope, and the
+   * production refusal is now vacuous because there is nothing to refuse.
+   */
 });

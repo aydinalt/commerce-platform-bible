@@ -4,82 +4,147 @@ import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { errorEnvelopeSchema } from "../packages/contracts/src/index.js";
-import { draftOfferingSchema } from "../packages/contracts/src/index.js";
+import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import type {
+  EmailDispatcher,
+  EmailMessage
+} from "../modules/notification/src/index.js";
+import {
+  draftOfferingSchema,
+  errorEnvelopeSchema
+} from "../packages/contracts/src/index.js";
 
 const enabled = Boolean(process.env.DATABASE_URL);
 const suite = enabled ? describe : describe.skip;
+
+const ORIGIN = "http://localhost:3000";
+const PASSWORD = "correct horse battery staple";
+
+class RecordingDispatcher implements EmailDispatcher {
+  readonly delivered: EmailMessage[] = [];
+
+  deliver(message: EmailMessage): Promise<void> {
+    this.delivered.push(message);
+    return Promise.resolve();
+  }
+}
 
 /**
  * Everything else in this suite calls the service directly. These cases go over
  * the wire instead, so the route prefix, status codes, principal resolution and
  * error-envelope wiring are proven rather than assumed.
+ *
+ * **The principal is now a real session.** This suite used to authenticate
+ * through `x-test-user-id` headers served by `TestPrincipalAdapter`, which
+ * existed because M11 predated identity: there was no way to register, so a
+ * header stood in for one. Identity arrived in I1 and the affordance outlived
+ * its reason — a second way to mint a principal, refusing to construct in
+ * production but present in the code either way. It is deleted, and this file
+ * is the last thing that needed it.
+ *
+ * Nothing about what these cases assert changed. The edge still refuses a
+ * malformed identifier before the driver sees it; the identifier is simply the
+ * session token now, which is what a person actually presents.
  */
 suite("Milestone 11 HTTP surface", () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const userId = randomUUID();
-  const businessId = randomUUID();
-  const otherBusinessId = randomUUID();
-  let domainId: string;
-  const categoryId = randomUUID();
-
+  const dispatcher = new RecordingDispatcher();
   let app: NestFastifyApplication;
+  let processor: OutboxProcessor;
 
-  const principalHeaders = () => ({
-    "x-correlation-id": randomUUID(),
-    "x-test-session-id": randomUUID(),
-    "x-test-user-id": userId
-  });
+  let cookie: string;
+  let businessId: string;
+  let otherBusinessId: string;
+  let categoryId: string;
+
+  /** A correlation identifier per request, as every caller is expected to send. */
+  const headers = () => ({ "x-correlation-id": randomUUID() });
 
   const inject = (options: {
     body?: unknown;
     headers?: Record<string, string>;
-    method: "GET" | "POST";
+    method: "GET" | "POST" | "PUT";
     url: string;
-  }) => app.inject(options);
+  }) =>
+    app.inject({
+      ...options,
+      headers: { origin: ORIGIN, ...options.headers }
+    });
+
+  const authed = (extra: Record<string, string> = {}) => ({
+    cookie,
+    ...headers(),
+    ...extra
+  });
+
+  /** Register, confirm by the emailed token, and keep the session cookie. */
+  const signUp = async () => {
+    const email = `http-${randomUUID()}@example.test`;
+    await inject({
+      body: { email, password: PASSWORD },
+      headers: headers(),
+      method: "POST",
+      url: "/api/v1/auth/registrations"
+    });
+    await processor.processBatch();
+    const message = dispatcher.delivered.find((m) => m.recipient === email);
+    const link = /https?:\/\/\S+/u.exec(message?.body ?? "")?.[0] ?? "";
+    const confirmed = await inject({
+      body: { token: new URL(link).searchParams.get("token") },
+      headers: headers(),
+      method: "POST",
+      url: "/api/v1/auth/registrations/confirmations"
+    });
+    const cookies = confirmed.cookies as { name: string; value: string }[];
+    return `commerce_session=${
+      cookies.find((c) => c.name === "commerce_session")?.value ?? ""
+    }`;
+  };
+
+  const createBusiness = async (name: string) => {
+    const created = await inject({
+      body: { name, slug: `http-${randomUUID()}` },
+      headers: authed(),
+      method: "POST",
+      url: "/api/v1/businesses"
+    });
+    return created.json<{ id: string }>().id;
+  };
 
   beforeAll(async () => {
-    process.env.ENABLE_TEST_PRINCIPAL = "true";
     process.env.NODE_ENV = "test";
 
-    await pool.query(
-      `insert into user_account (id,email,status,email_verified_at)
-       values ($1,$2,'ENABLED',now())`,
-      [userId, `http-${userId}@example.test`]
-    );
-    await pool.query(
-      `insert into business (id,slug,name,status)
-       values ($1,$2,'Owned','ACTIVE'),($3,$4,'Other','ACTIVE')`,
-      [
-        businessId,
-        `http-${businessId}`,
-        otherBusinessId,
-        `http-other-${otherBusinessId}`
-      ]
-    );
-    await pool.query(
-      `insert into business_owner (business_id,user_id) values ($1,$2),($3,$2)`,
-      [businessId, userId, otherBusinessId]
-    );
-    // The V1 Domains are seeded by `20260810000200_category_management`; this
-    // suite predates that and used to invent one of its own.
-    domainId = (
+    const { createApiApp } = await import("../apps/api/src/bootstrap.js");
+    app = await createApiApp({ logLevel: "fatal" });
+    processor = new OutboxProcessor({ dispatcher, publicWebUrl: ORIGIN });
+
+    cookie = await signUp();
+    businessId = await createBusiness("Owned");
+    otherBusinessId = await createBusiness("Other");
+    await inject({
+      body: { businessId },
+      headers: authed(),
+      method: "PUT",
+      url: "/api/v1/auth/me/business-context"
+    });
+
+    // The V1 Domains are seeded by `20260810000200_category_management`.
+    const domainId = (
       await pool.query<{ id: string }>(
         `select id from domain where stable_key = 'MOBILITY'`
       )
     ).rows[0]!.id;
+    categoryId = randomUUID();
     await pool.query(
       `insert into category (id,domain_id,stable_key,slug,name)
        values ($1,$2,$3,$4,'Category')`,
       [categoryId, domainId, `http-c-${categoryId}`, `http-c-${categoryId}`]
     );
-
-    const { createApiApp } = await import("../apps/api/src/bootstrap.js");
-    app = await createApiApp({ logLevel: "fatal" });
   });
 
   afterAll(async () => {
     await app.close();
+    await processor.close();
     await pool.end();
   });
 
@@ -96,6 +161,7 @@ suite("Milestone 11 HTTP surface", () => {
   it("answers 401 in the published envelope when no principal is presented", async () => {
     const response = await inject({
       body: { categoryId, slug: `anon-${randomUUID()}`, title: "Anonymous" },
+      headers: headers(),
       method: "POST",
       url: `/api/v1/businesses/${businessId}/offerings`
     });
@@ -107,14 +173,14 @@ suite("Milestone 11 HTTP surface", () => {
   });
 
   it("refuses a malformed principal instead of failing inside the driver", async () => {
-    for (const header of [
-      "x-correlation-id",
-      "x-test-session-id",
-      "x-test-user-id"
-    ]) {
+    // The untrusted identifier used to be three headers; it is the session
+    // token now. The property is the same one M11 established: a value that
+    // reaches a `uuid` column or a lookup is refused at the edge, so a request
+    // that should be a 401 never becomes a 500 inside the driver.
+    for (const value of ["'; drop table x; --", "not-a-token", ""]) {
       const response = await inject({
         body: { categoryId, slug: `evil-${randomUUID()}`, title: "Evil" },
-        headers: { ...principalHeaders(), [header]: "'; drop table x; --" },
+        headers: { ...headers(), cookie: `commerce_session=${value}` },
         method: "POST",
         url: `/api/v1/businesses/${businessId}/offerings`
       });
@@ -129,7 +195,7 @@ suite("Milestone 11 HTTP surface", () => {
   it("rejects malformed path identifiers at the edge", async () => {
     const create = await inject({
       body: { categoryId, slug: `bad-${randomUUID()}`, title: "Bad path" },
-      headers: principalHeaders(),
+      headers: authed(),
       method: "POST",
       url: "/api/v1/businesses/not-a-uuid/offerings"
     });
@@ -139,7 +205,7 @@ suite("Milestone 11 HTTP surface", () => {
     ).toBeDefined();
 
     const read = await inject({
-      headers: principalHeaders(),
+      headers: authed(),
       method: "GET",
       url: `/api/v1/businesses/${businessId}/offerings/not-a-uuid`
     });
@@ -159,7 +225,7 @@ suite("Milestone 11 HTTP surface", () => {
         title: "Mass assignment attempt",
         version: 999
       },
-      headers: principalHeaders(),
+      headers: authed(),
       method: "POST",
       url: `/api/v1/businesses/${businessId}/offerings`
     });
@@ -178,7 +244,7 @@ suite("Milestone 11 HTTP surface", () => {
         summary: "A".repeat(2_000_000),
         title: "Too large"
       },
-      headers: principalHeaders(),
+      headers: authed(),
       method: "POST",
       url: `/api/v1/businesses/${businessId}/offerings`
     });
@@ -193,7 +259,7 @@ suite("Milestone 11 HTTP surface", () => {
     const slug = `http-${randomUUID()}`;
     const response = await inject({
       body: { categoryId, slug, title: "Over the wire" },
-      headers: principalHeaders(),
+      headers: authed(),
       method: "POST",
       url: `/api/v1/businesses/${businessId}/offerings`
     });
@@ -210,7 +276,7 @@ suite("Milestone 11 HTTP surface", () => {
   it("reports validation failures with field errors", async () => {
     const response = await inject({
       body: { categoryId: "not-a-uuid", slug: "", title: "" },
-      headers: principalHeaders(),
+      headers: authed(),
       method: "POST",
       url: `/api/v1/businesses/${businessId}/offerings`
     });
@@ -226,16 +292,16 @@ suite("Milestone 11 HTTP surface", () => {
   });
 
   it("echoes the caller's correlation id back in failures", async () => {
-    const headers = principalHeaders();
+    const sent = authed();
     const response = await inject({
       body: { slug: "" },
-      headers,
+      headers: sent,
       method: "POST",
       url: `/api/v1/businesses/${businessId}/offerings`
     });
 
     expect(errorEnvelopeSchema.parse(response.json()).correlationId).toBe(
-      headers["x-correlation-id"]
+      sent["x-correlation-id"]
     );
   });
 
@@ -246,7 +312,7 @@ suite("Milestone 11 HTTP surface", () => {
 
     const first = await inject({
       body,
-      headers: principalHeaders(),
+      headers: authed(),
       method: "POST",
       url
     });
@@ -254,7 +320,7 @@ suite("Milestone 11 HTTP surface", () => {
 
     const second = await inject({
       body,
-      headers: principalHeaders(),
+      headers: authed(),
       method: "POST",
       url
     });
@@ -268,22 +334,25 @@ suite("Milestone 11 HTTP surface", () => {
     const slug = `roundtrip-${randomUUID()}`;
     const created = await inject({
       body: { categoryId, slug, summary: "Readable", title: "Roundtrip" },
-      headers: principalHeaders(),
+      headers: authed(),
       method: "POST",
       url: `/api/v1/businesses/${businessId}/offerings`
     });
     const { id } = created.json<{ id: string }>();
 
     const owned = await inject({
-      headers: principalHeaders(),
+      headers: authed(),
       method: "GET",
       url: `/api/v1/businesses/${businessId}/offerings/${id}`
     });
     expect(owned.statusCode).toBe(200);
     expect(draftOfferingSchema.parse(owned.json())).toMatchObject({ id, slug });
 
+    // The same account owns both Businesses, so this is the tenancy boundary
+    // rather than an ownership one: an Offering is readable through the exact
+    // Business that holds it and through no other.
     const foreign = await inject({
-      headers: principalHeaders(),
+      headers: authed(),
       method: "GET",
       url: `/api/v1/businesses/${otherBusinessId}/offerings/${id}`
     });

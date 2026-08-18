@@ -37,7 +37,18 @@ suite("Milestone 11 negative authorization", () => {
   const categoryId = randomUUID();
   const inactiveCategoryId = randomUUID();
 
-  const principal = (userId: string): Principal => ({
+  /**
+   * The Business the actor has selected, always stated.
+   *
+   * It used to be omitted, and an omitted selection meant *skip the context
+   * check* — so every case here reached its own denial through a hole rather
+   * than through a selection. The hole belonged to the deleted header adapter
+   * and the field is required now. Each case selects the Business it is about
+   * to act in, so it is still refused for the reason its name gives rather than
+   * for a missing context.
+   */
+  const principal = (userId: string, businessId: string): Principal => ({
+    businessId,
     correlationId: randomUUID(),
     sessionId: randomUUID(),
     userId
@@ -127,7 +138,7 @@ suite("Milestone 11 negative authorization", () => {
   });
 
   it("refuses a suspended account holder", async () => {
-    const actor = principal(suspendedUserId);
+    const actor = principal(suspendedUserId, activeBusinessId);
     await expect(
       service.create(activeBusinessId, draft(`p-${randomUUID()}`), actor)
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -135,7 +146,7 @@ suite("Milestone 11 negative authorization", () => {
   });
 
   it("hides a Business the principal does not own", async () => {
-    const actor = principal(strangerId);
+    const actor = principal(strangerId, activeBusinessId);
     await expect(
       service.create(activeBusinessId, draft(`s-${randomUUID()}`), actor)
     ).rejects.toBeInstanceOf(NotFoundException);
@@ -143,7 +154,7 @@ suite("Milestone 11 negative authorization", () => {
   });
 
   it("refuses a suspended Business", async () => {
-    const actor = principal(ownerId);
+    const actor = principal(ownerId, suspendedBusinessId);
     await expect(
       service.create(suspendedBusinessId, draft(`x-${randomUUID()}`), actor)
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -151,7 +162,7 @@ suite("Milestone 11 negative authorization", () => {
   });
 
   it("refuses a moderation-restricted Business", async () => {
-    const actor = principal(ownerId);
+    const actor = principal(ownerId, restrictedBusinessId);
     await expect(
       service.create(restrictedBusinessId, draft(`r-${randomUUID()}`), actor)
     ).rejects.toBeInstanceOf(ForbiddenException);
@@ -159,7 +170,7 @@ suite("Milestone 11 negative authorization", () => {
   });
 
   it("refuses an inactive Category", async () => {
-    const actor = principal(ownerId);
+    const actor = principal(ownerId, activeBusinessId);
     await expect(
       service.create(
         activeBusinessId,
@@ -176,9 +187,13 @@ suite("Milestone 11 negative authorization", () => {
 
   it("reports a duplicate slug as a conflict rather than a server error", async () => {
     const slug = `dupe-${randomUUID()}`;
-    await service.create(activeBusinessId, draft(slug), principal(ownerId));
+    await service.create(
+      activeBusinessId,
+      draft(slug),
+      principal(ownerId, activeBusinessId)
+    );
 
-    const actor = principal(ownerId);
+    const actor = principal(ownerId, activeBusinessId);
     await expect(
       service.create(activeBusinessId, draft(slug), actor)
     ).rejects.toBeInstanceOf(ConflictException);
@@ -187,9 +202,17 @@ suite("Milestone 11 negative authorization", () => {
 
   it("allows the same slug inside a different owned Business", async () => {
     const slug = `shared-${randomUUID()}`;
-    await service.create(activeBusinessId, draft(slug), principal(ownerId));
+    await service.create(
+      activeBusinessId,
+      draft(slug),
+      principal(ownerId, activeBusinessId)
+    );
     await expect(
-      service.create(otherBusinessId, draft(slug), principal(ownerId))
+      service.create(
+        otherBusinessId,
+        draft(slug),
+        principal(ownerId, otherBusinessId)
+      )
     ).resolves.toMatchObject({ slug, status: "DRAFT" });
   });
 
@@ -198,14 +221,20 @@ suite("Milestone 11 negative authorization", () => {
     const created = await service.create(
       activeBusinessId,
       draft(slug),
-      principal(ownerId)
+      principal(ownerId, activeBusinessId)
     );
 
     await expect(
-      service.get(activeBusinessId, created.id, principal(ownerId))
+      service.get(
+        activeBusinessId,
+        created.id,
+        principal(ownerId, activeBusinessId)
+      )
     ).resolves.toMatchObject({ id: created.id });
 
-    const actor = principal(ownerId);
+    // Selected into the other Business, so the context check passes and the
+    // refusal is the tenancy one this case is named for.
+    const actor = principal(ownerId, otherBusinessId);
     await expect(
       service.get(otherBusinessId, created.id, actor)
     ).rejects.toBeInstanceOf(NotFoundException);
@@ -213,7 +242,7 @@ suite("Milestone 11 negative authorization", () => {
   });
 
   it("records successful creation as ALLOWED evidence", async () => {
-    const actor = principal(ownerId);
+    const actor = principal(ownerId, activeBusinessId);
     await service.create(activeBusinessId, draft(`ok-${randomUUID()}`), actor);
     await expect(auditCount(actor.correlationId, "ALLOWED")).resolves.toBe(1);
     await expect(auditCount(actor.correlationId, "DENIED")).resolves.toBe(0);

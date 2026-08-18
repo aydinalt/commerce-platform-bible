@@ -106,7 +106,6 @@ suite("Milestone 12 Business context", () => {
   };
 
   beforeAll(async () => {
-    process.env.ENABLE_TEST_PRINCIPAL = "false";
     process.env.NODE_ENV = "test";
 
     await pool.query(

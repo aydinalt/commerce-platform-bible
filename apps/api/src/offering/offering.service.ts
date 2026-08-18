@@ -22,12 +22,10 @@ const TARGET_TYPE = "Offering";
 
 /**
  * `US-IDN-F07-001` AC-3 forbids choosing a Business silently, so a session must
- * have selected the Business it acts in. An absent field means the principal
- * came from the header adapter, which has no session to hold a selection and is
- * unreachable in production; ownership is still checked downstream either way.
+ * have selected the Business it acts in. The baseline is `null` and is refused
+ * here like any other Business: being signed in is not being somewhere.
  */
 function actsFor(principal: Principal, businessId: string): boolean {
-  if (principal.businessId === undefined) return true;
   return principal.businessId === businessId;
 }
 

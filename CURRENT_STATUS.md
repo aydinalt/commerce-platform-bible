@@ -14,7 +14,7 @@ Last Updated: 2026-08-17
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines. Every increment through I13 was proven green in target CI before the next opened; I14 and the documentation changes after it have passed the full chain locally and carry no recorded CI result |
-| Current phase | M12 Increment I15 Attribute Filter Controls and Search Narrowing — closed. Sixteen increments, I0 through I15 |
+| Current phase | M12 Increment I16 Test Principal Removal — closed. Seventeen increments, I0 through I16 |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour and §7.2 Search narrowing had none until I15. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,32 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I16 Test Principal Removal
+
+`TestPrincipalAdapter` minted a `Principal` from `x-test-user-id` headers,
+because M11 had an authenticated HTTP surface and identity was two increments
+away. It refused to construct in production, so it was never a way in — but it
+was a second code path to the answer that decides who a request is, and I1
+recorded that it should go once nothing depended on it. Fifteen increments later
+one suite still did. Findings and boundaries are in
+`docs/implementation/I16_TEST_PRINCIPAL_REMOVAL.md`.
+
+`m11-http.integration.test.ts` now registers, confirms by the emailed link and
+carries a real session cookie. Ten of its eleven cases changed only in how they
+authenticate. The eleventh — "refuses a malformed principal instead of failing
+inside the driver" — presents a malformed session token instead of malformed
+headers. It still catches a resolver that admits an unresolvable session, but it
+no longer fails for the *driver* reason its name gives: the token is hashed
+before it reaches SQL, so a malformed value structurally cannot arrive at a
+column. The name is a historical description now, and is left visible as one.
+
+**The adapter left a bypass behind.** `Principal.businessId` was optional, and
+every caller read the absent case as *skip the Business context check* — an
+authorization hole sitting in the type as a legitimate state. It is required
+now, so the hole is unrepresentable rather than merely unused, and the nine
+`m11-authorization` cases that had been reaching their denials through it each
+select the Business they act in.
 
 ## I15 Attribute Filter Controls and Search Narrowing
 
@@ -467,7 +493,7 @@ eligibility that was enacted without being recorded.
 - Platform Parent and Generated Story lifecycle metadata now carries the missing Freeze evidence for the already-authorized 2026-07-25 Owner Freeze; Story behaviour and Delivery Status are unchanged.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
 - `prisma validate`, `prisma migrate deploy` and `prisma migrate diff` cannot run in the local verification environment: the Prisma engine host answers 403 there. **Nothing stands in for them locally.** An earlier version of this line claimed schema syntax was checked through `@prisma/prisma-schema-wasm`; no such check exists in this repository, and the claim is withdrawn rather than quietly dropped. All three are proven in target CI and nowhere else.
-- Authentication is application-owned: Argon2id credentials and server-managed opaque sessions, per `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`. The `TestPrincipalAdapter` survives only as a development affordance that refuses to construct in production, and should be removed once no local workflow depends on it.
+- Authentication is application-owned: Argon2id credentials and server-managed opaque sessions, per `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`. ~~The `TestPrincipalAdapter` survives only as a development affordance.~~ **Deleted in I16.** The session cookie is now the only way to become a principal; `ENABLE_TEST_PRINCIPAL` is gone from the environment and `Principal.businessId` is required, so the "no selection, skip the context check" state the adapter needed no longer exists.
 - Outbound email is delivered by Postmark, chosen by the Owner on 2026-08-17 and wired in `buildDispatcher`. **No message has been sent through it.** `LoggingEmailDispatcher` remains the development adapter and still refuses to construct in production.
 - Discovery criteria travel in a five-minute `httpOnly` cookie rather than the address, because UX-0002 §4 places persistent or shareable URL state outside V1. A Results page therefore cannot be bookmarked or shared, and refreshing loses the query — an accepted cost of not building something no Story promised.
 - No public page may be prerendered or prefetched. Results depend on current eligibility, and opening an Offering produces an occurrence that a speculative fetch would fabricate.
@@ -494,6 +520,7 @@ eligibility that was enacted without being recorded.
 
 | Version | Date | Summary |
 |---|---|---|
+| 2.42 | 2026-08-18 | Closed I16 by deleting `TestPrincipalAdapter`, its resolver fallback, `ENABLE_TEST_PRINCIPAL` and the two contract tests that described it. It refused to construct in production and was therefore never a way in, but it was a second code path to who a request is, and I1 had recorded that it should go once nothing depended on it. `m11-http` now registers, confirms by the emailed link and carries a real session; its malformed-principal case presents a malformed session token, which still catches a resolver that admits an unresolvable session but no longer fails for the driver reason its name gives, because the token is hashed before it reaches SQL — recorded rather than renamed. The adapter had also left `Principal.businessId` optional, and every caller read absence as *skip the Business context check*; the field is required now, so that bypass is unrepresentable, and the nine `m11-authorization` cases that had been reaching their denials through it each select the Business they act in. Delivery Status unchanged. |
 | 1.9 | 2026-07-25 | Reconciled PRD, UX, ADR, Feature Registry, and all six Frozen Story-domain packages from the recovered ZIP set. |
 | 2.0 | 2026-07-25 | Recorded Offering Capability Architecture Frozen v2.0 and closed the F06/F07 capability-home gap. |
 | 2.1 | 2026-07-25 | Recorded repository-wide Feature-level PASS, resolved UX-0007 treatment for V1, and completed Platform Freeze evidence reconciliation. |

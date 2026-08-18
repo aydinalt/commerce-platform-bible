@@ -10,6 +10,44 @@ This project follows the principles of:
 
 ---
 
+## [3.1.0] - 2026-08-18
+
+### Removed
+
+- `TestPrincipalAdapter`, its fallback branch in `PrincipalResolver.resolve`,
+  the `ENABLE_TEST_PRINCIPAL` environment variable and the two contract tests
+  that described the adapter. It built a principal from `x-test-user-id`
+  headers because M11 had an authenticated HTTP surface and identity was two
+  increments away; it refused to construct in production, so it was never a way
+  in, but it was a second code path to who a request is. `I1` recorded that it
+  should go once nothing depended on it — one suite still did.
+
+### Changed
+
+- `tests/m11-http.integration.test.ts` authenticates through a real session:
+  register, process the outbox, follow the emailed confirmation link, keep the
+  cookie. Its malformed-principal case presents a malformed session token.
+- `Principal.businessId` is required (`string | null`). It was optional, and
+  every caller read absence as *skip the Business context check* — a bypass
+  living in the type as a legitimate state. `null` is the authenticated User
+  baseline and is refused like any other Business.
+
+### Verified
+
+- 85 test files, 800 tests, plus formatting, linting, module boundaries, type
+  checking, reproducible OpenAPI with no drift, dependency audit and a Next.js
+  production build. Three mutations run: removing the Business context check
+  and admitting an unresolvable session each fail exactly one test; removing the
+  early missing-cookie guard fails nothing, which is recorded in the closure
+  rather than papered over. The migration and drift gates remain CI-only.
+
+### Known
+
+- The adapter's production refusal was never exercised in production. It is
+  deleted for having no remaining caller, not for evidence it was ever reached.
+
+---
+
 ## [3.0.0] - 2026-08-17
 
 ### Note on the gap

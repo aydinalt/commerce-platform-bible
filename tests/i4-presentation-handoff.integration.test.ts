@@ -123,7 +123,6 @@ suite("Increment I4 Offering Presentation handoff", () => {
     send("GET", `/offerings/${offeringSlug}`);
 
   beforeAll(async () => {
-    process.env.ENABLE_TEST_PRINCIPAL = "false";
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
