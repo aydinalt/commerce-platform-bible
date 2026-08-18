@@ -130,11 +130,9 @@ function SelectFilter({
 
 export function FilterControls({
   applied,
-  categoryId,
   filters
 }: {
   applied: readonly AppliedFilterInput[];
-  categoryId: string;
   filters: readonly AvailableFilterResponse[];
 }) {
   // Nothing offered is not an empty panel. On a branch there is no active leaf
@@ -146,8 +144,10 @@ export function FilterControls({
   return (
     <section aria-labelledby="discovery-filters">
       <h2 id="discovery-filters">Filtreler</h2>
+      {/* No Category is submitted. The action reads the entry from the carrier,
+          which already knows which path this is — a hidden field naming it
+          would be a field somebody could rewrite. */}
       <form action={applyFilters}>
-        <input name="categoryId" type="hidden" value={categoryId} />
         {filters.map((filter) => {
           const shared = { applied: current.get(filter.attributeId), filter };
           if (filter.valueKind === "NUMBER")
@@ -164,7 +164,6 @@ export function FilterControls({
           is offered only when there is something to clear. */}
       {applied.length === 0 ? null : (
         <form action={clearFilters}>
-          <input name="categoryId" type="hidden" value={categoryId} />
           <button type="submit">Filtreleri temizle</button>
         </form>
       )}

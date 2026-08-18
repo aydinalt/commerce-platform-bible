@@ -73,6 +73,13 @@ export async function fetchSearchView(
   return searchViewSchema.parse(
     await post("/discovery/search", {
       query: entry.query,
+      // Narrowing and Filters are part of the same Search. Sent together
+      // because §9.6 combines them with the query using AND, and a page that
+      // applied either itself would be a second implementation of that rule.
+      ...(entry.categoryId === undefined
+        ? {}
+        : { categoryId: entry.categoryId }),
+      ...(entry.filters === undefined ? {} : { filters: entry.filters }),
       ...(entry.pathId === undefined ? {} : { discoveryPathId: entry.pathId })
     })
   );

@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.40
+Version:      2.41
 Last Updated: 2026-08-17
 -->
 
@@ -14,8 +14,8 @@ Last Updated: 2026-08-17
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines. Every increment through I13 was proven green in target CI before the next opened; I14 and the documentation changes after it have passed the full chain locally and carry no recorded CI result |
-| Current phase | M12 Increment I15 Attribute Filter Controls — closed. Sixteen increments, I0 through I15 |
-| Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour had none until I15, and Search narrowing still has none. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
+| Current phase | M12 Increment I15 Attribute Filter Controls and Search Narrowing — closed. Sixteen increments, I0 through I15 |
+| Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour and §7.2 Search narrowing had none until I15. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
 ## Canonical Layer Status
@@ -179,7 +179,7 @@ withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
 
-## I15 Attribute Filter Controls
+## I15 Attribute Filter Controls and Search Narrowing
 
 `US-DSC-F05-001` was implemented in the API in I3 and covered by twelve tests.
 It had no surface: a person could reach a leaf Category, see the Offerings in it
@@ -474,7 +474,7 @@ eligibility that was enacted without being recorded.
 - The Decision flow has a surface: Compare, Chat, selection, Affiliate Handoff and Direct Contact through to the two Completions, built in I8 against UX-0009.
 - Decision Chat is answered by Anthropic, chosen by the Owner on 2026-08-17 and wired in `buildAssistant`. **No question has been asked through it.** The brief-restating adapter remains for development and refuses to construct in production. The invented-value check that guards `US-DEC-F03-001` AC-6 is numeric only and cannot detect a claim expressed in words.
 - Current-flow Decision state expires after an hour and is swept on the next request rather than by a scheduler.
-- Attribute Filter controls exist on Browse as of I15, against UX-0002 §9. **Search-side Filters remain unreachable:** §9.1 makes them available once a Search is narrowed to an active leaf, and the web application offers no narrowing control, so there is no leaf to filter within. The narrowing surface is the prerequisite.
+- Attribute Filter controls exist on Browse and on Search as of I15, against UX-0002 §9, with Search narrowing (§7.2) as their prerequisite. Removing a narrowing outright is a judgement rather than a stated rule and is recorded as one in the closure.
 - Web tests render server components through `react-dom/server` rather than in a browser. They prove markup and absence — which is most of what these Stories require — and nothing about layout, focus behaviour or responsive treatment.
 - Discovery results are unpaged. No Frozen Discovery Story specifies a page size, a cursor or a "load more" affordance, and `US-DSC-F07-001` AC-3 and AC-5 require a stable deterministic order that a guessed pagination scheme could contradict.
 - Discovery Starts are read by Basic Analytics, built in I7. They were captured from I3 onward, before anything consumed them, because occurrences cannot be reconstructed afterwards.
@@ -508,6 +508,7 @@ eligibility that was enacted without being recorded.
 | 2.10 | 2026-08-04 | Hardened the input boundary after review: principal headers and path identifiers are validated before reaching PostgreSQL, unknown body fields are refused in line with the published contract, and framework failures carry stable codes. Added HTTP-level coverage of the whole surface. |
 | 2.12 | 2026-08-05 | Delivered the I1 Identity and Access baseline: sessions, registration with emailed proof, login, logout, password recovery, explicit Business context and operationally provisioned Admin authorization. Gave the transactional outbox its first consumer. Recorded that `US-IDN-F09-001` moves to I5. Delivery Status unchanged. |
 | 2.11 | 2026-08-04 | Closed the I0 Repository Foundation gate on CI run 9. Corrected the drift gate to Prisma 7 flag names and declared the trigram index the gate exposed as pre-existing drift. Delivery Status unchanged. |
+| 2.41 | 2026-08-17 | Closed the gap I15 opened in the same increment: Search narrowing, which §9.1 makes the prerequisite for Search-side Filters. Narrowing keeps the path identifier and stays on the Search entry, because §6 says selecting a Category to narrow an existing Search creates no Browse Discovery Start — making it a Browse selection would have counted a second person and lost the query. Moving leaf drops the Filters the previous leaf offered. Removing a narrowing outright is recorded as a judgement: §12 permits changing Category and §7.2 permits a Search without one, but no line says a narrowing may be removed, and without it a person who narrows cannot get back. The filter forms also stopped submitting a Category identifier — the actions read the carrier, which knows. |
 | 2.40 | 2026-08-17 | Closed I15 Attribute Filter Controls. `US-DSC-F05-001` has been implemented in the API since I3 and had no surface for four increments; UX-0002 §9 is a whole section nobody could reach, which also qualified this document's claim that every Frozen UX document has a surface. The offered Filters are read from the API rather than from the form, because a submitted list of what may be applied is one the browser can edit. An empty control is not a value — an empty Number box read as `0` would apply a Filter nobody chose and, since an Offering without a value does not match, would remove results. Search-side Filters remain unreachable: they need a narrowing control that does not exist. Eight tests, three mutations each caught by its own test. |
 | 2.39 | 2026-08-17 | Populated `docs/glossary.md`, which had been an outline of placeholder rows since it was created. 36 canonical terms, each assigned to the PRD whose Single Information Owner statement claims it rather than to whichever document uses it most — `Business Profile` and `Business Information` are separately owned terms and were nearly filed as variants of each other. Two genuine variant wordings recorded without picking a winner, with counts: `Affiliate Destination Handoff Eligibility` against the short form, 34 to 13; `final Offering Public Eligibility` against the bare form, 70 to 2. Four deprecated terms. The naming rules are recorded from the documents rather than invented, and every count in the file was checked against the PRDs after it was written. |
 | 2.38 | 2026-08-17 | Corrected a claim I had just written. The roadmap and changelog said fifteen increments closed with green CI; I have no CI result for I14 or for the commit the sentence was in, and silence is not a pass. Both now say what is known — green through I13, local-only after that — and the Repository Health row says the same. Left in the same shape as the withdrawals it sits beside: the overstatement is visible rather than quietly replaced. |

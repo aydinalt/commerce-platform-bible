@@ -39,7 +39,12 @@ export default async function DiscoveryPage() {
   if (!entry) redirect("/");
 
   if (entry.kind === "SEARCH")
-    return <SearchResultsView view={await fetchSearchView(entry)} />;
+    return (
+      <SearchResultsView
+        applied={entry.filters ?? []}
+        view={await fetchSearchView(entry)}
+      />
+    );
   return (
     <BrowseResultsView
       applied={entry.filters ?? []}

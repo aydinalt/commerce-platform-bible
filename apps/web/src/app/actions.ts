@@ -5,7 +5,9 @@ import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { fetchBrowseView } from "../discovery/api";
+import type { AvailableFilterResponse } from "@commerce/contracts";
+
+import { fetchBrowseView, fetchSearchView } from "../discovery/api";
 import { readAppliedFilters } from "../discovery/filters";
 
 import {
@@ -124,25 +126,45 @@ export async function returnToPreparation(form: FormData): Promise<void> {
 }
 
 /**
+ * The entry the person is currently in, or nothing.
+ *
+ * Read from the carrier rather than from the submitted form. The form used to
+ * carry a Category identifier and the action used to trust it; the cookie
+ * already knows which path this is and what it holds, so asking the form was
+ * both redundant and a field somebody could rewrite.
+ */
+async function currentEntry(): Promise<DiscoveryEntry | null> {
+  const jar = await cookies();
+  return readDiscoveryEntry(jar.get(DISCOVERY_ENTRY_COOKIE)?.value);
+}
+
+/** The Filters the API is currently offering for this exact entry. */
+async function offeredFilters(
+  entry: DiscoveryEntry,
+  pathId: string
+): Promise<readonly AvailableFilterResponse[]> {
+  if (entry.kind === "SEARCH")
+    return (await fetchSearchView({ ...entry, pathId })).filters;
+  return (await fetchBrowseView({ ...entry, pathId })).filters;
+}
+
+/**
  * Applying Attribute Filters (UX-0002 §9).
  *
- * The offered Filters are fetched again here rather than carried through the
- * form. §9.1 makes availability a property of the Category and the Attribute
- * definition, and a list of what may be applied, submitted by the browser,
- * would be a list the browser could edit — the form would be deciding its own
- * validity. Asking the API costs one request and removes the question.
+ * The offered Filters are fetched rather than carried through the form. §9.1
+ * makes availability a property of the Category and the Attribute definition,
+ * and a list of what may be applied, submitted by the browser, would be a list
+ * the browser could edit — the form deciding its own validity.
  *
- * §9.7: applying narrows or preserves. The query and the active leaf Category
- * are untouched, and the path identifier is kept, because changing a Filter is
- * the same person still looking at the same thing.
+ * §9.7: applying narrows or preserves. The query, the Category and the path
+ * identifier are untouched, because changing a Filter is the same person still
+ * looking at the same thing.
  */
 export async function applyFilters(form: FormData): Promise<void> {
-  const entry = readBrowseEntry(form.get("categoryId"));
+  const entry = await currentEntry();
   if (!entry) return;
-  const pathId = (await currentPathId()) ?? randomUUID();
-
-  const view = await fetchBrowseView({ ...entry, pathId });
-  const filters = readAppliedFilters(form, view.filters);
+  const pathId = entry.pathId ?? randomUUID();
+  const filters = readAppliedFilters(form, await offeredFilters(entry, pathId));
 
   await handOff({
     ...entry,
@@ -160,10 +182,59 @@ export async function applyFilters(form: FormData): Promise<void> {
  * empty apply is indistinguishable from a form that failed to submit its
  * values.
  */
-export async function clearFilters(form: FormData): Promise<void> {
-  const entry = readBrowseEntry(form.get("categoryId"));
+export async function clearFilters(): Promise<void> {
+  const entry = await currentEntry();
   if (!entry) return;
-  await handOff({ ...entry, pathId: (await currentPathId()) ?? randomUUID() });
+  // Destructured rather than overwritten with an empty array: the carrier
+  // should not hold an empty `filters` key that reads as "filtered by nothing".
+  const { filters: _dropped, ...kept } = entry;
+  await handOff({ ...kept, pathId: entry.pathId ?? randomUUID() });
+}
+
+/**
+ * Narrowing a Search to one active leaf Category (UX-0002 §7.2,
+ * `US-DSC-F04-001` AC-3).
+ *
+ * The path identifier is kept and no Browse entry is made. §6 is explicit:
+ * "Selecting a Category to narrow an existing Search does not create a Browse
+ * Discovery Start" — turning this into a Browse selection would record a
+ * second person beginning to look, and lose the query while doing it.
+ *
+ * Filters are dropped by moving leaf. They were offered by the Category being
+ * left, and §9.1 makes them applicable only inside the one that offered them.
+ */
+export async function narrowSearch(form: FormData): Promise<void> {
+  const entry = await currentEntry();
+  if (entry?.kind !== "SEARCH") return;
+  const narrowed = readBrowseEntry(form.get("categoryId"));
+  if (!narrowed) return;
+
+  await handOff({
+    categoryId: narrowed.categoryId,
+    kind: "SEARCH",
+    pathId: entry.pathId ?? randomUUID(),
+    query: entry.query
+  });
+}
+
+/**
+ * Removing the narrowing, back to the Search across leaves.
+ *
+ * **This is a judgement rather than a stated rule.** §12 lists changing
+ * Category among the bounded recoveries and §7.2 says a Search may begin
+ * without one, so the state this returns to is one the experience already
+ * permits — but no line says a narrowing may be removed outright. Without it a
+ * person who narrows has no way back to the results they had, which is the
+ * worse reading of a document that keeps criteria visible everywhere else.
+ */
+export async function widenSearch(): Promise<void> {
+  const entry = await currentEntry();
+  if (entry?.kind !== "SEARCH") return;
+  await handOff({
+    kind: "SEARCH",
+    pathId: entry.pathId ?? randomUUID(),
+    query: entry.query
+  });
 }
 
 /**

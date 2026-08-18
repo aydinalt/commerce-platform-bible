@@ -43,6 +43,16 @@ export interface PathContinuation {
 }
 
 export interface SearchEntry extends PathContinuation {
+  /**
+   * The active leaf Category the person narrowed to, if any (UX-0002 §7.2).
+   *
+   * A Search may begin without one and may span leaves, so its absence is the
+   * ordinary state rather than a missing value. Narrowing is part of the same
+   * Search — §6 is explicit that it creates no Browse Discovery Start — which
+   * is why it lives on this entry rather than turning it into a Browse one.
+   */
+  readonly categoryId?: string;
+  readonly filters?: readonly AppliedFilterInput[];
   readonly kind: "SEARCH";
   readonly query: string;
 }
@@ -126,7 +136,24 @@ export function readDiscoveryEntry(
 
   if (value.kind === "SEARCH") {
     const { entry } = readSearchEntry(value.query);
-    return entry ? { ...entry, ...pathId } : null;
+    if (!entry) return null;
+    const categoryId =
+      typeof value.categoryId === "string" && UUID.test(value.categoryId)
+        ? { categoryId: value.categoryId }
+        : {};
+    const filters = readFilters(value.filters);
+    return {
+      ...entry,
+      ...pathId,
+      ...categoryId,
+      // Filters apply only inside one active leaf Category, so carrying them
+      // without one would be a contradiction the API refuses. Dropping them
+      // here keeps the carrier coherent rather than sending a request that
+      // cannot be honoured.
+      ...(filters.length === 0 || !("categoryId" in categoryId)
+        ? {}
+        : { filters })
+    };
   }
   if (value.kind === "BROWSE") {
     const entry = readBrowseEntry(value.categoryId);

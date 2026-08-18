@@ -6,7 +6,12 @@ import type {
 import type { AppliedFilterInput } from "@commerce/contracts";
 
 import type { PreparationContext } from "../../discovery/entry";
-import { leavePreparation, selectCategory } from "../actions";
+import {
+  leavePreparation,
+  narrowSearch,
+  selectCategory,
+  widenSearch
+} from "../actions";
 
 import { FilterControls } from "./filter-controls";
 import { ListingCards } from "./listing-card";
@@ -74,11 +79,70 @@ function NothingMatched({ query }: { query: string | null }) {
   );
 }
 
-export function SearchResultsView({ view }: { view: SearchViewResponse }) {
+/**
+ * Narrowing a Search through the active Category hierarchy (UX-0002 §7.2).
+ *
+ * Offered when the API says the query reaches more than one leaf, which is the
+ * only condition under which narrowing means anything. Each choice is a
+ * submission for the reason every Discovery control here is: a Category chosen
+ * by being linked to could be chosen by a prefetch.
+ *
+ * §6 makes this explicitly *not* a Browse Discovery Start, and the action keeps
+ * the path identifier so it does not become one.
+ */
+function SearchNarrowing({
+  categories,
+  narrowed
+}: {
+  categories: { id: string; name: string }[];
+  narrowed: boolean;
+}) {
+  if (categories.length === 0 && !narrowed) return null;
+  return (
+    <nav aria-labelledby="search-narrowing">
+      <h2 id="search-narrowing">Kategoriye göre daralt</h2>
+      <form action={narrowSearch}>
+        <ul className="category-choices">
+          {categories.map((category) => (
+            <li key={category.id}>
+              <button name="categoryId" type="submit" value={category.id}>
+                {category.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </form>
+      {narrowed ? (
+        <form action={widenSearch}>
+          <button type="submit">Kategori daraltmasını kaldır</button>
+        </form>
+      ) : null}
+    </nav>
+  );
+}
+
+export function SearchResultsView({
+  applied = [],
+  view
+}: {
+  applied?: readonly AppliedFilterInput[];
+  view: SearchViewResponse;
+}) {
   return (
     <main>
       <section>
         <h1>“{view.query}” için sonuçlar</h1>
+
+        <SearchNarrowing
+          categories={view.narrowing}
+          narrowed={view.categoryId !== null}
+        />
+
+        {/* §9.1 again, and `US-DSC-F04-001` AC-6 is the gate: Filters become
+            available once the Search is narrowed to one active leaf. Before
+            that the API offers none and there is nothing to show. */}
+        <FilterControls applied={applied} filters={view.filters} />
+
         {view.results.length === 0 ? (
           <NothingMatched query={view.query} />
         ) : (
@@ -156,11 +220,7 @@ export function BrowseResultsView({
             They stay available inside a preparation return: §9 does not except
             it, and narrowing a leaf is exactly what somebody looking for a
             second Offering to compare is doing. */}
-        <FilterControls
-          applied={applied}
-          categoryId={view.category.id}
-          filters={view.filters}
-        />
+        <FilterControls applied={applied} filters={view.filters} />
 
         {/* AC-8. Inside the constraint the ordinary rules still apply: the same
             eligibility, the same Listing Cards, the same ordering and the same

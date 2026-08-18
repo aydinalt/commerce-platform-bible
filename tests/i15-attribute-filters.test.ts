@@ -3,10 +3,14 @@ import { describe, expect, it } from "vitest";
 
 import type {
   AvailableFilterResponse,
-  BrowseViewResponse
+  BrowseViewResponse,
+  SearchViewResponse
 } from "@commerce/contracts";
 
-import { BrowseResultsView } from "../apps/web/src/app/discovery/discovery-view";
+import {
+  BrowseResultsView,
+  SearchResultsView
+} from "../apps/web/src/app/discovery/discovery-view";
 import { readDiscoveryEntry } from "../apps/web/src/discovery/entry";
 import {
   filterField,
@@ -78,6 +82,24 @@ const browseView = (
  */
 const render = (props: Parameters<typeof BrowseResultsView>[0]) =>
   renderToStaticMarkup(BrowseResultsView(props));
+
+const searchView = (
+  over: Partial<SearchViewResponse> = {}
+): SearchViewResponse => ({
+  categoryId: null,
+  discoveryPathId: "11111111-1111-4111-8111-111111111111",
+  domain: null,
+  filters: [],
+  filtersAvailable: false,
+  narrowing: [],
+  query: "kırmızı araba",
+  results: [],
+  zeroResults: null,
+  ...over
+});
+
+const searched = (props: Parameters<typeof SearchResultsView>[0]) =>
+  renderToStaticMarkup(SearchResultsView(props));
 
 /**
  * Attribute Filter controls (UX-0002 §9).
@@ -194,6 +216,89 @@ describe("Increment I15 Attribute Filter controls", () => {
      * remove results rather than merely mislead.
      */
     expect(applied).toEqual([]);
+  });
+
+  it("offers narrowing when a Search reaches more than one leaf", () => {
+    const spanning = searched({
+      view: searchView({
+        narrowing: [
+          { id: LEAF, leaf: true, name: "Otomobil", slug: "otomobil" }
+        ]
+      })
+    });
+    const plain = searched({ view: searchView() });
+
+    // UX-0002 §7.2. A Search may begin without a leaf and may span several;
+    // narrowing is offered where the API says there is more than one to narrow
+    // to, and nowhere else.
+    expect(spanning).toContain("Kategoriye göre daralt");
+    expect(spanning).toContain("Otomobil");
+    expect(plain).not.toContain("Kategoriye göre daralt");
+  });
+
+  it("offers a way back out of a narrowing, and only once narrowed", () => {
+    const narrowed = searched({
+      view: searchView({ categoryId: LEAF, filters: OFFERED })
+    });
+    const spanning = searched({
+      view: searchView({
+        narrowing: [
+          { id: LEAF, leaf: true, name: "Otomobil", slug: "otomobil" }
+        ]
+      })
+    });
+
+    /*
+     * A judgement rather than a stated rule, and recorded as one.
+     *
+     * §12 lists changing Category among the bounded recoveries and §7.2 says a
+     * Search may begin without one, so this returns to a state the experience
+     * already permits. No line says a narrowing may be removed outright — and
+     * without it a person who narrows cannot get back to the results they had.
+     */
+    expect(narrowed).toContain("Kategori daraltmasını kaldır");
+    expect(spanning).not.toContain("Kategori daraltmasını kaldır");
+  });
+
+  it("offers Search Filters only once a leaf is selected", () => {
+    const narrowed = searched({
+      view: searchView({ categoryId: LEAF, filters: OFFERED })
+    });
+    const spanning = searched({ view: searchView() });
+
+    // `US-DSC-F04-001` AC-6 is the gate and §9.1 is the rule: Filters become
+    // available inside one active leaf Category. Before that the API offers
+    // none, which is why this page needs no opinion about it.
+    expect(narrowed).toContain("Filtreler");
+    expect(spanning).not.toContain("Filtreler");
+  });
+
+  it("keeps a Search narrowing in the carrier, with its Filters", () => {
+    const carried = readDiscoveryEntry(
+      JSON.stringify({
+        categoryId: LEAF,
+        filters: [{ attributeId: MILEAGE, kind: "NUMBER", max: 50, min: null }],
+        kind: "SEARCH",
+        query: "kırmızı araba"
+      })
+    );
+    // Filters apply only inside one active leaf Category, so a carrier holding
+    // them without one is incoherent rather than partly usable.
+    const orphaned = readDiscoveryEntry(
+      JSON.stringify({
+        filters: [{ attributeId: MILEAGE, kind: "NUMBER", max: 50, min: null }],
+        kind: "SEARCH",
+        query: "kırmızı araba"
+      })
+    );
+
+    expect(carried).toEqual({
+      categoryId: LEAF,
+      filters: [{ attributeId: MILEAGE, kind: "NUMBER", max: 50, min: null }],
+      kind: "SEARCH",
+      query: "kırmızı araba"
+    });
+    expect(orphaned).toEqual({ kind: "SEARCH", query: "kırmızı araba" });
   });
 
   it("carries applied Filters in the carrier, never in the address", () => {
