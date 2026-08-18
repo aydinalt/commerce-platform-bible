@@ -131,6 +131,9 @@ Generated Stories remain `Done`.
 - Sixty-seven test files still build a pool each. That is correct for a test
   harness and is why the suite holds far more connections than any one process
   would; it is not what this increment is about.
-- Nothing bounds how long one request may hold a connection. The I12 fix removed
-  the worst offender — a vendor call inside a transaction — but no timeout
-  enforces the general rule.
+- ~~Nothing bounds how long one request may hold a connection. The I12 fix
+  removed the worst offender — a vendor call inside a transaction — but no
+  timeout enforces the general rule.~~ **Closed in I19**, which supplies the
+  timeout definition Engineering Constitution §13 requires: five seconds per
+  statement, ten for an idle transaction, two to acquire a connection. Retry is
+  still undefined and is recorded there.

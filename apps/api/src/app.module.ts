@@ -116,6 +116,20 @@ function buildAssistant(): DecisionAssistant {
 }
 
 /**
+ * The process's pool, with somewhere for a dying connection to be reported.
+ *
+ * `pg` re-emits the failure of an idle connection on the pool, and a `Pool`
+ * with no `error` listener throws — which would take the API down on exactly
+ * the condition `idle_in_transaction_session_timeout` exists to survive.
+ */
+function buildDatabasePool(): Pool {
+  const logger = createLogger("api", loadRuntimeConfig("api").logLevel);
+  return createDatabasePool((error) => {
+    logger.error({ err: error }, "database_connection_lost");
+  });
+}
+
+/**
  * Closes the pool once, when the application does.
  *
  * Each repository used to end its own pool in `onModuleDestroy`, which was
@@ -191,7 +205,7 @@ export class DatabaseLifecycle implements OnModuleDestroy {
      * the process rather than of how many repositories happen to exist, and
      * makes the pool something a test can substitute.
      */
-    { provide: Pool, useFactory: createDatabasePool },
+    { provide: Pool, useFactory: buildDatabasePool },
     DatabaseLifecycle,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
     // Which assistant answers is a deployment decision rather than a source-file

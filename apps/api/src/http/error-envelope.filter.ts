@@ -35,6 +35,30 @@ interface ExceptionPayload {
   message?: unknown;
 }
 
+/** `query_canceled`, which is what `statement_timeout` raises. */
+const STATEMENT_TIMEOUT_CODE = "57014";
+
+/**
+ * Whether a failure is the database declining to answer within the deployment's
+ * budget, rather than anything this code did wrong.
+ *
+ * Two shapes, because the two timeouts arrive differently. `statement_timeout`
+ * comes back from the server with a SQLSTATE; the pool's acquisition timeout
+ * never reaches the server at all and `pg` throws a plain `Error` whose message
+ * is the only thing distinguishing it. Matching that message is unpleasant and
+ * is the reason this is one named function rather than a condition inlined at
+ * the call site: when `pg` changes the wording, exactly one place is wrong.
+ */
+function isDependencyTimeout(exception: unknown): boolean {
+  if (typeof exception !== "object" || exception === null) return false;
+  const candidate = exception as { code?: unknown; message?: unknown };
+  if (candidate.code === STATEMENT_TIMEOUT_CODE) return true;
+  return (
+    typeof candidate.message === "string" &&
+    candidate.message.includes("timeout exceeded when trying to connect")
+  );
+}
+
 function readCorrelationId(request: FastifyRequest): string {
   const header = request.headers["x-correlation-id"];
   const value = Array.isArray(header) ? header[0] : header;
@@ -64,6 +88,30 @@ export class ErrorEnvelopeFilter implements ExceptionFilter {
     const correlationId = readCorrelationId(request);
 
     if (!(exception instanceof HttpException)) {
+      /*
+       * A statement PostgreSQL cancelled is not a server defect, and saying
+       * `INTERNAL_ERROR` would tell a client the opposite of what to do.
+       *
+       * `57014` is raised when `statement_timeout` fires, and `pg` surfaces the
+       * pool's own acquisition timeout as a plain `Error`. Both mean the same
+       * thing to a caller — the database did not answer in the time this
+       * deployment allows — so both render as the `DEPENDENCY_UNAVAILABLE`
+       * already published for `503`, and neither adds a code to the contract.
+       *
+       * Logged at `warn` rather than `error`: a timeout is the system doing
+       * what it was told, and burying it among unhandled failures would hide
+       * the very signal that says a query has gone wrong.
+       */
+      if (isDependencyTimeout(exception)) {
+        request.log.warn({ correlationId, err: exception }, "database_timeout");
+        void reply.status(HttpStatus.SERVICE_UNAVAILABLE).send({
+          code: "DEPENDENCY_UNAVAILABLE",
+          correlationId,
+          message: "The database did not answer in time"
+        } satisfies ErrorEnvelope);
+        return;
+      }
+
       request.log.error({ correlationId, err: exception }, "unhandled_error");
       void reply.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
         code: "INTERNAL_ERROR",

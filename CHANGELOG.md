@@ -10,6 +10,50 @@ This project follows the principles of:
 
 ---
 
+## [3.4.0] - 2026-08-18
+
+### Added
+
+- The database dependency's timeout behaviour, which Engineering Constitution
+  §13 has required a definition for and which did not exist: a query that hung
+  held its connection until PostgreSQL or TCP gave up. `statement_timeout` at
+  five seconds and `connectionTimeoutMillis` at two are Owner decisions of
+  2026-08-18; `idle_in_transaction_session_timeout` at ten seconds covers what a
+  statement timeout cannot, since `begin` followed by nothing is not a running
+  statement. All three sit on the connection, so no statement escapes them, and
+  all three are configurable.
+- A required error handler on `createDatabasePool`, on both the pool and every
+  client. A dead connection emits `error` and an emitter with no listener
+  throws, so the idle-transaction timeout without this would have crashed the
+  API on exactly the condition it exists to survive.
+
+### Fixed
+
+- A statement PostgreSQL cancelled was reported as `500 INTERNAL_ERROR`, telling
+  a client this was a defect and retrying was pointless. It now answers
+  `503 DEPENDENCY_UNAVAILABLE` — a code already published for that status, so
+  the contract is unchanged — and logs at `warn` rather than `error`.
+
+### Verified
+
+- 88 test files, 817 tests, plus formatting, linting, module boundaries, type
+  checking, reproducible OpenAPI with no drift, dependency audit and a Next.js
+  production build. The six new cases drive real hangs against a real database:
+  a timeout that is configured and does not fire is worse than none, because it
+  is believed. Five mutations run, each caught. The first implementation
+  listened for errors only on the pool, which covers an idle connection but not
+  a checked-out one — caught by the test that holds its client while the server
+  kills the session, and recorded rather than smoothed over.
+
+### Known
+
+- Five seconds is a judgement, not a measurement.
+- A timeout ends the request and nothing retries. §13 lists retry alongside
+  timeout; a database retry policy has not been designed, which is better than
+  one that repeats an operation nobody decided was safe to repeat.
+
+---
+
 ## [3.3.0] - 2026-08-18
 
 ### Fixed

@@ -141,7 +141,7 @@ suite("Increment I18 connection budget", () => {
      */
     const previous = process.env.DATABASE_POOL_MAX;
     process.env.DATABASE_POOL_MAX = "7";
-    const pool = createDatabasePool();
+    const pool = createDatabasePool(() => undefined);
     try {
       expect(pool.options.max).toBe(7);
     } finally {

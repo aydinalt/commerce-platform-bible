@@ -61,7 +61,12 @@ function buildDispatcher(): EmailDispatcher {
  * The outbox and the sweep never run at once — they take turns in the same loop
  * — so two pools bought nothing but two sets of idle connections.
  */
-const pool = createDatabasePool();
+const pool = createDatabasePool((error) => {
+  // `pg` re-emits an idle connection's failure on the pool, and a pool with no
+  // listener throws. The worker would otherwise die the first time PostgreSQL
+  // ended a session it was holding.
+  logger.error({ err: error }, "database_connection_lost");
+});
 
 const processor = new OutboxProcessor({
   dispatcher: buildDispatcher(),
