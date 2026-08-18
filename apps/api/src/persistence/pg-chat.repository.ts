@@ -1,6 +1,11 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
+import {
+  EXPIRED_COMPARISON_SETS_SQL,
+  EXPIRED_DECISION_FLOWS_SQL
+} from "@commerce/database";
+
 import type { DecisionChatResponse } from "@commerce/contracts";
 import {
   DecisionContextInvalidError,
@@ -205,10 +210,8 @@ export class PgChatRepository implements OnModuleDestroy {
       // The sweep runs before the transaction rather than inside it. Expiry is
       // not part of the caller's act, and a refusal that rolled it back would
       // resurrect state that should already be gone.
-      await client.query(`delete from decision_flow where expires_at <= now()`);
-      await client.query(
-        `delete from comparison_set where expires_at <= now()`
-      );
+      await client.query(EXPIRED_DECISION_FLOWS_SQL);
+      await client.query(EXPIRED_COMPARISON_SETS_SQL);
       await client.query("begin");
       const result = await work(client);
       await client.query("commit");

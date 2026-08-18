@@ -14,7 +14,7 @@ Last Updated: 2026-08-17
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines. Every increment through I13 was proven green in target CI before the next opened; I14 and the documentation changes after it have passed the full chain locally and carry no recorded CI result |
-| Current phase | M12 Increment I16 Test Principal Removal — closed. Seventeen increments, I0 through I16 |
+| Current phase | M12 Increment I17 Retention Sweep — closed. Eighteen increments, I0 through I17 |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour and §7.2 Search narrowing had none until I15. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,37 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I17 Retention Sweep
+
+ADR-0012 §3 names "cookie security, CSRF defense, rotation, expiry and session
+cleanup" as mandatory controls. Four existed; **session cleanup did not, and
+neither did any other kind.** Six tables carry an `expires_at`, five index it,
+and nothing had ever used that index to delete a row — every record was filtered
+out once it stopped being usable and none was removed. Findings and boundaries
+are in `docs/implementation/I17_RETENTION_SWEEP.md`.
+
+Table growth is the visible half. The half that set the priority is that an
+abandoned `pending_registration` held an email address and a password hash
+indefinitely, for somebody who never became a User — while `US-IDN-F02-001` AC-7
+is explicit that a pending registration is not an account state.
+
+The windows are Owner decisions taken on 2026-08-18, because no Frozen document
+states a retention policy: expired registrations and password resets go at
+expiry with no grace, processed outbox events go after thirty days, and **dead
+letters are never deleted**. Nothing in the outbox statement names a dead letter
+— it is a row that is unprocessed and has stopped being claimed, so
+`processed_at is not null` excludes it by construction, along with every event
+still waiting.
+
+**Writing the sweep exposed a real defect.** `decision_flow.comparison_set_id`
+cascades on delete, deliberately, but both records lived sixty minutes from
+their *own* creation and a flow is always built on a set that already exists — so
+a flow entered half an hour into a Compare claimed sixty minutes while the
+cascade was going to end it in thirty, mid-decision, taking the context with it.
+`enterWithComparisonSet` now caps the flow at its set's expiry, which makes the
+claim true rather than making the cascade wrong. The alternative — extending the
+set — is recorded in the closure as the thing an Owner might prefer.
 
 ## I16 Test Principal Removal
 
@@ -494,12 +525,13 @@ eligibility that was enacted without being recorded.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
 - `prisma validate`, `prisma migrate deploy` and `prisma migrate diff` cannot run in the local verification environment: the Prisma engine host answers 403 there. **Nothing stands in for them locally.** An earlier version of this line claimed schema syntax was checked through `@prisma/prisma-schema-wasm`; no such check exists in this repository, and the claim is withdrawn rather than quietly dropped. All three are proven in target CI and nowhere else.
 - Authentication is application-owned: Argon2id credentials and server-managed opaque sessions, per `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`. ~~The `TestPrincipalAdapter` survives only as a development affordance.~~ **Deleted in I16.** The session cookie is now the only way to become a principal; `ENABLE_TEST_PRINCIPAL` is gone from the environment and `Principal.businessId` is required, so the "no selection, skip the context check" state the adapter needed no longer exists.
+- Expired state is deleted by a retention sweep in the worker, every five minutes, added in I17 against ADR-0012 §3. The windows are Owner decisions of 2026-08-18: identity rows at expiry, processed outbox events after thirty days, dead letters never. **The sweep has never run against a table with a real backlog** — every statement is index-supported and none has been measured outside a test database. Occurrence tables are deliberately untouched: a retention policy for evidence is a separate decision and has not been asked.
 - Outbound email is delivered by Postmark, chosen by the Owner on 2026-08-17 and wired in `buildDispatcher`. **No message has been sent through it.** `LoggingEmailDispatcher` remains the development adapter and still refuses to construct in production.
 - Discovery criteria travel in a five-minute `httpOnly` cookie rather than the address, because UX-0002 §4 places persistent or shareable URL state outside V1. A Results page therefore cannot be bookmarked or shared, and refreshing loses the query — an accepted cost of not building something no Story promised.
 - No public page may be prerendered or prefetched. Results depend on current eligibility, and opening an Offering produces an occurrence that a speculative fetch would fabricate.
 - The Decision flow has a surface: Compare, Chat, selection, Affiliate Handoff and Direct Contact through to the two Completions, built in I8 against UX-0009.
 - Decision Chat is answered by Anthropic, chosen by the Owner on 2026-08-17 and wired in `buildAssistant`. **No question has been asked through it.** The brief-restating adapter remains for development and refuses to construct in production. The invented-value check that guards `US-DEC-F03-001` AC-6 is numeric only and cannot detect a claim expressed in words.
-- Current-flow Decision state expires after an hour and is swept on the next request rather than by a scheduler.
+- Current-flow Decision state expires after an hour. It is swept both on the next request that uses Decision — which is what makes an expired flow unreadable within the request that would have read it — and by the worker's retention sweep, which is what makes that true of a platform nobody is using. As of I17 a flow built on a Comparison Set expires no later than the set does, so the deliberate `ON DELETE CASCADE` can no longer end a live flow early.
 - Attribute Filter controls exist on Browse and on Search as of I15, against UX-0002 §9, with Search narrowing (§7.2) as their prerequisite. Removing a narrowing outright is a judgement rather than a stated rule and is recorded as one in the closure.
 - Web tests render server components through `react-dom/server` rather than in a browser. They prove markup and absence — which is most of what these Stories require — and nothing about layout, focus behaviour or responsive treatment.
 - Discovery results are unpaged. No Frozen Discovery Story specifies a page size, a cursor or a "load more" affordance, and `US-DSC-F07-001` AC-3 and AC-5 require a stable deterministic order that a guessed pagination scheme could contradict.
@@ -520,6 +552,7 @@ eligibility that was enacted without being recorded.
 
 | Version | Date | Summary |
 |---|---|---|
+| 2.43 | 2026-08-18 | Closed I17 Retention Sweep, which implements the "session cleanup" ADR-0012 §3 has required since it was accepted. Six tables carried an `expires_at`, five indexed it, and nothing had ever used that index to delete a row — the sharpest consequence being that an abandoned `pending_registration` held an email address and a password hash indefinitely for somebody who never became a User. The windows are Owner decisions taken today, since no Frozen document states a retention policy: identity rows go at expiry, processed outbox events after thirty days, dead letters never. Writing it exposed a real defect: a Decision Flow built on a Comparison Set claimed sixty minutes while the set beneath it had less, and the deliberate `ON DELETE CASCADE` was going to end the flow mid-decision — `enterWithComparisonSet` now caps the flow at its set's expiry. Two of the eight tests were wrong first, both recorded rather than quietly fixed: one seeded a dead letter too fresh for its own mutation to bite, and one reproduced the statement it was checking instead of driving the repository. Delivery Status unchanged. |
 | 2.42 | 2026-08-18 | Closed I16 by deleting `TestPrincipalAdapter`, its resolver fallback, `ENABLE_TEST_PRINCIPAL` and the two contract tests that described it. It refused to construct in production and was therefore never a way in, but it was a second code path to who a request is, and I1 had recorded that it should go once nothing depended on it. `m11-http` now registers, confirms by the emailed link and carries a real session; its malformed-principal case presents a malformed session token, which still catches a resolver that admits an unresolvable session but no longer fails for the driver reason its name gives, because the token is hashed before it reaches SQL — recorded rather than renamed. The adapter had also left `Principal.businessId` optional, and every caller read absence as *skip the Business context check*; the field is required now, so that bypass is unrepresentable, and the nine `m11-authorization` cases that had been reaching their denials through it each select the Business they act in. Delivery Status unchanged. |
 | 1.9 | 2026-07-25 | Reconciled PRD, UX, ADR, Feature Registry, and all six Frozen Story-domain packages from the recovered ZIP set. |
 | 2.0 | 2026-07-25 | Recorded Offering Capability Architecture Frozen v2.0 and closed the F06/F07 capability-home gap. |

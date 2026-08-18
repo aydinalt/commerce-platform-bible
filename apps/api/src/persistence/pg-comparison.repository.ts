@@ -1,6 +1,8 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
+import { EXPIRED_COMPARISON_SETS_SQL } from "@commerce/database";
+
 import type {
   ComparisonRow,
   ComparisonSetResponse,
@@ -181,13 +183,13 @@ export class PgComparisonRepository implements OnModuleDestroy {
   private async transact<T>(work: (client: PoolClient) => Promise<T>) {
     const client = await this.pool.connect();
     try {
-      // Expired sets are swept opportunistically. There is no scheduler, and a
-      // set that has outlived its flow should not be readable in the meantime.
-      // Outside the transaction, because a refused member must not roll back
-      // the removal of somebody else's expired set.
-      await client.query(
-        `delete from comparison_set where expires_at <= now()`
-      );
+      // Expired sets are swept opportunistically here and on a schedule by the
+      // worker. Outside the transaction, because a refused member must not roll
+      // back the removal of somebody else's expired set.
+      //
+      // The statement is shared rather than written here, so the four callers
+      // that sweep this state cannot drift apart.
+      await client.query(EXPIRED_COMPARISON_SETS_SQL);
       await client.query("begin");
       const result = await work(client);
       await client.query("commit");

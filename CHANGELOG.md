@@ -10,6 +10,50 @@ This project follows the principles of:
 
 ---
 
+## [3.2.0] - 2026-08-18
+
+### Added
+
+- A retention sweep in the worker, on a five-minute interval, implementing the
+  "session cleanup" ADR-0012 §3 has named as a mandatory control since it was
+  accepted. Six tables carried an `expires_at`, five indexed it, and nothing had
+  ever used that index to delete a row.
+- Retention windows as an Owner decision of 2026-08-18, recorded in
+  `docs/implementation/I17_RETENTION_SWEEP.md`: expired registrations and
+  password resets at expiry with no grace, processed outbox events after thirty
+  days, dead letters never.
+
+### Fixed
+
+- A Decision Flow built on a Comparison Set could be destroyed mid-decision.
+  Both records lived sixty minutes from their own creation and a flow is always
+  built on a set that already exists, so the flow always claimed to outlive the
+  set whose `ON DELETE CASCADE` was going to take it.
+  `enterWithComparisonSet` now caps the flow at its set's expiry.
+
+### Changed
+
+- The two expired-Decision-state statements moved to `@commerce/database`, so
+  the four callers that sweep it cannot drift apart. That is the only reason
+  `apps/api` and `apps/worker` now depend on that package.
+
+### Verified
+
+- 86 test files, 808 tests, plus formatting, linting, module boundaries, type
+  checking, reproducible OpenAPI with no drift, dependency audit and a Next.js
+  production build. Four mutations run, each failing exactly one case. Two of
+  the eight new cases were wrong on the first attempt — one seeded a dead letter
+  too fresh for its own mutation to bite, one reproduced the statement it was
+  checking — and both corrections are recorded rather than quietly applied.
+
+### Known
+
+- The sweep has never run against a table with a real backlog.
+- Occurrence tables are deliberately untouched. A retention policy for evidence
+  is a different decision and has not been asked.
+
+---
+
 ## [3.1.0] - 2026-08-18
 
 ### Removed

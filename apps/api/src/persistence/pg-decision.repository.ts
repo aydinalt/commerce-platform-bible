@@ -1,6 +1,11 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
+import {
+  EXPIRED_COMPARISON_SETS_SQL,
+  EXPIRED_DECISION_FLOWS_SQL
+} from "@commerce/database";
+
 import type {
   AffiliateHandoffResponse,
   ComparisonSetResponse,
@@ -72,6 +77,20 @@ export class PgDecisionRepository implements OnModuleDestroy {
    * The set is referenced, not copied. "Unchanged" is then not a promise this
    * code keeps but a fact about the data: there is only one set, and Decision
    * has no writer for it.
+   *
+   * **The flow never outlives its set.** `decision_flow.comparison_set_id` is
+   * `ON DELETE CASCADE` and the migration says why: a flow pointing at a set
+   * that no longer exists would outlive the thing it was about. But both
+   * records live sixty minutes from their *own* creation, and a flow is always
+   * built on a set that already exists — so the flow always claimed to last
+   * longer than the set it depends on. Compare for half an hour, enter
+   * Decision, and the flow said sixty minutes while the cascade was going to
+   * end it in thirty, in the middle of somebody deciding.
+   *
+   * `least` makes the claim true rather than making the cascade wrong. The set
+   * keeps exactly the sixty minutes `COMPARISON_SET_TTL_MINUTES` gives it, and
+   * `DECISION_FLOW_TTL_MINUTES` becomes what it always had to be for this kind
+   * of context: a ceiling, not a promise.
    */
   async enterWithComparisonSet(
     comparisonSetId: string
@@ -79,8 +98,8 @@ export class PgDecisionRepository implements OnModuleDestroy {
     return this.transact(async (client) => {
       const created = await client.query<{ id: string }>(
         `insert into decision_flow (comparison_set_id, expires_at)
-         select $1, now() + ($2 || ' minutes')::interval
-         from comparison_set where id = $1
+         select $1, least(now() + ($2 || ' minutes')::interval, c.expires_at)
+         from comparison_set c where c.id = $1
          returning id`,
         [comparisonSetId, String(DECISION_FLOW_TTL_MINUTES)]
       );
@@ -403,10 +422,8 @@ export class PgDecisionRepository implements OnModuleDestroy {
       // while the set it points at has already gone. Outside the transaction:
       // the refusal that follows reading an expired flow would otherwise roll
       // the sweep back.
-      await client.query(`delete from decision_flow where expires_at <= now()`);
-      await client.query(
-        `delete from comparison_set where expires_at <= now()`
-      );
+      await client.query(EXPIRED_DECISION_FLOWS_SQL);
+      await client.query(EXPIRED_COMPARISON_SETS_SQL);
       await client.query("begin");
       const result = await work(client);
       await client.query("commit");

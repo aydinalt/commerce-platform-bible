@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@commerce/config": "0.0.0",
+    "@commerce/database": "0.0.0",
     "@commerce/notification": "0.0.0",
     "@commerce/observability": "0.0.0",
     "pg": "^8.16.3",
