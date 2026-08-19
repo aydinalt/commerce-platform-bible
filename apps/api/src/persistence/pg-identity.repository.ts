@@ -56,6 +56,8 @@ export class PgIdentityRepository {
    * so an abandoned link cannot be resurrected later.
    */
   async recordPendingRegistration(input: {
+    /** The request that asked for this, carried to the delivery (§12.3). */
+    correlationId: string;
     email: string;
     expiresAt: Date;
     passwordHash: string;
@@ -78,9 +80,9 @@ export class PgIdentityRepository {
       const id = pending.rows[0]?.id;
       if (!id) throw new Error("PENDING_REGISTRATION_FAILED");
       await client.query(
-        `insert into outbox_event (aggregate_type, aggregate_id, event_type, payload)
-         values ('PendingRegistration', $1, $2, '{}'::jsonb)`,
-        [id, REGISTRATION_REQUESTED]
+        `insert into outbox_event (aggregate_type, aggregate_id, event_type, payload, correlation_id)
+         values ('PendingRegistration', $1, $2, '{}'::jsonb, $3)`,
+        [id, REGISTRATION_REQUESTED, input.correlationId]
       );
       await client.query("commit");
     } catch (error) {
@@ -147,6 +149,7 @@ export class PgIdentityRepository {
    * a Suspended account to be able to complete a reset and stay Suspended.
    */
   async recordPasswordReset(input: {
+    correlationId: string;
     email: string;
     expiresAt: Date;
   }): Promise<boolean> {
@@ -167,9 +170,9 @@ export class PgIdentityRepository {
       const id = reset.rows[0]?.id;
       if (id !== undefined) {
         await client.query(
-          `insert into outbox_event (aggregate_type, aggregate_id, event_type, payload)
-           values ('PasswordReset', $1, $2, '{}'::jsonb)`,
-          [id, PASSWORD_RESET_REQUESTED]
+          `insert into outbox_event (aggregate_type, aggregate_id, event_type, payload, correlation_id)
+           values ('PasswordReset', $1, $2, '{}'::jsonb, $3)`,
+          [id, PASSWORD_RESET_REQUESTED, input.correlationId]
         );
       }
       await client.query("commit");

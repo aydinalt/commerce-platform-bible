@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 import type {
   EmailDispatcher,
   EmailMessage
@@ -163,7 +164,12 @@ suite("Increment I2 Attribute definitions", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({
+      dispatcher,
+      logger: silentLogger(),
+      pool,
+      publicWebUrl: ORIGIN
+    });
     admin = await signUp();
     await pool.query(
       `insert into admin_authorization (user_id, granted_by) values ($1,'test')`,

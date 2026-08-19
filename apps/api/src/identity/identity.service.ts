@@ -83,6 +83,7 @@ export class IdentityService {
     // The record and its delivery event are written together; the proof token
     // is minted by the dispatcher, not here.
     await this.repository.recordPendingRegistration({
+      correlationId: input.correlationId,
       email: input.email,
       expiresAt: new Date(Date.now() + REGISTRATION_TTL_MS),
       passwordHash
@@ -237,6 +238,7 @@ export class IdentityService {
     if (throttled) return { throttled: true };
 
     const scheduled = await this.repository.recordPasswordReset({
+      correlationId: input.correlationId,
       email: input.email,
       expiresAt: new Date(Date.now() + RECOVERY_TTL_MS)
     });

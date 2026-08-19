@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 
+import type { Logger } from "pino";
 import type { Pool } from "pg";
 
 import {
@@ -30,6 +31,15 @@ function digest(value: string): string {
 
 export interface OutboxProcessorOptions {
   dispatcher: EmailDispatcher;
+  /**
+   * Where a delivery is reported, carrying the correlation identifier of the
+   * request that queued it (§12.3).
+   *
+   * The processor logged nothing before this, which meant a message that never
+   * arrived left no trace outside its own row — and the row could not be tied
+   * to the request either. Both halves are the same gap.
+   */
+  logger: Logger;
   /**
    * The process's pool, handed in rather than built here.
    *
@@ -62,6 +72,13 @@ export class OutboxProcessor {
     let handled = 0;
 
     for (const event of claimed) {
+      // Carried on every line this event produces, so a person quoting the
+      // correlation identifier from their error message finds the delivery
+      // attempts too — not only the request that asked for them.
+      const trace = {
+        correlationId: event.correlationId,
+        eventType: event.eventType
+      };
       try {
         if (event.eventType === REGISTRATION_REQUESTED) {
           await this.deliverRegistration(event.aggregateId);
@@ -69,6 +86,7 @@ export class OutboxProcessor {
           await this.deliverPasswordReset(event.aggregateId);
         }
         await this.markProcessed(event.id);
+        this.options.logger.info(trace, "outbox_delivered");
         handled += 1;
       } catch (error) {
         /*
@@ -83,7 +101,15 @@ export class OutboxProcessor {
          * Attempts are still counted so the row says how hard it was tried,
          * and it is left unprocessed so it is still there to be found.
          */
-        await this.recordFailure(event.id, isPermanentRefusal(error));
+        const permanent = isPermanentRefusal(error);
+        // `warn` for something that will be tried again, `error` for one that
+        // will not: a dead letter is a person who never got their email, and it
+        // should not read like a transient blip.
+        this.options.logger[permanent ? "error" : "warn"](
+          { ...trace, err: error, permanent },
+          "outbox_delivery_failed"
+        );
+        await this.recordFailure(event.id, permanent);
       }
     }
 
@@ -102,6 +128,7 @@ export class OutboxProcessor {
   private async claim(limit: number) {
     const result = await this.pool.query<{
       aggregateId: string;
+      correlationId: string | null;
       eventType: string;
       id: string;
     }>(
@@ -116,7 +143,8 @@ export class OutboxProcessor {
          limit $1
          for update skip locked
        )
-       returning id, aggregate_id as "aggregateId", event_type as "eventType"`,
+       returning id, aggregate_id as "aggregateId", event_type as "eventType",
+                 correlation_id as "correlationId"`,
       [limit, MAX_DELIVERY_ATTEMPTS]
     );
     return result.rows;

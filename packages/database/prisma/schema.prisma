@@ -842,6 +842,10 @@ model OutboxEvent {
   aggregateId   String    @map("aggregate_id") @db.Uuid
   eventType     String    @map("event_type") @db.VarChar(160)
   payload       Json
+  /// The request that queued this event (§12.3). Nullable because rows written
+  /// before `20260819000100_outbox_correlation` have no identifier to supply,
+  /// and because delivery has never depended on one.
+  correlationId String?   @map("correlation_id") @db.Uuid
   occurredAt    DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
   availableAt   DateTime  @default(now()) @map("available_at") @db.Timestamptz(6)
   processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
@@ -849,5 +853,6 @@ model OutboxEvent {
 
   @@index([processedAt, availableAt])
   @@index([aggregateType, aggregateId])
+  @@index([correlationId])
   @@map("outbox_event")
 }

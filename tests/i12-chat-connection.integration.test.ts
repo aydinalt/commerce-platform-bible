@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ChatService } from "../apps/api/src/decision/chat.service.js";
 import { PgChatRepository } from "../apps/api/src/persistence/pg-chat.repository.js";
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 import {
   AssistantUnavailableError,
   type DecisionAssistant,
@@ -167,7 +168,12 @@ suite("Increment I12 Decision Chat and the connection pool", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({
+      dispatcher,
+      logger: silentLogger(),
+      pool,
+      publicWebUrl: ORIGIN
+    });
 
     // The application composes its assistant at boot from configuration, and
     // the suite has no way to substitute one without a testing container. So

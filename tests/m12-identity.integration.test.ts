@@ -4,6 +4,7 @@ import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { Pool } from "pg";
 
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 import type {
   EmailDispatcher,
   EmailMessage
@@ -87,6 +88,7 @@ suite("Milestone 12 identity baseline", () => {
     app = await createApiApp({ logLevel: "fatal" });
     processor = new OutboxProcessor({
       dispatcher,
+      logger: silentLogger(),
       pool,
       publicWebUrl: "http://localhost:3000"
     });

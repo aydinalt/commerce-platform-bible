@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import {
   ForbiddenException,
   Injectable,
@@ -9,25 +7,15 @@ import type { FastifyRequest } from "fastify";
 
 import type { Principal } from "@commerce/identity";
 
+import { correlationId } from "../http/correlation.js";
 import { IdentityService } from "../identity/identity.service.js";
 import { SESSION_COOKIE } from "../identity/session.cookie.js";
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 export function readSessionCookie(request: FastifyRequest): string | undefined {
   return request.cookies[SESSION_COOKIE];
 }
 
-/**
- * A correlation identifier reaches a `uuid` column, so a malformed one is
- * replaced rather than trusted.
- */
-export function correlationId(request: FastifyRequest): string {
-  const header = request.headers["x-correlation-id"];
-  const value = Array.isArray(header) ? header[0] : header;
-  return value && UUID_PATTERN.test(value) ? value : randomUUID();
-}
+export { correlationId };
 
 @Injectable()
 export class PrincipalResolver {

@@ -70,6 +70,7 @@ const pool = createDatabasePool((error) => {
 
 const processor = new OutboxProcessor({
   dispatcher: buildDispatcher(),
+  logger,
   pool,
   publicWebUrl: process.env.PUBLIC_WEB_URL ?? "http://localhost:3000"
 });

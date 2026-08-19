@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 import { ACCESS_MODERATION_SOURCE } from "../modules/identity/src/index.js";
 import type {
   EmailDispatcher,
@@ -184,7 +185,12 @@ suite("Increment I7 User access moderation actions", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({
+      dispatcher,
+      logger: silentLogger(),
+      pool,
+      publicWebUrl: ORIGIN
+    });
 
     admin = await signUp();
     await authorize(admin.userId);

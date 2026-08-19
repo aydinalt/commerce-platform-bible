@@ -17,6 +17,7 @@ import type {
 } from "../modules/notification/src/index.js";
 import { analyticsSchema } from "../packages/contracts/src/index.js";
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 
 const enabled = Boolean(process.env.DATABASE_URL);
 const suite = enabled ? describe : describe.skip;
@@ -147,7 +148,12 @@ suite("Increment I7 Basic Analytics", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({
+      dispatcher,
+      logger: silentLogger(),
+      pool,
+      publicWebUrl: ORIGIN
+    });
 
     admin = await signUp();
     await pool.query(

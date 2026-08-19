@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.41
-Last Updated: 2026-08-17
+Version:      2.47
+Last Updated: 2026-08-19
 -->
 
 # CURRENT STATUS
@@ -14,7 +14,7 @@ Last Updated: 2026-08-17
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines. Every increment through I13 was proven green in target CI before the next opened, on evidence recorded here run by run. I14 through I19 are green in target CI too, **on the Owner's confirmation of 2026-08-18 rather than on a run recorded in this document** — the distinction is kept because a claim about CI should say how it is known. That confirmation is what closes the three database gates for those six increments: `db:validate`, `db:deploy` and `db:drift` cannot run in the local environment and had gone unproven since I13 |
-| Current phase | M12 Increment I20 Metrics — closed. Twenty-one increments, I0 through I20. This is R1.1 of the release criteria proposed in `docs/releases/V1_RELEASE_CRITERIA_CANDIDATE.md` |
+| Current phase | M12 Increment I21 Correlation — closed. Twenty-two increments, I0 through I21. This is the half of R1.3 that does not need a deployment; R1.2 and R1.4 of `docs/releases/V1_RELEASE_CRITERIA_CANDIDATE.md` need a hosting target and a monitoring system, neither of which exists |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour and §7.2 Search narrowing had none until I15. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,34 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I21 Correlation
+
+Engineering Constitution §12.3 requires asynchronous flows to support correlation
+across boundaries. The identifier existed — in every error envelope and every
+`audit_record` — and **crossed neither boundary an incident starts from**.
+Findings and boundaries are in `docs/implementation/I21_CORRELATION.md`.
+
+Fastify stamped its own `req-1`, `req-2` on the automatic request and response
+lines, so the failure a person quotes and the route that produced it could not be
+joined; and a per-process counter is a different request on every replica. The
+outbox carried nothing, so "the confirmation email never arrived" — the report
+this platform will receive most — could not be traced to the request that asked
+for it.
+
+**Fastify's request id was made to *be* the correlation identifier** rather than
+adding the identifier to its lines. Both produce correct lines; the second leaves
+two identifiers and a permanent chance of divergence. Nothing gained a field —
+one field stopped existing.
+
+`outbox_event` gained a nullable, indexed `correlation_id`. **Nullable rather
+than required**, because a row with no request behind it has no identifier, and a
+default of a fresh UUID would give it one that joins to nothing while looking
+exactly like one that joins.
+
+The increment found a gap it did not set out to find: a request that **succeeded**
+gave the caller no identifier at all, since the envelope only exists on failures.
+An `onSend` hook now echoes `x-correlation-id` on every response.
 
 ## I20 Metrics
 
@@ -602,6 +630,7 @@ eligibility that was enacted without being recorded.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
 - `prisma validate`, `prisma migrate deploy` and `prisma migrate diff` cannot run in the local verification environment: the Prisma engine host answers 403 there. **Nothing stands in for them locally.** An earlier version of this line claimed schema syntax was checked through `@prisma/prisma-schema-wasm`; no such check exists in this repository, and the claim is withdrawn rather than quietly dropped. All three are proven in target CI and nowhere else.
 - Authentication is application-owned: Argon2id credentials and server-managed opaque sessions, per `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`. ~~The `TestPrincipalAdapter` survives only as a development affordance.~~ **Deleted in I16.** The session cookie is now the only way to become a principal; `ENABLE_TEST_PRINCIPAL` is gone from the environment and `Principal.businessId` is required, so the "no selection, skip the context check" state the adapter needed no longer exists.
+- One correlation identifier crosses every boundary as of I21, per Engineering Constitution §12.3: computed at ingress, carried as Fastify's `request.id`, echoed on every response, written to `outbox_event` and read back by the worker. **Nothing joins the two processes' logs, because there is no log aggregator** — the identifier is present on both sides and correlating them is a deployment capability that does not exist, the same boundary R1.2 and R1.4 report. The web application does not send an identifier of its own, so a browser-side failure that never reached the API has none. Only the two identity producers stamp the outbox, since they are the only ones that write to it; a future producer that forgets leaves `null`, and nothing enforces otherwise because a `not null` constraint would be wrong for a producer with no request behind it.
 - Metrics exist as of I20 and **nothing alerts on them.** R1.4 of the release criteria — somebody paged when the outbox stops draining, when dead letters appear, or when readiness fails — needs a monitoring system that does not exist, and metrics nobody is paged on are a dashboard. Timeouts are counted for the API only; the worker meets the same budgets and its failures surface as a stalled outbox instead. No latency, request volume or error rate: round one was scoped to what I17–I19 left unanswerable.
 - The database dependency's timeout behaviour is defined as of I19, per Engineering Constitution §13: five seconds per statement, ten for an idle transaction, two to acquire a connection, all configurable and all set on the connection. **Five seconds is a judgement, not a measurement** — chosen against what V1 queries are supposed to do, never run against production volume. A timeout ends the request and **nothing retries**: §13 lists retry alongside timeout, and a database retry policy has not been designed, which is better than one that repeats an operation nobody decided was safe to repeat.
 - One PostgreSQL connection pool per process, built by `createDatabasePool()` and capped by `DATABASE_POOL_MAX` (default ten), added in I18. **Ten is a default, not a measurement** — nothing here has been load-tested, and the right number for a real deployment comes from watching one. The budget is proven for the API against `pg_stat_activity`; the worker's single pool is asserted only by construction, having no HTTP surface to drive. Nothing bounds how long one request may hold a connection.
@@ -632,6 +661,7 @@ eligibility that was enacted without being recorded.
 
 | Version | Date | Summary |
 |---|---|---|
+| 2.47 | 2026-08-19 | Closed I21 Correlation, supplying what Engineering Constitution §12.3 required across the two boundaries where the existing identifier stopped. Fastify stamped its own per-process counter on every automatic request line, so the failure a person quotes and the route that produced it could not be joined — and `req-1` is a different request on every replica. The outbox carried nothing, so the report this platform will receive most often could not be traced to the request behind it. Fastify's request id was made to *be* the correlation identifier rather than adding a second field to its lines: nothing gained a field, one field stopped existing. A malformed header is minted afresh rather than trusted, since the value reaches a `uuid` column. `outbox_event.correlation_id` is nullable and indexed, because a row with no request behind it has no identifier and a default would give it one that joins to nothing. The increment found a gap it did not set out to find — a request that *succeeded* gave the caller no identifier, the envelope existing only on failures — and an `onSend` hook now echoes it on every response. Four tests following one identifier end to end, three mutations each caught. Delivery Status unchanged. |
 | 2.46 | 2026-08-18 | Closed I20 Metrics, the first control Engineering Constitution §12.2 requires and the repository had none of. Scoped by the Owner to the questions I17–I19 raised and left unanswerable, because §12.2 warns that a metric is useful only when its response is understood — so every series carries a HELP line saying what to do about it. Almost nothing is instrumented at a call site: the pool is asked what it holds and the database what it contains, and only the two events that leave no trace are counted in process. The worker is a separate process, so its work is read as database state rather than as its counters — which is the better measurement, since rows waiting to be swept climb on their own if it dies. The gate takes a bearer token or an entered Admin context, because a scraper cannot hold a session. It answers 404 rather than 401. The increment introduced and then found one bug: `@Header` on the route broke every failure path, turning a 404 into a 500 about serialisation. Three retention windows moved to `@commerce/database` so the gauge and the sweeper cannot disagree. Delivery Status unchanged. |
 | 2.45 | 2026-08-18 | Closed I19 Database Timeouts, supplying the definition Engineering Constitution §13 already required and closing the gap I18 recorded in its own closure. The Owner set a five-second statement budget and a two-second wait for a free connection; `idle_in_transaction_session_timeout` is ten seconds, since a statement timeout does not cover `begin` followed by nothing. All three sit on the connection, so no statement escapes them. A cancelled statement now answers the already-published `503 DEPENDENCY_UNAVAILABLE` rather than `500 INTERNAL_ERROR`, which told a client the opposite of the truth; the contract is unchanged. The increment would also have introduced a defect: a dead connection emits `error` and an emitter with no listener throws, so the idle-transaction timeout without a handler would have crashed the API on the condition it exists to survive — and the first attempt listened only on the pool, missing the checked-out client, which the test caught. Six tests against real hangs, five mutations each caught. Delivery Status unchanged. |
 | 2.44 | 2026-08-18 | Closed I18 Connection Budget. Every repository built its own `Pool` — fifteen in the API, ten connections each by `pg`'s default — so one instance could open a hundred and fifty against a PostgreSQL whose default ceiling is a hundred, a second instance was arithmetically impossible, and fourteen pools sat idle while the fifteenth queued. One pool per process now, built by `createDatabasePool()` and passed in, with `DATABASE_POOL_MAX` for the deployment to set. The budget is asserted against `pg_stat_activity` rather than by counting `new Pool(` in the source. The test was wrong twice and both are recorded: it first drove one route, which cannot reveal a second pool and let the mutation pass, and its ceiling assertion would have been satisfied by zero. A comment in `chat.service.ts` claiming a saturated pool stopped every request in the process was false when written and is corrected. Delivery Status unchanged. |

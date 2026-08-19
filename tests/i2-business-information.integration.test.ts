@@ -10,6 +10,7 @@ import {
   type BusinessInformation
 } from "../modules/business/src/index.js";
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 import type {
   EmailDispatcher,
   EmailMessage
@@ -113,7 +114,12 @@ suite("Increment I2 Business information", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({
+      dispatcher,
+      logger: silentLogger(),
+      pool,
+      publicWebUrl: ORIGIN
+    });
   });
 
   beforeEach(async () => {

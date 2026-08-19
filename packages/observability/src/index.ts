@@ -93,20 +93,32 @@ function key(name: string, labels: Record<string, string>): string {
     .join(",")}`;
 }
 
-export function createLogger(service: string, level: Level): Logger {
-  return pino({
-    base: { service },
-    level,
-    redact: {
-      paths: [
-        "authorization",
-        "cookie",
-        "*.authorization",
-        "*.cookie",
-        "*.password",
-        "*.token"
-      ],
-      remove: true
-    }
-  });
+export function createLogger(
+  service: string,
+  level: Level,
+  /**
+   * Where the lines go. Unset means pino's default, which is what a deployment
+   * collects; a destination is supplied only where a test has to read what was
+   * written.
+   */
+  destination?: { write: (line: string) => void }
+): Logger {
+  return pino(
+    {
+      base: { service },
+      level,
+      redact: {
+        paths: [
+          "authorization",
+          "cookie",
+          "*.authorization",
+          "*.cookie",
+          "*.password",
+          "*.token"
+        ],
+        remove: true
+      }
+    },
+    destination
+  );
 }

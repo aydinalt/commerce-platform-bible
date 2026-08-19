@@ -10,6 +10,50 @@ This project follows the principles of:
 
 ---
 
+## [3.6.0] - 2026-08-19
+
+### Added
+
+- One correlation identifier across every boundary, per Engineering Constitution
+  §12.3. The identifier already existed in the error envelope and in every
+  `audit_record`, and reached neither of the two places an incident starts from.
+- `apps/api/src/http/correlation.ts`, the single owner of the identifier. It is
+  computed once per request by Fastify's `genReqId`, so the framework's request
+  id and the application's correlation identifier are the same value.
+- `outbox_event.correlation_id`, nullable and indexed
+  (`20260819000100_outbox_correlation`). The worker reads it back and stamps it
+  on `outbox_delivered` and `outbox_delivery_failed`, so "the confirmation email
+  never arrived" can be joined to the request that asked for it.
+- An `onSend` hook echoing `x-correlation-id` on every response. A request that
+  succeeded previously gave the caller no identifier at all, the envelope
+  existing only on failures.
+
+### Changed
+
+- Fastify's automatic request and response lines carry the caller's identifier in
+  `reqId` instead of `req-1`, `req-2`. A per-process counter is a different
+  request on every replica, which is worse than no identifier because it looks
+  like one.
+- `createLogger` takes an optional destination, so a test can read what was
+  written. Unset means pino's default, which is what a deployment collects.
+
+### Verified
+
+- 90 test files, 829 tests, plus formatting, linting, module boundaries, type
+  checking, dependency audit and a production build. Three mutations run, each
+  caught: removing `genReqId`, writing `null` to the outbox column, and trusting
+  a malformed header.
+
+### Known
+
+- Nothing joins the API's and the worker's logs, because there is no log
+  aggregator. The identifier is present on both sides.
+- The web application does not send an identifier of its own.
+- Only the two identity producers stamp the outbox; a future producer that
+  forgets leaves `null`, and nothing enforces otherwise.
+
+---
+
 ## [3.5.0] - 2026-08-18
 
 ### Added

@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import {
   Catch,
   HttpException,
@@ -13,9 +11,7 @@ import { errorEnvelopeSchema, type ErrorEnvelope } from "@commerce/contracts";
 import { Counters } from "@commerce/observability";
 
 import { DB_TIMEOUT } from "../metrics/metrics.collector.js";
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+import { correlationId as readCorrelationId } from "./correlation.js";
 
 // Framework-raised failures need codes too. Labelling a 413 as INTERNAL_ERROR
 // would tell a client to retry a request that can never succeed unchanged.
@@ -65,12 +61,6 @@ function dependencyTimeout(
     candidate.message.includes("timeout exceeded when trying to connect")
     ? "acquisition"
     : null;
-}
-
-function readCorrelationId(request: FastifyRequest): string {
-  const header = request.headers["x-correlation-id"];
-  const value = Array.isArray(header) ? header[0] : header;
-  return value && UUID_PATTERN.test(value) ? value : randomUUID();
 }
 
 function readFieldErrors(

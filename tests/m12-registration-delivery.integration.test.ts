@@ -9,6 +9,7 @@ import type {
   EmailMessage
 } from "../modules/notification/src/index.js";
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 
 const enabled = Boolean(process.env.DATABASE_URL);
 const suite = enabled ? describe : describe.skip;
@@ -60,6 +61,7 @@ suite("Milestone 12 registration delivery", () => {
     app = await createApiApp({ logLevel: "fatal" });
     processor = new OutboxProcessor({
       dispatcher,
+      logger: silentLogger(),
       pool,
       publicWebUrl: WEB_URL
     });

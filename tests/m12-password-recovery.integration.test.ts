@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 import type {
   EmailDispatcher,
   EmailMessage
@@ -81,6 +82,7 @@ suite("Milestone 12 password recovery", () => {
     app = await createApiApp({ logLevel: "fatal" });
     processor = new OutboxProcessor({
       dispatcher,
+      logger: silentLogger(),
       pool,
       publicWebUrl: WEB_URL
     });

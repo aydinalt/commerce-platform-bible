@@ -12,6 +12,7 @@ import { createLogger } from "@commerce/observability";
 import type { RuntimeConfig } from "@commerce/config";
 
 import { AppModule } from "./app.module.js";
+import { correlationIdFrom } from "./http/correlation.js";
 
 /**
  * Single definition of how the API is assembled, so tests exercise the same
@@ -19,14 +20,58 @@ import { AppModule } from "./app.module.js";
  * configured only in `main.ts` would be untestable and could drift.
  */
 export async function createApiApp(
-  config: Pick<RuntimeConfig, "logLevel">
+  config: Pick<RuntimeConfig, "logLevel"> & {
+    /**
+     * Where log lines go, for the one case that has to read them.
+     *
+     * `i21-correlation` asserts that Fastify's automatic request line carries
+     * the caller's identifier in `reqId`, which cannot be checked without
+     * seeing the line. Optional and unset in production, where pino's default
+     * destination is what a deployment collects.
+     */
+    loggerDestination?: { write: (line: string) => void };
+  }
 ): Promise<NestFastifyApplication> {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({
-      loggerInstance: createLogger("api", config.logLevel)
+      /*
+       * The caller's correlation identifier *is* the request id (§12.3).
+       *
+       * Fastify would otherwise generate `req-1`, `req-2`, … and stamp that on
+       * every automatic request and response line, while the application
+       * stamped the correlation identifier on its own — two identifiers for one
+       * request, joined by nothing. A per-process counter also collides across
+       * instances, so `req-1` means a different request on every replica.
+       */
+      genReqId: correlationIdFrom,
+      loggerInstance: createLogger(
+        "api",
+        config.logLevel,
+        config.loggerDestination
+      )
     })
   );
+
+  /*
+   * Every response says which request it was (§12.3).
+   *
+   * The identifier reached a caller only through the error envelope, so a
+   * person whose request *succeeded* slowly, or returned the wrong thing, had
+   * nothing to quote — and support had nothing to search. Echoing it costs one
+   * header and closes the browser-to-API boundary the same way the outbox
+   * column closes the API-to-worker one.
+   *
+   * It is the caller's own value when they sent a usable one, so a client that
+   * generates its own identifier sees it come back rather than a second one.
+   */
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .addHook("onSend", (request, reply, payload, done) => {
+      void reply.header("x-correlation-id", request.id);
+      done(null, payload);
+    });
 
   await app.register(helmet);
   // Session cookies are read on every protected request, so the parser must be

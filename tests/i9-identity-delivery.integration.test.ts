@@ -10,6 +10,7 @@ import { V1_DOMAINS } from "@commerce/contracts";
 import type { ContactChannelsResponse } from "@commerce/contracts";
 
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
+import { silentLogger } from "../packages/testing/src/index.js";
 import type {
   EmailDispatcher,
   EmailMessage
@@ -116,7 +117,12 @@ suite("Increment I9 Identity delivery evidence", () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
     app = await createApiApp({ logLevel: "fatal" });
-    processor = new OutboxProcessor({ dispatcher, pool, publicWebUrl: ORIGIN });
+    processor = new OutboxProcessor({
+      dispatcher,
+      logger: silentLogger(),
+      pool,
+      publicWebUrl: ORIGIN
+    });
 
     admin = await signUp();
     await pool.query(
