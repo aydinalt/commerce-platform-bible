@@ -10,6 +10,58 @@ This project follows the principles of:
 
 ---
 
+## [3.8.0] - 2026-08-19
+
+### Added
+
+- The Error Behaviour the Frozen UX documents specify, for the public path.
+  **All eight carry an "Error Behaviour" section and the web application
+  implemented none of them** — twenty-two routes, zero error boundaries — so any
+  failed read threw and Next.js replaced the whole page with its crash screen.
+  Nothing in this repository had recorded the gap.
+- `apps/web/src/api-error.ts`: `ApiRequestError` keeps the status the API
+  answered instead of folding it into a message, and `isApiUnavailable` is `5xx`
+  only. A `4xx` is this application's mistake and a `TypeError` is a defect, and
+  both keep reaching the crash screen rather than being hidden behind a retry
+  that cannot work.
+- One bounded surface serving UX-0001 §13 and UX-0002 §14 together, because
+  "the route did not begin" and "the results did not arrive" are one moment for
+  the person. It fetches nothing, so no Discovery Start and no `Offering
+  Presentation Open` can arise from a failure.
+- A bounded surface for a Listing Card that could not be opened, keeping the
+  Discovery context and offering no Decision or Compare action over a
+  Presentation the application could not read.
+
+### Changed
+
+- `SearchEntry` accepts an initial query, so the unavailable surface re-offers
+  the same component Home uses, pre-filled. "The entered query remains" and "the
+  person may retry or edit the query" are one field, and there is one Search
+  entry in this application rather than two.
+- `applyFilters` returns without writing the carrier when the offered Filters
+  cannot be fetched. All three parts of §14's Filter application error are that
+  one absence.
+- Every recovery is a submission rather than a link. A prefetched link into
+  Discovery would record the Discovery Start that the failure specifically did
+  not claim.
+
+### Verified
+
+- 92 test files, 845 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build. Six
+  mutations run, each caught.
+
+### Known
+
+- Six of the eight documents are untouched: UX-0003 §16 beyond the Listing Card
+  case, UX-0004 §14, UX-0005 §15, UX-0006 §15, UX-0008 §14, UX-0009 §18.
+- Empty and Loading Behaviour is a separate gap; there are 0 `loading.tsx`
+  files.
+- Nothing distinguishes a slow API from an unavailable one — no `fetch` timeout
+  in the web application.
+
+---
+
 ## [3.7.0] - 2026-08-19
 
 ### Added

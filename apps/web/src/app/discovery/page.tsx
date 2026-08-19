@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { isApiUnavailable } from "../../api-error";
 import { fetchBrowseView, fetchSearchView } from "../../discovery/api";
 import {
   DISCOVERY_ENTRY_COOKIE,
@@ -8,6 +9,7 @@ import {
 } from "../../discovery/entry";
 
 import { BrowseResultsView, SearchResultsView } from "./discovery-view";
+import { ResultsUnavailable } from "./results-unavailable";
 
 import type { Metadata } from "next";
 
@@ -38,18 +40,40 @@ export default async function DiscoveryPage() {
   // invent, so the person goes back to where criteria are entered.
   if (!entry) redirect("/");
 
-  if (entry.kind === "SEARCH")
+  /*
+   * The read is attempted here rather than inside the branches so that one
+   * `catch` covers both paths. UX-0002 §14 names a single "Search or Browse
+   * result error" and gives it one behaviour, and two handlers would be two
+   * chances to give it two.
+   */
+  try {
+    if (entry.kind === "SEARCH")
+      return (
+        <SearchResultsView
+          applied={entry.filters ?? []}
+          view={await fetchSearchView(entry)}
+        />
+      );
     return (
-      <SearchResultsView
+      <BrowseResultsView
         applied={entry.filters ?? []}
-        view={await fetchSearchView(entry)}
+        preparation={entry.preparation}
+        view={await fetchBrowseView(entry)}
       />
     );
-  return (
-    <BrowseResultsView
-      applied={entry.filters ?? []}
-      preparation={entry.preparation}
-      view={await fetchBrowseView(entry)}
-    />
-  );
+  } catch (error) {
+    /*
+     * Only the API's failures are presented as a bounded state. A contract
+     * parse failure, a `TypeError` or any other defect is rethrown and reaches
+     * the crash screen, because telling a person "try again shortly" about a
+     * bug promises a retry that can never succeed and hides the bug for ever.
+     *
+     * The carrier is deliberately not touched on the way out. That single
+     * absence is most of what §14 asks for: the criteria remain because nothing
+     * removed them, and no alternative can be invented because nothing is
+     * written.
+     */
+    if (!isApiUnavailable(error)) throw error;
+    return <ResultsUnavailable entry={entry} />;
+  }
 }

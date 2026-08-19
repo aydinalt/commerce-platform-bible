@@ -9,6 +9,8 @@ import {
   type SearchViewResponse
 } from "@commerce/contracts";
 
+import { ApiRequestError } from "../api-error";
+
 import type { BrowseEntry, SearchEntry } from "./entry";
 
 /**
@@ -44,7 +46,7 @@ export async function fetchBrowseRoots(): Promise<BrowseRoots> {
     cache: "no-store",
     headers: { accept: "application/json" }
   });
-  if (!response.ok) throw new Error(`BROWSE_ROOTS_${response.status}`);
+  if (!response.ok) throw new ApiRequestError("BROWSE_ROOTS", response.status);
   return browseRootsSchema.parse(await response.json());
 }
 
@@ -63,7 +65,7 @@ async function post(path: string, body: unknown): Promise<unknown> {
     headers: { accept: "application/json", "content-type": "application/json" },
     method: "POST"
   });
-  if (!response.ok) throw new Error(`DISCOVERY_${response.status}`);
+  if (!response.ok) throw new ApiRequestError("DISCOVERY", response.status);
   return response.json();
 }
 
@@ -105,7 +107,7 @@ export async function fetchOfferingPresentation(
     { cache: "no-store", headers: { accept: "application/json" } }
   );
   if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`OFFERING_${response.status}`);
+  if (!response.ok) throw new ApiRequestError("OFFERING", response.status);
   return offeringPresentationSchema.parse(await response.json());
 }
 

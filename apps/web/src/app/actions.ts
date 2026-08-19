@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 import type { AvailableFilterResponse } from "@commerce/contracts";
 
+import { isApiUnavailable } from "../api-error";
 import { fetchBrowseView, fetchSearchView } from "../discovery/api";
 import { readAppliedFilters } from "../discovery/filters";
 
@@ -126,6 +127,30 @@ export async function returnToPreparation(form: FormData): Promise<void> {
 }
 
 /**
+ * Asking again for exactly what was asked for (UX-0001 §13, UX-0002 §14).
+ *
+ * The carrier was never rewritten when the read failed, so retrying is a
+ * redirect and nothing else — no criteria are reconstructed, no path identifier
+ * is minted, and there is no opportunity to invent an alternative query or
+ * Category while doing it. Keeping the path identifier is what stops a retry
+ * from counting as a second person beginning to look.
+ *
+ * A submission rather than a link, because a prefetched link into Discovery
+ * would record the Discovery Start that the failure specifically did not claim.
+ */
+export async function retryDiscovery(): Promise<void> {
+  /*
+   * The carrier is read rather than assumed. It lives five minutes, and a
+   * person who leaves this surface open longer than that has nothing left to
+   * retry — sending them to Discovery would only bounce them Home again by way
+   * of a route that claims to be showing them results. Home is where criteria
+   * are entered, so that is where an expired retry belongs.
+   */
+  const entry = await currentEntry();
+  redirect(entry ? DISCOVERY_ROUTE : "/");
+}
+
+/**
  * The entry the person is currently in, or nothing.
  *
  * Read from the carrier rather than from the submitted form. The form used to
@@ -164,8 +189,36 @@ export async function applyFilters(form: FormData): Promise<void> {
   const entry = await currentEntry();
   if (!entry) return;
   const pathId = entry.pathId ?? randomUUID();
-  const filters = readAppliedFilters(form, await offeredFilters(entry, pathId));
 
+  /*
+   * UX-0002 §14, *Filter application error*: "the last confirmed criteria and
+   * result set remain; the failed Filter is not silently applied; the person
+   * may retry or remove it."
+   *
+   * All three are one decision — **return without writing the carrier.** The
+   * carrier still holds the last confirmed criteria, so they remain; the
+   * requested Filter never reaches it, so it is not applied; and the controls
+   * the person used are still on the page, so retrying and removing are both
+   * still available.
+   *
+   * The alternative — applying the Filter anyway and letting the results page
+   * sort it out — is the one thing §14 names outright. A Filter the API never
+   * confirmed as offered would be this application deciding what may be
+   * filtered by, which §9.1 makes a property of the Category and the Attribute
+   * definition rather than of a form.
+   *
+   * Defects are rethrown, as everywhere else: only the API being unavailable is
+   * an ordinary condition to absorb.
+   */
+  let offered;
+  try {
+    offered = await offeredFilters(entry, pathId);
+  } catch (error) {
+    if (!isApiUnavailable(error)) throw error;
+    return;
+  }
+
+  const filters = readAppliedFilters(form, offered);
   await handOff({
     ...entry,
     ...(filters.length === 0 ? {} : { filters }),

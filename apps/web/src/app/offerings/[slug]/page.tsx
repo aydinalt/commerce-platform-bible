@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
+import { isApiUnavailable } from "../../../api-error";
 import { fetchOfferingPresentation } from "../../../discovery/api";
 import {
   DISCOVERY_ENTRY_COOKIE,
@@ -8,6 +9,7 @@ import {
 } from "../../../discovery/entry";
 
 import { OfferingPresentation } from "./offering-presentation";
+import { PresentationUnavailable } from "./presentation-unavailable";
 
 import type { Metadata } from "next";
 
@@ -43,7 +45,23 @@ export default async function OfferingPage({
   const { slug } = await params;
   const jar = await cookies();
   const entry = readDiscoveryEntry(jar.get(DISCOVERY_ENTRY_COOKIE)?.value);
-  const offering = await fetchOfferingPresentation(slug);
+
+  /*
+   * UX-0002 §14 and UX-0003 §16. A `404` is already an ordinary answer handled
+   * below — the Offering stopped being eligible, which is expected. This is the
+   * other case: the API could not answer at all, which used to take the whole
+   * page down and with it the Results the person would go back to.
+   *
+   * Defects are rethrown. A contract that no longer parses is this
+   * application's problem to fix, not a condition to invite a person to retry.
+   */
+  let offering;
+  try {
+    offering = await fetchOfferingPresentation(slug);
+  } catch (error) {
+    if (!isApiUnavailable(error)) throw error;
+    return <PresentationUnavailable slug={slug} />;
+  }
 
   // AC-4. Presentation begins only while the Offering is still eligible; a
   // not-found says nothing about why, which is the only answer that leaks

@@ -15,8 +15,28 @@ import { beginSearch } from "./actions";
  * UX-0001 §7.2). A single text field and a submit control is the whole of it,
  * and the absences are the specification.
  */
-export function SearchEntry() {
-  const [state, submit, pending] = useActionState(beginSearch, NO_SEARCH_ENTRY);
+export function SearchEntry({
+  /**
+   * What the person already asked, when this is being offered again after a
+   * route failed to begin.
+   *
+   * UX-0001 §13 requires that "the entered query remains" when the Search route
+   * cannot begin, and that the person "may retry or edit the query". Both are
+   * this one field, pre-filled — which is why the unavailable surface reuses
+   * this component rather than drawing its own input. A second Search field
+   * would be a second implementation of AC-7's absences: no autocomplete, no
+   * suggestions, nothing travelling alongside the query.
+   *
+   * Empty on Home, where there is nothing yet to remember.
+   */
+  initialQuery = ""
+}: {
+  initialQuery?: string;
+}) {
+  const [state, submit, pending] = useActionState(beginSearch, {
+    ...NO_SEARCH_ENTRY,
+    typed: initialQuery
+  });
 
   return (
     <form action={submit} className="search-entry">
