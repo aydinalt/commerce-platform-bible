@@ -36,7 +36,11 @@ export class MetricsCollector {
 
   async scrape(): Promise<string> {
     const database = await this.databaseState();
-    return renderMetrics([...this.poolSeries(), ...database, ...this.counterSeries()]);
+    return renderMetrics([
+      ...this.poolSeries(),
+      ...database,
+      ...this.counterSeries()
+    ]);
   }
 
   /**

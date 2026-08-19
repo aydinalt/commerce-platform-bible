@@ -74,7 +74,10 @@ export class Counters {
   private readonly totals = new Map<string, number>();
 
   increment(name: string, labels: Record<string, string> = {}): void {
-    this.totals.set(key(name, labels), (this.totals.get(key(name, labels)) ?? 0) + 1);
+    this.totals.set(
+      key(name, labels),
+      (this.totals.get(key(name, labels)) ?? 0) + 1
+    );
   }
 
   /** Zero rather than absent, so a series exists before the first event. */
