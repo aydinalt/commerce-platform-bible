@@ -8,6 +8,7 @@ import {
 } from "@commerce/observability";
 
 import {
+  classifyDatabaseFailure,
   DEFAULT_IDLE_TRANSACTION_TIMEOUT_MS,
   IDENTITY_GRACE_MS,
   OUTBOX_RETENTION_MS
@@ -34,11 +35,32 @@ export class MetricsCollector {
     private readonly counters: Counters
   ) {}
 
+  /**
+   * A scrape that survives the outage it is most needed during.
+   *
+   * Every series used to be composed after one query, so a database that could
+   * not answer took the **whole endpoint** down with it — `500`, no pool gauges,
+   * no timeout counters, nothing. That is exactly backwards: an unreachable
+   * database is the moment somebody is most likely to be looking at this, and
+   * two thirds of what it publishes never needed the database at all.
+   *
+   * When the query fails the database-derived gauges are **omitted rather than
+   * zeroed**. Zero is a value, and `commerce_outbox_pending 0` during an outage
+   * reads as "mail is flowing" — it would silence the alert that should be
+   * loudest. An absent series makes a scraper's own staleness handling apply,
+   * which is the honest outcome; `commerce_db_reachable` then says why.
+   */
   async scrape(): Promise<string> {
     const database = await this.databaseState();
     return renderMetrics([
       ...this.poolSeries(),
-      ...database,
+      {
+        help: "Whether this process could query PostgreSQL at scrape time. When 0, the outbox and retention gauges are absent rather than zero, because a zero there would read as healthy.",
+        kind: "gauge",
+        name: "commerce_db_reachable",
+        samples: [{ value: database === null ? 0 : 1 }]
+      },
+      ...(database ?? []),
       ...this.counterSeries()
     ]);
   }
@@ -85,8 +107,22 @@ export class MetricsCollector {
    * of rows still waiting to be deleted says whether it is *keeping up* — and if
    * the worker dies, every one of these climbs on its own. That is the signal an
    * alert should fire on.
+   *
+   * Returns `null` when the database could not answer. Only failures this
+   * repository classifies as the database's are swallowed: anything else is a
+   * defect in the query above, and swallowing that would leave a permanently
+   * broken scrape looking like a permanent outage.
    */
-  private async databaseState(): Promise<MetricSeries[]> {
+  private async databaseState(): Promise<MetricSeries[] | null> {
+    try {
+      return await this.readDatabaseState();
+    } catch (error) {
+      if (classifyDatabaseFailure(error) === null) throw error;
+      return null;
+    }
+  }
+
+  private async readDatabaseState(): Promise<MetricSeries[]> {
     const counts = await this.pool.query<{
       comparisonSets: number;
       deadLetters: number;
@@ -194,6 +230,12 @@ export class MetricsCollector {
         ]
       },
       {
+        help: "Requests answered 503 because PostgreSQL was not there to answer them — refused, reset, shut down or out of resources. Distinct from a timeout: a timeout means find the query, this means find the database.",
+        kind: "counter",
+        name: "commerce_db_unavailable_total",
+        samples: [{ value: this.counters.total(DB_UNAVAILABLE) }]
+      },
+      {
         help: "How long a transaction may sit idle before PostgreSQL ends its session, published so a scrape carries the budget its numbers are measured against.",
         kind: "gauge",
         name: "commerce_db_idle_transaction_timeout_ms",
@@ -203,5 +245,6 @@ export class MetricsCollector {
   }
 }
 
-/** The one counter name, so the filter and the collector cannot disagree. */
+/** The counter names, so the filter and the collector cannot disagree. */
 export const DB_TIMEOUT = "db_timeout";
+export const DB_UNAVAILABLE = "db_unavailable";

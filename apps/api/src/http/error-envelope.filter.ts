@@ -8,9 +8,13 @@ import {
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { errorEnvelopeSchema, type ErrorEnvelope } from "@commerce/contracts";
+import {
+  classifyDatabaseFailure,
+  type DatabaseFailure
+} from "@commerce/database";
 import { Counters } from "@commerce/observability";
 
-import { DB_TIMEOUT } from "../metrics/metrics.collector.js";
+import { DB_TIMEOUT, DB_UNAVAILABLE } from "../metrics/metrics.collector.js";
 import { correlationId as readCorrelationId } from "./correlation.js";
 
 // Framework-raised failures need codes too. Labelling a 413 as INTERNAL_ERROR
@@ -34,34 +38,20 @@ interface ExceptionPayload {
   message?: unknown;
 }
 
-/** `query_canceled`, which is what `statement_timeout` raises. */
-const STATEMENT_TIMEOUT_CODE = "57014";
-
 /**
- * Which kind of timeout a failure is, or `null` if it is not one.
+ * What a caller is told for each kind of database failure.
  *
- * The two are distinguished rather than merged because they call for different
- * responses: statements outgrowing five seconds is a query problem, and a pool
- * that cannot hand out a connection is a capacity one.
- *
- * Two shapes, because the two timeouts arrive differently. `statement_timeout`
- * comes back from the server with a SQLSTATE; the pool's acquisition timeout
- * never reaches the server at all and `pg` throws a plain `Error` whose message
- * is the only thing distinguishing it. Matching that message is unpleasant and
- * is the reason this is one named function rather than a condition inlined at
- * the call site: when `pg` changes the wording, exactly one place is wrong.
+ * All three answer `503 DEPENDENCY_UNAVAILABLE`, because to a client they mean
+ * the same thing — the database did not serve this, and the request was not at
+ * fault. They are still distinguished here, because the *message* is the only
+ * part of the envelope that can say which, and "did not answer in time" would be
+ * a lie about a server that is not running at all.
  */
-function dependencyTimeout(
-  exception: unknown
-): "acquisition" | "statement" | null {
-  if (typeof exception !== "object" || exception === null) return null;
-  const candidate = exception as { code?: unknown; message?: unknown };
-  if (candidate.code === STATEMENT_TIMEOUT_CODE) return "statement";
-  return typeof candidate.message === "string" &&
-    candidate.message.includes("timeout exceeded when trying to connect")
-    ? "acquisition"
-    : null;
-}
+const DEPENDENCY_MESSAGE: Record<DatabaseFailure, string> = {
+  acquisition: "The database did not answer in time",
+  statement: "The database did not answer in time",
+  unavailable: "The database is not available"
+};
 
 function readFieldErrors(
   payload: ExceptionPayload
@@ -95,27 +85,46 @@ export class ErrorEnvelopeFilter implements ExceptionFilter {
 
     if (!(exception instanceof HttpException)) {
       /*
-       * A statement PostgreSQL cancelled is not a server defect, and saying
-       * `INTERNAL_ERROR` would tell a client the opposite of what to do.
+       * A database that did not serve us is not a server defect, and saying
+       * `INTERNAL_ERROR` tells a client the opposite of what to do.
        *
-       * `57014` is raised when `statement_timeout` fires, and `pg` surfaces the
-       * pool's own acquisition timeout as a plain `Error`. Both mean the same
-       * thing to a caller — the database did not answer in the time this
-       * deployment allows — so both render as the `DEPENDENCY_UNAVAILABLE`
-       * already published for `503`, and neither adds a code to the contract.
+       * Three kinds arrive here: a statement PostgreSQL cancelled, a connection
+       * the pool could not hand out, and a server that is not there at all. All
+       * render as the `DEPENDENCY_UNAVAILABLE` already published for `503`, so
+       * none of them adds a code to the contract.
        *
-       * Logged at `warn` rather than `error`: a timeout is the system doing
-       * what it was told, and burying it among unhandled failures would hide
-       * the very signal that says a query has gone wrong.
+       * **The third was missing and mattered most.** A statement timeout is one
+       * request going wrong; an absent database is every request going wrong at
+       * once, and until this the platform answered every one of them with
+       * `INTERNAL_ERROR` — reporting a defect it did not have, for the entire
+       * duration of somebody else's outage, while telling clients not to retry.
+       *
+       * Counted separately from the timeouts rather than as a third `kind` of
+       * them, because an outage is not a timeout and a series named
+       * `db_timeouts_total` that counts outages is a metric that lies. The two
+       * also call for different responses: a timeout means find the query, an
+       * outage means find the database.
+       *
+       * Logged at `warn` rather than `error` for the same reason a timeout is:
+       * this is the system doing what it was told. During an outage this line
+       * appears once per request and diagnoses nothing that the pool's own
+       * `database_connection_lost` error line does not already say — so raising
+       * it to `error` would bury the useful line under thousands of copies of
+       * the useless one.
        */
-      const timeout = dependencyTimeout(exception);
-      if (timeout !== null) {
-        this.counters.increment(DB_TIMEOUT, { kind: timeout });
-        request.log.warn({ correlationId, err: exception }, "database_timeout");
+      const failure = classifyDatabaseFailure(exception);
+      if (failure !== null) {
+        this.count(failure);
+        request.log.warn(
+          { correlationId, err: exception, failure },
+          failure === "unavailable"
+            ? "database_unavailable"
+            : "database_timeout"
+        );
         void reply.status(HttpStatus.SERVICE_UNAVAILABLE).send({
           code: "DEPENDENCY_UNAVAILABLE",
           correlationId,
-          message: "The database did not answer in time"
+          message: DEPENDENCY_MESSAGE[failure]
         } satisfies ErrorEnvelope);
         return;
       }
@@ -149,5 +158,11 @@ export class ErrorEnvelopeFilter implements ExceptionFilter {
     });
 
     void reply.status(status).send(envelope);
+  }
+
+  /** Two series, because an outage and a timeout are answered differently. */
+  private count(failure: DatabaseFailure): void {
+    if (failure === "unavailable") this.counters.increment(DB_UNAVAILABLE);
+    else this.counters.increment(DB_TIMEOUT, { kind: failure });
   }
 }

@@ -10,6 +10,58 @@ This project follows the principles of:
 
 ---
 
+## [3.7.0] - 2026-08-19
+
+### Added
+
+- Honest degradation when PostgreSQL is unavailable, per R3.6 of the release
+  criteria candidate and Engineering Constitution §13. Measured first: a real
+  embedded server was stopped underneath a running API.
+- `classifyDatabaseFailure()` in `@commerce/database` — one function covering a
+  cancelled statement, a connection the pool could not hand out, and a server
+  that is not there. The third was missing, so an absent database fell through
+  to `INTERNAL_ERROR`.
+- `commerce_db_unavailable_total`, separate from the timeout counter, and
+  `commerce_db_reachable`, which is the cheapest possible outage alert.
+
+### Changed
+
+- Every route answers `503 DEPENDENCY_UNAVAILABLE` during an outage instead of
+  `500 INTERNAL_ERROR`. The platform was reporting a defect it did not have, on
+  every request, for the whole duration of somebody else's outage — and telling
+  clients not to retry.
+- `/metrics` survives an outage. It answered `500` before, losing the pool gauges
+  and counters that never needed a database. The database-derived gauges are
+  **omitted rather than zeroed**, because `commerce_outbox_pending 0` reads as
+  "mail is flowing" and would silence the alert that should be loudest.
+
+### Fixed
+
+- **I20's content-type fix was incomplete and its closure record overstated it.**
+  The header was moved past the permission check and still ran before the scrape,
+  so any collection failure reproduced the identical serialisation error — which
+  is exactly what a database outage caused. It is set after the body now. The bug
+  was never "the decorator applies too early"; it was "the header is set before a
+  body is known to exist".
+
+### Verified
+
+- 91 test files, 837 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build. Six
+  mutations run, each caught. One was missed by the first version of its test:
+  the content-type bug leaves the status and the code unchanged at `500
+  INTERNAL_ERROR`, and only the envelope's message differs — which is how I20
+  believed it was finished.
+
+### Known
+
+- This is R3.6's behaviour, not its evidence. Performing a deliberate outage in a
+  non-production environment still needs an environment.
+- The web application's behaviour on a `503` was not assessed.
+- Nothing retries, and nothing alerts on `commerce_db_reachable`.
+
+---
+
 ## [3.6.0] - 2026-08-19
 
 ### Added

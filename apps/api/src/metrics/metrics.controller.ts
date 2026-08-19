@@ -38,16 +38,25 @@ export class MetricsController {
    * unauthenticated caller that it is there; there is no reason to confirm that
    * to somebody who cannot use it.
    *
-   * **The content type is set after the permission check, not by a decorator.**
+   * **The content type is set last — after the body exists, not by a decorator
+   * and not merely after the permission check.**
    *
    * `@Header("content-type", "text/plain")` was the obvious way to write this
    * and it broke every failure path: the header applies to the whole route, so
    * when the handler threw, Fastify was asked to send the JSON error envelope as
    * text and refused — *"Attempted to send payload of invalid type 'object'"* —
    * turning a `404` into a `500` that described a serialisation problem rather
-   * than the refusal. Setting it here means the success path declares its type
-   * and the failure path is left to the envelope filter, which is the only thing
-   * that knows what an error looks like.
+   * than the refusal.
+   *
+   * I20 moved it past the permission check and stopped there, and its closure
+   * record claimed the failure path was fixed. **It was not.** The header still
+   * ran before `scrape()`, so a scrape that threw — which is what a database
+   * outage used to do — reproduced the identical serialisation error. The bug
+   * was not "the decorator applies too early", it was "the header is set before
+   * a body is known to exist", and only the second statement puts it out of
+   * reach. Setting it after the body means the failure path is always left to
+   * the envelope filter, which is the only thing that knows what an error
+   * looks like.
    */
   @Get()
   async scrape(
@@ -55,11 +64,12 @@ export class MetricsController {
     @Res({ passthrough: true }) reply: FastifyReply
   ): Promise<string> {
     if (!(await this.permitted(request))) throw new NotFoundException();
+    const body = await this.collector.scrape();
     void reply.header(
       "content-type",
       "text/plain; version=0.0.4; charset=utf-8"
     );
-    return this.collector.scrape();
+    return body;
   }
 
   private async permitted(request: FastifyRequest): Promise<boolean> {

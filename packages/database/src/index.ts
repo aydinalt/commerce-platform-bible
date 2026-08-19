@@ -168,6 +168,113 @@ export function createDatabasePool(
 }
 
 /**
+ * Why the database did not serve a request, when the request was not at fault.
+ *
+ * `null` means it *was* at fault, or that the failure has nothing to do with the
+ * database — those are defects and must keep answering `500`. Widening this
+ * union to swallow constraint violations or syntax errors would turn every
+ * application bug into a soothing "try again later".
+ */
+export type DatabaseFailure = "acquisition" | "statement" | "unavailable";
+
+/** `query_canceled` — what `statement_timeout` raises. */
+const STATEMENT_TIMEOUT_CODE = "57014";
+
+/**
+ * SQLSTATE classes that mean the server could not serve us.
+ *
+ * - `08` connection exception — the connection broke or was never made.
+ * - `53` insufficient resources — out of connections, memory or disk. Not the
+ *   caller's fault and not this application's defect; the caller's correct
+ *   action is to come back later, which is what `503` says.
+ * - `57` operator intervention — admin shutdown (`57P01`), crash shutdown
+ *   (`57P02`), still starting up (`57P03`). **Except `57014`**, which is also
+ *   class 57 and is a cancelled statement rather than an absent server; I19
+ *   made that its own kind and it stays its own kind, because "your query was
+ *   too slow" and "the database is gone" call for different responses.
+ */
+const UNAVAILABLE_CLASSES = new Set(["08", "53", "57"]);
+
+/**
+ * Socket-level failures, which never reach PostgreSQL and so carry no SQLSTATE.
+ *
+ * `ENOENT` is here because this repository connects over a Unix socket in test:
+ * a stopped server leaves no socket file, and the resulting error is a missing
+ * path rather than a refused connection.
+ */
+const UNAVAILABLE_SYSCALLS = new Set([
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "ENOENT",
+  "ENOTFOUND",
+  "EPIPE",
+  "ETIMEDOUT"
+]);
+
+/**
+ * `pg`'s own messages for a connection that went away, which arrive as plain
+ * `Error`s with nothing structured to match on.
+ *
+ * Matching message text is unpleasant and is the reason this lives in one named
+ * function rather than inline at a call site: when `pg` rewords something,
+ * exactly one place is wrong and one test fails.
+ */
+const UNAVAILABLE_MESSAGES = [
+  "Connection terminated",
+  "Client has encountered a connection error",
+  "Cannot use a pool after calling end"
+];
+
+/** The pool's own acquisition timeout, which never reaches the server either. */
+const ACQUISITION_MESSAGE = "timeout exceeded when trying to connect";
+
+/**
+ * Classifies a failure raised while talking to PostgreSQL.
+ *
+ * **One function for all three kinds, deliberately.** An earlier version of this
+ * logic lived in `ErrorEnvelopeFilter` and knew only about the two timeouts, so
+ * a database that was *absent* rather than *slow* fell through to
+ * `INTERNAL_ERROR` — the platform blaming itself for its dependency being down,
+ * on every request, for the whole outage. Splitting the knowledge across two
+ * homes is how that happened; keeping the three kinds in one place is how it
+ * stops being possible to add a fourth and forget one caller.
+ *
+ * It lives in this package because this package already owns the pool, the
+ * timeouts the two timeout kinds are measured against, and the connection
+ * options that set them on the server.
+ */
+export function classifyDatabaseFailure(
+  error: unknown
+): DatabaseFailure | null {
+  if (typeof error !== "object" || error === null) return null;
+  const candidate = error as {
+    code?: unknown;
+    message?: unknown;
+    syscall?: unknown;
+  };
+
+  if (typeof candidate.code === "string") {
+    if (candidate.code === STATEMENT_TIMEOUT_CODE) return "statement";
+    if (UNAVAILABLE_SYSCALLS.has(candidate.code)) return "unavailable";
+    // A SQLSTATE is five characters and its first two are the class.
+    if (
+      candidate.code.length === 5 &&
+      UNAVAILABLE_CLASSES.has(candidate.code.slice(0, 2))
+    )
+      return "unavailable";
+  }
+
+  if (typeof candidate.message !== "string") return null;
+  const message = candidate.message;
+  if (message.includes(ACQUISITION_MESSAGE)) return "acquisition";
+  return UNAVAILABLE_MESSAGES.some((text) => message.includes(text))
+    ? "unavailable"
+    : null;
+}
+
+/**
  * A row that can no longer authenticate anything is deleted at once.
  *
  * The Owner's reading, and the right one: these rows carry an email address and

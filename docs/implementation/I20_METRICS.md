@@ -96,12 +96,29 @@ envelope as text and refused — *"Attempted to send payload of invalid type
 'object'"* — turning the `404` into a `500` that described a serialisation
 problem rather than the refusal.
 
-The content type is now set inside the handler, after the permission check. The
+~~The content type is now set inside the handler, after the permission check. The
 success path declares its own type and the failure path is left to the envelope
-filter, which is the only thing that knows what an error looks like.
+filter, which is the only thing that knows what an error looks like.~~
+
+> **Corrected by I22, 2026-08-19.** The paragraph above was true about the
+> mechanism and **wrong about the coverage**, and it is struck through rather
+> than rewritten because a closure record should show what it once claimed.
+>
+> Moving the header past the *permission check* fixed the `404`. It still ran
+> before `scrape()`, so **any failure during collection reproduced the identical
+> serialisation error** — and a database outage is precisely such a failure, which
+> is how I22 found it: `/metrics` answered `500` with *"Attempted to send payload
+> of invalid type 'object'"* while PostgreSQL was down.
+>
+> The bug was never "the decorator applies too early". It was "the header is set
+> before a body is known to exist", and only the second statement puts it out of
+> reach. It is set after the body now. See
+> `docs/implementation/I22_DATABASE_OUTAGE.md`.
 
 Found by the first test written against the endpoint, which is the argument for
-writing that test first.
+writing that test first — and half-fixed by it, which is the argument for asking
+what *else* the route can fail at. The test asserted the status and the code, and
+the surviving bug changes neither: only the envelope's message differs.
 
 ## One constant moved
 
