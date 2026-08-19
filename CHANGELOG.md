@@ -10,6 +10,49 @@ This project follows the principles of:
 
 ---
 
+## [3.5.0] - 2026-08-18
+
+### Added
+
+- Metrics, in the Prometheus text exposition format, on an `/metrics` endpoint
+  that takes a bearer token or an entered Admin context. Engineering
+  Constitution §12.2 requires every production component to expose them and
+  there were none. This is R1.1 of the release criteria candidate.
+- The set answers the questions I17, I18 and I19 raised and left unanswerable —
+  pool saturation against its ceiling, timeout counts, outbox backlog and dead
+  letters, and rows waiting for the retention sweep. Every series carries a
+  `HELP` line saying what to do about it.
+
+### Changed
+
+- `IDENTITY_GRACE_MS`, `OUTBOX_RETENTION_MS` and `THROTTLE_RETENTION_MS` moved
+  to `@commerce/database`, beside the expired-state SQL. The gauge counts rows
+  waiting to be swept using the identical windows the sweeper deletes by.
+
+### Fixed
+
+- `@Header("content-type", "text/plain")` on the metrics route broke every
+  failure path: Fastify was asked to send the JSON error envelope as text and
+  refused, turning a `404` into a `500` about serialisation. The type is set
+  after the permission check instead.
+
+### Verified
+
+- 89 test files, 825 tests, plus formatting, linting, module boundaries, type
+  checking, reproducible OpenAPI with no drift — the endpoint is deliberately
+  outside the contract — dependency audit and a Next.js production build. Five
+  mutations run, each caught. The hardest to notice in production is separate
+  `Counters` for the filter and the collector, which reads exactly like "no
+  timeouts happened".
+
+### Known
+
+- Nothing alerts on any of this. Metrics nobody is paged on are a dashboard.
+- Timeouts are counted for the API only.
+- No latency, request volume or error rate in round one.
+
+---
+
 ## [3.4.0] - 2026-08-18
 
 ### Added

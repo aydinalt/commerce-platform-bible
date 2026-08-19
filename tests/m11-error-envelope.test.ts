@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 
+import { Counters } from "../packages/observability/src/index.js";
+
 import {
   BadRequestException,
   ConflictException,
@@ -39,7 +41,7 @@ function invoke(exception: unknown, correlationId?: string): Captured {
     })
   } as unknown as ArgumentsHost;
 
-  new ErrorEnvelopeFilter().catch(exception, host);
+  new ErrorEnvelopeFilter(new Counters()).catch(exception, host);
   return captured;
 }
 

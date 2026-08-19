@@ -2,7 +2,10 @@ import type { Pool } from "pg";
 
 import {
   EXPIRED_COMPARISON_SETS_SQL,
-  EXPIRED_DECISION_FLOWS_SQL
+  EXPIRED_DECISION_FLOWS_SQL,
+  IDENTITY_GRACE_MS,
+  OUTBOX_RETENTION_MS,
+  THROTTLE_RETENTION_MS
 } from "@commerce/database";
 
 /**
@@ -22,43 +25,13 @@ import {
  * registration is not an account state. Keeping it indefinitely makes it one in
  * practice.
  *
- * No Frozen document states a retention policy, so the windows below are an
- * Owner decision taken on 2026-08-18 and recorded in
- * `docs/implementation/I17_RETENTION_SWEEP.md`. They are stated here, once,
- * rather than spread across the statements that use them.
+ * No Frozen document states a retention policy, so the windows are an Owner
+ * decision taken on 2026-08-18 and recorded in
+ * `docs/implementation/I17_RETENTION_SWEEP.md`. They live in
+ * `@commerce/database` beside the statements they bound, because I20 needed to
+ * publish how many rows are *waiting* to be deleted and a second copy of a
+ * window is a second thing to get wrong.
  */
-
-/**
- * A row that can no longer authenticate anything is deleted at once.
- *
- * The Owner's reading, and the right one: these rows carry an email address and
- * a password hash for a person who is not a User, and the reason to delete them
- * is precisely that they should not linger. `audit_record` is this repository's
- * forensic store and already carries what happened; a dead token digest adds
- * nothing to it.
- */
-export const IDENTITY_GRACE_MS = 0;
-
-/**
- * Delivered mail is evidence for a month, then it is noise.
- *
- * A processed outbox event answers "did we send it, and when" — a question with
- * a short useful life, asked while somebody is still wondering why they did not
- * get an email. One row accrues per registration and per password reset, so
- * keeping them all is a table that only ever grows.
- */
-export const OUTBOX_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
-
-/**
- * Long enough past the fifteen-minute attempt window that deleting a throttle
- * row forgives nobody.
- *
- * `registerAttempt` already resets `attempts` to 1 when `first_seen_at` has
- * fallen outside the window, so removing such a row is exactly what the next
- * attempt would do to it. A subject who is still being counted is inside the
- * window and is never touched here.
- */
-export const THROTTLE_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 export interface SweepCounts {
   authThrottles: number;

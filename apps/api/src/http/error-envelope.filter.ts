@@ -10,6 +10,9 @@ import {
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { errorEnvelopeSchema, type ErrorEnvelope } from "@commerce/contracts";
+import { Counters } from "@commerce/observability";
+
+import { DB_TIMEOUT } from "../metrics/metrics.collector.js";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -39,8 +42,11 @@ interface ExceptionPayload {
 const STATEMENT_TIMEOUT_CODE = "57014";
 
 /**
- * Whether a failure is the database declining to answer within the deployment's
- * budget, rather than anything this code did wrong.
+ * Which kind of timeout a failure is, or `null` if it is not one.
+ *
+ * The two are distinguished rather than merged because they call for different
+ * responses: statements outgrowing five seconds is a query problem, and a pool
+ * that cannot hand out a connection is a capacity one.
  *
  * Two shapes, because the two timeouts arrive differently. `statement_timeout`
  * comes back from the server with a SQLSTATE; the pool's acquisition timeout
@@ -49,14 +55,16 @@ const STATEMENT_TIMEOUT_CODE = "57014";
  * is the reason this is one named function rather than a condition inlined at
  * the call site: when `pg` changes the wording, exactly one place is wrong.
  */
-function isDependencyTimeout(exception: unknown): boolean {
-  if (typeof exception !== "object" || exception === null) return false;
+function dependencyTimeout(
+  exception: unknown
+): "acquisition" | "statement" | null {
+  if (typeof exception !== "object" || exception === null) return null;
   const candidate = exception as { code?: unknown; message?: unknown };
-  if (candidate.code === STATEMENT_TIMEOUT_CODE) return true;
-  return (
-    typeof candidate.message === "string" &&
+  if (candidate.code === STATEMENT_TIMEOUT_CODE) return "statement";
+  return typeof candidate.message === "string" &&
     candidate.message.includes("timeout exceeded when trying to connect")
-  );
+    ? "acquisition"
+    : null;
 }
 
 function readCorrelationId(request: FastifyRequest): string {
@@ -81,6 +89,14 @@ function readFieldErrors(
  */
 @Catch()
 export class ErrorEnvelopeFilter implements ExceptionFilter {
+  /**
+   * Counted here because this is already the one place that classifies a
+   * timeout, and because a cancelled statement leaves nothing to count
+   * afterwards — unlike every other metric this repository publishes, which is
+   * read from the pool or the database at scrape time.
+   */
+  constructor(private readonly counters: Counters) {}
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
     const request = http.getRequest<FastifyRequest>();
@@ -102,7 +118,9 @@ export class ErrorEnvelopeFilter implements ExceptionFilter {
        * what it was told, and burying it among unhandled failures would hide
        * the very signal that says a query has gone wrong.
        */
-      if (isDependencyTimeout(exception)) {
+      const timeout = dependencyTimeout(exception);
+      if (timeout !== null) {
+        this.counters.increment(DB_TIMEOUT, { kind: timeout });
         request.log.warn({ correlationId, err: exception }, "database_timeout");
         void reply.status(HttpStatus.SERVICE_UNAVAILABLE).send({
           code: "DEPENDENCY_UNAVAILABLE",

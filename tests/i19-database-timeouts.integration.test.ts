@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import { HttpStatus } from "@nestjs/common";
 import { Pool } from "pg";
+
+import { Counters } from "../packages/observability/src/index.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ErrorEnvelopeFilter } from "../apps/api/src/http/error-envelope.filter.js";
@@ -155,7 +157,7 @@ suite("Increment I19 database timeouts", () => {
   });
 
   it("answers a timeout as the published dependency failure, not as a defect", () => {
-    const filter = new ErrorEnvelopeFilter();
+    const filter = new ErrorEnvelopeFilter(new Counters());
     const sent: { body?: unknown; status?: number } = {};
     const reply = {
       send: (body: unknown) => {
@@ -199,7 +201,7 @@ suite("Increment I19 database timeouts", () => {
   });
 
   it("still calls an ordinary failure a defect", () => {
-    const filter = new ErrorEnvelopeFilter();
+    const filter = new ErrorEnvelopeFilter(new Counters());
     const sent: { body?: unknown; status?: number } = {};
     const reply = {
       send: (body: unknown) => {

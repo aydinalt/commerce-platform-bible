@@ -5,7 +5,7 @@ import { Pool } from "pg";
 import { loadChatConfig, loadRuntimeConfig } from "@commerce/config";
 import { createDatabasePool } from "@commerce/database";
 import type { DecisionAssistant } from "@commerce/decision";
-import { createLogger } from "@commerce/observability";
+import { Counters, createLogger } from "@commerce/observability";
 
 import {
   AdminBusinessController,
@@ -35,6 +35,8 @@ import { AnalyticsController } from "./platform/analytics.controller.js";
 import { ModerationCaseController } from "./platform/moderation.controller.js";
 import { DiscoveryController } from "./discovery/discovery.controller.js";
 import { HealthController } from "./health.controller.js";
+import { MetricsCollector } from "./metrics/metrics.collector.js";
+import { MetricsController } from "./metrics/metrics.controller.js";
 import { ErrorEnvelopeFilter } from "./http/error-envelope.filter.js";
 import { IdentityController } from "./identity/identity.controller.js";
 import { AUDIT_WRITER, IdentityService } from "./identity/identity.service.js";
@@ -164,6 +166,7 @@ export class DatabaseLifecycle implements OnModuleDestroy {
     DecisionFlowController,
     DiscoveryController,
     HealthController,
+    MetricsController,
     IdentityController,
     OfferingController,
     PublicOfferingController
@@ -206,6 +209,13 @@ export class DatabaseLifecycle implements OnModuleDestroy {
      * makes the pool something a test can substitute.
      */
     { provide: Pool, useFactory: buildDatabasePool },
+    /*
+     * One counter set for the process, shared by the filter that increments and
+     * the collector that publishes. Two instances would mean the endpoint
+     * reporting zero while the filter counted.
+     */
+    Counters,
+    MetricsCollector,
     DatabaseLifecycle,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
     // Which assistant answers is a deployment decision rather than a source-file

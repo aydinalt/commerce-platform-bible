@@ -4,10 +4,8 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { PgDecisionRepository } from "../apps/api/src/persistence/pg-decision.repository.js";
-import {
-  OUTBOX_RETENTION_MS,
-  RetentionSweeper
-} from "../apps/worker/src/retention.sweeper.js";
+import { OUTBOX_RETENTION_MS } from "../packages/database/src/index.js";
+import { RetentionSweeper } from "../apps/worker/src/retention.sweeper.js";
 
 const enabled = Boolean(process.env.DATABASE_URL);
 const suite = enabled ? describe : describe.skip;
