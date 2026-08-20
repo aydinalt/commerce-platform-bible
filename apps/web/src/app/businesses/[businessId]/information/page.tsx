@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../../unavailable";
+
 import { fetchInformation } from "../../../../business/api";
 import { formValues } from "../../../../business/information";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../../identity/session";
@@ -34,7 +37,18 @@ export default async function BusinessInformationPage({
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const information = await fetchInformation(session, businessId);
+  const information = await orUnavailable(
+    fetchInformation(session, businessId)
+  );
+  /*
+   * Two answers where there was one. `notFound()` answered both, and saying
+   * "this is not here" about something that is there is the one claim a failed
+   * read must never make — UX-0006 §14, distinguish zero from unavailable.
+   */
+  if (isUnavailable(information))
+    return (
+      <ServiceUnavailable retryPath={`/businesses/${businessId}/information`} />
+    );
   if (information === null) notFound();
 
   const save = saveBusinessInformation.bind(null, businessId);

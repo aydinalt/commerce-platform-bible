@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../unavailable";
+
 import type { DestinationWorkloadItem } from "@commerce/contracts";
 
 import {
@@ -93,10 +96,19 @@ export default async function DestinationWorkloadPage() {
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const panel = await fetchAdminPanel(session);
+  const panel = await orUnavailable(fetchAdminPanel(session));
+  /*
+   * Two answers where there was one. `notFound()` answered both, so during an
+   * outage every Admin route said the Admin panel does not exist — the same claim the
+   * API deliberately makes to somebody who is not an Admin, which is exactly
+   * why it must not also be made to somebody who is.
+   */
+  if (isUnavailable(panel))
+    return <ServiceUnavailable retryPath="/admin/destinations" />;
   if (panel === null) notFound();
 
-  const items = await fetchDestinationWorkload(session);
+  const read = await orUnavailable(fetchDestinationWorkload(session));
+  const items = isUnavailable(read) ? null : read;
   /*
    * A destination that has been Enabled or Disabled owes nothing, and says so
    * by having no category. It stays in the response because the read answers

@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../../../unavailable";
+
 import {
   fetchCorrectionNotices,
   fetchOfferingContent
@@ -44,7 +47,21 @@ export default async function CorrectionPage({
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const notices = await fetchCorrectionNotices(session, businessId);
+  const notices = await orUnavailable(
+    fetchCorrectionNotices(session, businessId)
+  );
+  /*
+   * Two answers where there was one. This route is the sharpest case: a
+   * correction notice is the platform asking a Business owner to do something,
+   * and `notFound()` during an outage told them the request they were answering
+   * does not exist.
+   */
+  if (isUnavailable(notices))
+    return (
+      <ServiceUnavailable
+        retryPath={`/businesses/${businessId}/corrections/${correctionId}`}
+      />
+    );
   if (notices === null) notFound();
   const notice = notices.find((candidate) => candidate.id === correctionId);
   // Not theirs, or not there. The same answer, as everywhere else.
@@ -73,11 +90,15 @@ export default async function CorrectionPage({
       </main>
     );
 
-  const content = await fetchOfferingContent(
-    session,
-    businessId,
-    notice.offeringId
+  const content = await orUnavailable(
+    fetchOfferingContent(session, businessId, notice.offeringId)
   );
+  if (isUnavailable(content))
+    return (
+      <ServiceUnavailable
+        retryPath={`/businesses/${businessId}/corrections/${correctionId}`}
+      />
+    );
   if (content === null) notFound();
 
   return (

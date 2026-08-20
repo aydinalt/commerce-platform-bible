@@ -46,3 +46,32 @@ export class ApiRequestError extends Error {
 export function isApiUnavailable(error: unknown): boolean {
   return error instanceof ApiRequestError && error.status >= 500;
 }
+
+/**
+ * "This is not here" — unless the API never said so.
+ *
+ * The authenticated reads collapsed every failure into `null`, and their pages
+ * turned `null` into `notFound()`. During an outage that told a Business owner
+ * their **Business does not exist** and an Admin that the **Admin panel does
+ * not exist**: thirteen routes, each stating something false, each
+ * indistinguishable from the deliberate answer the API gives somebody with no
+ * standing to learn a thing exists.
+ *
+ * UX-0006 §14 names the rule this restores in five words — *"distinguish zero
+ * from unavailable"* — and it is a rule about honesty rather than about
+ * analytics. Absence is a fact about the world; a failed read is a fact about
+ * this request, and reporting the second as the first invents the world.
+ *
+ * `4xx` still means absent, and deliberately. `401`, `403` and `404` are how
+ * the API says "not yours" without confirming existence, and that answer is
+ * load-bearing — turning it into "unavailable" would leak that something is
+ * there to be unavailable.
+ */
+export function absentUnlessUnavailable(
+  response: Response,
+  operation: string
+): null {
+  if (response.status >= 500)
+    throw new ApiRequestError(operation, response.status);
+  return null;
+}

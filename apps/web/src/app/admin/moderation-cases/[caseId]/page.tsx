@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../../unavailable";
+
 import { fetchAdminPanel, fetchModerationCase } from "../../../../platform/api";
 import {
   ACTION_LABELS,
@@ -50,10 +53,22 @@ export default async function ModerationCasePage({
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const panel = await fetchAdminPanel(session);
+  const [panel, found] = await Promise.all([
+    orUnavailable(fetchAdminPanel(session)),
+    orUnavailable(fetchModerationCase(session, caseId))
+  ]);
+  /*
+   * Two answers where there was one. `notFound()` answered both, and saying
+   * "this is not here" about something that is there is the one claim a failed
+   * read must never make — UX-0006 §14, distinguish zero from unavailable.
+   */
+  if (isUnavailable(panel) || isUnavailable(found))
+    return (
+      <ServiceUnavailable retryPath={`/admin/moderation-cases/${caseId}`} />
+    );
   if (panel === null) notFound();
-
-  const found = await fetchModerationCase(session, caseId);
+  // A case that genuinely is not there still answers `notFound()`, which is the
+  // whole point of separating the two.
   if (found === null) notFound();
 
   const closed = found.status === "CLOSED";

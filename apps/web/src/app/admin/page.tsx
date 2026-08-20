@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../service-unavailable";
+import { isUnavailable, orUnavailable } from "../unavailable";
+
 import { fetchAdminPanel, fetchAnalytics } from "../../platform/api";
 import {
   ACTIONABLE_HEADING,
@@ -50,14 +53,28 @@ export default async function AdminDashboardPage({
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const panel = await fetchAdminPanel(session);
-  // Not Enabled, not authorized, or not in Admin context. One answer for all
-  // three, exactly as the API gives one.
+  const panel = await orUnavailable(fetchAdminPanel(session));
+  /*
+   * Two answers where there was one. `notFound()` answered both, so during an
+   * outage every Admin route said the Admin panel does not exist — the same claim the
+   * API deliberately makes to somebody who is not an Admin, which is exactly
+   * why it must not also be made to somebody who is.
+   */
+  if (isUnavailable(panel)) return <ServiceUnavailable retryPath="/admin" />;
   if (panel === null) notFound();
 
   const { period: raw } = await searchParams;
   const period = readPeriod(raw);
-  const analytics = await fetchAnalytics(session, period);
+  /*
+   * Wrapped because the read now throws on a 5xx rather than answering `null`.
+   * The two existing `analytics === null` branches already said "unavailable"
+   * rather than showing zero — UX-0006 §14's "distinguish zero from
+   * unavailable" was honoured here — so this keeps that reaching them instead
+   * of letting the failure take the moderation surfaces down with it, which
+   * §15's last line forbids.
+   */
+  const read = await orUnavailable(fetchAnalytics(session, period));
+  const analytics = isUnavailable(read) ? null : read;
 
   const openCases = analytics?.moderationCases.status.OPEN ?? 0;
   const destinationWork = Object.values(

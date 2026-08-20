@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../../../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../../../../unavailable";
+
 import { fetchDestinationManagement } from "../../../../../../business/api";
 import {
   DESTINATION_ENTRY_LABELS,
@@ -46,11 +49,20 @@ export default async function DestinationPage({
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const entry = await fetchDestinationManagement(
-    session,
-    businessId,
-    offeringId
+  const entry = await orUnavailable(
+    fetchDestinationManagement(session, businessId, offeringId)
   );
+  /*
+   * Two answers where there was one. `notFound()` answered both, and saying
+   * "this is not here" about something that is there is the one claim a failed
+   * read must never make — UX-0006 §14, distinguish zero from unavailable.
+   */
+  if (isUnavailable(entry))
+    return (
+      <ServiceUnavailable
+        retryPath={`/businesses/${businessId}/offerings/${offeringId}/destination`}
+      />
+    );
   if (entry === null) notFound();
 
   const { destination, entries, offering } = entry;

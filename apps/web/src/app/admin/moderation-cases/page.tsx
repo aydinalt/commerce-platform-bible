@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../unavailable";
+
 import { fetchAdminPanel, fetchModerationCases } from "../../../platform/api";
 import {
   NO_CASES,
@@ -37,14 +40,23 @@ export default async function ModerationCasesPage({
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const panel = await fetchAdminPanel(session);
+  const panel = await orUnavailable(fetchAdminPanel(session));
+  /*
+   * Two answers where there was one. `notFound()` answered both, so during an
+   * outage every Admin route said the Admin panel does not exist — the same claim the
+   * API deliberately makes to somebody who is not an Admin, which is exactly
+   * why it must not also be made to somebody who is.
+   */
+  if (isUnavailable(panel))
+    return <ServiceUnavailable retryPath="/admin/moderation-cases" />;
   if (panel === null) notFound();
 
   const { status: raw } = await searchParams;
   const status = FILTERS.includes(raw as "OPEN" | "CLOSED")
     ? (raw as "OPEN" | "CLOSED")
     : "OPEN";
-  const cases = await fetchModerationCases(session, status);
+  const read = await orUnavailable(fetchModerationCases(session, status));
+  const cases = isUnavailable(read) ? null : read;
 
   return (
     <main lang="en">

@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../../../unavailable";
+
 import {
   fetchDashboard,
   fetchOfferingContent
@@ -47,9 +50,20 @@ export default async function OfferingPage({
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
   const [content, dashboard] = await Promise.all([
-    fetchOfferingContent(session, businessId, offeringId),
-    fetchDashboard(session, businessId)
+    orUnavailable(fetchOfferingContent(session, businessId, offeringId)),
+    orUnavailable(fetchDashboard(session, businessId))
   ]);
+  /*
+   * Two answers where there was one. `notFound()` answered both, and saying
+   * "this is not here" about something that is there is the one claim a failed
+   * read must never make — UX-0006 §14, distinguish zero from unavailable.
+   */
+  if (isUnavailable(content) || isUnavailable(dashboard))
+    return (
+      <ServiceUnavailable
+        retryPath={`/businesses/${businessId}/offerings/${offeringId}`}
+      />
+    );
   if (content === null || dashboard === null) notFound();
 
   const managed = LIFECYCLE_GROUPS.flatMap(

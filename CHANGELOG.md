@@ -10,6 +10,51 @@ This project follows the principles of:
 
 ---
 
+## [3.9.0] - 2026-08-19
+
+### Fixed
+
+- **During a database outage the platform told a Business owner their own
+  Business does not exist, and an Admin that the Admin panel does not exist.**
+  One line, `if (!response.ok) return null;`, appeared thirteen times across the
+  two authenticated api layers and collapsed "not here or not yours" into "the
+  API did not answer". Thirteen pages then turned that into `notFound()`.
+- The correction-notices region rendered **nothing** on a failed read, under a
+  comment explaining that an empty list "would say nothing needs your attention,
+  which is not what a failed read means". Rendering nothing says the same thing.
+- The Create Offering control vanished when the catalogue could not be read,
+  which reads as a permission being withdrawn rather than a temporary failure.
+
+### Added
+
+- `absentUnlessUnavailable`, which throws on `5xx` and keeps `4xx` meaning
+  absent — `401`, `403` and `404` refuse without confirming existence, and
+  turning them into "unavailable" would leak that there is something there.
+- `orUnavailable` and `isUnavailable`, carrying the third answer as a symbol
+  rather than another `null`, because the defect was two facts sharing a value.
+- A bounded authenticated unavailable surface that lists nothing, counts
+  nothing and offers no action — UX-0006 §14's "distinguish zero from
+  unavailable" and both documents' "actions remain unavailable until the
+  authoritative target state is resolved".
+
+### Verified
+
+- 93 test files, 852 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build. Six
+  mutations run. **One passed, and correctly**: three comments claimed the order
+  of the two checks was the requirement, and it is not — they are mutually
+  exclusive. The comments are corrected rather than deleted.
+
+### Known
+
+- Reads only. UX-0005 §15's failed-save and failed-action lines concern the
+  mutation paths and were not re-examined.
+- UX-0003 §16, UX-0004 §14, UX-0008 §14 and UX-0009 §18 remain queued.
+- Still no `fetch` timeout anywhere in the web application: 27 call sites, 0
+  with a signal, so a hanging API reaches none of these surfaces.
+
+---
+
 ## [3.8.0] - 2026-08-19
 
 ### Added

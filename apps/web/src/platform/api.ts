@@ -14,6 +14,8 @@ import {
   type ModerationCase
 } from "@commerce/contracts";
 
+import { absentUnlessUnavailable } from "../api-error";
+
 import { SESSION_COOKIE } from "../identity/api";
 
 function apiBaseUrl(): string {
@@ -48,7 +50,7 @@ export async function fetchAdminPanel(
     cache: "no-store",
     headers: adminHeaders(session)
   });
-  if (!response.ok) return null;
+  if (!response.ok) return absentUnlessUnavailable(response, "ADMIN_PANEL");
   return adminPanelSchema.parse(await response.json());
 }
 
@@ -67,7 +69,8 @@ export async function fetchModerationCases(
     `${apiBaseUrl()}/admin/moderation-cases${status === null ? "" : `?status=${status}`}`,
     { cache: "no-store", headers: adminHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "MODERATION_CASES");
   return moderationCasesSchema.parse(await response.json()).cases;
 }
 
@@ -79,7 +82,7 @@ export async function fetchModerationCase(
     `${apiBaseUrl()}/admin/moderation-cases/${caseId}`,
     { cache: "no-store", headers: adminHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok) return absentUnlessUnavailable(response, "MODERATION_CASE");
   return moderationCaseSchema.parse(await response.json());
 }
 
@@ -97,7 +100,8 @@ export async function fetchDestinationWorkload(
     `${apiBaseUrl()}/admin/offerings/affiliate-destinations/workload`,
     { cache: "no-store", headers: adminHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "ADMIN_DESTINATIONS");
   return destinationWorkloadSchema.parse(await response.json()).items;
 }
 
@@ -110,7 +114,8 @@ export async function fetchCategories(
     cache: "no-store",
     headers: adminHeaders(session)
   });
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "ADMIN_CATEGORIES");
   return categoriesSchema.parse(await response.json()).categories;
 }
 
@@ -123,7 +128,8 @@ export async function fetchAttributes(
     cache: "no-store",
     headers: adminHeaders(session)
   });
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "ADMIN_ATTRIBUTES");
   return attributesSchema.parse(await response.json()).attributes;
 }
 
@@ -196,6 +202,6 @@ export async function fetchAnalytics(
     `${apiBaseUrl()}/admin/analytics?period=${period}`,
     { cache: "no-store", headers: adminHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok) return absentUnlessUnavailable(response, "ADMIN_ANALYTICS");
   return analyticsSchema.parse(await response.json());
 }

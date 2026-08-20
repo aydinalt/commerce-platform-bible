@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../unavailable";
+
 import { fetchAdminPanel, fetchCategories } from "../../../platform/api";
 import {
   DOMAIN_LABELS,
@@ -44,10 +47,22 @@ export default async function CategoriesPage() {
   const session = jar.get(SESSION_COOKIE)?.value;
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
-  const panel = await fetchAdminPanel(session);
+  const panel = await orUnavailable(fetchAdminPanel(session));
+  /*
+   * Two answers where there was one. `notFound()` answered both, so during an
+   * outage every Admin route said the Admin panel does not exist — the same claim the
+   * API deliberately makes to somebody who is not an Admin, which is exactly
+   * why it must not also be made to somebody who is.
+   */
+  if (isUnavailable(panel))
+    return <ServiceUnavailable retryPath="/admin/categories" />;
   if (panel === null) notFound();
 
-  const categories = await fetchCategories(session);
+  // `null` and unavailable arrive at the same message here, which was already
+  // honest: "the catalogue could not be loaded" is true of both and claims
+  // nothing about what the catalogue contains.
+  const read = await orUnavailable(fetchCategories(session));
+  const categories = isUnavailable(read) ? null : read;
 
   return (
     <main lang="en">

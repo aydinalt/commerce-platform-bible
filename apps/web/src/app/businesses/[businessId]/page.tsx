@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { ServiceUnavailable } from "../../service-unavailable";
+import { isUnavailable, orUnavailable } from "../../unavailable";
+
 import {
   fetchAssignableCategories,
   fetchCorrectionNotices,
@@ -43,10 +46,28 @@ export default async function BusinessDashboardPage({
   if (session === undefined) redirect(AUTH_ROUTES.login);
 
   const [dashboard, notices, categories] = await Promise.all([
-    fetchDashboard(session, businessId),
-    fetchCorrectionNotices(session, businessId),
-    fetchAssignableCategories()
+    orUnavailable(fetchDashboard(session, businessId)),
+    orUnavailable(fetchCorrectionNotices(session, businessId)),
+    orUnavailable(fetchAssignableCategories())
   ]);
+
+  /*
+   * Unavailable and absent are now two answers rather than one.
+   *
+   * `notFound()` used to answer both, so during an outage this page told the
+   * owner of a Business that their Business does not exist — the boldest claim
+   * available, and indistinguishable from the deliberate answer the API gives
+   * somebody with no standing to learn it exists. UX-0006 §14 states the rule
+   * in five words: distinguish zero from unavailable.
+   *
+   * **Only the Dashboard gates the page.** UX-0006 §15 is explicit that a
+   * failure "does not block unrelated actions where their data is available",
+   * so a notices read that fails must not take the inventory down with it. The
+   * two secondary reads degrade in place instead, further down.
+   */
+  if (isUnavailable(dashboard))
+    return <ServiceUnavailable retryPath={`/businesses/${businessId}`} />;
+
   if (dashboard === null) notFound();
 
   const { business, inventory } = dashboard;
@@ -83,10 +104,25 @@ export default async function BusinessDashboardPage({
       {/* §12. Placed before the inventory, because a notice is something the
           platform asked of this Business and the inventory is what the
           Business is doing — a person arriving after a restriction should
-          find the question before the work. Rendered only where the notices
-          could actually be read: an empty list would say "nothing needs your
-          attention", which is not what a failed read means. */}
-      {notices === null ? null : (
+          find the question before the work. */}
+      {/*
+       * Three outcomes, and they used to be two.
+       *
+       * The comment here previously said the notices were "rendered only where
+       * they could actually be read: an empty list would say nothing needs your
+       * attention, which is not what a failed read means" — and then rendered
+       * **nothing at all**, which says the same thing to the person looking at
+       * the screen. The distinction was made in the code and not in the output.
+       *
+       * A person with a correction notice waiting is the one who can least
+       * afford to be told there is none.
+       */}
+      {isUnavailable(notices) ? (
+        <p role="status">
+          Düzeltme bildirimleriniz şu anda okunamadı. Bekleyen bir bildiriminiz
+          olup olmadığını görmek için sayfayı yenileyin.
+        </p>
+      ) : notices === null ? null : (
         <CorrectionNotices businessId={business.id} notices={notices} />
       )}
 
@@ -108,12 +144,23 @@ export default async function BusinessDashboardPage({
           it is not — the emptiest screen is where an unavailable action is
           most tempting to show and least honest. */}
       {/* Creation needs somewhere to put the Offering. Where the catalogue
-          could not be read, or offers nothing assignable, the form is absent
-          rather than shown with an empty list — a picker with no options is a
-          dead end dressed as a choice. */}
-      {offersCreate(business.moderationStatus) &&
-      categories !== null &&
-      categories.length > 0 ? (
+          offers nothing assignable, the form is absent rather than shown with
+          an empty list — a picker with no options is a dead end dressed as a
+          choice. */}
+      {/* But a catalogue that could not be *read* is a different thing, and
+          used to look identical: the control simply vanished, which reads as
+          "you may not create an Offering" rather than "ask again in a moment".
+          §14 keeps an unavailable action unavailable; it does not ask the
+          platform to pretend the permission is gone. */}
+      {offersCreate(business.moderationStatus) && isUnavailable(categories) ? (
+        <p role="status">
+          Kategoriler şu anda okunamadı, bu yüzden yeni ilan oluşturma geçici
+          olarak kullanılamıyor.
+        </p>
+      ) : offersCreate(business.moderationStatus) &&
+        !isUnavailable(categories) &&
+        categories !== null &&
+        categories.length > 0 ? (
         <CreateOffering
           action={createDraftOffering.bind(null, business.id)}
           categories={categories}

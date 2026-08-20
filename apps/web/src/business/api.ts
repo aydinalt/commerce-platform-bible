@@ -17,6 +17,8 @@ import {
   type UpdateBusinessInformation
 } from "@commerce/contracts";
 
+import { absentUnlessUnavailable } from "../api-error";
+
 import { SESSION_COOKIE } from "../identity/api";
 
 function apiBaseUrl(): string {
@@ -52,7 +54,7 @@ export async function fetchDashboard(
     `${apiBaseUrl()}/businesses/${businessId}/dashboard`,
     { cache: "no-store", headers: ownerHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok) return absentUnlessUnavailable(response, "DASHBOARD");
   return businessDashboardSchema.parse(await response.json());
 }
 
@@ -152,7 +154,8 @@ export async function fetchAssignableCategories(): Promise<
     cache: "no-store",
     headers: { accept: "application/json" }
   });
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "BUSINESS_INFORMATION");
   return assignableCategoriesSchema.parse(await response.json()).categories;
 }
 
@@ -175,7 +178,8 @@ export async function fetchCorrectionNotices(
     `${apiBaseUrl()}/businesses/${businessId}/correction-notices`,
     { cache: "no-store", headers: ownerHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "CORRECTION_NOTICES");
   return correctionNoticesSchema.parse(await response.json()).notices;
 }
 
@@ -229,7 +233,8 @@ export async function fetchOfferingContent(
     `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/content`,
     { cache: "no-store", headers: ownerHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "ASSIGNABLE_CATEGORIES");
   return editableOfferingContentSchema.parse(await response.json());
 }
 
@@ -282,7 +287,8 @@ export async function fetchDestinationManagement(
     `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/affiliate-destination/management`,
     { cache: "no-store", headers: ownerHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "EDITABLE_OFFERING");
   return destinationManagementEntrySchema.parse(await response.json());
 }
 
@@ -334,7 +340,8 @@ export async function fetchInformation(
     `${apiBaseUrl()}/businesses/${businessId}/information`,
     { cache: "no-store", headers: ownerHeaders(session) }
   );
-  if (!response.ok) return null;
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "DESTINATION_ENTRY");
   return businessInformationSchema.parse(await response.json());
 }
 
