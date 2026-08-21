@@ -10,6 +10,46 @@ This project follows the principles of:
 
 ---
 
+## [3.10.0] - 2026-08-19
+
+### Added
+
+- A ten-second budget on every read the web application makes of the API,
+  closing the last untimed dependency edge in the repository. Postmark had ten
+  seconds, the Chat provider eight, PostgreSQL five and two — and the edge a
+  person actually waits on had none, across 27 call sites. Node's `fetch` has no
+  default.
+- `fetchWithBudget`, `apiTimeoutMs` and `DEFAULT_API_TIMEOUT_MS` in
+  `apps/web/src/api-error.ts`, with `API_TIMEOUT_MS` for a deployment to set.
+
+### Changed
+
+- A timed-out read raises `ApiRequestError` with `504`, which
+  `isApiUnavailable` already covers — so a hang reaches the bounded surfaces I23
+  and I24 built with no new branch anywhere.
+- Sixteen reads are budgeted; **the eight writes deliberately are not.**
+  Aborting a write does not undo it, so reporting a timeout as a failure would
+  claim an outcome this application does not know.
+
+### Verified
+
+- 94 test files, 860 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build. Six
+  mutations run, each caught. The central case drives a `fetch` that resolves
+  only when its signal aborts, because a rejected promise would prove nothing.
+
+### Known
+
+- Ten seconds is a judgement, not a measurement — the third such number after
+  `DATABASE_POOL_MAX` and `statement_timeout`. R3.4 asks for all of them under
+  load.
+- Nothing counts web timeouts. The web application publishes no metrics at all,
+  so a deployment cannot see whether the number is right; §12.2 has never been
+  read against it.
+- UX-0003 §16, UX-0004 §14, UX-0008 §14 and UX-0009 §18 remain queued.
+
+---
+
 ## [3.9.0] - 2026-08-19
 
 ### Fixed

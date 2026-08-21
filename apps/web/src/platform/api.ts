@@ -14,7 +14,7 @@ import {
   type ModerationCase
 } from "@commerce/contracts";
 
-import { absentUnlessUnavailable } from "../api-error";
+import { absentUnlessUnavailable, fetchWithBudget } from "../api-error";
 
 import { SESSION_COOKIE } from "../identity/api";
 
@@ -46,10 +46,14 @@ function adminHeaders(session: string): Record<string, string> {
 export async function fetchAdminPanel(
   session: string
 ): Promise<AdminPanel | null> {
-  const response = await fetch(`${apiBaseUrl()}/admin/panel`, {
-    cache: "no-store",
-    headers: adminHeaders(session)
-  });
+  const response = await fetchWithBudget(
+    `${apiBaseUrl()}/admin/panel`,
+    {
+      cache: "no-store",
+      headers: adminHeaders(session)
+    },
+    "ADMIN_PANEL"
+  );
   if (!response.ok) return absentUnlessUnavailable(response, "ADMIN_PANEL");
   return adminPanelSchema.parse(await response.json());
 }
@@ -65,9 +69,10 @@ export async function fetchModerationCases(
   session: string,
   status: "OPEN" | "CLOSED" | null
 ): Promise<ModerationCase[] | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/admin/moderation-cases${status === null ? "" : `?status=${status}`}`,
-    { cache: "no-store", headers: adminHeaders(session) }
+    { cache: "no-store", headers: adminHeaders(session) },
+    "MODERATION_CASES"
   );
   if (!response.ok)
     return absentUnlessUnavailable(response, "MODERATION_CASES");
@@ -78,9 +83,10 @@ export async function fetchModerationCase(
   session: string,
   caseId: string
 ): Promise<ModerationCase | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/admin/moderation-cases/${caseId}`,
-    { cache: "no-store", headers: adminHeaders(session) }
+    { cache: "no-store", headers: adminHeaders(session) },
+    "MODERATION_CASE"
   );
   if (!response.ok) return absentUnlessUnavailable(response, "MODERATION_CASE");
   return moderationCaseSchema.parse(await response.json());
@@ -96,9 +102,10 @@ export async function fetchModerationCase(
 export async function fetchDestinationWorkload(
   session: string
 ): Promise<DestinationWorkloadItem[] | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/admin/offerings/affiliate-destinations/workload`,
-    { cache: "no-store", headers: adminHeaders(session) }
+    { cache: "no-store", headers: adminHeaders(session) },
+    "ADMIN_DESTINATIONS"
   );
   if (!response.ok)
     return absentUnlessUnavailable(response, "ADMIN_DESTINATIONS");
@@ -110,10 +117,14 @@ export async function fetchDestinationWorkload(
 export async function fetchCategories(
   session: string
 ): Promise<CategoryResponse[] | null> {
-  const response = await fetch(`${apiBaseUrl()}/admin/categories`, {
-    cache: "no-store",
-    headers: adminHeaders(session)
-  });
+  const response = await fetchWithBudget(
+    `${apiBaseUrl()}/admin/categories`,
+    {
+      cache: "no-store",
+      headers: adminHeaders(session)
+    },
+    "ADMIN_CATEGORIES"
+  );
   if (!response.ok)
     return absentUnlessUnavailable(response, "ADMIN_CATEGORIES");
   return categoriesSchema.parse(await response.json()).categories;
@@ -124,10 +135,14 @@ export async function fetchCategories(
 export async function fetchAttributes(
   session: string
 ): Promise<AttributeResponse[] | null> {
-  const response = await fetch(`${apiBaseUrl()}/admin/attributes`, {
-    cache: "no-store",
-    headers: adminHeaders(session)
-  });
+  const response = await fetchWithBudget(
+    `${apiBaseUrl()}/admin/attributes`,
+    {
+      cache: "no-store",
+      headers: adminHeaders(session)
+    },
+    "ADMIN_ATTRIBUTES"
+  );
   if (!response.ok)
     return absentUnlessUnavailable(response, "ADMIN_ATTRIBUTES");
   return attributesSchema.parse(await response.json()).attributes;
@@ -198,9 +213,10 @@ export async function fetchAnalytics(
   session: string,
   period: Analytics["period"]
 ): Promise<Analytics | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/admin/analytics?period=${period}`,
-    { cache: "no-store", headers: adminHeaders(session) }
+    { cache: "no-store", headers: adminHeaders(session) },
+    "ADMIN_ANALYTICS"
   );
   if (!response.ok) return absentUnlessUnavailable(response, "ADMIN_ANALYTICS");
   return analyticsSchema.parse(await response.json());

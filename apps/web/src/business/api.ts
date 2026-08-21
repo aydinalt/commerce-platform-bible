@@ -17,7 +17,7 @@ import {
   type UpdateBusinessInformation
 } from "@commerce/contracts";
 
-import { absentUnlessUnavailable } from "../api-error";
+import { absentUnlessUnavailable, fetchWithBudget } from "../api-error";
 
 import { SESSION_COOKIE } from "../identity/api";
 
@@ -50,9 +50,10 @@ export async function fetchDashboard(
   session: string,
   businessId: string
 ): Promise<BusinessDashboardResponse | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/businesses/${businessId}/dashboard`,
-    { cache: "no-store", headers: ownerHeaders(session) }
+    { cache: "no-store", headers: ownerHeaders(session) },
+    "DASHBOARD"
   );
   if (!response.ok) return absentUnlessUnavailable(response, "DASHBOARD");
   return businessDashboardSchema.parse(await response.json());
@@ -150,10 +151,14 @@ async function refusalOf(
 export async function fetchAssignableCategories(): Promise<
   AssignableCategory[] | null
 > {
-  const response = await fetch(`${apiBaseUrl()}/categories/assignable`, {
-    cache: "no-store",
-    headers: { accept: "application/json" }
-  });
+  const response = await fetchWithBudget(
+    `${apiBaseUrl()}/categories/assignable`,
+    {
+      cache: "no-store",
+      headers: { accept: "application/json" }
+    },
+    "ASSIGNABLE_CATEGORIES"
+  );
   if (!response.ok)
     return absentUnlessUnavailable(response, "BUSINESS_INFORMATION");
   return assignableCategoriesSchema.parse(await response.json()).categories;
@@ -174,9 +179,10 @@ export async function fetchCorrectionNotices(
   session: string,
   businessId: string
 ): Promise<CorrectionNotice[] | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/businesses/${businessId}/correction-notices`,
-    { cache: "no-store", headers: ownerHeaders(session) }
+    { cache: "no-store", headers: ownerHeaders(session) },
+    "CORRECTION_NOTICES"
   );
   if (!response.ok)
     return absentUnlessUnavailable(response, "CORRECTION_NOTICES");
@@ -229,9 +235,10 @@ export async function fetchOfferingContent(
   businessId: string,
   offeringId: string
 ): Promise<EditableOfferingContent | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/content`,
-    { cache: "no-store", headers: ownerHeaders(session) }
+    { cache: "no-store", headers: ownerHeaders(session) },
+    "EDITABLE_OFFERING"
   );
   if (!response.ok)
     return absentUnlessUnavailable(response, "ASSIGNABLE_CATEGORIES");
@@ -283,9 +290,10 @@ export async function fetchDestinationManagement(
   businessId: string,
   offeringId: string
 ): Promise<DestinationManagementEntry | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/businesses/${businessId}/offerings/${offeringId}/affiliate-destination/management`,
-    { cache: "no-store", headers: ownerHeaders(session) }
+    { cache: "no-store", headers: ownerHeaders(session) },
+    "DESTINATION_ENTRY"
   );
   if (!response.ok)
     return absentUnlessUnavailable(response, "EDITABLE_OFFERING");
@@ -336,9 +344,10 @@ export async function fetchInformation(
   session: string,
   businessId: string
 ): Promise<BusinessInformationResponse | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/businesses/${businessId}/information`,
-    { cache: "no-store", headers: ownerHeaders(session) }
+    { cache: "no-store", headers: ownerHeaders(session) },
+    "BUSINESS_INFORMATION"
   );
   if (!response.ok)
     return absentUnlessUnavailable(response, "DESTINATION_ENTRY");

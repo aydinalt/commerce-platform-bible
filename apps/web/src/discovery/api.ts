@@ -9,7 +9,7 @@ import {
   type SearchViewResponse
 } from "@commerce/contracts";
 
-import { ApiRequestError } from "../api-error";
+import { ApiRequestError, fetchWithBudget } from "../api-error";
 
 import type { BrowseEntry, SearchEntry } from "./entry";
 
@@ -42,10 +42,14 @@ function apiBaseUrl(): string {
  * route that no longer exists.
  */
 export async function fetchBrowseRoots(): Promise<BrowseRoots> {
-  const response = await fetch(`${apiBaseUrl()}/discovery/browse`, {
-    cache: "no-store",
-    headers: { accept: "application/json" }
-  });
+  const response = await fetchWithBudget(
+    `${apiBaseUrl()}/discovery/browse`,
+    {
+      cache: "no-store",
+      headers: { accept: "application/json" }
+    },
+    "BROWSE_ROOTS"
+  );
   if (!response.ok) throw new ApiRequestError("BROWSE_ROOTS", response.status);
   return browseRootsSchema.parse(await response.json());
 }
@@ -59,12 +63,19 @@ export async function fetchBrowseRoots(): Promise<BrowseRoots> {
  * else's Results or recording a Start that nobody made.
  */
 async function post(path: string, body: unknown): Promise<unknown> {
-  const response = await fetch(`${apiBaseUrl()}${path}`, {
-    body: JSON.stringify(body),
-    cache: "no-store",
-    headers: { accept: "application/json", "content-type": "application/json" },
-    method: "POST"
-  });
+  const response = await fetchWithBudget(
+    `${apiBaseUrl()}${path}`,
+    {
+      body: JSON.stringify(body),
+      cache: "no-store",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json"
+      },
+      method: "POST"
+    },
+    "DISCOVERY"
+  );
   if (!response.ok) throw new ApiRequestError("DISCOVERY", response.status);
   return response.json();
 }
@@ -102,9 +113,10 @@ export async function fetchSearchView(
 export async function fetchOfferingPresentation(
   slug: string
 ): Promise<OfferingPresentationResponse | null> {
-  const response = await fetch(
+  const response = await fetchWithBudget(
     `${apiBaseUrl()}/offerings/${encodeURIComponent(slug)}`,
-    { cache: "no-store", headers: { accept: "application/json" } }
+    { cache: "no-store", headers: { accept: "application/json" } },
+    "OFFERING"
   );
   if (response.status === 404) return null;
   if (!response.ok) throw new ApiRequestError("OFFERING", response.status);
