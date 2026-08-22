@@ -1,12 +1,13 @@
 import Link from "next/link";
 
 import { REFUSAL_COPY } from "../../../identity/outcome";
+import { LINKS, TITLES } from "../../../identity/copy";
 import { AUTH_ROUTES } from "../../../identity/session";
 import { confirm } from "../actions";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Finish creating your account" };
+export const metadata: Metadata = { title: TITLES.confirm };
 
 /**
  * The proof link's destination (UX-0008 §6.2, §6.3).
@@ -32,16 +33,16 @@ export default async function ConfirmRegistrationPage({
       : await confirm(token);
 
   return (
-    <main lang="en">
-      <h1>Finish creating your account</h1>
+    <main>
+      <h1>{TITLES.confirm}</h1>
       <p role="alert">
         {state.kind === "REFUSED"
           ? REFUSAL_COPY[state.reason]
           : REFUSAL_COPY.TOKEN}
       </p>
       <p>
-        You can <Link href={AUTH_ROUTES.register}>register again</Link> to
-        receive a new link.
+        Yeni bir bağlantı almak için{" "}
+        <Link href={AUTH_ROUTES.register}>{LINKS.registerAgain}</Link>.
       </p>
     </main>
   );

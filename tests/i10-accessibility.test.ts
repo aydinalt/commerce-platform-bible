@@ -23,7 +23,23 @@ function routes(): { file: string; route: string }[] {
   return found.sort((a, b) => a.route.localeCompare(b.route));
 }
 
-const ENGLISH = /^\/(login|register|recover|account|admin|businesses)(\/|$)/u;
+/**
+ * The routes still written in English.
+ *
+ * **This list is a record of an accident being cleaned up, and it only
+ * shrinks.** The application declares `<html lang="tr">` and the public journey
+ * is Turkish; eighteen surfaces were nonetheless written in English and marked
+ * `lang="en"`, so a person who searched in Turkish and then signed in changed
+ * language mid-journey.
+ *
+ * I27 translated UX-0008's six authentication surfaces, which is why `login`,
+ * `register`, `recover` and `account` are no longer here. The Business
+ * Dashboard and Admin remain and are the next increments in the Owner's
+ * sequence. When they land this becomes an empty pattern and the case below
+ * still holds — a route marked English while written in Turkish fails just as
+ * loudly as the reverse.
+ */
+const ENGLISH = /^\/(admin|businesses)(\/|$)/u;
 
 /**
  * The accessibility properties, asserted as properties.

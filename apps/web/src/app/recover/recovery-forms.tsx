@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { PASSWORD_MIN_LENGTH } from "@commerce/contracts";
 
+import { ACTIONS, FIELDS, SENT, TITLES } from "../../identity/copy";
 import { IDLE, REFUSAL_COPY, type AuthState } from "../../identity/outcome";
 
 /**
@@ -22,8 +23,8 @@ export function BeginRecoveryForm({
   return (
     <form action={dispatch} noValidate>
       <fieldset disabled={pending}>
-        <legend>Reset your password</legend>
-        <label htmlFor="email">Email address</label>
+        <legend>{TITLES.recover}</legend>
+        <label htmlFor="email">{FIELDS.email}</label>
         <input
           aria-invalid={fields.email ? true : undefined}
           autoComplete="email"
@@ -33,17 +34,14 @@ export function BeginRecoveryForm({
           type="email"
         />
         {fields.email ? <p role="alert">{fields.email.join(" ")}</p> : null}
-        <button type="submit">{pending ? "Working…" : "Send link"}</button>
+        <button type="submit">
+          {pending ? ACTIONS.pending : ACTIONS.sendLink}
+        </button>
       </fieldset>
       {state.kind === "REFUSED" ? (
         <p role="alert">{REFUSAL_COPY[state.reason]}</p>
       ) : null}
-      {state.kind === "SENT" ? (
-        <p role="status">
-          If that address has an account, a link to set a new password is on its
-          way.
-        </p>
-      ) : null}
+      {state.kind === "SENT" ? <p role="status">{SENT.recovery}</p> : null}
     </form>
   );
 }
@@ -69,9 +67,9 @@ export function ResetPasswordForm({
   return (
     <form action={dispatch} noValidate>
       <fieldset disabled={pending}>
-        <legend>Set a new password</legend>
+        <legend>{TITLES.reset}</legend>
         <input name="token" type="hidden" value={token} />
-        <label htmlFor="password">New password</label>
+        <label htmlFor="password">{FIELDS.password}</label>
         <input
           aria-invalid={fields.password ? true : undefined}
           id="password"
@@ -84,7 +82,7 @@ export function ResetPasswordForm({
           <p role="alert">{fields.password.join(" ")}</p>
         ) : null}
         <button type="submit">
-          {pending ? "Working…" : "Set new password"}
+          {pending ? ACTIONS.pending : ACTIONS.setPassword}
         </button>
       </fieldset>
       {state.kind === "REFUSED" ? (

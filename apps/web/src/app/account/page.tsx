@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { readOwnedBusinesses, readSession } from "../../identity/api";
+import { ACCOUNT, ACTIONS, REFUSALS, TITLES } from "../../identity/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../identity/session";
 import { logout } from "../login/actions";
 import { enterAdmin, enterBusiness } from "./actions";
@@ -45,39 +46,36 @@ export default async function AccountPage({
   const { entry } = await searchParams;
 
   return (
-    <main lang="en">
-      <h1>Your account</h1>
+    <main>
+      <h1>{TITLES.account}</h1>
 
       {entry === "refused" ? (
-        <p role="alert">
-          That context could not be entered. Nothing has changed.
-        </p>
+        <p role="alert">{REFUSALS.contextRefused}</p>
       ) : null}
 
       <section aria-labelledby="baseline">
-        <h2 id="baseline">Keep browsing</h2>
+        <h2 id="baseline">{ACCOUNT.baselineHeading}</h2>
         {/* §8.1's first option, stated rather than implied. Doing nothing here
             is a real choice and the page says so. */}
         <p>
-          You are signed in. You can{" "}
-          <Link href="/">carry on using the public site</Link> without entering
-          any other context.
+          {ACCOUNT.keepBrowsingBefore}{" "}
+          <Link href="/">{ACCOUNT.publicSite}</Link>.
         </p>
       </section>
 
       <section aria-labelledby="businesses">
-        <h2 id="businesses">Your Businesses</h2>
+        <h2 id="businesses">{ACCOUNT.businessesHeading}</h2>
         {businesses.length === 0 ? (
           // §8.1. This page creates no Business ownership, so an empty list is
           // simply the answer — there is no offer to make one from here.
-          <p>You do not own a Business.</p>
+          <p>{ACCOUNT.noBusiness}</p>
         ) : (
           <ul>
             {businesses.map((business) => (
               <li key={business.id}>
                 <form action={enterBusiness}>
                   <input name="businessId" type="hidden" value={business.id} />
-                  <button type="submit">Manage {business.name}</button>
+                  <button type="submit">{ACTIONS.manage(business.name)}</button>
                 </form>
               </li>
             ))}
@@ -87,12 +85,12 @@ export default async function AccountPage({
 
       {session.adminAuthorized ? (
         <section aria-labelledby="admin">
-          <h2 id="admin">Platform administration</h2>
+          <h2 id="admin">{ACCOUNT.adminHeading}</h2>
           {session.adminContext ? (
-            <p>You are in Admin context.</p>
+            <p>{ACCOUNT.inAdminContext}</p>
           ) : (
             <form action={enterAdmin}>
-              <button type="submit">Enter Admin</button>
+              <button type="submit">{ACTIONS.enterAdmin}</button>
             </form>
           )}
         </section>
@@ -101,7 +99,7 @@ export default async function AccountPage({
       {/* §8.4. Logout is requestable from every authenticated context and is
           the same act in each; UX-0008 owns it wherever it is asked for. */}
       <form action={logout}>
-        <button type="submit">Sign out</button>
+        <button type="submit">{ACTIONS.logout}</button>
       </form>
     </main>
   );

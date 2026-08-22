@@ -205,9 +205,12 @@ suite("Increment I8 Authentication", () => {
 
     // The screen shows one message for a spent, expired or forged link,
     // because all three mean the same thing to the person holding it.
+    //
+    // Turkish since I27: these surfaces used to be English while the document
+    // declared `lang="tr"`, so the copy moved with them.
     expect(first.statusCode).toBe(201);
     expect(second.statusCode).toBe(400);
-    expect(REFUSAL_COPY.TOKEN).toContain("no longer valid");
+    expect(REFUSAL_COPY.TOKEN).toContain("artık geçerli değil");
   });
 
   it("enters no context for a Suspended account", async () => {

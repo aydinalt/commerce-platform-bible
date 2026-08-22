@@ -10,6 +10,50 @@ This project follows the principles of:
 
 ---
 
+## [3.12.0] - 2026-08-21
+
+### Fixed
+
+- **The application was bilingual and nobody chose it.** The root declared
+  `<html lang="tr">` and the public journey was Turkish, while eighteen surfaces
+  declared `lang="en"` and were written in English. A person searched for a
+  listing in Turkish, pressed *Giriş*, and arrived at **Sign in**.
+- UX-0008's six surfaces — sign in, register, confirm, recovery, reset, account
+  — are Turkish, and their `lang="en"` markers are gone.
+
+### Added
+
+- `apps/web/src/vocabulary.ts`: the Frozen domain terms in Turkish, in one
+  place, so three translations cannot produce three words for one concept.
+  Anchored to what Discovery and Compare have said since I4.
+- `apps/web/src/identity/copy.ts`: every string those six surfaces say,
+  **extracted rather than inlined** — which is the shape §9.2 of the design
+  foundation says real multi-language support needs.
+
+### Verified
+
+- 96 test files, 879 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build. Seven
+  mutations run, each caught.
+- Two security properties asserted rather than assumed across the translation:
+  a failed sign-in still names neither half, and a spent, expired or forged link
+  still gets one message.
+- **One test passed while it was wrong**, and is recorded: it listed English
+  words to look for and missed two entire English sentences whose first words
+  were not on the list. Rewritten to look for rendered text containing no
+  Turkish-specific letter, it caught both.
+
+### Known
+
+- Twelve surfaces remain English: the Business Dashboard's five and Admin's
+  seven. Next two increments.
+- The Turkish has not been read by a Turkish speaker other than its author.
+- `toLocaleUpperCase("tr")` is used nowhere yet; a plain `toUpperCase()` would
+  turn *ilan* into *ILAN* rather than *İLAN*.
+- §9.1 unanswered — interface-only, content too, or locale-scoped catalogue.
+
+---
+
 ## [3.11.0] - 2026-08-21
 
 ### Added

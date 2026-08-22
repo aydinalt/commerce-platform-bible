@@ -1,12 +1,13 @@
 import Link from "next/link";
 
 import { CredentialForm } from "../register/credential-form";
+import { ACTIONS, LINKS, TITLES } from "../../identity/copy";
 import { AUTH_ROUTES, returnPath } from "../../identity/session";
 import { login } from "./actions";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = { title: TITLES.login };
 
 /**
  * Sign in (UX-0008 §7).
@@ -29,20 +30,20 @@ export default async function LoginPage({
     typeof raw === "string" && returnPath(raw) !== null ? raw : undefined;
 
   return (
-    <main lang="en">
-      <h1>Sign in</h1>
+    <main>
+      <h1>{TITLES.login}</h1>
       <CredentialForm
         action={login}
-        legend="Sign in"
+        legend={TITLES.login}
         returnTo={returnTo}
-        submit="Sign in"
+        submit={ACTIONS.login}
       />
       <p>
-        Forgotten your password?{" "}
-        <Link href={AUTH_ROUTES.recover}>Reset it</Link>.
+        {LINKS.forgot} <Link href={AUTH_ROUTES.recover}>{LINKS.reset}</Link>.
       </p>
       <p>
-        New here? <Link href={AUTH_ROUTES.register}>Create an account</Link>.
+        {LINKS.newHere}{" "}
+        <Link href={AUTH_ROUTES.register}>{LINKS.register}</Link>.
       </p>
     </main>
   );

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { PASSWORD_MIN_LENGTH } from "@commerce/contracts";
 
+import { ACTIONS, FIELDS, SENT } from "../../identity/copy";
 import { IDLE, REFUSAL_COPY, type AuthState } from "../../identity/outcome";
 
 /**
@@ -46,7 +47,7 @@ export function CredentialForm({
       <fieldset disabled={pending}>
         <legend>{legend}</legend>
 
-        <label htmlFor="email">Email address</label>
+        <label htmlFor="email">{FIELDS.email}</label>
         <input
           aria-describedby={fields.email ? "email-error" : undefined}
           aria-invalid={fields.email ? true : undefined}
@@ -62,7 +63,7 @@ export function CredentialForm({
           </p>
         ) : null}
 
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password">{FIELDS.password}</label>
         <input
           aria-describedby={fields.password ? "password-error" : undefined}
           aria-invalid={fields.password ? true : undefined}
@@ -80,18 +81,13 @@ export function CredentialForm({
 
         {/* §13. The button is disabled while the step resolves, so a second
             submission cannot create a second attempt. */}
-        <button type="submit">{pending ? "Working…" : submit}</button>
+        <button type="submit">{pending ? ACTIONS.pending : submit}</button>
       </fieldset>
 
       {state.kind === "REFUSED" ? (
         <p role="alert">{REFUSAL_COPY[state.reason]}</p>
       ) : null}
-      {state.kind === "SENT" ? (
-        <p role="status">
-          Check your email. Registration is not finished until you follow the
-          link we sent.
-        </p>
-      ) : null}
+      {state.kind === "SENT" ? <p role="status">{SENT.registration}</p> : null}
     </form>
   );
 }

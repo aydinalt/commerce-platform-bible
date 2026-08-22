@@ -55,8 +55,10 @@ export function refusalFor(status: number): AuthState {
 /// What each refusal says to the person. Bounded, and never more specific than
 /// the API was willing to be.
 export const REFUSAL_COPY: Record<AuthRefusal, string> = {
-  CREDENTIALS: "That email address and password did not match.",
-  THROTTLED: "Too many attempts. Please wait a little and try again.",
-  TOKEN: "That link is no longer valid. Please request a new one.",
-  UNAVAILABLE: "Something went wrong. Please try again."
+  // Neither half is named, deliberately: saying which one was wrong would tell
+  // an attacker whether the address is registered.
+  CREDENTIALS: "E-posta adresi ve parola eşleşmedi.",
+  THROTTLED: "Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.",
+  TOKEN: "Bu bağlantı artık geçerli değil. Yeni bir bağlantı isteyin.",
+  UNAVAILABLE: "Bir sorun oldu. Lütfen tekrar deneyin."
 };

@@ -1,12 +1,13 @@
 import Link from "next/link";
 
+import { ACTIONS, LINKS, TITLES } from "../../identity/copy";
 import { AUTH_ROUTES } from "../../identity/session";
 import { register } from "./actions";
 import { CredentialForm } from "./credential-form";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Create an account" };
+export const metadata: Metadata = { title: TITLES.register };
 
 /**
  * Register (UX-0008 §6).
@@ -18,19 +19,19 @@ export const metadata: Metadata = { title: "Create an account" };
  */
 export default function RegisterPage() {
   return (
-    <main lang="en">
-      <h1>Create an account</h1>
+    <main>
+      <h1>{TITLES.register}</h1>
       <CredentialForm
         action={register}
-        legend="Create an account"
-        submit="Create account"
+        legend={TITLES.register}
+        submit={ACTIONS.createAccount}
       />
       <p>
-        Already have an account? <Link href={AUTH_ROUTES.login}>Sign in</Link>.
+        {LINKS.alreadyRegistered}{" "}
+        <Link href={AUTH_ROUTES.login}>{LINKS.login}</Link>.
       </p>
       <p>
-        Forgotten your password?{" "}
-        <Link href={AUTH_ROUTES.recover}>Reset it</Link>.
+        {LINKS.forgot} <Link href={AUTH_ROUTES.recover}>{LINKS.reset}</Link>.
       </p>
     </main>
   );
