@@ -1,15 +1,88 @@
+/*
+ * The visual design foundation.
+ *
+ * Proposed and approved in `docs/design/DESIGN_FOUNDATION_CANDIDATE.md`. This
+ * file is the single owner of every colour, size and spacing value in the
+ * application — a number that appears here appears nowhere else, so changing a
+ * decision is one edit rather than an archaeology exercise.
+ *
+ * The direction is **calm, content-first**, and it forbids things:
+ * lines rather than shadows, one accent used sparingly, hierarchy carried by
+ * type rather than by boxes. Where density would serve better than calm, this
+ * is the wrong foundation and should be replaced rather than eroded.
+ *
+ * Every colour pairing below is **measured**, not estimated, and the
+ * measurements are enforced by `tests/i26-design-foundation.test.ts` so they
+ * cannot drift back. The first version of the proposal claimed 3.1:1 for a
+ * control border that measured 1.63:1 — the test exists because a document
+ * cannot fail.
+ *
+ * One thing the proposal asked for is deliberately absent: a webfont. See the
+ * note in `layout.tsx`.
+ */
+
 :root {
+  /* Neutrals. `--border` is decorative; `--border-strong` bounds a control and
+     is therefore held to WCAG 1.4.11's 3:1 rather than to taste. */
+  --surface: #fafafa;
+  --surface-raised: #ffffff;
+  --border: #e3e5e9;
+  --border-strong: #818894;
+  --text: #16202e;
+  --text-muted: #5a6577;
+
+  /* One accent. Colour marks what is interactive or what demands attention; a
+     screen where four things are coloured has said nothing. */
+  --accent: #2c5f8a;
+  --accent-strong: #1f4767;
+  --accent-surface: #eef3f8;
+
+  /* Two states, and only two. There is no success green and no warning amber:
+     this application has three things to say about a state — it worked, it was
+     refused, it needs your attention — and a fourth colour invites a fifth. */
+  --critical: #9b2c2c;
+  --critical-surface: #fbeeee;
+  --notice: #7a5a1e;
+  --notice-surface: #fcf6e9;
+
+  /* Type. 16px body rather than 15px: the browser default, and the size at
+     which a phone will not zoom a focused input. */
+  /* The platform UI face. Not a webfont: see the note in `layout.tsx` — a
+     build-time fetch from Google would make every deployment depend on a third
+     party. This stack costs nothing, cannot shift the layout, and carries the
+     full Turkish set including the dotted and dotless *i*. */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --text-display: 1.875rem;
+  --text-heading: 1.3125rem;
+  --text-subheading: 1.0625rem;
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+
+  /* Space, 4px base. Nothing between steps — the scale exists to stop 13px and
+     27px appearing. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius: 4px;
+  --radius-sm: 2px;
+  --measure: 46rem;
+  --measure-wide: 60rem;
+
   color-scheme: light;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background: #f6f7f9;
-  color: #162033;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.6;
 }
 
 * {
@@ -20,64 +93,105 @@ body {
   margin: 0;
 }
 
+/*
+ * Layout.
+ *
+ * Mobile-first, and the only reason `--measure-wide` exists is the Admin
+ * Dashboard: moderation queues and Attribute definitions are genuinely tabular
+ * and compress badly. Every other surface reads fine at `--measure`.
+ */
 main {
   display: grid;
+  justify-items: center;
   min-height: 100vh;
-  place-items: center;
-  padding: 2rem;
+  padding: var(--space-4);
 }
 
-section {
-  max-width: 46rem;
+main > * {
+  max-width: var(--measure);
+  width: 100%;
 }
 
-p {
-  color: #526079;
-  line-height: 1.6;
+@media (min-width: 768px) {
+  main {
+    padding: var(--space-8);
+  }
 }
 
+@media (min-width: 1120px) {
+  main:has(table) > * {
+    max-width: var(--measure-wide);
+  }
+}
+
+/* Content pages start at the top; a single form is centred. */
+main:has(.listing-cards),
+main:has(.category-choices),
+main:has(table) {
+  align-content: start;
+}
+
+/* Typography */
 h1 {
-  font-size: 1.9rem;
-  line-height: 1.3;
-  margin: 0 0 1rem;
+  font-size: var(--text-display);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 var(--space-4);
 }
 
 h2 {
-  font-size: 1.05rem;
+  font-size: var(--text-heading);
   font-weight: 600;
-  margin: 2.5rem 0 0.75rem;
+  line-height: 1.3;
+  margin: var(--space-8) 0 var(--space-3);
 }
 
-.search-entry-row {
-  display: flex;
-  gap: 0.5rem;
+h3 {
+  font-size: var(--text-subheading);
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 var(--space-2);
 }
 
-.search-entry input {
-  border: 1px solid #c3cbd9;
-  border-radius: 0.5rem;
-  flex: 1;
-  font: inherit;
-  padding: 0.75rem 0.9rem;
+p {
+  margin: 0 0 var(--space-4);
 }
 
-.search-entry input[aria-invalid="true"] {
-  border-color: #a4243b;
+a {
+  color: var(--accent);
 }
 
-.search-entry [role="alert"] {
-  color: #a4243b;
-  margin: 0.5rem 0 0;
+a:hover {
+  color: var(--accent-strong);
 }
 
+/*
+ * Focus, on everything, never removed.
+ *
+ * I9 established focus visibility across 22 routes and this must not quietly
+ * undo it. The ring is the accent rather than the text colour so it reads as
+ * "this is interactive" rather than as a border that happens to be there.
+ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Button — primary, secondary, destructive */
 button {
-  background: #162033;
-  border: 1px solid #162033;
-  border-radius: 0.5rem;
-  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--surface-raised);
   cursor: pointer;
   font: inherit;
-  padding: 0.75rem 1.1rem;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
 }
 
 button:disabled {
@@ -85,34 +199,101 @@ button:disabled {
   opacity: 0.6;
 }
 
-nav ul {
+/* Secondary: the same shape, carrying no colour of its own. Category choices,
+   filters and in-table actions are all of these. */
+nav button,
+.comparison thead button,
+.preparation-notice button,
+.category-choices button {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+nav button:hover:not(:disabled),
+.comparison thead button:hover:not(:disabled),
+.preparation-notice button:hover:not(:disabled),
+.category-choices button:hover:not(:disabled) {
+  background: var(--accent-surface);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+/* Field — label, control, hint, error */
+label {
+  display: block;
+  font-size: var(--text-small);
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+input,
+select,
+textarea {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  width: 100%;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--critical);
+  border-width: 2px;
+}
+
+[role="alert"] {
+  color: var(--critical);
+  margin: var(--space-2) 0 0;
+}
+
+[role="status"] {
+  margin: var(--space-2) 0 0;
+}
+
+/* Badge — lifecycle and moderation status, always with its own word beside it */
+.badge {
+  background: var(--accent-surface);
+  border-radius: var(--radius-sm);
+  color: var(--accent-strong);
+  display: inline-block;
+  font-size: var(--text-small);
+  padding: var(--space-1) var(--space-2);
+}
+
+.badge-notice {
+  background: var(--notice-surface);
+  color: var(--notice);
+}
+
+.badge-critical {
+  background: var(--critical-surface);
+  color: var(--critical);
+}
+
+/* Search entry */
+.search-entry-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  gap: var(--space-2);
 }
 
-nav button {
-  background: #fff;
-  border-color: #c3cbd9;
-  color: #162033;
+.search-entry-row input {
+  flex: 1;
 }
 
-:focus-visible {
-  outline: 2px solid #162033;
-  outline-offset: 2px;
+.search-entry-row button {
+  flex: none;
 }
 
-main:has(.listing-cards),
-main:has(.category-choices) {
-  align-items: start;
-  place-items: start center;
-}
-
+/* Listing cards */
 .listing-cards,
-.category-choices {
+.category-choices,
+.decision-entries {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -120,67 +301,79 @@ main:has(.category-choices) {
 
 .listing-cards {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .listing-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .listing-card {
-  background: #fff;
-  border: 1px solid #dfe4ec;
-  border-radius: 0.75rem;
-  padding: 1rem 1.15rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
 }
 
 .listing-card h3 {
-  font-size: 1.05rem;
-  margin: 0 0 0.35rem;
+  margin-bottom: var(--space-1);
 }
 
 .listing-card a {
-  color: #162033;
+  color: var(--text);
+}
+
+.listing-card a:hover {
+  color: var(--accent-strong);
 }
 
 .listing-card-facts {
+  color: var(--text-muted);
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  font-size: var(--text-small);
+  gap: var(--space-2);
   margin: 0;
 }
 
-.category-choices {
+.category-choices,
+.decision-entries {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.zero-results {
-  border: 1px dashed #c3cbd9;
-  border-radius: 0.75rem;
-  padding: 1rem 1.15rem;
-}
-
-article {
-  max-width: 46rem;
+  gap: var(--space-2);
 }
 
 .category-path {
-  font-size: 0.92rem;
+  color: var(--text-muted);
+  font-size: var(--text-small);
   margin-top: 0;
 }
 
+.zero-results {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+}
+
+/* Attribute list */
 .attributes {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--space-2);
   margin: 0;
 }
 
 .attributes div {
+  border-bottom: 1px solid var(--border);
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
   justify-content: space-between;
+  padding-bottom: var(--space-2);
 }
 
 .attributes dt {
-  color: #526079;
+  color: var(--text-muted);
 }
 
 .attributes dd {
@@ -189,74 +382,93 @@ article {
 }
 
 .attribute-absent dd {
-  color: #8b97a8;
+  color: var(--text-muted);
 }
 
-.comparison {
+/*
+ * Tables, and what they become on a phone.
+ *
+ * Below `--bp-md` every table becomes a stack of labelled rows rather than
+ * scrolling sideways. A moderation queue a person cannot read on a phone is a
+ * queue that does not get worked — and horizontal scroll inside a page is the
+ * one gesture people reliably fail to discover.
+ */
+table {
   border-collapse: collapse;
   width: 100%;
 }
 
-.comparison th,
-.comparison td {
-  border-bottom: 1px solid #dfe4ec;
-  padding: 0.7rem 0.6rem;
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-3) var(--space-2);
   text-align: left;
   vertical-align: top;
 }
 
-.comparison thead th {
-  border-bottom-width: 2px;
+thead th {
+  border-bottom: 2px solid var(--border-strong);
+  font-size: var(--text-small);
+}
+
+tbody th {
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .comparison thead a {
-  color: #162033;
+  color: var(--text);
   display: block;
   font-weight: 600;
 }
 
 .comparison-business {
-  color: #526079;
+  color: var(--text-muted);
   display: block;
   font-weight: 400;
-  margin-bottom: 0.4rem;
+  margin-bottom: var(--space-1);
 }
 
-.comparison thead button {
-  background: #fff;
-  border-color: #c3cbd9;
-  color: #162033;
-  font-size: 0.85rem;
-  padding: 0.35rem 0.7rem;
+@media (max-width: 767px) {
+  .comparison thead,
+  .stacking thead {
+    border: 0;
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+  }
+
+  .comparison tr,
+  .stacking tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: block;
+    margin-bottom: var(--space-3);
+    padding: var(--space-2);
+  }
+
+  .comparison td,
+  .stacking td {
+    border: 0;
+    display: block;
+    padding: var(--space-1) 0;
+  }
 }
 
-.comparison tbody th {
-  color: #526079;
-  font-weight: 400;
-}
-
+/* Notices */
 .preparation-notice {
-  background: #eef2f8;
-  border-radius: 0.75rem;
-  margin-bottom: 1.25rem;
-  padding: 0.9rem 1.1rem;
+  background: var(--accent-surface);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
 }
 
 .preparation-notice p {
-  margin: 0 0 0.6rem;
+  margin: 0 0 var(--space-2);
 }
 
-.preparation-notice button {
-  background: #fff;
-  border-color: #c3cbd9;
-  color: #162033;
-}
-
-.decision-entries {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+article {
+  max-width: var(--measure);
 }

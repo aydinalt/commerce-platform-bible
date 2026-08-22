@@ -93,7 +93,11 @@ export function AnalyticsTable({ analytics }: { analytics: Analytics }) {
       />
 
       <h3>What people did</h3>
-      <table>
+      {/* `stacking` is what turns this into labelled rows below 768px. An
+          Admin queue that can only be read by scrolling sideways on a phone is
+          a queue that does not get worked, and horizontal scroll inside a page
+          is the one gesture people reliably fail to discover. */}
+      <table className="stacking">
         <thead>
           <tr>
             <th scope="col">Indicator</th>

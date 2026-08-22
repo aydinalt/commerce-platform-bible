@@ -84,6 +84,20 @@ export default async function BusinessDashboardPage({
           Business currently has. */}
       <header>
         <h1>{business.name}</h1>
+        {/*
+         * The status as a badge and as a sentence, which is not redundancy.
+         *
+         * The badge is the thing a person finds when scanning; the sentence is
+         * the consequence, and a badge cannot carry "some management actions are
+         * unavailable". UX-0005 §16 requires restriction to be explained without
+         * colour alone, so the word `Restricted` sits inside the badge rather
+         * than the badge's colour standing for it.
+         */}
+        <p>
+          <span className={restricted ? "badge badge-notice" : "badge"}>
+            {restricted ? "Restricted" : "Unrestricted"}
+          </span>
+        </p>
         <p>
           {restricted
             ? "This Business is Restricted. Some management actions are unavailable."

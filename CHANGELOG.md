@@ -10,6 +10,58 @@ This project follows the principles of:
 
 ---
 
+## [3.11.0] - 2026-08-21
+
+### Added
+
+- A visual design foundation — the first in the repository. No Frozen UX
+  document specifies visual design, so it was proposed in
+  `docs/design/DESIGN_FOUNDATION_CANDIDATE.md`, approved by the Owner on
+  2026-08-21 with the direction **calm, content-first**, and implemented here.
+- A token layer in `globals.css` owning every colour, size and spacing value:
+  seven colour tokens, a five-step type scale, an eight-step space scale.
+- Three breakpoints where there were none, and **both tables become stacked
+  labelled rows below 768px** rather than scrolling sideways.
+- `tests/i26-design-foundation.test.ts`, which parses the real stylesheet and
+  enforces every contrast ratio, plus what the direction forbids: no shadow, no
+  animation, no removed focus ring, no fourth colour, no fourth breakpoint.
+
+### Fixed
+
+- **A control border failed WCAG 1.4.11 at roughly 1.6:1** — in the existing
+  code *and* in the approved proposal, which published an estimated 3.1:1 for a
+  colour that measures 1.63:1. Measuring before writing caught it;
+  `--border-strong` is now `#818894` at 3.42:1.
+- **The typeface was never loaded.** `Inter` was asked for and nothing fetched
+  it, so the application rendered in whatever the visitor's system supplied.
+- **There was no responsive design.** Zero media queries application-wide.
+
+### Changed
+
+- The candidate document's colour table is corrected in place with measured
+  values and a note saying what it had claimed.
+- Body text is 16px rather than 15px — the size at which a phone will not zoom a
+  focused input.
+
+### Verified
+
+- 95 test files, 871 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build. Seven
+  mutations run, each caught.
+
+### Known
+
+- **A deviation from the approved §5, recorded rather than hidden**: no webfont
+  is loaded. `next/font/google` fetches at build time and failed the build here,
+  which would make every deployment depend on a third party. `next/font/local`
+  with committed files is the way back.
+- Nobody has seen this. Every claim is computed; no screenshot, no device, no
+  person. R4.7 remains open.
+- Dark mode absent, no `loading.tsx` so no Skeleton, and the application is
+  still bilingual across fourteen surfaces.
+
+---
+
 ## [3.10.0] - 2026-08-19
 
 ### Added
