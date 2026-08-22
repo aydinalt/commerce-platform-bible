@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { CREATE } from "../../../business/copy";
+
 import type { AssignableCategory } from "@commerce/contracts";
 
 import {
@@ -37,10 +39,10 @@ export function CreateOffering({
   return (
     <form action={dispatch} noValidate>
       <fieldset disabled={pending}>
-        <legend>Create an Offering</legend>
+        <legend>{CREATE.heading}</legend>
 
         <p>
-          <label htmlFor="title">Title</label>
+          <label htmlFor="title">{CREATE.title}</label>
           <input
             aria-invalid={fields.title ? true : undefined}
             id="title"
@@ -54,7 +56,7 @@ export function CreateOffering({
         </p>
 
         <p>
-          <label htmlFor="slug">Address</label>
+          <label htmlFor="slug">{CREATE.address}</label>
           <input
             aria-invalid={fields.slug ? true : undefined}
             id="slug"
@@ -68,7 +70,7 @@ export function CreateOffering({
         </p>
 
         <p>
-          <label htmlFor="categoryId">Category</label>
+          <label htmlFor="categoryId">{CREATE.category}</label>
           <select
             aria-invalid={fields.categoryId ? true : undefined}
             id="categoryId"

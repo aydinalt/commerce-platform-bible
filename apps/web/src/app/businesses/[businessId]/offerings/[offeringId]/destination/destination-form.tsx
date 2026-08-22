@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { DESTINATION } from "../../../../../../business/copy";
+
 import {
   ACTION_IDLE,
   type ActionState
@@ -41,7 +43,7 @@ export function DestinationForm({
         <p>{SAVE_CONSEQUENCE}</p>
 
         <p>
-          <label htmlFor="reference">Destination address</label>
+          <label htmlFor="reference">{DESTINATION.address}</label>
           <input
             aria-invalid={fields.reference ? true : undefined}
             defaultValue={reference}
@@ -59,9 +61,7 @@ export function DestinationForm({
       </fieldset>
 
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
-      {state.kind === "DONE" ? (
-        <p role="status">Saved. The platform decides again from here.</p>
-      ) : null}
+      {state.kind === "DONE" ? <p role="status">{DESTINATION.saved}</p> : null}
     </form>
   );
 }

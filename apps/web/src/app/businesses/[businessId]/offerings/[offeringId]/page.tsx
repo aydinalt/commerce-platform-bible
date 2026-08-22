@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+
+import { CONTENT } from "../../../../../business/copy";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -72,7 +74,7 @@ export default async function OfferingPage({
   if (managed === undefined) notFound();
 
   return (
-    <main lang="en">
+    <main>
       <p>
         <Link href={`/businesses/${businessId}`}>
           {dashboard.business.name}
@@ -95,8 +97,8 @@ export default async function OfferingPage({
               this Offering is not editable right now, and inventing a reason
               here would be this screen's own account of a rule it does not
               own. */}
-          <h2 id="content">Offering content</h2>
-          <p>{content.summary ?? "No summary."}</p>
+          <h2 id="content">{CONTENT.heading}</h2>
+          <p>{content.summary ?? "Özet yok."}</p>
           {content.applicableAttributes.length > 0 ? (
             <dl>
               {content.applicableAttributes.map((attribute) => (

@@ -1,5 +1,7 @@
 import type { DestinationManagementEntry } from "@commerce/contracts";
 
+import { TERMS } from "../vocabulary";
+
 type Entry = DestinationManagementEntry["entries"][number];
 type Destination = NonNullable<DestinationManagementEntry["destination"]>;
 
@@ -13,9 +15,9 @@ type Destination = NonNullable<DestinationManagementEntry["destination"]>;
  * this type can hold and none can appear on this screen by accident.
  */
 export const DESTINATION_ENTRY_LABELS: Record<Entry, string> = {
-  CREATE: "Add a destination",
-  EDIT: "Change the destination",
-  VIEW: "Destination"
+  CREATE: "Adres ekle",
+  EDIT: "Adresi değiştir",
+  VIEW: TERMS.affiliateDestination
 };
 
 /**
@@ -27,16 +29,16 @@ export const DESTINATION_ENTRY_LABELS: Record<Entry, string> = {
  * copy that implied a queue would be inventing one.
  */
 export const STATUS_COPY: Record<Destination["status"], string> = {
-  DISABLED: "Disabled by the platform.",
-  DRAFT: "Not enabled.",
-  ENABLED: "Enabled by the platform."
+  DISABLED: "Platform tarafından kapatıldı.",
+  DRAFT: "Açık değil.",
+  ENABLED: "Platform tarafından açıldı."
 };
 
 export const VALIDATION_COPY: Record<Destination["validationResult"], string> =
   {
-    INVALID: "The platform found a problem with this reference.",
-    NOT_VALIDATED: "Not checked by the platform.",
-    VALID: "Checked by the platform."
+    INVALID: "Platform bu adreste bir sorun buldu.",
+    NOT_VALIDATED: "Platform tarafından kontrol edilmedi.",
+    VALID: "Platform tarafından kontrol edildi."
   };
 
 /**
@@ -51,8 +53,8 @@ export const ELIGIBILITY_COPY: Record<
   Destination["handoffEligibility"],
   string
 > = {
-  ELIGIBLE: "Ready to hand off to.",
-  INELIGIBLE: "Not ready to hand off to."
+  ELIGIBLE: "Yönlendirmeye hazır.",
+  INELIGIBLE: "Yönlendirmeye hazır değil."
 };
 
 /**
@@ -65,7 +67,7 @@ export const ELIGIBILITY_COPY: Record<
  * afterwards would be finding out too late.
  */
 export const SAVE_CONSEQUENCE =
-  "Saving a new address returns this destination to not enabled and not checked. The platform decides again from there.";
+  "Yeni bir adres kaydetmek bu yönlendirmeyi açık değil ve kontrol edilmedi durumuna döndürür. Karar yeniden platformundur.";
 
 /**
  * Who does what, stated once so the screen never implies otherwise.
@@ -76,7 +78,7 @@ export const SAVE_CONSEQUENCE =
  * something they forgot to do.
  */
 export const PLATFORM_OWNS =
-  "Checking, enabling and disabling a destination are the platform's, not yours.";
+  "Kontrol etmek, açmak ve kapatmak platformun işidir, sizin değil.";
 
 export function offers(entries: readonly Entry[], entry: Entry): boolean {
   return entries.includes(entry);

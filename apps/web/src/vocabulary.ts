@@ -38,9 +38,20 @@
  */
 export const TERMS = {
   admin: "Yönetici",
+  /**
+   * `Yönlendirme adresi`, not `İş ortağı bağlantısı`.
+   *
+   * An Affiliate Destination is the address an Offering hands a person off to,
+   * and the owner's screen is about *where it goes* rather than about a
+   * commercial arrangement. Naming the arrangement would also promise one the
+   * platform does not model: nothing here tracks commission.
+   */
+  affiliateDestination: "Yönlendirme adresi",
   attribute: "Nitelik",
   business: "İşletme",
   category: "Kategori",
+  /** The platform asking an owner to change something (PRD-0006). */
+  correctionNotice: "Düzeltme bildirimi",
   offering: "İlan",
   user: "Kullanıcı"
 } as const;

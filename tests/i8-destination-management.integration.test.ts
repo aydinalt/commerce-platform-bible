@@ -228,7 +228,7 @@ suite("Increment I8 destination management", () => {
     expect(after.destination?.status).toBe("DRAFT");
     expect(after.destination?.validationResult).toBe("NOT_VALIDATED");
     expect(after.destination?.handoffEligibility).toBe("INELIGIBLE");
-    expect(SAVE_CONSEQUENCE).toMatch(/not enabled and not checked/iu);
+    expect(SAVE_CONSEQUENCE).toMatch(/açık değil ve kontrol edilmedi/iu);
   });
 
   it("leaves an Archived Offering's destination readable and nothing more", async () => {

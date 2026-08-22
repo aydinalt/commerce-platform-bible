@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+
+import { DASHBOARD, INFORMATION } from "../../../../business/copy";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -13,7 +15,7 @@ import { InformationForm } from "./information-form";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Business information" };
+export const metadata: Metadata = { title: DASHBOARD.informationTitle };
 
 /**
  * Managing Business Information (UX-0005 §7).
@@ -54,15 +56,15 @@ export default async function BusinessInformationPage({
   const save = saveBusinessInformation.bind(null, businessId);
 
   return (
-    <main lang="en">
+    <main>
       {/* §6.3. The active Business stays identifiable in every subarea, so a
           save is never made against a Business the person has lost track of. */}
       <p>
         <Link href={`/businesses/${businessId}`}>
-          Back to {information.name}
+          {INFORMATION.backTo(information.name)}
         </Link>
       </p>
-      <h1>Business information</h1>
+      <h1>{DASHBOARD.informationTitle}</h1>
       <InformationForm action={save} values={formValues(information)} />
     </main>
   );

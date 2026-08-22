@@ -10,6 +10,53 @@ This project follows the principles of:
 
 ---
 
+## [3.13.0] - 2026-08-21
+
+### Fixed
+
+- UX-0005's five Business Dashboard surfaces are Turkish. Second of three;
+  Admin's seven remain.
+- **Three of four eligibility labels contained the fourth as a substring.**
+  `Herkese açık değil` contains `Herkese açık`, so an assertion that a withheld
+  Offering is *not* shown as public would have passed while the screen said the
+  opposite. `INELIGIBLE`, `PENDING` and `WITHDRAWN` are reworded so no label is
+  a substring of another.
+- **`Arşivle` was a prefix of `Arşivlenmiş`**, the heading an Archived Offering
+  sits under — "this screen offers no Retire action" would have been satisfied
+  by the heading. The action is `Arşive kaldır`.
+- Nine single-word English labels — `Title`, `Address`, `Category`,
+  `Attributes`, `Saved.`, `Status`, `Checked`, `Handoff` — that three earlier
+  versions of the detector walked past.
+
+### Added
+
+- `apps/web/src/business/copy.ts` for what was left inline in the pages. The
+  refusal messages stay beside the refusal codes they map from, so a code added
+  upstream breaks the file that has to answer for it.
+- `affiliateDestination` and `correctionNotice` in the shared vocabulary.
+
+### Verified
+
+- 96 test files, 880 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build. Five
+  mutations run, each caught.
+- **The English-detector has now been wrong four times**, and each correction
+  found real defects the previous one missed. A mutation restoring
+  `<h2>Offerings</h2>` passed against the third version; dropping its two-word
+  minimum caught it and nine more.
+- Nine existing tests updated, none weakened — each asserted an English string
+  for behaviour that has not changed.
+
+### Known
+
+- Admin's seven surfaces remain English.
+- The substring hazard is fixed where found, not prevented; a pairwise check
+  across all labels is worth adding once the third area lands.
+- The Turkish still has not been read by a Turkish speaker other than its
+  author, and there is now twice as much of it.
+
+---
+
 ## [3.12.0] - 2026-08-21
 
 ### Fixed

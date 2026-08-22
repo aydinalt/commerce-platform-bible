@@ -324,7 +324,7 @@ suite("Increment I8 correction notices", () => {
       "CORRECTION_AREA_NOT_TARGETED"
     );
     expect(CORRECTION_REFUSALS.CORRECTION_AREA_NOT_TARGETED).toMatch(
-      /only that part/iu
+      /yalnızca o bölüm/iu
     );
   });
 

@@ -10,7 +10,10 @@ import {
   fetchCorrectionNotices,
   fetchDashboard
 } from "../../../business/api";
+import { DASHBOARD } from "../../../business/copy";
 import { LIFECYCLE_GROUPS, offersCreate } from "../../../business/inventory";
+import { MODERATION } from "../../../vocabulary";
+import { ACTIONS } from "../../../identity/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import { logout } from "../../login/actions";
 import { createDraftOffering } from "./actions";
@@ -20,7 +23,7 @@ import { InventoryGroup } from "./inventory-group";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Business dashboard" };
+export const metadata: Metadata = { title: DASHBOARD.title };
 
 /**
  * The Business Dashboard (UX-0005).
@@ -77,7 +80,7 @@ export default async function BusinessDashboardPage({
   );
 
   return (
-    <main lang="en">
+    <main>
       {/* §6.3. The active Business and its Moderation Status stay identifiable
           throughout, so no management action is ever taken without the person
           being able to see which Business it lands on and what standing that
@@ -95,13 +98,13 @@ export default async function BusinessDashboardPage({
          */}
         <p>
           <span className={restricted ? "badge badge-notice" : "badge"}>
-            {restricted ? "Restricted" : "Unrestricted"}
+            {restricted ? MODERATION.RESTRICTED : MODERATION.UNRESTRICTED}
           </span>
         </p>
         <p>
           {restricted
-            ? "This Business is Restricted. Some management actions are unavailable."
-            : "This Business is Unrestricted."}
+            ? DASHBOARD.restrictedExplained
+            : DASHBOARD.unrestrictedExplained}
         </p>
       </header>
 
@@ -111,7 +114,7 @@ export default async function BusinessDashboardPage({
           correct something. */}
       <p>
         <Link href={`/businesses/${business.id}/information`}>
-          Business information
+          {DASHBOARD.informationLink}
         </Link>
       </p>
 
@@ -132,17 +135,14 @@ export default async function BusinessDashboardPage({
        * afford to be told there is none.
        */}
       {isUnavailable(notices) ? (
-        <p role="status">
-          Düzeltme bildirimleriniz şu anda okunamadı. Bekleyen bir bildiriminiz
-          olup olmadığını görmek için sayfayı yenileyin.
-        </p>
+        <p role="status">{DASHBOARD.noticesUnreadable}</p>
       ) : notices === null ? null : (
         <CorrectionNotices businessId={business.id} notices={notices} />
       )}
 
-      <h2>Offerings</h2>
+      <h2>{DASHBOARD.offeringsHeading}</h2>
       {empty ? (
-        <p>You have no Offerings yet.</p>
+        <p>{DASHBOARD.emptyInventory}</p>
       ) : (
         LIFECYCLE_GROUPS.map((group) => (
           <InventoryGroup
@@ -167,10 +167,7 @@ export default async function BusinessDashboardPage({
           §14 keeps an unavailable action unavailable; it does not ask the
           platform to pretend the permission is gone. */}
       {offersCreate(business.moderationStatus) && isUnavailable(categories) ? (
-        <p role="status">
-          Kategoriler şu anda okunamadı, bu yüzden yeni ilan oluşturma geçici
-          olarak kullanılamıyor.
-        </p>
+        <p role="status">{DASHBOARD.categoriesUnreadable}</p>
       ) : offersCreate(business.moderationStatus) &&
         !isUnavailable(categories) &&
         categories !== null &&
@@ -184,7 +181,7 @@ export default async function BusinessDashboardPage({
       {/* §5.1. Logout is requested here and executed by UX-0008, which owns
           it wherever it is asked for. */}
       <form action={logout}>
-        <button type="submit">Sign out</button>
+        <button type="submit">{ACTIONS.logout}</button>
       </form>
     </main>
   );

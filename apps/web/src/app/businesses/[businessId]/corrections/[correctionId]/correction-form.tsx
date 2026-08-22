@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { CORRECTION } from "../../../../../business/copy";
+
 import type { EditableOfferingContent } from "@commerce/contracts";
 
 import {
@@ -159,11 +161,7 @@ export function CorrectionForm({
       {/* §11. Saved, and still open — said in the same breath, because the two
           facts are true at the same time and separating them is how a person
           comes to believe the second one is not true. */}
-      {state.kind === "DONE" ? (
-        <p role="status">
-          Saved. The case stays open and the platform reviews it again.
-        </p>
-      ) : null}
+      {state.kind === "DONE" ? <p role="status">{CORRECTION.saved}</p> : null}
     </form>
   );
 }

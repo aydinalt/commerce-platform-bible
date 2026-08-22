@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import type { CorrectionNotice } from "@commerce/contracts";
 
+import { CORRECTION } from "../../../business/copy";
+
 import {
   CONTENT_AREA_COPY,
   NO_NOTICES,
@@ -34,7 +36,7 @@ export function CorrectionNotices({
 
   return (
     <section aria-labelledby="corrections">
-      <h2 id="corrections">Correction notices</h2>
+      <h2 id="corrections">{CORRECTION.noticesHeading}</h2>
       {open.length === 0 ? (
         /* §14. One sentence, and nothing that stands in for an inbox. */
         <p>{NO_NOTICES}</p>

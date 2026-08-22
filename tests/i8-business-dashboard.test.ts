@@ -1,4 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
+
+import { INVENTORY } from "../apps/web/src/business/copy.js";
 import { describe, expect, it } from "vitest";
 
 import type { BusinessDashboardResponse } from "../packages/contracts/src/index.js";
@@ -122,7 +124,7 @@ describe("Increment I8 Business Dashboard inventory", () => {
     // A Draft has no public standing yet, and saying "not publicly visible"
     // would overstate a decision nobody has made.
     expect(markup).toContain(ELIGIBILITY_COPY.PENDING);
-    expect(ELIGIBILITY_COPY.PENDING).toMatch(/not yet decided/u);
+    expect(ELIGIBILITY_COPY.PENDING).toMatch(/henüz belirlenmedi/u);
   });
 
   it("says so plainly when a group is empty", () => {
@@ -130,7 +132,7 @@ describe("Increment I8 Business Dashboard inventory", () => {
 
     // §14. An empty group is a real answer and gets one, rather than the group
     // disappearing and leaving a person to wonder whether it was ever there.
-    expect(markup).toContain("Nothing here.");
+    expect(markup).toContain(INVENTORY.emptyGroup);
   });
 
   it("offers creation only where moderation permits it", () => {

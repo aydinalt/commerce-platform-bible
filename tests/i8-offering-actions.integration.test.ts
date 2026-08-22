@@ -272,7 +272,7 @@ suite("Increment I8 Offering actions", () => {
     // minimum*, so this points at the Offering rather than listing conditions.
     // Listing them here would be a second definition of PRD-0001 §6.1.1 that
     // could drift from the one the API enforces.
-    expect(message).toMatch(/not ready to publish/u);
+    expect(message).toMatch(/yayımlanmaya hazır değil/u);
     expect(message).not.toMatch(/title|category|attribute|display name/iu);
   });
 
@@ -313,7 +313,7 @@ suite("Increment I8 Offering actions", () => {
       "OFFERING_ALREADY_ARCHIVED"
     );
     expect(ACTION_REFUSALS.OFFERING_ALREADY_ARCHIVED).toMatch(
-      /already been retired/u
+      /zaten arşivlendi/u
     );
   });
 
@@ -341,8 +341,8 @@ suite("Increment I8 Offering actions", () => {
     // Publish and Retire become submissions, because they are things a person
     // does; View and Edit become links, because they are places to go. A link
     // that performed a transition could be followed by a prefetch.
-    expect(markup).toMatch(/<form[^>]*>[\s\S]*Publish/u);
-    expect(markup).toMatch(/<form[^>]*>[\s\S]*Retire/u);
+    expect(markup).toMatch(/<form[^>]*>[\s\S]*Yayımla/u);
+    expect(markup).toMatch(/<form[^>]*>[\s\S]*Arşive kaldır/u);
     expect(markup).toMatch(/<a[^>]*href="[^"]*offerings\/1a2b3c4d[^"]*"/u);
   });
 

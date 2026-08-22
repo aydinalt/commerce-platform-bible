@@ -1,5 +1,7 @@
 import type { ManagedOffering } from "@commerce/contracts";
 
+import { TERMS } from "../vocabulary";
+
 /**
  * The entry vocabulary, read off the contract rather than restated.
  *
@@ -36,11 +38,19 @@ export type LifecycleGroup = (typeof LIFECYCLE_GROUPS)[number];
  * can hold, so neither can appear on this screen even by accident.
  */
 export const ENTRY_LABELS: Record<OfferingEntry, string> = {
-  EDIT: "Edit",
-  MANAGE_AFFILIATE_DESTINATION: "Affiliate destination",
-  PUBLISH: "Publish",
-  RETIRE: "Retire",
-  VIEW: "View"
+  EDIT: "Düzenle",
+  MANAGE_AFFILIATE_DESTINATION: TERMS.affiliateDestination,
+  PUBLISH: "Yayımla",
+  /*
+   * `Arşive kaldır`, not `Arşivle`.
+   *
+   * `Arşivle` is a prefix of `Arşivlenmiş`, the group heading an Archived
+   * Offering sits under — so a check for "this screen does not offer Retire"
+   * would find the *heading* and be satisfied by it. The collision was found by
+   * a test that had been passing on English and started failing on Turkish.
+   */
+  RETIRE: "Arşive kaldır",
+  VIEW: "Görüntüle"
 };
 
 /**
@@ -56,10 +66,20 @@ export const ELIGIBILITY_COPY: Record<
   ManagedOffering["publicEligibility"],
   string
 > = {
-  ELIGIBLE: "Publicly visible",
-  INELIGIBLE: "Not publicly visible",
-  PENDING: "Public visibility not yet decided",
-  WITHDRAWN: "Withdrawn from public view"
+  /*
+   * Four states, and **no one of them a substring of another**.
+   *
+   * The first translation made all three of the others contain `Herkese açık`,
+   * so an assertion that a withheld Offering is not shown as public would have
+   * matched `Herkese açık değil` and passed while the screen said the opposite.
+   * The English wording had the same shape and got away with it because
+   * `Publicly visible` was checked against markup that never held the longer
+   * strings together.
+   */
+  ELIGIBLE: "Herkese açık",
+  INELIGIBLE: "Herkese kapalı",
+  PENDING: "Görünürlüğü henüz belirlenmedi",
+  WITHDRAWN: "Görünümden çıkarıldı"
 };
 
 /**

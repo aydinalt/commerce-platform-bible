@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { ManagedOffering } from "@commerce/contracts";
 
+import { INVENTORY } from "../../../business/copy";
 import {
   ELIGIBILITY_COPY,
   ENTRY_LABELS,
@@ -10,12 +11,7 @@ import {
 import { publishOffering, retireOffering } from "./actions";
 import { OfferingAction } from "./offering-actions";
 
-const GROUP_LABELS: Record<LifecycleGroup, string> = {
-  ARCHIVED: "Archived",
-  DRAFT: "Draft",
-  HIDDEN: "Hidden",
-  PUBLISHED: "Published"
-};
+const GROUP_LABELS: Record<LifecycleGroup, string> = INVENTORY.groups;
 
 /**
  * One lifecycle group of the inventory (UX-0005 §8, §9).
@@ -43,7 +39,7 @@ export function InventoryGroup({
     <section aria-labelledby={`group-${group}`}>
       <h3 id={`group-${group}`}>{GROUP_LABELS[group]}</h3>
       {offerings.length === 0 ? (
-        <p>Nothing here.</p>
+        <p>{INVENTORY.emptyGroup}</p>
       ) : (
         <ul>
           {offerings.map((offering) => (

@@ -1,4 +1,7 @@
 import { cookies } from "next/headers";
+
+import { DESTINATION } from "../../../../../../business/copy";
+import { TERMS } from "../../../../../../vocabulary";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -23,7 +26,7 @@ import { DestinationForm } from "./destination-form";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Affiliate Destination" };
+export const metadata: Metadata = { title: TERMS.affiliateDestination };
 
 /**
  * Affiliate Destination management (UX-0005 §13).
@@ -70,7 +73,7 @@ export default async function DestinationPage({
   const editable = creating || offers(entries, "EDIT");
 
   return (
-    <main lang="en">
+    <main>
       <p>
         <Link href={`/businesses/${businessId}/offerings/${offeringId}`}>
           {offering.title}
@@ -82,19 +85,19 @@ export default async function DestinationPage({
         /* Absence is not a failure here. It is the state Create exists for,
            and where Create is not offered either, it is simply the truth
            about this Offering. */
-        <p>This Offering has no destination.</p>
+        <p>{DESTINATION.none}</p>
       ) : (
         <dl>
           <div>
-            <dt>Address</dt>
+            <dt>{DESTINATION.address}</dt>
             <dd>{destination.reference}</dd>
           </div>
           <div>
-            <dt>Status</dt>
+            <dt>{DESTINATION.status}</dt>
             <dd>{STATUS_COPY[destination.status]}</dd>
           </div>
           <div>
-            <dt>Checked</dt>
+            <dt>{DESTINATION.checked}</dt>
             <dd>
               {VALIDATION_COPY[destination.validationResult]}
               {destination.validationReason === null
@@ -107,7 +110,7 @@ export default async function DestinationPage({
                 from the other two by `US-OFR-F07-001`, and this page reports
                 the composition's answer rather than deriving one of its own —
                 a second derivation would eventually disagree. */}
-            <dt>Handoff</dt>
+            <dt>{DESTINATION.handoff}</dt>
             <dd>{ELIGIBILITY_COPY[destination.handoffEligibility]}</dd>
           </div>
         </dl>

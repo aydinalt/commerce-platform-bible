@@ -120,8 +120,8 @@ export function submittedValues(
 /// UX-0005 §9. Only the areas an owner may change appear; Category is not one
 /// of them here, because moving an Offering is not correcting what it says.
 export const CONTENT_LABELS = {
-  summary: "Summary",
-  title: "Title"
+  summary: "Özet",
+  title: "Başlık"
 } as const;
 
 /**
@@ -142,7 +142,7 @@ export function offersEdit(entries: readonly OfferingEntry[]): boolean {
 
 /// What an unfilled Attribute reads as. One sentence in one place, so the form
 /// and the reading cannot say it differently.
-export const NOT_SPECIFIED = "Not specified";
+export const NOT_SPECIFIED = "Belirtilmemiş";
 
 /**
  * What the Offering holds for one Attribute, as a person would read it.
@@ -172,7 +172,7 @@ export function heldAsText(
 
   const labels = held.optionIds.map((id) => {
     const option = attribute.options.find((candidate) => candidate.id === id);
-    return option?.label ?? "A value that is no longer offered";
+    return option?.label ?? "Artık sunulmayan bir değer";
   });
   return labels.join(", ");
 }

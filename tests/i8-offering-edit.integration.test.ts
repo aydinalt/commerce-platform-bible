@@ -420,7 +420,9 @@ suite("Increment I8 Offering edit", () => {
     );
     // And the sentence says what was not saved rather than what was refused in
     // the abstract.
-    expect(EDIT_REFUSALS.BUSINESS_RESTRICTED).toMatch(/nothing was saved/iu);
+    expect(EDIT_REFUSALS.BUSINESS_RESTRICTED).toMatch(
+      /hiçbir şey kaydedilmedi/iu
+    );
   });
 
   it("refuses a save that would leave a Published Offering incomplete", async () => {
@@ -457,7 +459,7 @@ suite("Increment I8 Offering edit", () => {
     expect(after.status).toBe("PUBLISHED");
     // The sentence names the save, not a publication that was never asked for.
     expect(EDIT_REFUSALS.PUBLICATION_MINIMUM_NOT_SATISFIED).toMatch(
-      /not saved/iu
+      /kaydedilmedi/iu
     );
   });
 
@@ -526,7 +528,7 @@ suite("Increment I8 Offering edit", () => {
     // no save may choose it again — so it has no label to show and the screen
     // says that rather than rendering nothing.
     expect(heldAsText(content, content.applicableAttributes[0]!)).toBe(
-      "A value that is no longer offered"
+      "Artık sunulmayan bir değer"
     );
   });
 

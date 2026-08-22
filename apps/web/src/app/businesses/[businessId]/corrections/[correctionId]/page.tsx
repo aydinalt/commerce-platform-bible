@@ -1,4 +1,7 @@
 import { cookies } from "next/headers";
+
+import { CORRECTION } from "../../../../../business/copy";
+import { TERMS } from "../../../../../vocabulary";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -20,7 +23,7 @@ import { CorrectionForm } from "./correction-form";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Correction notice" };
+export const metadata: Metadata = { title: TERMS.correctionNotice };
 
 /**
  * The bounded correction-edit path (UX-0005 §11).
@@ -69,7 +72,9 @@ export default async function CorrectionPage({
 
   const back = (
     <p>
-      <Link href={`/businesses/${businessId}`}>Back to your Business</Link>
+      <Link href={`/businesses/${businessId}`}>
+        {CORRECTION.backToBusiness}
+      </Link>
     </p>
   );
 
@@ -82,9 +87,9 @@ export default async function CorrectionPage({
     notice.contentArea === null
   )
     return (
-      <main lang="en">
+      <main>
         {back}
-        <h1>Correction notice</h1>
+        <h1>{CORRECTION.heading}</h1>
         <p>{TARGET_COPY[notice.target]}</p>
         {notice.note === null ? null : <p>{notice.note}</p>}
       </main>
@@ -102,7 +107,7 @@ export default async function CorrectionPage({
   if (content === null) notFound();
 
   return (
-    <main lang="en">
+    <main>
       {back}
       <h1>{content.title}</h1>
       <p>{TARGET_COPY[notice.target]}</p>

@@ -150,8 +150,10 @@ suite("Increment I8 Business Information", () => {
   it("says on screen which half strangers can read", () => {
     // The person filling the form in is exactly who needs to know, so it is
     // stated rather than left to be inferred from the grouping.
-    expect(GROUP_COPY.identity).toMatch(/publicly/u);
-    expect(GROUP_COPY.contact).toMatch(/never on the public site/u);
+    expect(GROUP_COPY.identity).toMatch(/herkese açık/u);
+    expect(GROUP_COPY.contact).toMatch(
+      /herkese açık sayfalarda asla görünmez/u
+    );
   });
 
   it("composes a public identity that carries no contact channel", async () => {

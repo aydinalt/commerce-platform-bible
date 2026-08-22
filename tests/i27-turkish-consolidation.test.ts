@@ -12,9 +12,20 @@ import {
   TITLES
 } from "../apps/web/src/identity/copy.js";
 import { REFUSAL_COPY } from "../apps/web/src/identity/outcome.js";
+import { CORRECTION, DASHBOARD } from "../apps/web/src/business/copy.js";
+import { ENTRY_LABELS } from "../apps/web/src/business/inventory.js";
 import { CONTEXTS, CREDENTIALS, TERMS } from "../apps/web/src/vocabulary.js";
 
+/**
+ * The areas consolidated so far, in the order the Owner sequenced them.
+ *
+ * **This list only grows, and `i10-accessibility`'s `ENGLISH` pattern only
+ * shrinks.** The two meet when Admin lands: every route is Turkish, no route
+ * claims otherwise, and both checks still hold.
+ */
 const AUTH = ["login", "register", "recover", "account"];
+const BUSINESS = ["businesses"];
+const CONSOLIDATED = [...AUTH, ...BUSINESS];
 const APP = "apps/web/src/app";
 
 /** Every `.tsx` under a route folder, including its child components. */
@@ -49,8 +60,8 @@ function surfaces(folders: string[]): string[] {
  * word left in a Turkish screen looks like a screen, not like a bug.
  */
 describe("Increment I27 Turkish consolidation", () => {
-  it("leaves no English marker on the six authentication surfaces", () => {
-    const marked = surfaces(AUTH).filter((file) =>
+  it("leaves no English marker on any consolidated surface", () => {
+    const marked = surfaces(CONSOLIDATED).filter((file) =>
       readFileSync(file, "utf8").includes('lang="en"')
     );
 
@@ -80,14 +91,33 @@ describe("Increment I27 Turkish consolidation", () => {
      * `href` and a `className` are excluded by only reading what sits between
      * tags.
      */
-    const rendered = />\s*([A-Za-zÇĞİÖŞÜçğıöşü][^<>{}]{6,})/gu;
+    /*
+     * `(?<!=)` is load-bearing: without it the arrow in `=>` reads as a closing
+     * tag and the case reports JavaScript as copy. **This detector has been
+     * wrong twice** — first too narrow to catch two English sentences, then
+     * wide enough to catch code — so what it excludes is as deliberate as what
+     * it matches.
+     */
+    const rendered = /(?<!=)>\s*([A-Za-zÇĞİÖŞÜçğıöşü][^<>{}]{3,})/gu;
     const turkish = /[çğıİöşüÇĞÖŞÜ]/u;
 
     const offenders: string[] = [];
-    for (const file of surfaces(AUTH))
+    for (const file of surfaces(CONSOLIDATED))
       for (const [, text] of readFileSync(file, "utf8").matchAll(rendered)) {
         const words = (text ?? "").trim();
-        if (words.split(/\s+/u).length >= 2 && !turkish.test(words))
+        /*
+         * **No two-word minimum**, and that is the fourth correction this
+         * detector has needed. With one, `<h2>Offerings</h2>` slipped through —
+         * a mutation put it back and this case passed. Single English words are
+         * most of what a heading is.
+         *
+         * A literal here is copy by construction: anything from the data is an
+         * `{expression}` and never reaches this match. So in an application
+         * that speaks one language, rendered ASCII-only prose is always
+         * suspicious, and a brand name would be the exception to add when one
+         * exists rather than a hole to leave open now.
+         */
+        if (/^[A-Za-z][A-Za-z ,.'’-]*$/u.test(words) && !turkish.test(words))
           offenders.push(`${file}: ${words.slice(0, 40)}`);
       }
 
@@ -105,12 +135,17 @@ describe("Increment I27 Turkish consolidation", () => {
      * A surface that hard-codes a Turkish sentence has undone that without
      * looking like it has.
      */
-    const inlineSentence = />\s*[A-ZĞÜŞİÖÇ][a-zğüşıöç]+\s+[a-zğüşıöç]+/u;
-    const offenders = surfaces(AUTH).filter((file) => {
+    const inlineSentence = /(?<!=)>\s*[A-ZĞÜŞİÖÇ][a-zğüşıöç]+\s+[a-zğüşıöç]+/u;
+    const offenders = surfaces(CONSOLIDATED).filter((file) => {
       const source = readFileSync(file, "utf8");
-      // The confirm page composes one sentence around a link, which cannot be
-      // a single constant without also owning the link.
-      return inlineSentence.test(source) && !file.endsWith("confirm/page.tsx");
+      /*
+       * Two files compose a sentence around a link, which cannot be a single
+       * constant without the constant also owning the link. Both halves still
+       * live in a copy module; only the join is in the page.
+       */
+      const composes =
+        file.endsWith("confirm/page.tsx") || file.endsWith("account/page.tsx");
+      return inlineSentence.test(source) && !composes;
     });
     expect(offenders).toEqual([]);
   });
@@ -135,6 +170,34 @@ describe("Increment I27 Turkish consolidation", () => {
     expect(ACCOUNT.noBusiness).toContain(TERMS.business);
     expect(ACCOUNT.inAdminContext).toContain(CONTEXTS.admin);
     expect(FIELDS).toBe(CREDENTIALS);
+  });
+
+  it("keeps the Business area speaking the same vocabulary", () => {
+    /*
+     * The second area translated, and the first chance for the vocabulary to
+     * have been ignored. Each of these composes from `TERMS` rather than
+     * repeating a word, so a term changed there changes here too.
+     */
+    expect(DASHBOARD.title).toContain(TERMS.business);
+    expect(DASHBOARD.offeringsHeading).toContain(TERMS.offering);
+    expect(CORRECTION.heading).toBe(TERMS.correctionNotice);
+
+    // Retirement moves an Offering to Archived, so the verb is the lifecycle's
+    // rather than "remove from publication" — which is Hiding, a different act
+    // performed by a different party.
+    /*
+     * `Arşive kaldır`, not `Arşivle` — and this line is the reason.
+     *
+     * `Arşivle` is a prefix of `Arşivlenmiş`, the heading an Archived Offering
+     * sits under, so "this screen offers no Retire action" would have been
+     * satisfied by the heading. Caught by a test that passed on English and
+     * failed the moment the words became Turkish.
+     */
+    expect(ENTRY_LABELS.RETIRE).toBe("Arşive kaldır");
+    expect("Arşivlenmiş").not.toContain(ENTRY_LABELS.RETIRE);
+    expect(ENTRY_LABELS.MANAGE_AFFILIATE_DESTINATION).toBe(
+      TERMS.affiliateDestination
+    );
   });
 
   it("names a destination in every link rather than saying 'click here'", () => {

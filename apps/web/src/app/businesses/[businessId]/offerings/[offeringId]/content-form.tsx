@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { CONTENT } from "../../../../../business/copy";
+
 import type {
   ApplicableAttribute,
   EditableOfferingContent
@@ -127,7 +129,7 @@ export function ContentForm({
   return (
     <form action={dispatch} noValidate>
       <fieldset disabled={pending}>
-        <legend>Offering content</legend>
+        <legend>{CONTENT.heading}</legend>
 
         <p>
           <label htmlFor="title">{CONTENT_LABELS.title}</label>
@@ -159,7 +161,7 @@ export function ContentForm({
 
         {content.applicableAttributes.length > 0 ? (
           <fieldset>
-            <legend>Attributes</legend>
+            <legend>{CONTENT.attributesHeading}</legend>
             {content.applicableAttributes.map((attribute) => (
               <AttributeField
                 attribute={attribute}
@@ -189,7 +191,7 @@ export function ContentForm({
           )}
         </div>
       ) : null}
-      {state.kind === "DONE" ? <p role="status">Saved.</p> : null}
+      {state.kind === "DONE" ? <p role="status">{CONTENT.saved}</p> : null}
     </form>
   );
 }

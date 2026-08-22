@@ -32,14 +32,12 @@ function routes(): { file: string; route: string }[] {
  * `lang="en"`, so a person who searched in Turkish and then signed in changed
  * language mid-journey.
  *
- * I27 translated UX-0008's six authentication surfaces, which is why `login`,
- * `register`, `recover` and `account` are no longer here. The Business
- * Dashboard and Admin remain and are the next increments in the Owner's
- * sequence. When they land this becomes an empty pattern and the case below
- * still holds — a route marked English while written in Turkish fails just as
- * loudly as the reverse.
+ * I27 translated UX-0008's six authentication surfaces and I28 the Business
+ * Dashboard's five, which is why only `admin` is left. When Admin lands this
+ * becomes an empty pattern and the case below still holds — a route marked
+ * English while written in Turkish fails just as loudly as the reverse.
  */
-const ENGLISH = /^\/(admin|businesses)(\/|$)/u;
+const ENGLISH = /^\/admin(\/|$)/u;
 
 /**
  * The accessibility properties, asserted as properties.

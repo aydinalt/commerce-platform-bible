@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiRequestError } from "../apps/web/src/api-error.js";
+import { DASHBOARD } from "../apps/web/src/business/copy.js";
 
 /**
  * Distinguishing zero from unavailable (UX-0006 §14, UX-0005 §15, UX-0006 §15).
@@ -177,8 +178,8 @@ describe("Increment I24 zero or unavailable", () => {
        * an empty list "would say nothing needs your attention, which is not
        * what a failed read means" — while showing the person exactly that.
        */
-      expect(markup).toContain("Düzeltme bildirimleriniz şu anda okunamadı");
-      expect(markup).toContain("Offerings");
+      expect(markup).toContain(DASHBOARD.noticesUnreadable);
+      expect(markup).toContain(DASHBOARD.offeringsHeading);
     });
 
     it("says creation is temporarily unavailable rather than removing it", async () => {
@@ -209,7 +210,7 @@ describe("Increment I24 zero or unavailable", () => {
 
       // A control that vanishes reads as "you may not do this". The permission
       // did not change; only the catalogue could not be read.
-      expect(markup).toContain("geçici olarak kullanılamıyor");
+      expect(markup).toContain(DASHBOARD.categoriesUnreadable);
     });
   });
 

@@ -30,12 +30,12 @@ export type InformationField =
   | (typeof PUBLIC_IDENTITY_FIELDS)[number];
 
 export const FIELD_LABELS: Record<InformationField, string> = {
-  contactEmail: "Email address",
-  contactTelephone: "Telephone",
-  contactUrl: "Website or contact page",
-  logoUrl: "Logo address",
-  name: "Display name",
-  shortDescription: "Short description"
+  contactEmail: "E-posta adresi",
+  contactTelephone: "Telefon",
+  contactUrl: "Web sitesi veya iletişim sayfası",
+  logoUrl: "Logo adresi",
+  name: "Görünen ad",
+  shortDescription: "Kısa açıklama"
 };
 
 /**
@@ -44,8 +44,8 @@ export const FIELD_LABELS: Record<InformationField, string> = {
  */
 export const GROUP_COPY = {
   contact:
-    "Only shown to a signed-in person who asks to contact you, and never on the public site.",
-  identity: "Shown publicly wherever one of your Offerings appears."
+    "Yalnızca giriş yapmış ve sizinle iletişime geçmek isteyen kişiye gösterilir; herkese açık sayfalarda asla görünmez.",
+  identity: "İlanlarınızın göründüğü her yerde herkese açık olarak gösterilir."
 } as const;
 
 /**

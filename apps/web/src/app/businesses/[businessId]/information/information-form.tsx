@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { INFORMATION } from "../../../../business/copy";
+
 import {
   DIRECT_CONTACT_FIELDS,
   FIELD_LABELS,
@@ -74,7 +76,7 @@ export function InformationForm({
   return (
     <form action={dispatch} noValidate>
       <fieldset disabled={pending}>
-        <legend>Public identity</legend>
+        <legend>{INFORMATION.identityHeading}</legend>
         <p>{GROUP_COPY.identity}</p>
         {PUBLIC_IDENTITY_FIELDS.map((name) => (
           <Field
@@ -87,7 +89,7 @@ export function InformationForm({
       </fieldset>
 
       <fieldset disabled={pending}>
-        <legend>Direct contact</legend>
+        <legend>{INFORMATION.contactHeading}</legend>
         <p>{GROUP_COPY.contact}</p>
         {DIRECT_CONTACT_FIELDS.map((name) => (
           <Field
@@ -102,9 +104,7 @@ export function InformationForm({
       <button type="submit">{pending ? "Saving…" : "Save"}</button>
 
       {state.kind === "UNCHANGED" ? <p role="alert">{state.message}</p> : null}
-      {state.kind === "SAVED" ? (
-        <p role="status">Your Business information has been saved.</p>
-      ) : null}
+      {state.kind === "SAVED" ? <p role="status">{INFORMATION.saved}</p> : null}
     </form>
   );
 }

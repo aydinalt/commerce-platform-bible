@@ -64,8 +64,8 @@ export async function saveBusinessInformation(
       kind: "UNCHANGED",
       message:
         outcome.status === 403
-          ? "This information could not be saved. Nothing has changed."
-          : "That could not be saved. Your Business information is unchanged."
+          ? "Bu bilgiler kaydedilemedi. Hiçbir şey değişmedi."
+          : "Bu kaydedilemedi. İşletme bilgileriniz değişmedi."
     };
   return { kind: "SAVED" };
 }

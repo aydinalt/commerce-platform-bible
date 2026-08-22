@@ -15,27 +15,27 @@ type ContentArea = NonNullable<CorrectionNotice["contentArea"]>;
  */
 export const TARGET_COPY: Record<Target, string> = {
   AFFILIATE_DESTINATION_CONFIGURATION:
-    "Something about an Affiliate Destination needs your attention.",
+    "Bir yönlendirme adresiyle ilgili dikkatinizi gerektiren bir şey var.",
   BUSINESS_INFORMATION:
-    "Something about your Business information needs your attention.",
+    "İşletme bilgilerinizle ilgili dikkatinizi gerektiren bir şey var.",
   DIRECT_CONTACT_INFORMATION:
-    "Something about your direct contact details needs your attention.",
-  OFFERING_CONTENT: "Something about an Offering needs your attention."
+    "Doğrudan iletişim bilgilerinizle ilgili dikkatinizi gerektiren bir şey var.",
+  OFFERING_CONTENT: "Bir ilanla ilgili dikkatinizi gerektiren bir şey var."
 };
 
 /// What the targeted part of an Offering is called, matching the edit form's
 /// own labels so the notice and the field it points at read the same.
 export const CONTENT_AREA_COPY: Record<ContentArea, string> = {
-  ATTRIBUTES: "Attributes",
-  SUMMARY: "Summary",
-  TITLE: "Title"
+  ATTRIBUTES: "Nitelikler",
+  SUMMARY: "Özet",
+  TITLE: "Başlık"
 };
 
 /// What the link into a management area says.
 export const AREA_COPY: Record<ManagementArea, string> = {
-  AFFILIATE_DESTINATION: "Open the Affiliate Destination",
-  BUSINESS_INFORMATION: "Open Business information",
-  OFFERING_CONTENT: "Open the Offering"
+  AFFILIATE_DESTINATION: "Yönlendirme adresini aç",
+  BUSINESS_INFORMATION: "İşletme bilgilerini aç",
+  OFFERING_CONTENT: "İlanı aç"
 };
 
 /**
@@ -91,11 +91,11 @@ export function noticeEntry(
  * the silence it replaces.
  */
 export const RE_REVIEW_COPY =
-  "Making this change does not close the case. The platform reviews it again.";
+  "Bu değişikliği yapmak vakayı kapatmaz. Platform yeniden inceler.";
 
 /// UX-0005 §14. There is no inbox, no conversation and no substitute for one,
 /// so an absence of notices is said in one sentence and nothing is offered.
-export const NO_NOTICES = "You have no correction notices.";
+export const NO_NOTICES = "Düzeltme bildiriminiz yok.";
 
 /**
  * What a refused correction save says.
@@ -113,20 +113,20 @@ export const NO_NOTICES = "You have no correction notices.";
  */
 export const CORRECTION_REFUSALS: Record<string, string> = {
   ATTRIBUTE_VALUE_MISMATCH:
-    "One of the values does not fit the Attribute it belongs to. Nothing was saved.",
+    "Değerlerden biri ait olduğu niteliğe uymuyor. Hiçbir şey kaydedilmedi.",
   BOUNDED_CORRECTION_UNAVAILABLE:
-    "This correction can no longer be answered here. Go back and open the notice again.",
+    "Bu düzeltme artık buradan yanıtlanamıyor. Geri dönüp bildirimi yeniden açın.",
   CORRECTION_AREA_NOT_TARGETED:
-    "This notice asks about one part of the Offering, and only that part can be changed here.",
+    "Bu bildirim ilanın tek bir bölümünü soruyor ve burada yalnızca o bölüm değiştirilebilir.",
   CORRECTION_NOT_FOUND:
-    "This correction is no longer available. Go back and open the notice again.",
+    "Bu düzeltme artık kullanılamıyor. Geri dönüp bildirimi yeniden açın.",
   PUBLICATION_MINIMUM_NOT_SATISFIED:
-    "That change was not saved: it would have left this Offering short of what it needs to stay published."
+    "Bu değişiklik kaydedilmedi: ilanı yayında kalmak için gerekenlerin altında bırakırdı."
 };
 
 export function correctionRefusalMessage(code: string): string {
   return (
     CORRECTION_REFUSALS[code] ??
-    "That could not be saved. This Offering still holds what it held before."
+    "Bu kaydedilemedi. İlan hâlâ önceki içeriğini taşıyor."
   );
 }

@@ -40,13 +40,13 @@ export const ACTION_IDLE: ActionState = { kind: "IDLE" };
  */
 export const ACTION_REFUSALS: Record<string, string> = {
   AFFILIATE_DESTINATION_EXISTS:
-    "This Offering already has a destination. Change the one it has instead.",
+    "Bu ilanın zaten bir yönlendirme adresi var. Bunun yerine mevcut olanı değiştirin.",
   AFFILIATE_DESTINATION_NOT_FOUND:
-    "This Offering has no destination to change.",
+    "Bu ilanın değiştirilecek bir yönlendirme adresi yok.",
   AFFILIATE_DESTINATION_READ_ONLY:
-    "This Offering is retired, so its destination is a record now and cannot be changed.",
+    "Bu ilan arşivlendi; yönlendirme adresi artık bir kayıt ve değiştirilemez.",
   BUSINESS_RESTRICTED:
-    "This Business is Restricted, so that action is unavailable right now.",
+    "Bu işletme kısıtlı, bu yüzden o eylem şu anda kullanılamıyor.",
   /*
    * The management entry could not be read at all, so this action does not
    * know whether a destination exists and therefore does not know which verb
@@ -54,20 +54,20 @@ export const ACTION_REFUSALS: Record<string, string> = {
    * meant, or the reverse.
    */
   DESTINATION_NOT_MANAGEABLE:
-    "This destination cannot be managed right now. Nothing was saved.",
-  OFFERING_ALREADY_ARCHIVED: "This Offering has already been retired.",
-  OFFERING_NOT_EDITABLE: "This Offering can no longer be edited.",
-  OFFERING_NOT_PUBLISHABLE: "Only a Draft Offering can be published.",
+    "Bu yönlendirme adresi şu anda yönetilemiyor. Hiçbir şey kaydedilmedi.",
+  OFFERING_ALREADY_ARCHIVED: "Bu ilan zaten arşivlendi.",
+  OFFERING_NOT_EDITABLE: "Bu ilan artık düzenlenemiyor.",
+  OFFERING_NOT_PUBLISHABLE: "Yalnızca taslak bir ilan yayımlanabilir.",
   OFFERING_SLUG_CONFLICT:
-    "You already have an Offering with that address. Choose another.",
+    "Bu adrese sahip bir ilanınız zaten var. Başka bir adres seçin.",
   PUBLICATION_MINIMUM_NOT_SATISFIED:
-    "This Offering is not ready to publish yet. Open it to see what is still needed."
+    "Bu ilan henüz yayımlanmaya hazır değil. Neyin eksik olduğunu görmek için açın."
 };
 
 export function refusalMessage(code: string): string {
   return (
     ACTION_REFUSALS[code] ??
-    "That could not be done. Nothing about this Offering has changed."
+    "Bu yapılamadı. İlanla ilgili hiçbir şey değişmedi."
   );
 }
 
@@ -87,12 +87,12 @@ export function refusalMessage(code: string): string {
  */
 export const SHORTFALL_COPY: Record<string, string> = {
   BUSINESS_DISPLAY_NAME_MISSING:
-    "Your Business has no display name. Add one in Business information — this is not about the Offering itself.",
+    "İşletmenizin görünen adı yok. İşletme bilgilerinden ekleyin — bu, ilanın kendisiyle ilgili değil.",
   CATEGORY_NOT_ACTIVE_LEAF:
-    "This Offering's Category is no longer one an Offering can sit in. Choose another.",
+    "Bu ilanın kategorisi artık ilan alabilecek bir kategori değil. Başka bir kategori seçin.",
   REQUIRED_ATTRIBUTE_MISSING:
-    "An Attribute its Category requires has no value yet.",
-  TITLE_MISSING: "It has no title."
+    "Kategorisinin zorunlu tuttuğu bir niteliğin henüz değeri yok.",
+  TITLE_MISSING: "Başlığı yok."
 };
 
 export function shortfallMessages(shortfalls: readonly string[]): string[] {
@@ -115,17 +115,17 @@ export function shortfallMessages(shortfalls: readonly string[]): string[] {
  */
 export const EDIT_REFUSALS: Record<string, string> = {
   ATTRIBUTE_VALUE_MISMATCH:
-    "One of the values does not fit the Attribute it belongs to. Nothing was saved.",
+    "Değerlerden biri ait olduğu niteliğe uymuyor. Hiçbir şey kaydedilmedi.",
   BUSINESS_RESTRICTED:
-    "This Business is Restricted, so only its Draft Offerings can be edited. Nothing was saved.",
-  OFFERING_ARCHIVED: "This Offering is retired and can no longer be edited.",
+    "Bu işletme kısıtlı; yalnızca taslak ilanları düzenlenebilir. Hiçbir şey kaydedilmedi.",
+  OFFERING_ARCHIVED: "Bu ilan arşivlendi ve artık düzenlenemiyor.",
   PUBLICATION_MINIMUM_NOT_SATISFIED:
-    "That change was not saved: it would have left this Offering short of what it needs to stay published."
+    "Bu değişiklik kaydedilmedi: ilanı yayında kalmak için gerekenlerin altında bırakırdı."
 };
 
 export function editRefusalMessage(code: string): string {
   return (
     EDIT_REFUSALS[code] ??
-    "That could not be saved. This Offering still holds what it held before."
+    "Bu kaydedilemedi. İlan hâlâ önceki içeriğini taşıyor."
   );
 }
