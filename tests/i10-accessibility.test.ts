@@ -24,20 +24,21 @@ function routes(): { file: string; route: string }[] {
 }
 
 /**
- * The routes still written in English.
+ * ~~The routes still written in English.~~
  *
- * **This list is a record of an accident being cleaned up, and it only
- * shrinks.** The application declares `<html lang="tr">` and the public journey
- * is Turkish; eighteen surfaces were nonetheless written in English and marked
+ * **There are none, and the pattern is gone rather than empty.**
+ *
+ * The application declares `<html lang="tr">` and the public journey was
+ * Turkish; eighteen surfaces were nonetheless written in English and marked
  * `lang="en"`, so a person who searched in Turkish and then signed in changed
- * language mid-journey.
+ * language mid-journey. I27 translated authentication's six, I28 the Business
+ * Dashboard's five, I29 Admin's seven.
  *
- * I27 translated UX-0008's six authentication surfaces and I28 the Business
- * Dashboard's five, which is why only `admin` is left. When Admin lands this
- * becomes an empty pattern and the case below still holds — a route marked
- * English while written in Turkish fails just as loudly as the reverse.
+ * An empty pattern would have been the smaller edit and the worse one: it
+ * would leave a mechanism for declaring an exception, sitting ready, describing
+ * nothing. The case below now asserts the property directly — no route claims
+ * a language other than the document's.
  */
-const ENGLISH = /^\/admin(\/|$)/u;
 
 /**
  * The accessibility properties, asserted as properties.
@@ -70,19 +71,24 @@ describe("Increment I10 accessibility", () => {
     expect(untitled.map((r) => r.route)).toEqual(["/"]);
   });
 
-  it("says which routes are in English and which are not", () => {
+  it("declares one language for the whole application and no exceptions", () => {
     const layout = readFileSync(join(APP, "layout.tsx"), "utf8");
-    const mislabelled = routes().filter(({ file, route }) => {
-      const declares = /<main lang="en">/u.test(readFileSync(file, "utf8"));
-      return ENGLISH.test(route) !== declares;
-    });
+    const claiming = routes().filter(({ file }) =>
+      /lang="(?!tr")/u.test(readFileSync(file, "utf8"))
+    );
 
-    // WCAG 3.1.1 and 3.1.2. The document is Turkish because the public journey
-    // is; the entered contexts are English and each says so on its own `main`.
-    // Without the part-level declaration a screen reader applies Turkish
-    // pronunciation to English words, which is nearer noise than accent.
+    /*
+     * WCAG 3.1.1 and 3.1.2. The document has a language, and 3.1.2 applies only
+     * where a *part* differs — which, since I29, none does.
+     *
+     * This is asserted rather than assumed because the failure is silent in
+     * both directions. A Turkish page marked `en` makes a screen reader apply
+     * English pronunciation rules to Turkish words, which is nearer noise than
+     * an accent; an English page left unmarked does the reverse and looks
+     * completely normal on screen.
+     */
     expect(layout).toContain('<html lang="tr">');
-    expect(mislabelled.map((r) => r.route)).toEqual([]);
+    expect(claiming.map((r) => r.route)).toEqual([]);
   });
 
   it("skips no heading level in the public result lists", () => {

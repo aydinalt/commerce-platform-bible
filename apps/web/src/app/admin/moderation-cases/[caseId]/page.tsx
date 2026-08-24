@@ -26,9 +26,11 @@ import {
   RequestCorrection
 } from "../case-actions";
 
+import { CASES } from "../../../../platform/copy";
+
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Moderation case" };
+export const metadata: Metadata = { title: CASES.caseTitle };
 
 /**
  * One General Moderation case (UX-0006 §7, §8).
@@ -76,14 +78,17 @@ export default async function ModerationCasePage({
     found.availableActions.includes("REQUEST_CORRECTION");
 
   return (
-    <main lang="en">
+    <main>
       <p>
-        <Link href="/admin/moderation-cases">Moderation cases</Link>
+        <Link href="/admin/moderation-cases">{CASES.title}</Link>
       </p>
-      <h1>{TARGET_LABELS[found.targetType]} case</h1>
+      <h1>
+        {TARGET_LABELS[found.targetType]}{" "}
+        {CASES.caseTitle.toLocaleLowerCase("tr")}
+      </h1>
       <p>
-        {closed ? `Closed ${found.closedAt ?? ""}` : "Open"} · opened{" "}
-        {found.openedAt}
+        {closed ? CASES.closedAt(found.closedAt ?? "") : CASES.open} ·{" "}
+        {CASES.openedAt} {found.openedAt}
       </p>
 
       {found.reReviewRequired ? (
@@ -91,9 +96,9 @@ export default async function ModerationCasePage({
       ) : null}
 
       <section aria-labelledby="record">
-        <h2 id="record">What has been recorded</h2>
+        <h2 id="record">{CASES.recorded}</h2>
         {found.resolutions.length === 0 ? (
-          <p>Nothing yet.</p>
+          <p>{CASES.nothingRecorded}</p>
         ) : (
           <ul>
             {found.resolutions.map((resolution) => (
@@ -102,7 +107,7 @@ export default async function ModerationCasePage({
                     of evidence closure accepts, shown as themselves rather
                     than merged into a single "activity" line. */}
                 {resolution.action === null
-                  ? `No action: ${resolution.noActionReason ?? ""}`
+                  ? CASES.noActionRecorded(resolution.noActionReason ?? "")
                   : ACTION_LABELS[resolution.action]}{" "}
                 ({resolution.recordedAt})
               </li>
@@ -115,11 +120,9 @@ export default async function ModerationCasePage({
           control here says otherwise — §7.5 gives no route back to Open. */}
       {closed ? null : (
         <section aria-labelledby="actions">
-          <h2 id="actions">What you can do</h2>
+          <h2 id="actions">{CASES.what}</h2>
           {found.availableActions.length === 0 ? (
-            <p>
-              No General Moderation action applies to this target right now.
-            </p>
+            <p>{CASES.noAction}</p>
           ) : (
             <ul>
               {found.availableActions

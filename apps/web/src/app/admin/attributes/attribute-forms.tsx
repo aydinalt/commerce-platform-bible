@@ -9,6 +9,7 @@ import {
   TEXT_IS_NOT_FILTERABLE,
   VALUE_KIND_LABELS
 } from "../../../platform/catalog";
+import { ATTRIBUTES } from "../../../platform/copy";
 import {
   ADMIN_IDLE,
   type AdminActionState
@@ -28,7 +29,7 @@ function CategoryChoices({
 }) {
   return (
     <fieldset>
-      <legend>Applies to</legend>
+      <legend>{ATTRIBUTES.appliesTo}</legend>
       {categories
         .filter((category) => category.active)
         .map((category) => (
@@ -73,18 +74,18 @@ export function CreateAttribute({
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Define an Attribute</legend>
+        <legend>{ATTRIBUTES.define}</legend>
 
         <p>
-          <label htmlFor="name">Name</label>
+          <label htmlFor="name">{ATTRIBUTES.name}</label>
           <input id="name" name="name" required type="text" />
         </p>
         <p>
-          <label htmlFor="stableKey">Stable key</label>
+          <label htmlFor="stableKey">{ATTRIBUTES.stableKey}</label>
           <input id="stableKey" name="stableKey" required type="text" />
         </p>
         <p>
-          <label htmlFor="valueKind">Kind of value</label>
+          <label htmlFor="valueKind">{ATTRIBUTES.valueKind}</label>
           <select id="valueKind" name="valueKind" required>
             {Object.entries(VALUE_KIND_LABELS).map(([kind, label]) => (
               <option key={kind} value={kind}>
@@ -94,17 +95,19 @@ export function CreateAttribute({
           </select>
         </p>
         <p>
-          <label htmlFor="unit">Unit (Number only)</label>
+          <label htmlFor="unit">{ATTRIBUTES.unitOnlyNumber}</label>
           <input id="unit" name="unit" type="text" />
         </p>
 
         {/* One line per allowed value, for the two Select kinds. Left empty
             for every other kind, where the platform accepts none. */}
         <fieldset>
-          <legend>Allowed values (Select kinds only)</legend>
+          <legend>{ATTRIBUTES.options}</legend>
           {[0, 1, 2, 3].map((index) => (
             <p key={index}>
-              <label htmlFor={`option-${String(index)}`}>Value</label>
+              <label htmlFor={`option-${String(index)}`}>
+                {ATTRIBUTES.value}
+              </label>
               <input
                 id={`option-${String(index)}`}
                 name="optionLabel"
@@ -119,14 +122,14 @@ export function CreateAttribute({
         <p>
           <label htmlFor="filterable">
             <input id="filterable" name="filterable" type="checkbox" />
-            Can be filtered on
+            {ATTRIBUTES.filterable}
           </label>
         </p>
         <p>{TEXT_IS_NOT_FILTERABLE}</p>
         <p>
           <label htmlFor="comparable">
             <input id="comparable" name="comparable" type="checkbox" />
-            Appears in Compare
+            {ATTRIBUTES.comparable}
           </label>
         </p>
 
@@ -150,9 +153,9 @@ export function AttributeProperties({
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Properties</legend>
+        <legend>{ATTRIBUTES.properties}</legend>
         <p>
-          <label htmlFor={`name-${attribute.id}`}>Name</label>
+          <label htmlFor={`name-${attribute.id}`}>{ATTRIBUTES.name}</label>
           <input
             defaultValue={attribute.name}
             id={`name-${attribute.id}`}
@@ -162,7 +165,7 @@ export function AttributeProperties({
           />
         </p>
         <p>
-          <label htmlFor={`unit-${attribute.id}`}>Unit</label>
+          <label htmlFor={`unit-${attribute.id}`}>{ATTRIBUTES.unit}</label>
           <input
             defaultValue={attribute.unit ?? ""}
             id={`unit-${attribute.id}`}
@@ -178,7 +181,7 @@ export function AttributeProperties({
               name="filterable"
               type="checkbox"
             />
-            Can be filtered on
+            {ATTRIBUTES.filterable}
           </label>
         </p>
         <p>
@@ -189,7 +192,7 @@ export function AttributeProperties({
               name="comparable"
               type="checkbox"
             />
-            Appears in Compare
+            {ATTRIBUTES.comparable}
           </label>
         </p>
         <button type="submit">{pending ? "Saving…" : "Save"}</button>
@@ -213,7 +216,7 @@ export function RequiredForPublication({
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Required to publish</legend>
+        <legend>{ATTRIBUTES.required}</legend>
         <p>{REQUIRED_NEEDS_EVERY_LIVE_OFFERING}</p>
         <p>
           <label htmlFor={`required-${attribute.id}`}>
@@ -223,7 +226,7 @@ export function RequiredForPublication({
               name="requiredForPublication"
               type="checkbox"
             />
-            An Offering needs a value here before it can be published
+            {ATTRIBUTES.requiredExplained}
           </label>
         </p>
         <button type="submit">{pending ? "Saving…" : "Save"}</button>
@@ -272,7 +275,7 @@ export function RetireOption({
   return (
     <form action={dispatch}>
       <button disabled={pending} type="submit">
-        {pending ? "Retiring…" : `Retire ${label}`}
+        {pending ? ATTRIBUTES.retiring : ATTRIBUTES.retire(label)}
       </button>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -285,13 +288,13 @@ export function AddOption({ action }: { action: Action }) {
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Add an allowed value</legend>
+        <legend>{ATTRIBUTES.addOption}</legend>
         <p>
-          <label htmlFor="label">Label</label>
+          <label htmlFor="label">{ATTRIBUTES.label}</label>
           <input id="label" name="label" required type="text" />
         </p>
         <p>
-          <label htmlFor="optionKey">Stable key</label>
+          <label htmlFor="optionKey">{ATTRIBUTES.stableKey}</label>
           <input id="optionKey" name="stableKey" required type="text" />
         </p>
         <button type="submit">{pending ? "Adding…" : "Add"}</button>

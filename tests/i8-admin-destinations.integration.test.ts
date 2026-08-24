@@ -206,7 +206,9 @@ suite("Increment I8 Admin destinations", () => {
       before?.destination.validationResult
     );
     expect(after?.category).toBe("NEEDS_VALIDATION");
-    expect(DESTINATION_ACTION_RESULTS.REVIEW).toMatch(/changes nothing/iu);
+    expect(DESTINATION_ACTION_RESULTS.REVIEW).toMatch(
+      /hiçbir şeyi değiştirmez/iu
+    );
   });
 
   it("moves the queue by moving the results it is derived from", async () => {
@@ -271,7 +273,7 @@ suite("Increment I8 Admin destinations", () => {
     expect(destination.status).toBe("DISABLED");
     expect(destination.handoffEligibility).toBe("INELIGIBLE");
     expect(destination.validationResult).toBe("VALID");
-    expect(DESTINATION_ACTION_RESULTS.DISABLE).toMatch(/kept/iu);
+    expect(DESTINATION_ACTION_RESULTS.DISABLE).toMatch(/olduğu gibi kalır/iu);
   });
 
   it("keeps this family and General Moderation apart", () => {
@@ -283,7 +285,7 @@ suite("Increment I8 Admin destinations", () => {
     // and said again on the screen — because the two queues share a panel and
     // an Admin has no other way to know that validating opens no case.
     expect(overlap).toEqual([]);
-    expect(SEPARATE_FROM_MODERATION).toMatch(/not general moderation/iu);
+    expect(SEPARATE_FROM_MODERATION).toMatch(/Genel Moderasyon değildir/u);
   });
 
   it("says whose turn it is on the one item that is not the platform's", () => {
@@ -291,7 +293,7 @@ suite("Increment I8 Admin destinations", () => {
     // move would keep returning to it. The queue is also ordered so that what
     // the platform can act on comes first.
     expect(WORKLOAD_COPY.BUSINESS_CORRECTION_NEEDED).toMatch(
-      /the business has to/iu
+      /Değiştirmesi gereken/u
     );
     expect(WORKLOAD_ORDER[0]).toBe("READY_TO_ENABLE");
     expect(WORKLOAD_ORDER.at(-1)).toBe("BUSINESS_CORRECTION_NEEDED");

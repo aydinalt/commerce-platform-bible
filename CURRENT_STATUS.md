@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.54
-Last Updated: 2026-08-21
+Version:      2.55
+Last Updated: 2026-08-22
 -->
 
 # CURRENT STATUS
@@ -14,7 +14,7 @@ Last Updated: 2026-08-21
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines. Every increment through I13 was proven green in target CI before the next opened, on evidence recorded here run by run. I14 through I19 are green in target CI too, **on the Owner's confirmation of 2026-08-18 rather than on a run recorded in this document** — the distinction is kept because a claim about CI should say how it is known. That confirmation is what closes the three database gates for those six increments: `db:validate`, `db:deploy` and `db:drift` cannot run in the local environment and had gone unproven since I13 |
-| Current phase | M12 Increment I28 Turkish Consolidation — closed for UX-0005. Twenty-nine increments, I0 through I28. Second of three: authentication and the Business Dashboard speak Turkish; Admin's seven surfaces remain. The first visual-design work in the repository: no Frozen UX document specifies visual design, so the Owner approved a foundation on 2026-08-21 and this implements it. The web application's calls to the API were the last untimed dependency edge in the repository, which made I23's and I24's surfaces unreachable in the failure that produces them most often. UX-0005 and UX-0006 join the public path; four of the eight Error Behaviour documents remain queued. R1.2, R1.4 and all of R2 of `docs/releases/V1_RELEASE_CRITERIA_CANDIDATE.md` need a hosting target and a monitoring system, neither of which exists |
+| Current phase | M12 Increment I29 Turkish Consolidation — closed for UX-0006, and the thread is finished. Thirty increments, I0 through I29. **All twenty-two routes speak Turkish**; `<html lang="tr">` is true of the whole application and no route declares an exception, so `i10`'s `ENGLISH` pattern is deleted rather than empty. **Nothing can be deployed**: no `Dockerfile`, no deploy workflow, no named hosting target — see `docs/implementation/ROADMAP_2026-08-22.md`. The Owner confirmed on 2026-08-22 that Offerings will carry images; the schema has no image, photo or media column of any kind, so that is the next substantial piece of work and it reorders everything after it. The first visual-design work in the repository: no Frozen UX document specifies visual design, so the Owner approved a foundation on 2026-08-21 and this implements it. The web application's calls to the API were the last untimed dependency edge in the repository, which made I23's and I24's surfaces unreachable in the failure that produces them most often. UX-0005 and UX-0006 join the public path; four of the eight Error Behaviour documents remain queued. R1.2, R1.4 and all of R2 of `docs/releases/V1_RELEASE_CRITERIA_CANDIDATE.md` need a hosting target and a monitoring system, neither of which exists |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour and §7.2 Search narrowing had none until I15. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,34 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I29 Turkish Consolidation — UX-0006
+
+Admin's seven surfaces, and the last of the three. The `platform/*` modules
+already owned their words and were translated in place; `platform/copy.ts` holds
+only what was inline. Findings are in
+`docs/implementation/I29_TURKISH_ADMIN.md`.
+
+**The Analytics tables rendered the contract's own identifiers.** An Admin read
+`UNRESTRICTED`, `PUBLISHED`, `NOT_VALIDATED` and `MOBILITY: 3` on the screen
+that describes the platform. No source-reading test could have found it: these
+strings are never literals in the JSX, they arrive as data — so the
+English-detector that had been corrected four times was structurally incapable
+of seeing them, and three increments walked past.
+
+**Two comments described an accident as a decision.** `panel.ts` and
+`layout.tsx` both explained the English/Turkish division as deliberate, one of
+them attributing it to "the Owner's decision". No Owner made it. Both are struck
+through rather than deleted.
+
+**A unit test proved a resolver and the screen ignored it.** A mutation putting
+the raw Domain key back on screen passed against `tallyLabel`'s own case,
+because a function being right says nothing about whether the surface calls it.
+The assertion is now against rendered markup.
+
+**The production build caught what nothing else did**: the new imports used
+`.js` extensions, correct for the tests and unresolvable by the web bundler,
+which the type check and all 883 tests passed over in silence.
 
 ## I28 Turkish Consolidation — UX-0005
 
@@ -827,7 +855,7 @@ eligibility that was enacted without being recorded.
 - The monorepo skeleton implements only accepted architecture boundaries and technical health checks; it does not claim product behaviour.
 - `prisma validate`, `prisma migrate deploy` and `prisma migrate diff` cannot run in the local verification environment: the Prisma engine host answers 403 there. **Nothing stands in for them locally.** An earlier version of this line claimed schema syntax was checked through `@prisma/prisma-schema-wasm`; no such check exists in this repository, and the claim is withdrawn rather than quietly dropped. All three are proven in target CI and nowhere else.
 - Authentication is application-owned: Argon2id credentials and server-managed opaque sessions, per `docs/implementation/IDENTITY_IMPLEMENTATION_DECISION.md`. ~~The `TestPrincipalAdapter` survives only as a development affordance.~~ **Deleted in I16.** The session cookie is now the only way to become a principal; `ENABLE_TEST_PRINCIPAL` is gone from the environment and `Principal.businessId` is required, so the "no selection, skip the context check" state the adapter needed no longer exists.
-- The Business Dashboard speaks Turkish as of I28. **Admin's seven surfaces remain English**, the last of the three. **The substring hazard is fixed where it was found, not prevented** — nothing stops a future label from being a prefix of another, and a general pairwise check is worth adding when the third area lands and the full label set exists. `toLocaleUpperCase("tr")` now has its first use, lower-casing a term mid-sentence where a plain `toLowerCase()` would turn `İlan` into `i̇lan`.
+- ~~The Business Dashboard speaks Turkish as of I28. **Admin's seven surfaces remain English**, the last of the three.~~ **Finished in I29: all twenty-two routes are Turkish.** ~~**The substring hazard is fixed where it was found, not prevented**~~ — the pairwise check landed in I29, and it exempts the bare terms, because a label containing a term is the design rather than a defect. **It does not cover sentences**: `i24` asserted on the word `yüklenemedi`, which two different messages now share, and that was found by breaking rather than by the check. `toLocaleUpperCase("tr")` now has its first use, lower-casing a term mid-sentence where a plain `toLowerCase()` would turn `İlan` into `i̇lan`.
 - Authentication speaks Turkish as of I27, with the domain vocabulary owned in one module and every string extracted. **Twelve surfaces remain English** — the Business Dashboard's five and Admin's seven — and they are the next two increments. **The Turkish has not been read by a Turkish speaker other than its author**; it is consistent, and consistency is not the same as sounding right. **`toLocaleUpperCase("tr")` is used nowhere yet** because nothing upper-cases user text, and a plain `toUpperCase()` would turn *ilan* into *ILAN* rather than *İLAN*.
 - The application has a visual design foundation as of I26, and **nobody has seen it**: every claim is computed — contrast from hex, layout from CSS rules — with no screenshot, no device and no person. R4.7's screen-reader session remains open. **No webfont is loaded**, deliberately, so a build cannot fail because a third party is down. **Dark mode is absent** and would double every contrast check. **No `loading.tsx` exists**, so the Skeleton component was not built. **The application is still bilingual** — fourteen surfaces remain `lang="en"` with English copy, which is the next increment in the approved sequence.
 - The web application's reads are bounded by a ten-second budget as of I25, per Engineering Constitution §13 and the Owner's decision of 2026-08-19. **The eight writes are deliberately unbudgeted** — an aborted write may already have happened, and calling that a failure claims an outcome nothing knows. **Ten seconds is a judgement, not a measurement**, the third such number after `DATABASE_POOL_MAX` and `statement_timeout`; R3.4 asks for all of them under load. **Nothing counts web timeouts**: the web application publishes no metrics at all, so a deployment cannot see whether the number is right — §12.2 has never been read against it.

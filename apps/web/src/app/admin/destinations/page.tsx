@@ -25,13 +25,14 @@ import {
   STATUS_COPY,
   VALIDATION_COPY
 } from "../../../business/destination";
+import { DESTINATIONS, PANEL } from "../../../platform/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import { administerDestination } from "./actions";
 import { DestinationAction } from "./destination-actions";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Affiliate Destinations" };
+export const metadata: Metadata = { title: DESTINATIONS.title };
 
 /**
  * Affiliate Destination Administration (UX-0006 §9).
@@ -68,7 +69,7 @@ function WorkloadItem({ item }: { item: DestinationWorkloadItem }) {
       <p>{ELIGIBILITY_COPY[destination.handoffEligibility]}</p>
       <p>
         <Link href={`/admin/moderation-cases?status=OPEN`}>
-          Business {item.businessId}
+          {DESTINATIONS.business} {item.businessId}
         </Link>
       </p>
 
@@ -118,15 +119,15 @@ export default async function DestinationWorkloadPage() {
   const pending = items?.filter((item) => item.category !== null) ?? [];
 
   return (
-    <main lang="en">
+    <main>
       <p>
-        <Link href="/admin">Platform administration</Link>
+        <Link href="/admin">{PANEL.title}</Link>
       </p>
-      <h1>Affiliate Destinations</h1>
+      <h1>{DESTINATIONS.title}</h1>
       <p>{SEPARATE_FROM_MODERATION}</p>
 
       {items === null ? (
-        <p role="alert">The workload could not be loaded.</p>
+        <p role="alert">{DESTINATIONS.unreadable}</p>
       ) : pending.length === 0 ? (
         /* §14. Said as itself, and not turned into an invitation to find
            something else to do to a Business. */

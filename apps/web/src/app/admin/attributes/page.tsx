@@ -11,6 +11,7 @@ import {
   fetchCategories
 } from "../../../platform/api";
 import { NO_ATTRIBUTES, VALUE_KIND_LABELS } from "../../../platform/catalog";
+import { ATTRIBUTES, PANEL } from "../../../platform/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import {
   addAttributeOption,
@@ -31,7 +32,7 @@ import {
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Attributes" };
+export const metadata: Metadata = { title: ATTRIBUTES.title };
 
 /**
  * Attribute management (UX-0006 §11).
@@ -75,18 +76,18 @@ export default async function AttributesPage() {
 
   if (attributes === null || categories === null)
     return (
-      <main lang="en">
-        <h1>Attributes</h1>
-        <p role="alert">The catalogue could not be loaded.</p>
+      <main>
+        <h1>{ATTRIBUTES.title}</h1>
+        <p role="alert">{ATTRIBUTES.unreadable}</p>
       </main>
     );
 
   return (
-    <main lang="en">
+    <main>
       <p>
-        <Link href="/admin">Platform administration</Link>
+        <Link href="/admin">{PANEL.title}</Link>
       </p>
-      <h1>Attributes</h1>
+      <h1>{ATTRIBUTES.title}</h1>
 
       {attributes.length === 0 ? (
         <p>{NO_ATTRIBUTES}</p>

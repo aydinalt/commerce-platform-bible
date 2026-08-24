@@ -5,6 +5,7 @@ import {
   DOMAIN_GAP,
   INFORMATIONAL_HEADING
 } from "../../platform/panel";
+import { ANALYTICS, tallyLabel } from "../../platform/copy";
 
 /**
  * One tally, rendered as the counts it is.
@@ -26,12 +27,15 @@ function Tally({
     <div>
       <h3>{heading}</h3>
       {entries.length === 0 ? (
-        <p>Nothing recorded.</p>
+        <p>{ANALYTICS.nothingRecorded}</p>
       ) : (
         <dl>
           {entries.map(([key, count]) => (
             <div key={key}>
-              <dt>{key}</dt>
+              {/* Sorted by the contract key above rather than by the label, so
+                  the order a tally appears in does not change with the
+                  language it is read in. */}
+              <dt>{tallyLabel(key)}</dt>
               <dd>{count}</dd>
             </div>
           ))}
@@ -58,41 +62,41 @@ export function AnalyticsTable({ analytics }: { analytics: Analytics }) {
     <section aria-labelledby="analytics">
       <h2 id="analytics">{INFORMATIONAL_HEADING}</h2>
 
-      <Tally heading="User accounts" tally={analytics.userAccounts} />
-      <Tally heading="Businesses" tally={analytics.businesses} />
+      <Tally heading={ANALYTICS.userAccounts} tally={analytics.userAccounts} />
+      <Tally heading={ANALYTICS.businesses} tally={analytics.businesses} />
       <Tally
-        heading="Offerings by lifecycle"
+        heading={ANALYTICS.lifecycle}
         tally={analytics.offerings.lifecycle}
       />
       {/* §12.3 lists lifecycle and final public eligibility as two indicators,
           and they stay two here — a Published Offering is not necessarily a
           publicly visible one, and one table would suggest it is. */}
       <Tally
-        heading="Offerings by public eligibility"
+        heading={ANALYTICS.publicEligibility}
         tally={analytics.offerings.publicEligibility}
       />
       <Tally
-        heading="Destinations by status"
+        heading={ANALYTICS.destinationStatus}
         tally={analytics.affiliateDestinations.status}
       />
       <Tally
-        heading="Destinations by validation"
+        heading={ANALYTICS.destinationValidation}
         tally={analytics.affiliateDestinations.validationResult}
       />
       <Tally
-        heading="Destinations by Handoff Eligibility"
+        heading={ANALYTICS.eligibility}
         tally={analytics.affiliateDestinations.handoffEligibility}
       />
       <Tally
-        heading="Cases by status"
+        heading={ANALYTICS.cases}
         tally={analytics.moderationCases.status}
       />
       <Tally
-        heading="Open cases by target"
+        heading={ANALYTICS.openByTarget}
         tally={analytics.moderationCases.openByTarget}
       />
 
-      <h3>What people did</h3>
+      <h3>{ANALYTICS.heading}</h3>
       {/* `stacking` is what turns this into labelled rows below 768px. An
           Admin queue that can only be read by scrolling sideways on a phone is
           a queue that does not get worked, and horizontal scroll inside a page
@@ -100,9 +104,9 @@ export function AnalyticsTable({ analytics }: { analytics: Analytics }) {
       <table className="stacking">
         <thead>
           <tr>
-            <th scope="col">Indicator</th>
-            <th scope="col">Overall</th>
-            <th scope="col">By Domain</th>
+            <th scope="col">{ANALYTICS.indicator}</th>
+            <th scope="col">{ANALYTICS.overall}</th>
+            <th scope="col">{ANALYTICS.byDomain}</th>
           </tr>
         </thead>
         <tbody>
@@ -113,10 +117,16 @@ export function AnalyticsTable({ analytics }: { analytics: Analytics }) {
               </th>
               <td>{count.overall}</td>
               <td>
+                {/* The Domain was rendered as its contract key, so this cell
+                    read `MOBILITY: 3` — the identifier, not the name. It is
+                    data rather than a literal, which is why three passes over
+                    the source did not see it. */}
                 {count.byDomain.length === 0
                   ? "—"
                   : count.byDomain
-                      .map((entry) => `${entry.domain}: ${entry.count}`)
+                      .map(
+                        (entry) => `${tallyLabel(entry.domain)}: ${entry.count}`
+                      )
                       .join(", ")}
               </td>
             </tr>

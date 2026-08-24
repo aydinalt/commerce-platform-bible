@@ -11,6 +11,7 @@ import {
   NO_CATEGORIES,
   asTree
 } from "../../../platform/catalog";
+import { CATEGORIES, PANEL } from "../../../platform/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import {
   createCategory,
@@ -27,7 +28,7 @@ import {
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Categories" };
+export const metadata: Metadata = { title: CATEGORIES.title };
 
 /**
  * Category and Domain management (UX-0006 §10).
@@ -65,14 +66,14 @@ export default async function CategoriesPage() {
   const categories = isUnavailable(read) ? null : read;
 
   return (
-    <main lang="en">
+    <main>
       <p>
-        <Link href="/admin">Platform administration</Link>
+        <Link href="/admin">{PANEL.title}</Link>
       </p>
-      <h1>Categories</h1>
+      <h1>{CATEGORIES.title}</h1>
 
       {categories === null ? (
-        <p role="alert">The catalogue could not be loaded.</p>
+        <p role="alert">{CATEGORIES.unreadable}</p>
       ) : (
         <>
           {categories.length === 0 ? (

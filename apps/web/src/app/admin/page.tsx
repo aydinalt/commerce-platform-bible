@@ -17,13 +17,14 @@ import {
   PERIOD_LABELS,
   readPeriod
 } from "../../platform/panel";
+import { PANEL } from "../../platform/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../identity/session";
 import { logout } from "../login/actions";
 import { AnalyticsTable } from "./analytics-table";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Platform administration" };
+export const metadata: Metadata = { title: PANEL.title };
 
 /**
  * The Admin Dashboard (UX-0006).
@@ -82,8 +83,8 @@ export default async function AdminDashboardPage({
   ).reduce((total, count) => total + count, 0);
 
   return (
-    <main lang="en">
-      <h1>Platform administration</h1>
+    <main>
+      <h1>{PANEL.title}</h1>
 
       {/* §6. The queues that are waiting for an Admin, kept apart from the
           figures that merely describe the platform. Mixing them would make
@@ -100,7 +101,7 @@ export default async function AdminDashboardPage({
                 NO_OPEN_CASES
               ) : (
                 <Link href="/admin/moderation-cases">
-                  {openCases} moderation cases need action
+                  {PANEL.casesWaiting(openCases)}
                 </Link>
               )}
             </li>
@@ -112,7 +113,7 @@ export default async function AdminDashboardPage({
                 NO_DESTINATION_WORKLOAD
               ) : (
                 <Link href="/admin/destinations">
-                  {destinationWork} Affiliate Destinations are waiting
+                  {PANEL.destinationsWaiting(destinationWork)}
                 </Link>
               )}
             </li>
@@ -121,7 +122,7 @@ export default async function AdminDashboardPage({
       </section>
 
       <section aria-labelledby="functions">
-        <h2 id="functions">What you can do here</h2>
+        <h2 id="functions">{PANEL.actions}</h2>
         <ul>
           {panel.functions.map((entry) => (
             <li key={entry}>
@@ -141,7 +142,7 @@ export default async function AdminDashboardPage({
 
       {/* §12.1. The period is in the address, so a reload keeps it and a link
           to a queue can be returned from without losing what was selected. */}
-      <nav aria-label="Analytics period">
+      <nav aria-label={PANEL.analyticsPeriod}>
         <ul>
           {PERIODS.map((entry) => (
             <li key={entry}>
@@ -171,7 +172,7 @@ export default async function AdminDashboardPage({
       {/* §5.1. Logout is requested here and executed by UX-0008, which owns it
           wherever it is asked for. */}
       <form action={logout}>
-        <button type="submit">Sign out</button>
+        <button type="submit">{PANEL.signOut}</button>
       </form>
     </main>
   );

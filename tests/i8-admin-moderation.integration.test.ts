@@ -255,7 +255,7 @@ suite("Increment I8 Admin moderation", () => {
     expect(refused.statusCode).toBeGreaterThanOrEqual(400);
     expect(refused.json<{ code: string }>().code).toBe("CASE_NOT_RESOLVED");
     expect(after.status).toBe("OPEN");
-    expect(moderationRefusal("CASE_NOT_RESOLVED")).toMatch(/stays open/iu);
+    expect(moderationRefusal("CASE_NOT_RESOLVED")).toMatch(/açık kalıyor/iu);
   });
 
   it("closes on a no-action decision and changes no target state", async () => {
@@ -278,7 +278,7 @@ suite("Increment I8 Admin moderation", () => {
     expect(closed.statusCode).toBe(200);
     expect(closed.json<ModerationCase>().status).toBe("CLOSED");
     expect(lifecycle.rows[0]?.status).toBe("PUBLISHED");
-    expect(CLOSURE_CHANGES_NOTHING).toMatch(/changes nothing/iu);
+    expect(CLOSURE_CHANGES_NOTHING).toMatch(/hiçbir şeyi değiştirmez/iu);
   });
 
   it("keeps a case open until somebody looks at the owner's answer", async () => {

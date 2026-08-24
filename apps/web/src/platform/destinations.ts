@@ -1,5 +1,7 @@
 import type { DestinationWorkloadItem } from "@commerce/contracts";
 
+import { TERMS } from "../vocabulary";
+
 type Category = NonNullable<DestinationWorkloadItem["category"]>;
 type Destination = DestinationWorkloadItem["destination"];
 
@@ -12,16 +14,15 @@ type Destination = DestinationWorkloadItem["destination"];
  * it is turns a list of work into a list of work you can actually do.
  */
 export const WORKLOAD_COPY: Record<Category, string> = {
-  BUSINESS_CORRECTION_NEEDED:
-    "The platform found a problem with this address. The Business has to change it — there is nothing to do here until they do.",
-  NEEDS_VALIDATION: "Nobody has checked this address yet.",
-  READY_TO_ENABLE: "Checked and valid. It can be enabled."
+  BUSINESS_CORRECTION_NEEDED: `Platform bu adreste bir sorun buldu. Değiştirmesi gereken ${TERMS.business} — onlar yapana kadar burada yapılacak bir şey yok.`,
+  NEEDS_VALIDATION: "Bu adresi henüz kimse denetlemedi.",
+  READY_TO_ENABLE: "Denetlendi ve geçerli. Açılabilir."
 };
 
 export const WORKLOAD_HEADINGS: Record<Category, string> = {
-  BUSINESS_CORRECTION_NEEDED: "Waiting on the Business",
-  NEEDS_VALIDATION: "Needs checking",
-  READY_TO_ENABLE: "Ready to enable"
+  BUSINESS_CORRECTION_NEEDED: `${TERMS.business} bekleniyor`,
+  NEEDS_VALIDATION: "Denetim bekliyor",
+  READY_TO_ENABLE: "Açılmaya hazır"
 };
 
 /**
@@ -47,20 +48,20 @@ export const WORKLOAD_ORDER: readonly Category[] = [
  * something while deciding nothing is worse than no control.
  */
 export const DESTINATION_ACTION_LABELS = {
-  DISABLE: "Disable",
-  ENABLE: "Enable",
-  REVIEW: "Record a review",
-  VALIDATE_INVALID: "Mark invalid",
-  VALIDATE_VALID: "Mark valid"
+  DISABLE: "Kapat",
+  ENABLE: "Aç",
+  REVIEW: "İnceleme kaydet",
+  VALIDATE_INVALID: "Geçersiz işaretle",
+  VALIDATE_VALID: "Geçerli işaretle"
 } as const;
 
 export const DESTINATION_ACTION_RESULTS = {
   DISABLE:
-    "Becomes Disabled and Handoff Ineligible. The validation result is kept.",
-  ENABLE: "Becomes Enabled and Handoff Eligible. Requires a Valid result.",
-  REVIEW: "Changes nothing. It records that somebody looked.",
-  VALIDATE_INVALID: "Records Invalid. The status stays where it is.",
-  VALIDATE_VALID: "Records Valid. The status stays where it is."
+    "Kapalı duruma geçer ve devir alamaz. Denetim sonucu olduğu gibi kalır.",
+  ENABLE: "Açık duruma geçer ve devir alabilir. Geçerli bir sonuç gerektirir.",
+  REVIEW: "Hiçbir şeyi değiştirmez. Birinin baktığını kaydeder.",
+  VALIDATE_INVALID: "Geçersiz sonucunu kaydeder. Durum olduğu yerde kalır.",
+  VALIDATE_VALID: "Geçerli sonucunu kaydeder. Durum olduğu yerde kalır."
 } as const;
 
 export const DESTINATION_PATHS = {
@@ -96,10 +97,8 @@ export function disableAvailable(destination: Destination): boolean {
  * Admin moving between them has no other way to know that validating a
  * destination is not a moderation action and opens no case.
  */
-export const SEPARATE_FROM_MODERATION =
-  "Destination administration is not General Moderation. Nothing here opens or closes a moderation case.";
+export const SEPARATE_FROM_MODERATION = `${TERMS.affiliateDestination} yönetimi, Genel Moderasyon değildir. Buradaki hiçbir şey ${TERMS.moderationCase.toLocaleLowerCase("tr")} açmaz ya da kapatmaz.`;
 
 /// §14. An empty queue is a state worth naming, and it is not an invitation to
 /// go and find something else to do to a Business.
-export const NO_WORKLOAD =
-  "No Affiliate Destination is waiting on the platform.";
+export const NO_WORKLOAD = `Platformu bekleyen ${TERMS.affiliateDestination.toLocaleLowerCase("tr")} yok.`;

@@ -6,6 +6,7 @@ import {
   DESTINATION_ACTION_LABELS,
   DESTINATION_ACTION_RESULTS
 } from "../../../platform/destinations";
+import { DESTINATIONS } from "../../../platform/copy";
 import {
   ADMIN_IDLE,
   type AdminActionState
@@ -52,20 +53,22 @@ export function DestinationAction({
 
         {verb === "VALIDATE_INVALID" ? (
           <p>
-            <label htmlFor={`reason-${verb}`}>What is wrong with it</label>
+            <label htmlFor={`reason-${verb}`}>
+              {DESTINATIONS.invalidReason}
+            </label>
             <textarea id={`reason-${verb}`} name="reason" />
           </p>
         ) : null}
 
         {verb === "REVIEW" ? (
           <p>
-            <label htmlFor="note">Note (optional)</label>
+            <label htmlFor="note">{DESTINATIONS.note}</label>
             <textarea id="note" name="note" />
           </p>
         ) : null}
 
         <button type="submit">
-          {pending ? "Working…" : DESTINATION_ACTION_LABELS[verb]}
+          {pending ? DESTINATIONS.working : DESTINATION_ACTION_LABELS[verb]}
         </button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}

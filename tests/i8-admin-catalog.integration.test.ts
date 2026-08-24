@@ -175,7 +175,9 @@ suite("Increment I8 Admin catalog", () => {
       "CATEGORY_DOMAIN_MISMATCH"
     );
     expect(after?.parentId).toBe(mobility.id);
-    expect(catalogRefusal("CATEGORY_DOMAIN_MISMATCH")).toMatch(/unchanged/iu);
+    expect(catalogRefusal("CATEGORY_DOMAIN_MISMATCH")).toMatch(
+      /hiyerarşi değişmedi/iu
+    );
   });
 
   it("refuses to put a Category underneath itself", async () => {
@@ -191,7 +193,7 @@ suite("Increment I8 Admin catalog", () => {
       "CATEGORY_ANCESTRY_CYCLE"
     );
     expect(catalogRefusal("CATEGORY_ANCESTRY_CYCLE")).toMatch(
-      /underneath itself/iu
+      /kendi altında yer alamaz/iu
     );
   });
 
@@ -210,8 +212,8 @@ suite("Increment I8 Admin catalog", () => {
     // before the attempt, so the refusal is a reminder rather than news.
     expect(refused.statusCode).toBeGreaterThanOrEqual(400);
     expect(after?.active).toBe(true);
-    expect(RETIREMENT_IS_NOT_DELETION).toMatch(/keeps the category/iu);
-    expect(ARCHIVED_DOES_NOT_BLOCK).toMatch(/archived/iu);
+    expect(RETIREMENT_IS_NOT_DELETION).toMatch(/yerinde bırakır/iu);
+    expect(ARCHIVED_DOES_NOT_BLOCK).toMatch(/açık tutmaz/u);
   });
 
   it("keeps a retired Category rather than deleting it", async () => {
@@ -284,7 +286,7 @@ suite("Increment I8 Admin catalog", () => {
     // refuses it — so the form says the rule rather than disabling a control
     // and leaving an Admin to wonder whether they misread it.
     expect(refused.statusCode).toBeGreaterThanOrEqual(400);
-    expect(TEXT_IS_NOT_FILTERABLE).toMatch(/cannot be filters/iu);
+    expect(TEXT_IS_NOT_FILTERABLE).toMatch(/filtre olamaz/iu);
   });
 
   it("refuses to change a value kind that Offerings already depend on", async () => {
@@ -354,7 +356,7 @@ suite("Increment I8 Admin catalog", () => {
     );
     expect(after?.valueKind).toBe("NUMBER");
     expect(catalogRefusal("ATTRIBUTE_MUTATION_BLOCKED")).toMatch(
-      /silently alter or delete/iu
+      /sessizce bozar ya da siler/iu
     );
   });
 });

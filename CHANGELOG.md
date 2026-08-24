@@ -10,6 +10,62 @@ This project follows the principles of:
 
 ---
 
+## [3.14.0] - 2026-08-22
+
+### Fixed
+
+- UX-0006's seven Admin surfaces are Turkish. **All twenty-two routes now speak
+  one language**, so `i10`'s `ENGLISH` pattern is deleted rather than emptied —
+  an empty pattern would leave a mechanism for declaring exceptions sitting
+  ready, describing nothing.
+- **The Analytics tables rendered the contract's own identifiers.** An Admin
+  read `UNRESTRICTED`, `PUBLISHED`, `NOT_VALIDATED`, `USER_ACCOUNT` and
+  `MOBILITY: 3` on the one screen that says how the platform is doing. No
+  source-reading test could have found this: the strings are never literals in
+  the JSX, they arrive as data, so the English-detector corrected four times
+  across I27 and I28 was structurally blind to them.
+- **Two comments described an accident as a decision.** `panel.ts` explained the
+  English/Turkish division as "not arbitrary"; `layout.tsx` attributed it to
+  "the Owner's decision". No Owner made it — it was the order the surfaces
+  happened to be written in. Both struck through rather than deleted.
+
+### Added
+
+- `apps/web/src/platform/copy.ts`, and `Alan`, `Moderasyon vakası` and the three
+  Domain names in the shared vocabulary. Admin is the first surface to name a
+  Domain at all: Home receives the grouping and flattens it.
+- The pairwise substring check I28 left open, now that the full label set
+  exists. **Its first version reported the design as a bug** — flagging
+  `Bu İlanı gizle` for containing `İlan` — so a bare term may be contained and
+  nothing else may.
+
+### Verified
+
+- 96 test files, 883 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build.
+- Seven mutations, each caught. **One of them passed at first and was the most
+  useful.** `tallyLabel` was proven by a unit case, and putting the raw Domain
+  key back on screen passed anyway — a function being right says nothing about
+  whether the surface calls it. The assertion is now against rendered markup and
+  matches the *shape* of a contract identifier, so a value added upstream and
+  rendered raw fails without anybody remembering to add it.
+- **The production build caught what nothing else did.** The new imports used
+  `.js` extensions — correct for the tests, unresolvable by the web bundler —
+  and the type check and all 883 tests passed over it in silence.
+- Sixteen existing tests updated, none weakened.
+
+### Known
+
+- The Turkish still has not been read by a Turkish speaker other than its
+  author, and there is now three times as much of it.
+- `Ulaşım` for Mobility rather than `Vasıta`: the familiar word names the
+  vehicle where Mobility is the grouping.
+- The pairwise check covers labels, not sentences. `i24` asserted on
+  `yüklenemedi`, which two messages now share; that was found by breaking.
+- §9.1 remains unanswered and now blocks i18n alone.
+
+---
+
 ## [3.13.0] - 2026-08-21
 
 ### Fixed

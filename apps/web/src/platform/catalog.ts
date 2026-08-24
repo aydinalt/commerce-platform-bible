@@ -1,5 +1,7 @@
 import type { AttributeResponse, CategoryResponse } from "@commerce/contracts";
 
+import { DOMAINS as DOMAIN_NAMES, LIFECYCLE, TERMS } from "../vocabulary";
+
 type Domain = CategoryResponse["domain"];
 type ValueKind = AttributeResponse["valueKind"];
 
@@ -17,18 +19,14 @@ export const DOMAINS: readonly Domain[] = [
   "TECHNOLOGY"
 ];
 
-export const DOMAIN_LABELS: Record<Domain, string> = {
-  MOBILITY: "Mobility",
-  REAL_ESTATE: "Real Estate",
-  TECHNOLOGY: "Technology"
-};
+export const DOMAIN_LABELS: Record<Domain, string> = DOMAIN_NAMES;
 
 export const VALUE_KIND_LABELS: Record<ValueKind, string> = {
-  BOOLEAN: "Yes or no",
-  MULTI_SELECT: "Several from a list",
-  NUMBER: "Number",
-  SINGLE_SELECT: "One from a list",
-  TEXT: "Text"
+  BOOLEAN: "Evet ya da hayır",
+  MULTI_SELECT: "Listeden birkaçı",
+  NUMBER: "Sayı",
+  SINGLE_SELECT: "Listeden biri",
+  TEXT: "Serbest metin"
 };
 
 /**
@@ -44,31 +42,24 @@ export const VALUE_KIND_LABELS: Record<ValueKind, string> = {
  * did not know that would go looking for what they had just broken.
  */
 export const CATALOG_REFUSALS: Record<string, string> = {
-  ATTRIBUTE_KEY_CONFLICT:
-    "Another Attribute already uses that stable key. The definition is unchanged.",
-  ATTRIBUTE_MUTATION_BLOCKED:
-    "Offerings in an active lifecycle already hold values under this definition, so this change would silently alter or delete them. The definition is unchanged.",
-  ATTRIBUTE_OPTIONS_EXHAUSTED:
-    "A Select Attribute needs at least one allowed value. The definition is unchanged.",
-  ATTRIBUTE_SHAPE_INVALID:
-    "That combination is not a shape an Attribute can have — a unit belongs only to a Number, and Text cannot be filterable. The definition is unchanged.",
-  CATEGORY_ANCESTRY_CYCLE:
-    "A Category cannot sit underneath itself. The hierarchy is unchanged.",
-  CATEGORY_DOMAIN_MISMATCH:
-    "A Category cannot move to another Domain. The hierarchy is unchanged.",
-  CATEGORY_KEY_CONFLICT:
-    "Another Category already uses that stable key or address. Nothing was created.",
+  ATTRIBUTE_KEY_CONFLICT: `Bu kalıcı anahtarı başka bir ${TERMS.attribute} kullanıyor. Tanım değişmedi.`,
+  ATTRIBUTE_MUTATION_BLOCKED: `Etkin yaşam döngüsündeki ${TERMS.offering}lar bu tanım altında zaten değer taşıyor; bu değişiklik onları sessizce bozar ya da siler. Tanım değişmedi.`,
+  ATTRIBUTE_OPTIONS_EXHAUSTED: `Listeden seçmeli bir ${TERMS.attribute} en az bir izinli değere ihtiyaç duyar. Tanım değişmedi.`,
+  ATTRIBUTE_SHAPE_INVALID: `Bu birleşim bir ${TERMS.attribute}in alabileceği bir biçim değil — birim yalnızca sayıya aittir ve serbest metin filtre olamaz. Tanım değişmedi.`,
+  CATEGORY_ANCESTRY_CYCLE: `Bir ${TERMS.category} kendi altında yer alamaz. Hiyerarşi değişmedi.`,
+  CATEGORY_DOMAIN_MISMATCH: `Bir ${TERMS.category} başka bir ${TERMS.domain}a taşınamaz. Hiyerarşi değişmedi.`,
+  CATEGORY_KEY_CONFLICT: `Bu kalıcı anahtarı ya da adresi başka bir ${TERMS.category} kullanıyor. Hiçbir şey oluşturulmadı.`,
   CATEGORY_PARENT_RETIRED:
-    "That parent has been retired, so nothing new can be placed under it. The hierarchy is unchanged.",
-  CATEGORY_RETIREMENT_BLOCKED:
-    "This Category still has an active child or an Offering that is not Archived. It stays active.",
-  VALIDATION_FAILED: "That is not a value this field accepts. Nothing changed."
+    "O üst kayıt kaldırıldı, altına yeni bir şey yerleştirilemez. Hiyerarşi değişmedi.",
+  CATEGORY_RETIREMENT_BLOCKED: `Bu ${TERMS.category}nin hâlâ etkin bir alt kaydı ya da arşivlenmemiş bir ${TERMS.offering}ı var. Etkin kalıyor.`,
+  VALIDATION_FAILED:
+    "Bu, bu alanın kabul ettiği bir değer değil. Hiçbir şey değişmedi."
 };
 
 export function catalogRefusal(code: string): string {
   return (
     CATALOG_REFUSALS[code] ??
-    "That change could not be made. The last confirmed definition is unchanged."
+    "Bu değişiklik yapılamadı. Son onaylanmış tanım olduğu gibi duruyor."
   );
 }
 
@@ -80,8 +71,7 @@ export function catalogRefusal(code: string): string {
  * Archived Offering's history. An Admin who read "retire" as "delete" would
  * hesitate over something safe, or worse, expect a cleanup that never comes.
  */
-export const RETIREMENT_IS_NOT_DELETION =
-  "Retiring keeps the Category. It stops accepting new Offerings and disappears from public browsing; nothing already recorded is removed.";
+export const RETIREMENT_IS_NOT_DELETION = `Kaldırmak ${TERMS.category}yi yerinde bırakır. Yeni ${TERMS.offering} almayı durdurur ve kamusal gezinmeden çıkar; kayıtlı olan hiçbir şey silinmez.`;
 
 /**
  * Why an Archived Offering does not block retirement.
@@ -90,8 +80,7 @@ export const RETIREMENT_IS_NOT_DELETION =
  * looking at a Category with a hundred Archived Offerings in it should not be
  * hunting for what is holding it open.
  */
-export const ARCHIVED_DOES_NOT_BLOCK =
-  "Archived Offerings do not hold a Category open. Only an active child or an Offering that is still Draft, Published or Hidden does.";
+export const ARCHIVED_DOES_NOT_BLOCK = `Arşivlenmiş ${TERMS.offering}lar bir ${TERMS.category}yi açık tutmaz. Yalnızca etkin bir alt kayıt ya da hâlâ ${LIFECYCLE.DRAFT}, ${LIFECYCLE.PUBLISHED} veya ${LIFECYCLE.HIDDEN} olan bir ${TERMS.offering} tutar.`;
 
 /**
  * What making an Attribute required actually asks of the platform.
@@ -101,18 +90,16 @@ export const ARCHIVED_DOES_NOT_BLOCK =
  * own publication minimum. Saying so before the refusal turns an obstacle into
  * a reason.
  */
-export const REQUIRED_NEEDS_EVERY_LIVE_OFFERING =
-  "This can only be turned on while every Published and Hidden Offering in the applicable Categories already has a value.";
+export const REQUIRED_NEEDS_EVERY_LIVE_OFFERING = `Bu, yalnızca ilgili ${TERMS.category}lerdeki her ${LIFECYCLE.PUBLISHED} ve ${LIFECYCLE.HIDDEN} ${TERMS.offering} zaten bir değer taşıyorken açılabilir.`;
 
 /// §11. Text is never filterable — PRD-0002 §10.1 leaves it out of V1 and the
 /// platform refuses it, so the control says so rather than letting somebody
 /// find out by being refused.
-export const TEXT_IS_NOT_FILTERABLE =
-  "Text Attributes cannot be filters in V1.";
+export const TEXT_IS_NOT_FILTERABLE = `Serbest metin ${TERMS.attribute}leri V1'de filtre olamaz.`;
 
 /// §14. An empty catalogue is a state worth naming.
-export const NO_CATEGORIES = "No Category has been created yet.";
-export const NO_ATTRIBUTES = "No Attribute has been defined yet.";
+export const NO_CATEGORIES = `Henüz hiç ${TERMS.category} oluşturulmadı.`;
+export const NO_ATTRIBUTES = `Henüz hiç ${TERMS.attribute} tanımlanmadı.`;
 
 /**
  * The tree, in reading order.

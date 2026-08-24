@@ -10,6 +10,7 @@ import {
   DOMAIN_LABELS,
   RETIREMENT_IS_NOT_DELETION
 } from "../../../platform/catalog";
+import { CATEGORIES } from "../../../platform/copy";
 import {
   ADMIN_IDLE,
   type AdminActionState
@@ -45,25 +46,25 @@ export function CreateCategory({
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Create a Category</legend>
+        <legend>{CATEGORIES.create}</legend>
 
         <p>
-          <label htmlFor="name">Name</label>
+          <label htmlFor="name">{CATEGORIES.name}</label>
           <input id="name" name="name" required type="text" />
         </p>
         <p>
-          <label htmlFor="slug">Address</label>
+          <label htmlFor="slug">{CATEGORIES.address}</label>
           <input id="slug" name="slug" required type="text" />
         </p>
         <p>
-          <label htmlFor="stableKey">Stable key</label>
+          <label htmlFor="stableKey">{CATEGORIES.stableKey}</label>
           <input id="stableKey" name="stableKey" required type="text" />
         </p>
 
         <p>
-          <label htmlFor="parentId">Underneath</label>
+          <label htmlFor="parentId">{CATEGORIES.parent}</label>
           <select id="parentId" name="parentId">
-            <option value="">Nothing — this is a root</option>
+            <option value="">{CATEGORIES.noParent}</option>
             {categories
               .filter((category) => category.active)
               .map((category) => (
@@ -75,7 +76,7 @@ export function CreateCategory({
         </p>
 
         <p>
-          <label htmlFor="domain">Domain (roots only)</label>
+          <label htmlFor="domain">{CATEGORIES.domain}</label>
           <select id="domain" name="domain">
             {DOMAINS.map((domain) => (
               <option key={domain} value={domain}>
@@ -108,12 +109,12 @@ export function RenameCategory({
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Rename</legend>
+        <legend>{CATEGORIES.rename}</legend>
         {/* A `legend` names the group, not the control inside it. One field in
             one fieldset is exactly where that is easiest to miss and easiest
             to hear: without this, the box is announced as "edit text" and the
             Admin has to guess from the button beside it. */}
-        <label htmlFor={`rename-${categoryId}`}>New name</label>
+        <label htmlFor={`rename-${categoryId}`}>{CATEGORIES.newName}</label>
         <input
           defaultValue={name}
           id={`rename-${categoryId}`}
@@ -150,14 +151,14 @@ export function ReparentCategory({
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Move</legend>
-        <label htmlFor={`parent-${category.id}`}>New parent</label>
+        <legend>{CATEGORIES.move}</legend>
+        <label htmlFor={`parent-${category.id}`}>{CATEGORIES.newParent}</label>
         <select
           defaultValue={category.parentId ?? ""}
           id={`parent-${category.id}`}
           name="parentId"
         >
-          <option value="">Nothing — make it a root</option>
+          <option value="">{CATEGORIES.noParentMove}</option>
           {categories
             .filter(
               (candidate) =>
@@ -188,7 +189,7 @@ export function RetireCategory({ action }: { action: Action }) {
       <p>{RETIREMENT_IS_NOT_DELETION}</p>
       <p>{ARCHIVED_DOES_NOT_BLOCK}</p>
       <button disabled={pending} type="submit">
-        {pending ? "Retiring…" : "Retire"}
+        {pending ? CATEGORIES.retiring : CATEGORIES.retire}
       </button>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>

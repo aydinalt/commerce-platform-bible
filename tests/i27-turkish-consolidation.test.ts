@@ -14,18 +14,43 @@ import {
 import { REFUSAL_COPY } from "../apps/web/src/identity/outcome.js";
 import { CORRECTION, DASHBOARD } from "../apps/web/src/business/copy.js";
 import { ENTRY_LABELS } from "../apps/web/src/business/inventory.js";
-import { CONTEXTS, CREDENTIALS, TERMS } from "../apps/web/src/vocabulary.js";
+import {
+  ANALYTICS,
+  CASES,
+  PANEL,
+  tallyLabel
+} from "../apps/web/src/platform/copy.js";
+import { ACTION_LABELS } from "../apps/web/src/platform/moderation.js";
+import { DOMAIN_LABELS } from "../apps/web/src/platform/catalog.js";
+import {
+  FUNCTION_LABELS,
+  PERIOD_LABELS
+} from "../apps/web/src/platform/panel.js";
+import {
+  CONTEXTS,
+  CREDENTIALS,
+  DOMAINS,
+  LIFECYCLE,
+  MODERATION,
+  TERMS
+} from "../apps/web/src/vocabulary.js";
 
 /**
  * The areas consolidated so far, in the order the Owner sequenced them.
  *
- * **This list only grows, and `i10-accessibility`'s `ENGLISH` pattern only
+ * ~~**This list only grows, and `i10-accessibility`'s `ENGLISH` pattern only
  * shrinks.** The two meet when Admin lands: every route is Turkish, no route
- * claims otherwise, and both checks still hold.
+ * claims otherwise, and both checks still hold.~~
+ *
+ * **They have met.** Admin landed in I29, so this list is now every route
+ * folder in the application and `i10`'s `ENGLISH` pattern is gone rather than
+ * smaller. What was a moving boundary between two languages is a property of
+ * the whole thing.
  */
 const AUTH = ["login", "register", "recover", "account"];
 const BUSINESS = ["businesses"];
-const CONSOLIDATED = [...AUTH, ...BUSINESS];
+const ADMIN = ["admin"];
+const CONSOLIDATED = [...AUTH, ...BUSINESS, ...ADMIN];
 const APP = "apps/web/src/app";
 
 /** Every `.tsx` under a route folder, including its child components. */
@@ -198,6 +223,105 @@ describe("Increment I27 Turkish consolidation", () => {
     expect(ENTRY_LABELS.MANAGE_AFFILIATE_DESTINATION).toBe(
       TERMS.affiliateDestination
     );
+  });
+
+  it("keeps the Admin area speaking the same vocabulary", () => {
+    /*
+     * The last area, and the one that names the most Frozen concepts: Offering,
+     * Business, Category, Attribute, Domain, moderation case and Affiliate
+     * Destination all appear on the same screens. Each composes rather than
+     * repeats, so the vocabulary cannot drift here without the Business
+     * Dashboard drifting with it.
+     */
+    expect(PANEL.title).toBe("Platform yönetimi");
+    expect(CASES.title).toContain(TERMS.moderationCase);
+    expect(FUNCTION_LABELS.MANAGE_CATEGORIES).toContain(TERMS.category);
+    expect(FUNCTION_LABELS.MODERATE_OFFERINGS).toContain(TERMS.offering);
+    expect(ANALYTICS.byDomain).toContain(TERMS.domain);
+
+    /*
+     * `Alan` is Admin's word and nowhere else's, because Home receives the
+     * Domain grouping and flattens it. This is the first and only place the
+     * concept is named on screen, which is exactly why it belongs in the shared
+     * vocabulary rather than in this area's copy.
+     */
+    expect(DOMAIN_LABELS.MOBILITY).toBe(DOMAINS.MOBILITY);
+  });
+
+  it("says the tally keys rather than showing the contract's identifiers", () => {
+    /*
+     * **The Analytics tables rendered raw enum keys and three increments walked
+     * past it.** An Admin read `UNRESTRICTED`, `PUBLISHED`, `NOT_VALIDATED` and
+     * `USER_ACCOUNT` on the one screen that describes the platform.
+     *
+     * The English-detector could not have caught it and still cannot: these
+     * strings are never literals in the source, they arrive as data. A test
+     * that reads the source finds copy; only a test that knows what the
+     * contract can send finds this.
+     */
+    for (const key of [
+      "ENABLED",
+      "SUSPENDED",
+      "PUBLISHED",
+      "NOT_VALIDATED",
+      "USER_ACCOUNT",
+      "OPEN"
+    ])
+      expect(tallyLabel(key)).not.toBe(key);
+
+    // The fallback is the key itself, deliberately: an untranslated label is
+    // visibly wrong and gets fixed, where a blank row would not be noticed.
+    expect(tallyLabel("SOMETHING_ADDED_UPSTREAM")).toBe(
+      "SOMETHING_ADDED_UPSTREAM"
+    );
+  });
+
+  it("gives no label another label as a substring", () => {
+    /*
+     * **I28 left this open and it is the reason it was left open.** The
+     * translation there produced `Herkese açık değil` containing `Herkese
+     * açık`, so `expect(markup).not.toContain(ELIGIBLE)` would have passed on a
+     * screen saying the opposite. It was fixed where found; nothing prevented
+     * the next one.
+     *
+     * A pairwise check needs the full set, which only exists now that the third
+     * area has landed. Every `toContain` and `not.toContain` in this suite is
+     * only as trustworthy as this case.
+     */
+    const labels = [
+      ...Object.values(TERMS),
+      ...Object.values(LIFECYCLE),
+      ...Object.values(MODERATION),
+      ...Object.values(ENTRY_LABELS),
+      ...Object.values(ACTION_LABELS),
+      ...Object.values(DOMAIN_LABELS),
+      ...Object.values(PERIOD_LABELS)
+    ];
+
+    /*
+     * **A bare term is allowed to be contained, and nothing else is.**
+     *
+     * The first version of this case flagged `Bu İlanı gizle` for containing
+     * `İlan`, which is not a defect but the point: the vocabulary exists so
+     * that labels compose from it rather than repeat it. Every composed label
+     * contains its term by construction, so a rule without this exception
+     * reports the design as a bug and gets deleted by the next person.
+     *
+     * Excluding the terms keeps both defects I28 found. `Herkese açık değil`
+     * containing `Herkese açık` is two eligibility labels, neither a term.
+     * `Arşivlenmiş` containing `Arşivle` is a lifecycle heading and an action —
+     * different sets, which is why a within-set rule would have missed it, and
+     * neither is a term either.
+     */
+    const composable = new Set<string>(Object.values(TERMS));
+
+    const collisions: string[] = [];
+    for (const outer of labels)
+      for (const inner of labels)
+        if (outer !== inner && !composable.has(inner) && outer.includes(inner))
+          collisions.push(`"${outer}" contains "${inner}"`);
+
+    expect(collisions).toEqual([]);
   });
 
   it("names a destination in every link rather than saying 'click here'", () => {

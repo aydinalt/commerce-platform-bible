@@ -23,6 +23,7 @@ import {
   PERIODS,
   readPeriod
 } from "../apps/web/src/platform/panel";
+import { ANALYTICS } from "../apps/web/src/platform/copy";
 
 const enabled = Boolean(process.env.DATABASE_URL);
 const suite = enabled ? describe : describe.skip;
@@ -211,8 +212,8 @@ suite("Increment I8 Admin Dashboard", () => {
       expect(label).not.toMatch(
         /sale|sold|purchase|lead|conversion|revenue|response|reply|success/iu
       );
-    expect(CORE_FLOW_LABELS.AFFILIATE_HANDOFF_COMPLETIONS).toMatch(/handoff/iu);
-    expect(CORE_FLOW_LABELS.DIRECT_CONTACT_COMPLETIONS).toMatch(/shown/iu);
+    expect(CORE_FLOW_LABELS.AFFILIATE_HANDOFF_COMPLETIONS).toMatch(/devir/iu);
+    expect(CORE_FLOW_LABELS.DIRECT_CONTACT_COMPLETIONS).toMatch(/gösterildi/u);
   });
 
   it("shows a figure with no Domain as having none", async () => {
@@ -236,13 +237,27 @@ suite("Increment I8 Admin Dashboard", () => {
     expect(markup).toContain(CORE_FLOW_LABELS.DISCOVERY_STARTS);
     // Lifecycle and public eligibility stay two tables: a Published Offering
     // is not necessarily a publicly visible one.
-    expect(markup).toContain("Offerings by lifecycle");
-    expect(markup).toContain("Offerings by public eligibility");
+    expect(markup).toContain(ANALYTICS.lifecycle);
+    expect(markup).toContain(ANALYTICS.publicEligibility);
+
+    /*
+     * **Rendered, not resolved.** I29 gave the tally keys Turkish names and
+     * proved the resolver with a unit case — and a mutation putting
+     * `${entry.domain}` back into this cell passed anyway, because a function
+     * being right says nothing about whether the screen calls it.
+     *
+     * So the assertion is against the markup: no contract identifier reaches
+     * an Admin. `_` catches the screaming-case keys without naming any one of
+     * them, which is the point — a value added upstream and rendered raw fails
+     * here without anybody having to remember to add it.
+     */
+    const rendered = markup.replace(/<[^>]*>/gu, " ");
+    expect(rendered).not.toMatch(/\b[A-Z]{2,}(_[A-Z]+)+\b/u);
   });
 
   it("keeps unavailable and zero apart", () => {
     // §14. One is a figure an Admin may act on; the other is a question that
     // was not answered. A page of quiet zeros would be the worse of the two.
-    expect(ANALYTICS_UNAVAILABLE).toMatch(/not the same as zero/iu);
+    expect(ANALYTICS_UNAVAILABLE).toMatch(/sıfır demek değildir/iu);
   });
 });

@@ -11,11 +11,12 @@ import {
   RE_REVIEW_REQUIRED_NOTICE,
   TARGET_LABELS
 } from "../../../platform/moderation";
+import { CASES, PANEL } from "../../../platform/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Moderation cases" };
+export const metadata: Metadata = { title: CASES.title };
 
 const FILTERS = ["OPEN", "CLOSED"] as const;
 
@@ -59,21 +60,21 @@ export default async function ModerationCasesPage({
   const cases = isUnavailable(read) ? null : read;
 
   return (
-    <main lang="en">
+    <main>
       <p>
-        <Link href="/admin">Platform administration</Link>
+        <Link href="/admin">{PANEL.title}</Link>
       </p>
-      <h1>Moderation cases</h1>
+      <h1>{CASES.title}</h1>
 
-      <nav aria-label="Case status">
+      <nav aria-label={CASES.statusFilter}>
         <ul>
           {FILTERS.map((entry) => (
             <li key={entry}>
               {entry === status ? (
-                <strong>{entry === "OPEN" ? "Open" : "Closed"}</strong>
+                <strong>{entry === "OPEN" ? CASES.open : CASES.closed}</strong>
               ) : (
                 <Link href={`/admin/moderation-cases?status=${entry}`}>
-                  {entry === "OPEN" ? "Open" : "Closed"}
+                  {entry === "OPEN" ? CASES.open : CASES.closed}
                 </Link>
               )}
             </li>
@@ -82,7 +83,7 @@ export default async function ModerationCasesPage({
       </nav>
 
       {cases === null ? (
-        <p role="alert">The cases could not be loaded.</p>
+        <p role="alert">{CASES.unreadable}</p>
       ) : cases.length === 0 ? (
         <p>{NO_CASES}</p>
       ) : (
@@ -94,7 +95,9 @@ export default async function ModerationCasesPage({
                   {TARGET_LABELS[entry.targetType]}
                 </Link>
               </h2>
-              <p>Opened {entry.openedAt}</p>
+              <p>
+                {CASES.opened}: {entry.openedAt}
+              </p>
               {/* §8. The owner answered and nobody has looked since. It is
                   surfaced in the queue because it is work waiting, not a
                   property of the case somebody has to open it to find. */}
@@ -103,8 +106,8 @@ export default async function ModerationCasesPage({
               ) : null}
               <p>
                 {entry.resolutions.length === 0
-                  ? "Nothing recorded yet."
-                  : `${entry.resolutions.length} recorded decisions.`}
+                  ? CASES.nothingRecordedYet
+                  : CASES.decisionsRecorded(entry.resolutions.length)}
               </p>
             </li>
           ))}

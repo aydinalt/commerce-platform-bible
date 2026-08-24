@@ -13,6 +13,7 @@ import {
   CONTENT_AREA_LABELS,
   CORRECTION_TARGET_LABELS
 } from "../../../platform/moderation";
+import { CASES, CASE_FORMS } from "../../../platform/copy";
 import {
   ADMIN_IDLE,
   type AdminActionState
@@ -48,7 +49,7 @@ function ModerationAction({
       <input name="action" type="hidden" value={entry} />
       <p>{ACTION_RESULTS[entry]}</p>
       <button disabled={pending} type="submit">
-        {pending ? "Working…" : ACTION_LABELS[entry]}
+        {pending ? CASES.working : ACTION_LABELS[entry]}
       </button>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -84,7 +85,7 @@ function RequestCorrection({
         <p>{ACTION_RESULTS.REQUEST_CORRECTION}</p>
 
         <p>
-          <label htmlFor="target">What needs correcting</label>
+          <label htmlFor="target">{CASE_FORMS.correctionTarget}</label>
           <select id="target" name="target" required>
             {Object.entries(CORRECTION_TARGET_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -98,9 +99,9 @@ function RequestCorrection({
             Offering — the database refuses a content area without one. */}
         {offeringCase ? (
           <p>
-            <label htmlFor="contentArea">Which part of the Offering</label>
+            <label htmlFor="contentArea">{CASE_FORMS.correctionArea}</label>
             <select id="contentArea" name="contentArea">
-              <option value="">Not a specific part</option>
+              <option value="">{CASE_FORMS.correctionNotSpecific}</option>
               {Object.entries(CONTENT_AREA_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -111,7 +112,7 @@ function RequestCorrection({
         ) : null}
 
         <p>
-          <label htmlFor="note">What to tell them</label>
+          <label htmlFor="note">{CASE_FORMS.correctionText}</label>
           <textarea id="note" name="note" />
         </p>
 
@@ -130,9 +131,9 @@ function NoActionDecision({ action }: { action: Action }) {
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Decide that nothing needs doing</legend>
+        <legend>{CASE_FORMS.noActionTitle}</legend>
         <p>
-          <label htmlFor="reason">Why</label>
+          <label htmlFor="reason">{CASE_FORMS.noActionReason}</label>
           <textarea id="reason" name="reason" required />
         </p>
         <button type="submit">{pending ? "Recording…" : "Record"}</button>
@@ -149,9 +150,9 @@ function ReReview({ action }: { action: Action }) {
   return (
     <form action={dispatch}>
       <fieldset disabled={pending}>
-        <legend>Record a re-review</legend>
+        <legend>{CASE_FORMS.reReview}</legend>
         <p>
-          <label htmlFor="note">Note (optional)</label>
+          <label htmlFor="note">{CASE_FORMS.note}</label>
           <textarea id="note" name="note" />
         </p>
         <button type="submit">{pending ? "Recording…" : "Record"}</button>
@@ -178,7 +179,7 @@ function Closure({
       {needsReReview ? <p>{CLOSURE_NEEDS_RE_REVIEW}</p> : null}
       <p>{CLOSURE_CHANGES_NOTHING}</p>
       <button disabled={pending} type="submit">
-        {pending ? "Closing…" : "Close this case"}
+        {pending ? CASES.closing : CASES.closeThis}
       </button>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>

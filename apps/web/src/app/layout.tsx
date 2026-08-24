@@ -39,20 +39,28 @@ export const metadata: Metadata = {
 };
 
 /**
- * `lang` is the public journey's language, not the whole application's.
+ * `lang` is the application's language, and now there is only one.
  *
- * The Owner's decision put Discovery, the Offering Presentation, Compare and
+ * ~~`lang` is the public journey's language, not the whole application's. The
+ * Owner's decision put Discovery, the Offering Presentation, Compare and
  * Decision in Turkish and the entered contexts — authentication, the Business
- * Dashboard, Admin — in English. A single `lang` on `<html>` therefore
- * described seventeen of the twenty-two routes wrongly, and a screen reader
- * given `tr` reads English words with Turkish pronunciation rules, which is
- * closer to noise than to an accent.
+ * Dashboard, Admin — in English, so each English surface declares `lang="en"`
+ * on its own `<main>`.~~
  *
- * Each English surface declares `lang="en"` on its own `<main>`. That is
- * WCAG 3.1.2 exactly: the document has a language and a part of it says when
- * it differs. Declaring it per page rather than in a shared wrapper keeps the
- * statement next to the copy it is about, so a page that changed language
- * would change its own attribute rather than inherit a stale one.
+ * **Struck through because it described an accident as a decision.** No Owner
+ * ever chose a language division; the surfaces were simply written in the
+ * order they were built, and the per-page `lang="en"` was the honest label on
+ * an inconsistency rather than the expression of a plan. Saying "the Owner's
+ * decision" gave it a provenance it did not have, which is how it survived
+ * three increments unexamined.
+ *
+ * The eighteen markers are gone: I27 translated authentication, I28 the
+ * Business Dashboard, I29 Admin. `<html lang="tr">` is now true of all
+ * twenty-two routes, and WCAG 3.1.2 is satisfied by the document language
+ * alone because no part of it differs.
+ *
+ * A per-part marker returns the day a part is genuinely in another language —
+ * the mechanism was right, and only the thing it was describing was wrong.
  */
 export default function RootLayout({
   children

@@ -52,8 +52,35 @@ export const TERMS = {
   category: "Kategori",
   /** The platform asking an owner to change something (PRD-0006). */
   correctionNotice: "Düzeltme bildirimi",
+  /**
+   * `Alan`, the V1 grouping of Offerings — Mobility, Real Estate, Technology.
+   *
+   * Admin is the first surface to name it: Home receives the Domain grouping
+   * from the API and flattens it, so no Turkish screen has had to say the word
+   * until now. `Sektör` was the alternative and is rejected because it claims
+   * an industry classification the platform does not have — three values chosen
+   * by PRD-0001 are not sectors.
+   */
+  domain: "Alan",
+  /** A General Moderation case (PRD-0006). */
+  moderationCase: "Moderasyon vakası",
   offering: "İlan",
   user: "Kullanıcı"
+} as const;
+
+/**
+ * The three V1 Domains, as PRD-0001 fixes them.
+ *
+ * `Ulaşım` for Mobility rather than `Vasıta`. Turkish listing sites use
+ * *vasıta* and it would read as familiar — but it names the vehicle, and
+ * Mobility is the grouping, which will hold more than vehicles the moment
+ * PRD-0001 says so. Translating the label narrower than the concept is how a
+ * grouping quietly acquires a boundary nobody decided on.
+ */
+export const DOMAINS = {
+  MOBILITY: "Ulaşım",
+  REAL_ESTATE: "Emlak",
+  TECHNOLOGY: "Teknoloji"
 } as const;
 
 /**

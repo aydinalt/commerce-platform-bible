@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiRequestError } from "../apps/web/src/api-error.js";
 import { DASHBOARD } from "../apps/web/src/business/copy.js";
+import { PAGE_UNAVAILABLE } from "../apps/web/src/app/service-unavailable.js";
+import { ANALYTICS_UNAVAILABLE } from "../apps/web/src/platform/panel.js";
 
 /**
  * Distinguishing zero from unavailable (UX-0006 §14, UX-0005 §15, UX-0006 §15).
@@ -113,7 +115,7 @@ describe("Increment I24 zero or unavailable", () => {
       });
 
       // The claim that used to be made, and the one that replaces it.
-      expect(markup).toContain("yüklenemedi");
+      expect(markup).toContain(PAGE_UNAVAILABLE);
       expect(markup).toContain("silindiği anlamına gelmez");
       expect(markup).toContain('href="/businesses/b-1"');
     });
@@ -231,7 +233,7 @@ describe("Increment I24 zero or unavailable", () => {
         searchParams: Promise.resolve({})
       });
 
-      expect(markup).toContain("yüklenemedi");
+      expect(markup).toContain(PAGE_UNAVAILABLE);
       expect(markup).toContain('href="/admin"');
     });
 
@@ -259,8 +261,20 @@ describe("Increment I24 zero or unavailable", () => {
        * read — and say it rather than showing zero, which §14 forbids because
        * an Admin who sees an empty queue concludes there is nothing to review.
        */
-      expect(markup).not.toContain("yüklenemedi");
-      expect(markup.toLowerCase()).toContain("analytics");
+      /*
+       * Asserted against the page-level heading rather than the word
+       * `yüklenemedi`, which the analytics region also uses now that both are
+       * Turkish. A substring of one message was never evidence about another;
+       * while the two were English they happened to share no word.
+       */
+      expect(markup).not.toContain(PAGE_UNAVAILABLE);
+      /*
+       * The analytics regions say they could not be read, which is the half of
+       * §15 this case is about — asserted against the message itself rather
+       * than against the word `analytics`, which used to appear only because
+       * an `aria-label` happened to be English.
+       */
+      expect(markup).toContain(ANALYTICS_UNAVAILABLE);
     });
   });
 });

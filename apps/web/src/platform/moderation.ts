@@ -1,5 +1,7 @@
 import type { ModerationCase } from "@commerce/contracts";
 
+import { LIFECYCLE, MODERATION, TERMS } from "../vocabulary";
+
 type Action = ModerationCase["availableActions"][number];
 type TargetType = ModerationCase["targetType"];
 
@@ -13,13 +15,13 @@ type TargetType = ModerationCase["targetType"];
  * this type can hold.
  */
 export const ACTION_LABELS: Record<Action, string> = {
-  HIDE_OFFERING: "Hide this Offering",
-  REINSTATE_USER: "Reinstate this account",
-  REQUEST_CORRECTION: "Request a correction",
-  RESTORE_BUSINESS: "Restore this Business",
-  RESTORE_OFFERING: "Restore this Offering",
-  RESTRICT_BUSINESS: "Restrict this Business",
-  SUSPEND_USER: "Suspend this account"
+  HIDE_OFFERING: "Bu İlanı gizle",
+  REINSTATE_USER: "Bu hesabı geri getir",
+  REQUEST_CORRECTION: "Düzeltme iste",
+  RESTORE_BUSINESS: "Bu İşletmenin kısıtlamasını kaldır",
+  RESTORE_OFFERING: "Bu İlanı yeniden yayına al",
+  RESTRICT_BUSINESS: "Bu İşletmeyi kısıtla",
+  SUSPEND_USER: "Bu hesabı askıya al"
 };
 
 /**
@@ -32,14 +34,14 @@ export const ACTION_LABELS: Record<Action, string> = {
  * who expected it to take something down would otherwise assume it had.
  */
 export const ACTION_RESULTS: Record<Action, string> = {
-  HIDE_OFFERING: "Published becomes Hidden.",
-  REINSTATE_USER: "Suspended becomes Enabled.",
+  HIDE_OFFERING: `${LIFECYCLE.PUBLISHED} durumu ${LIFECYCLE.HIDDEN} olur.`,
+  REINSTATE_USER: "Askıya alınmış hesap yeniden etkinleşir.",
   REQUEST_CORRECTION:
-    "Nothing changes state. The Business is asked to fix something and the case stays open.",
-  RESTORE_BUSINESS: "Restricted becomes Unrestricted.",
-  RESTORE_OFFERING: "Hidden becomes Published.",
-  RESTRICT_BUSINESS: "Unrestricted becomes Restricted.",
-  SUSPEND_USER: "Enabled becomes Suspended."
+    "Hiçbir durum değişmez. İşletmeden bir şeyi düzeltmesi istenir ve vaka açık kalır.",
+  RESTORE_BUSINESS: `${MODERATION.RESTRICTED} durumu "${MODERATION.UNRESTRICTED}" olur.`,
+  RESTORE_OFFERING: `${LIFECYCLE.HIDDEN} durumu ${LIFECYCLE.PUBLISHED} olur.`,
+  RESTRICT_BUSINESS: `"${MODERATION.UNRESTRICTED}" durumu ${MODERATION.RESTRICTED} olur.`,
+  SUSPEND_USER: "Etkin hesap askıya alınır."
 };
 
 /**
@@ -76,9 +78,9 @@ export function actionPath(
 }
 
 export const TARGET_LABELS: Record<TargetType, string> = {
-  BUSINESS: "Business",
-  OFFERING: "Offering",
-  USER_ACCOUNT: "User account"
+  BUSINESS: TERMS.business,
+  OFFERING: TERMS.offering,
+  USER_ACCOUNT: `${TERMS.user} hesabı`
 };
 
 /**
@@ -89,16 +91,16 @@ export const TARGET_LABELS: Record<TargetType, string> = {
  * request this application can make.
  */
 export const CORRECTION_TARGET_LABELS = {
-  AFFILIATE_DESTINATION_CONFIGURATION: "Affiliate Destination configuration",
-  BUSINESS_INFORMATION: "Business information",
-  DIRECT_CONTACT_INFORMATION: "Direct contact information",
-  OFFERING_CONTENT: "Offering content"
+  AFFILIATE_DESTINATION_CONFIGURATION: `${TERMS.affiliateDestination} ayarları`,
+  BUSINESS_INFORMATION: `${TERMS.business} bilgileri`,
+  DIRECT_CONTACT_INFORMATION: "Doğrudan iletişim bilgileri",
+  OFFERING_CONTENT: `${TERMS.offering} içeriği`
 } as const;
 
 export const CONTENT_AREA_LABELS = {
-  ATTRIBUTES: "Attributes",
-  SUMMARY: "Summary",
-  TITLE: "Title"
+  ATTRIBUTES: `${TERMS.attribute}ler`,
+  SUMMARY: "Özet",
+  TITLE: "Başlık"
 } as const;
 
 /**
@@ -110,35 +112,28 @@ export const CONTENT_AREA_LABELS = {
  * stops the refusal being the first time an Admin hears about the rule.
  */
 export const CLOSURE_NEEDS_EVIDENCE =
-  "A case closes only after an applied action or a recorded no-action decision.";
-export const CLOSURE_NEEDS_RE_REVIEW =
-  "The Business has answered this correction. Record a re-review before closing.";
+  "Bir vaka yalnızca uygulanmış bir eylemden ya da kayda geçmiş bir işlem-yapılmadı kararından sonra kapanır.";
+export const CLOSURE_NEEDS_RE_REVIEW = `${TERMS.business} bu düzeltmeye yanıt verdi. Kapatmadan önce yeniden inceleme kaydedin.`;
 
 /// §7.5. Closing creates no target state — worth saying, because an Admin who
 /// believed otherwise would close cases expecting something to happen.
-export const CLOSURE_CHANGES_NOTHING =
-  "Closing changes nothing about the Offering, the Business or the account.";
+export const CLOSURE_CHANGES_NOTHING = `Kapatmak ${TERMS.offering}, ${TERMS.business} ya da hesap hakkında hiçbir şeyi değiştirmez.`;
 
 /// §8. The owner's bounded response keeps the case open and requires an Admin
 /// to look again. It is not an eighth action.
-export const RE_REVIEW_REQUIRED_NOTICE =
-  "The Business used the bounded correction path. The case is still open and needs a re-review.";
+export const RE_REVIEW_REQUIRED_NOTICE = `${TERMS.business} sınırlı düzeltme yolunu kullandı. Vaka hâlâ açık ve yeniden inceleme gerekiyor.`;
 
 export const MODERATION_REFUSALS: Record<string, string> = {
-  ADMIN_TARGET_FORBIDDEN:
-    "This account holds Admin authorization. Suspending or reinstating it is a Product Owner action taken outside this application.",
-  BUSINESS_MODERATION_UNAVAILABLE:
-    "That Business is not in a state this action can start from. Nothing has changed.",
+  ADMIN_TARGET_FORBIDDEN: `Bu hesap ${TERMS.admin} yetkisi taşıyor. Askıya almak ya da geri getirmek, bu uygulamanın dışında alınan bir Ürün Sahibi kararıdır.`,
+  BUSINESS_MODERATION_UNAVAILABLE: `O ${TERMS.business}, bu eylemin başlayabileceği bir durumda değil. Hiçbir şey değişmedi.`,
   CASE_NOT_RESOLVED:
-    "This case has no applied action and no recorded no-action decision, so it stays open.",
-  CASE_NOT_RE_REVIEWED:
-    "The Business answered after the last review. Record a re-review before closing.",
-  OFFERING_MODERATION_UNAVAILABLE:
-    "That Offering is not in a state this action can start from. Nothing has changed.",
+    "Bu vakada uygulanmış bir eylem ve kayda geçmiş bir işlem-yapılmadı kararı yok, bu yüzden açık kalıyor.",
+  CASE_NOT_RE_REVIEWED: `${TERMS.business} son incelemeden sonra yanıt verdi. Kapatmadan önce yeniden inceleme kaydedin.`,
+  OFFERING_MODERATION_UNAVAILABLE: `O ${TERMS.offering}, bu eylemin başlayabileceği bir durumda değil. Hiçbir şey değişmedi.`,
   ACCESS_MODERATION_UNAVAILABLE:
-    "That account is not in a state this action can start from. Nothing has changed.",
-  MODERATION_CASE_NOT_FOUND: "That case no longer exists.",
-  USER_ACCOUNT_NOT_FOUND: "No account matches that identifier."
+    "O hesap, bu eylemin başlayabileceği bir durumda değil. Hiçbir şey değişmedi.",
+  MODERATION_CASE_NOT_FOUND: "O vaka artık mevcut değil.",
+  USER_ACCOUNT_NOT_FOUND: "Bu tanımlayıcıya uyan bir hesap yok."
 };
 
 /**
@@ -151,9 +146,9 @@ export const MODERATION_REFUSALS: Record<string, string> = {
 export function moderationRefusal(code: string): string {
   return (
     MODERATION_REFUSALS[code] ??
-    "That could not be done. Nothing about this target has changed."
+    "Bu yapılamadı. Bu hedefle ilgili hiçbir şey değişmedi."
   );
 }
 
 /// §14. An empty queue is a state worth naming.
-export const NO_CASES = "No case matches this filter.";
+export const NO_CASES = "Bu filtreye uyan vaka yok.";

@@ -1,4 +1,21 @@
 /**
+ * The page-level failure, named so it can be told apart from a region's.
+ *
+ * **Exported because a test could not distinguish the two.** I24 asserted that
+ * an analytics failure does not take the whole Admin Dashboard down, and it did
+ * so with `not.toContain("yüklenemedi")` — a word this heading shares with
+ * `ANALYTICS_UNAVAILABLE`. While both were English the two sentences had no
+ * word in common by luck; in Turkish they do, and the case broke.
+ *
+ * The copy is right and the assertion was fragile: a substring of one message
+ * is not evidence about a different message. This is the same hazard I28 found
+ * between four eligibility labels, appearing between a page and a region rather
+ * than between two labels — and the pairwise check added in I29 does not cover
+ * it, because these are sentences rather than labels.
+ */
+export const PAGE_UNAVAILABLE = "Bu sayfa şu anda yüklenemedi";
+
+/**
  * What an authenticated surface shows when the API could not answer it.
  *
  * UX-0005 §15 and UX-0006 §15 both turn on one word: a failed read must not
@@ -35,7 +52,7 @@ export function ServiceUnavailable({
   return (
     <main>
       <section aria-labelledby="service-unavailable-heading">
-        <h1 id="service-unavailable-heading">Bu sayfa şu anda yüklenemedi</h1>
+        <h1 id="service-unavailable-heading">{PAGE_UNAVAILABLE}</h1>
 
         {/* Stated in words and announced, on the same reasoning I9 fixed the
             rest of the application by: a state a person cannot hear is a state
