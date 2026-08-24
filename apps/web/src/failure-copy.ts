@@ -56,6 +56,22 @@ export const UNEXPECTED = {
  *
  * So this says the honest thing that covers both: it is not here for you.
  */
+/**
+ * A navigation that has not finished (`loading.tsx`).
+ *
+ * Not a failure, which is why it lives beside the other two rather than with
+ * them: the three are what the application says when it cannot yet show the
+ * thing a person asked for, and only two of those are something going wrong.
+ *
+ * **It promises nothing about how long.** A progress bar or an estimate would
+ * be inventing a number the platform does not have, and I25's ten-second budget
+ * is a limit rather than a prediction.
+ */
+export const RESOLVING = {
+  body: "İstediğiniz sayfa hazırlanıyor.",
+  heading: "Yükleniyor"
+} as const;
+
 export const ABSENT = {
   body: `Aradığınız sayfa burada değil. Adres değişmiş, ${TERMS.offering.toLocaleLowerCase("tr")} kaldırılmış ya da bu sayfa size açık olmayabilir.`,
   heading: "Bu sayfa bulunamadı",

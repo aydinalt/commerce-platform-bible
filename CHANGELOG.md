@@ -10,6 +10,57 @@ This project follows the principles of:
 
 ---
 
+## [3.17.0] - 2026-08-24
+
+### Added
+
+- **Loading Behaviour.** Eight Frozen sections name it and there were zero
+  `loading.tsx` files, so clicking a Listing Card did nothing visible for as
+  long as the API took — up to I25's ten-second budget. Five files now cover the
+  fourteen routes that wait.
+- The Skeleton I26 named and did not build, now that there is a loading state to
+  put it in. Words carry the state (`role="status"`, `aria-busy`); the shapes are
+  `aria-hidden`, because grey rectangles say nothing a reader can use.
+
+### Known — the interesting half
+
+- **No root `app/loading.tsx`, deliberately.** It applies to every segment
+  beneath it with no way to opt one out, so it would reach the two places the
+  Frozen documents forbid.
+- **Home** — UX-0001 §12 requires Search to stay usable while Categories
+  resolve, and a `loading.tsx` replaces the whole segment. The compliant answer
+  is a Suspense boundary inside the page.
+- **Discovery cannot satisfy UX-0002 §13 either way today.** Without a boundary
+  the criteria stay visible but the old result actions stay clickable; with one
+  the actions go and so do the criteria. The criteria live in the carrier cookie
+  and a `loading.tsx` is a synchronous fallback that cannot read one — the
+  compliant answer needs them in the URL, and the cookie was chosen in I4
+  precisely so that a prefetch cannot record a Discovery Start. **Two Frozen
+  requirements pulling opposite ways through one design decision**, which is an
+  Owner question rather than a refactoring.
+
+### Fixed
+
+- **The approved design foundation caught an overreach.** The first version
+  pulsed the skeleton behind a `prefers-reduced-motion` guard;
+  `i26-design-foundation` failed on "declares no animation", a constraint the
+  Owner approved on 2026-08-21 for a stated reason. The pulse is gone — a still
+  skeleton says everything a pulsing one does, so the motion was decoration
+  bought at the price of somebody else's decision. The constraint is now
+  asserted in `i32` too, because a loading screen is the one surface that seems
+  to need movement.
+
+### Verified
+
+- 99 test files, 920 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build.
+- Five mutations, each caught.
+- Nothing has seen a loading state: every claim is computed from rendered
+  markup, and no navigation has been slow enough in a browser for anybody to
+  watch one appear.
+
+---
+
 ## [3.16.0] - 2026-08-24
 
 ### Fixed

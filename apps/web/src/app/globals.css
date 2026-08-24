@@ -543,3 +543,45 @@ article {
   font-size: var(--text-small);
   margin-top: var(--space-1);
 }
+
+/*
+ * Resolving (I32).
+ *
+ * The shapes stand where content will be, so the page does not jump when it
+ * arrives. They are `aria-hidden` in the markup: grey rectangles say nothing a
+ * screen reader can use, and the sentence above them is what carries the state.
+ */
+.skeleton-stack {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--measure);
+}
+
+.skeleton {
+  background: var(--border);
+  border-radius: var(--radius);
+  height: 1.25rem;
+}
+
+.skeleton:nth-child(2) {
+  width: 85%;
+}
+
+.skeleton:nth-child(3) {
+  width: 60%;
+}
+
+/*
+ * **Still, because the approved design foundation says so.**
+ *
+ * The first version of this pulsed, and `i26-design-foundation` failed on
+ * "declares no animation" — a constraint the Owner approved on 2026-08-21 for a
+ * stated reason: *"motion needs a `prefers-reduced-motion` story that would
+ * otherwise be discovered by someone it harms."*
+ *
+ * The reasoning survives contact with this case. A skeleton that pulses says
+ * nothing a still one does not; the sentence above it carries the state and
+ * these shapes carry where the content will be. Adding motion would have been
+ * the direction eroding rather than being replaced, which is what §3 of that
+ * document asks to be caught — and it was, by a test rather than by memory.
+ */
