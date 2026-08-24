@@ -54,7 +54,26 @@ const ADMIN = ["admin"];
 const CONSOLIDATED = [...AUTH, ...BUSINESS, ...ADMIN];
 const APP = "apps/web/src/app";
 
-/** Every `.tsx` under a route folder, including its child components. */
+/**
+ * The failure screens, which sit at the root rather than inside a route folder.
+ *
+ * **They would have been outside this walk.** `CONSOLIDATED` names route
+ * folders, and these three are beside them — the same hole the copy modules
+ * turned out to be in, found this time before it cost anything.
+ *
+ * They are what a person sees when the application breaks, which makes them the
+ * worst place for the language to be wrong.
+ *
+ * **The other root files are deliberately not here.** Home, `search-entry` and
+ * `service-unavailable` predate the consolidation: they were written in Turkish
+ * from I4 and their copy was never extracted into a module, so the extraction
+ * rule below does not describe them. Adding them would report the difference as
+ * a defect rather than recording it, and it is recorded in
+ * `I31_FAILURE_SURFACES.md` instead.
+ */
+const ROOT_FAILURE = ["error.tsx", "global-error.tsx", "not-found.tsx"];
+
+/** Every `.tsx` under a route folder, plus the failure screens. */
 function surfaces(folders: string[]): string[] {
   const found: string[] = [];
   const walk = (dir: string): void => {
@@ -65,7 +84,23 @@ function surfaces(folders: string[]): string[] {
     }
   };
   for (const folder of folders) walk(join(APP, folder));
+  for (const file of ROOT_FAILURE) found.push(join(APP, file));
   return found;
+}
+
+/**
+ * The source with its comments removed.
+ *
+ * **A comment mentioning `lang="en"` is not a declaration of it.** I29 struck
+ * through the paragraph in `layout.tsx` that once justified the English
+ * surfaces rather than deleting it, and the marker check then read that note as
+ * the thing it was describing. What a page declares and what a comment says
+ * about the past are different questions.
+ */
+function code(file: string): string {
+  return readFileSync(file, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//gu, "")
+    .replace(/\/\/.*$/gmu, "");
 }
 
 /**
@@ -88,7 +123,7 @@ function surfaces(folders: string[]): string[] {
 describe("Increment I27 Turkish consolidation", () => {
   it("leaves no English marker on any consolidated surface", () => {
     const marked = surfaces(CONSOLIDATED).filter((file) =>
-      readFileSync(file, "utf8").includes('lang="en"')
+      code(file).includes('lang="en"')
     );
 
     /*

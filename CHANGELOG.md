@@ -10,6 +10,60 @@ This project follows the principles of:
 
 ---
 
+## [3.16.0] - 2026-08-24
+
+### Fixed
+
+- **Twenty-two routes had no error boundary and twenty-nine `notFound()` calls
+  had no page.** Every uncaught error and every one of those calls produced
+  Next.js's built-in screen: English, no route back into the application,
+  nothing a person could quote to anybody.
+- **The thirteen `notFound()` answers I24 deliberately preserved were being
+  given in the wrong language by the increment that made them honest.**
+
+### Added
+
+- `error.tsx`, `global-error.tsx` and `not-found.tsx`, with `failure-copy.ts`
+  owning what they say.
+- **One message for both `notFound()` situations, on purpose.** They mean either
+  "no such address" or "this is not yours", and the second is exactly why the
+  first cannot be more specific — a page that told them apart would answer, to
+  anybody who asked, whether a given Offering exists.
+- `global-error.tsx` declares its own `lang="tr"`: there is nothing to inherit
+  from, because the layout that normally declares it is what failed.
+
+### Verified
+
+- 98 test files, 911 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build.
+- Seven mutations, each caught. **One passed at first**, and it is the same hole
+  as I30's: `failure-copy.ts` is a copy module and sits outside every check that
+  walks the route folders. The same conclusion follows — `Ara` and
+  `Tekrar dene` are Turkish with none of `ç ğ ı ö ş ü`, so the values are named
+  rather than derived.
+- **The production build caught the same class of error it caught in I30**: a
+  `.js` extension on a relative import, correct for the tests and unresolvable
+  by the web bundler, which the type check and all 911 tests passed over in
+  silence. Twice now. The web package has none left.
+- Widening `i27`'s walk to the application root produced three failures and **all
+  three were the check being wrong**, not the code: `layout.tsx`'s struck-through
+  historical note read as a live `lang="en"` declaration, and `Ara` and
+  `Tekrar dene` were reported as English.
+
+### Known
+
+- **Nothing has seen these screens.** Every claim is computed from rendered
+  markup; no browser has thrown a real error into the boundary and `reset` has
+  never been pressed.
+- `digest` and the platform's correlation ID are two identifiers for two
+  different things, and a person holding one cannot be found by the other.
+- UX-0004 §14, UX-0008 §14 and UX-0009 §18 remain queued. UX-0003 §16 was
+  implemented in I23 and is not claimed here.
+- Empty and Loading Behaviour is untouched: eight Frozen sections name it and
+  there are still zero `loading.tsx` files.
+
+---
+
 ## [3.15.0] - 2026-08-24
 
 ### Added
