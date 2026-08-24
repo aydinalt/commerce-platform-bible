@@ -53,6 +53,7 @@ export interface OfferingContentRecord {
   summary: string | null;
   title: string;
   version: number;
+  visuals: string[];
 }
 
 interface DefinitionShape {
@@ -235,6 +236,7 @@ export class PgOfferingContentRepository {
     summary: string | null;
     title: string;
     userId: string;
+    visuals: string[];
   }): Promise<OfferingContentRecord | null> {
     const client = await this.pool.connect();
     try {
@@ -266,6 +268,7 @@ export class PgOfferingContentRepository {
       );
 
       await this.replaceAttributes(client, input.offeringId, input.attributes);
+      await this.replaceVisuals(client, input.offeringId, input.visuals);
 
       if (PUBLICATION_GATED.includes(current.status))
         await this.assertPublicationMinimum(client, input.offeringId);
@@ -803,6 +806,38 @@ export class PgOfferingContentRepository {
   }
 
   /**
+   * The submitted addresses replace the stored ones, in the order they arrive.
+   *
+   * **The array's index is the `position` column**, so the owner expresses
+   * "this is the primary visual" by putting it first rather than by setting a
+   * flag that could contradict the ordering. Delete-then-insert rather than a
+   * diff: an ordering is not a set of independent rows, and computing the
+   * minimal set of moves would be a second place where the arrangement is
+   * decided.
+   *
+   * Nothing here validates the address. `US-BUS-F02-001` Out of Scope §11
+   * excludes technical URL validation and the contract bounds the length; what
+   * the application is willing to render is decided at render, in
+   * `apps/web/src/image-source.ts`.
+   */
+  private async replaceVisuals(
+    client: PoolClient,
+    offeringId: string,
+    visuals: string[]
+  ): Promise<void> {
+    await client.query(`delete from offering_visual where offering_id = $1`, [
+      offeringId
+    ]);
+    if (visuals.length === 0) return;
+    await client.query(
+      `insert into offering_visual (offering_id, position, url)
+       select $1, ordinality - 1, url
+       from unnest($2::text[]) with ordinality as t(url, ordinality)`,
+      [offeringId, visuals]
+    );
+  }
+
+  /**
    * The submitted set replaces the stored one, so what is absent is removed.
    * Each value is checked against the kind its definition declares: a request
    * that says `TEXT` for a Number definition is a mistake worth naming, not a
@@ -966,7 +1001,14 @@ export class PgOfferingContentRepository {
               group by v.attribute_definition_id
             ) a),
            '[]'
-         ) as attributes
+         ) as attributes,
+         -- In position order, so the owner reads back the arrangement they
+         -- saved rather than whatever order the rows happen to come out in.
+         coalesce(
+           (select array_agg(v.url order by v.position)
+            from offering_visual v where v.offering_id = o.id),
+           '{}'
+         ) as visuals
        from offering o
        where o.id = $1 and ($2::uuid is null or o.business_id = $2)`,
       [offeringId, businessId]

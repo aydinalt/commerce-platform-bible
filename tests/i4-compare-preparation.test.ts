@@ -46,6 +46,7 @@ describe("Increment I4 Compare preparation return", () => {
         businessName: "Kartal Motors",
         categoryName: "Otomobil",
         offeringId: "55555555-5555-4555-8555-555555555555",
+        primaryVisualUrl: null,
         publishedAt: "2026-08-01T10:00:00.000Z",
         slug: "ikinci-ilan",
         title: "İkinci ilan"

@@ -1,3 +1,5 @@
+import { PRIMARY_VISUAL_SQL } from "./listing-card.sql.js";
+
 import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
@@ -394,11 +396,12 @@ export class PgDiscoveryRepository {
         // bare name, not inside an expression, and the level is the input to
         // one.
         `select "offeringId", title, "businessName", "categoryName", slug,
-           "publishedAt", "matchLevel"
+           "publishedAt", "primaryVisualUrl", "matchLevel"
          from (
            select p.offering_id as "offeringId", p.title,
              p.business_name as "businessName", c.name as "categoryName",
              o.slug, p.published_at as "publishedAt",
+             ${PRIMARY_VISUAL_SQL},
              case
                when to_tsvector('simple', p.title) @@ to_tsquery('simple', $2)
                  then 'TITLE'
@@ -493,7 +496,8 @@ export class PgDiscoveryRepository {
       Omit<ListingCard, "publishedAt"> & { publishedAt: Date }
     >(
       `select p.offering_id as "offeringId", p.title, p.business_name as "businessName",
-         c.name as "categoryName", o.slug, p.published_at as "publishedAt"
+         c.name as "categoryName", o.slug, p.published_at as "publishedAt",
+         ${PRIMARY_VISUAL_SQL}
        from offering_search_projection p
        join offering o on o.id = p.offering_id
        join category c on c.id = p.category_id

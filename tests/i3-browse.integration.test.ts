@@ -144,6 +144,23 @@ suite("Increment I3 Browse", () => {
       )
     ).rows[0]?.total;
 
+  /**
+   * The primary visual is the row at `position` 0 (I30).
+   *
+   * Inserted straight into the table rather than through the owner's edit
+   * path, because what is under test is which row the Listing Card query
+   * chooses — not how the rows got there. `position` 1 is written first so a
+   * query that took whatever the database returned would pick the wrong one.
+   */
+  const giveVisuals = async (offeringId: string, urls: string[]) => {
+    for (const [index, url] of [...urls].reverse().entries())
+      await pool.query(
+        `insert into offering_visual (offering_id, position, url)
+         values ($1, $2, $3)`,
+        [offeringId, urls.length - 1 - index, url]
+      );
+  };
+
   beforeAll(async () => {
     process.env.NODE_ENV = "test";
     const { createApiApp } = await import("../apps/api/src/bootstrap.js");
@@ -220,6 +237,49 @@ suite("Increment I3 Browse", () => {
 
     // AC-8. One act of looking, however many steps it takes.
     expect(await starts(pathId)).toBe(1);
+  });
+
+  it("puts the primary visual on the Listing Card and no other", async () => {
+    /*
+     * `US-DSC-F06-001` AC-4, proven against the query rather than the
+     * component (I30).
+     *
+     * **The component test could not catch this.** It renders whatever
+     * `primaryVisualUrl` it is handed, so it says nothing about which of an
+     * Offering's visuals the API chose — a mutation pointing the query at
+     * `position = 1` passed every case in `i30-offering-visuals`.
+     */
+    const parent = await root("MOBILITY", "Visuals");
+    const leaf = await child(parent, "Cars");
+    const listed = await publish(leaf, "With a picture");
+    await giveVisuals(listed.offeringId, [
+      "https://example.test/primary.jpg",
+      "https://example.test/second.jpg"
+    ]);
+
+    const view = browseViewSchema.parse((await browse(leaf)).json());
+    const found = view.results.find(
+      (result) => result.offeringId === listed.offeringId
+    );
+
+    // The first, and only the first: a card carries one visual and the rest of
+    // the set belongs to Presentation.
+    expect(found?.primaryVisualUrl).toBe("https://example.test/primary.jpg");
+  });
+
+  it("carries no visual for an Offering that supplied none", async () => {
+    const parent = await root("MOBILITY", "NoVisuals");
+    const leaf = await child(parent, "Cars");
+    const listed = await publish(leaf, "Without a picture");
+
+    const view = browseViewSchema.parse((await browse(leaf)).json());
+    const found = view.results.find(
+      (result) => result.offeringId === listed.offeringId
+    );
+
+    // `null` rather than an empty string, so "none supplied" and "supplied
+    // nothing" cannot be confused downstream.
+    expect(found?.primaryVisualUrl).toBeNull();
   });
 
   it("creates a separate Start for a new path", async () => {

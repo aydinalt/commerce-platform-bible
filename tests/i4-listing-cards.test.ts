@@ -21,6 +21,9 @@ describe("Increment I4 Discovery Results and Listing Cards", () => {
     businessName: `İşletme ${n}`,
     categoryName: `Kategori ${n}`,
     offeringId: `0000000${n}-0000-4000-8000-000000000000`,
+    // I30 gave the card somewhere to carry a visual. `null` here keeps these
+    // cases about the rest of the minimum; the visual has its own file.
+    primaryVisualUrl: null,
     publishedAt: "2026-08-01T10:00:00.000Z",
     slug: `ilan-${n}`,
     title: `İlan ${n}`

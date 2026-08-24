@@ -692,6 +692,7 @@ model Offering {
   business     Business                  @relation(fields: [businessId], references: [id], onDelete: Restrict)
   category     Category                  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   attributes   OfferingAttributeValue[]
+  visuals      OfferingVisual[]
   publications OfferingPublication[]
   projection   OfferingSearchProjection?
   /// Zero or one, never shared (PRD-0001 §9.1).
@@ -729,6 +730,30 @@ model OfferingAttributeValue {
 
   @@index([attributeDefinitionId])
   @@map("offering_attribute_value")
+}
+
+/// A visual supplied for one Offering (`US-OFR-F05-001` AC-4, `US-DSC-F06-001`
+/// AC-4, UX-0003 §8.2).
+///
+/// **An address, not bytes.** `Business.logoUrl` has held an image this way
+/// since I1, so this follows the platform's existing answer rather than
+/// introducing a second one — and object storage would need a hosting target,
+/// which does not exist yet.
+///
+/// `position` is the order the set is inspected in and `0` is the primary
+/// visual, so "which one goes on the Listing Card" is a fact about the data
+/// rather than a rule some reader has to know. The unique constraint makes two
+/// primaries unrepresentable.
+model OfferingVisual {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  offeringId String   @map("offering_id") @db.Uuid
+  position   Int
+  url        String   @db.VarChar(2048)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  offering   Offering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  @@unique([offeringId, position])
+  @@map("offering_visual")
 }
 
 /// A distinct object associated with exactly one Offering, not a field on it

@@ -497,6 +497,10 @@ suite("Increment I3 Search", () => {
       "categoryName",
       "matchLevel",
       "offeringId",
+      // I30. A visual is part of the Listing Card minimum and is not protected
+      // information; the exact key list is what keeps a telephone or an
+      // Affiliate Destination from arriving beside it unnoticed.
+      "primaryVisualUrl",
       "publishedAt",
       "slug",
       "title"

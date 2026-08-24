@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.55
-Last Updated: 2026-08-22
+Version:      2.56
+Last Updated: 2026-08-24
 -->
 
 # CURRENT STATUS
@@ -14,7 +14,7 @@ Last Updated: 2026-08-22
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines. Every increment through I13 was proven green in target CI before the next opened, on evidence recorded here run by run. I14 through I19 are green in target CI too, **on the Owner's confirmation of 2026-08-18 rather than on a run recorded in this document** — the distinction is kept because a claim about CI should say how it is known. That confirmation is what closes the three database gates for those six increments: `db:validate`, `db:deploy` and `db:drift` cannot run in the local environment and had gone unproven since I13 |
-| Current phase | M12 Increment I29 Turkish Consolidation — closed for UX-0006, and the thread is finished. Thirty increments, I0 through I29. **All twenty-two routes speak Turkish**; `<html lang="tr">` is true of the whole application and no route declares an exception, so `i10`'s `ENGLISH` pattern is deleted rather than empty. **Nothing can be deployed**: no `Dockerfile`, no deploy workflow, no named hosting target — see `docs/implementation/ROADMAP_2026-08-22.md`. The Owner confirmed on 2026-08-22 that Offerings will carry images; the schema has no image, photo or media column of any kind, so that is the next substantial piece of work and it reorders everything after it. The first visual-design work in the repository: no Frozen UX document specifies visual design, so the Owner approved a foundation on 2026-08-21 and this implements it. The web application's calls to the API were the last untimed dependency edge in the repository, which made I23's and I24's surfaces unreachable in the failure that produces them most often. UX-0005 and UX-0006 join the public path; four of the eight Error Behaviour documents remain queued. R1.2, R1.4 and all of R2 of `docs/releases/V1_RELEASE_CRITERIA_CANDIDATE.md` need a hosting target and a monitoring system, neither of which exists |
+| Current phase | M12 Increment I30 Offering Visuals — closed. Thirty-one increments, I0 through I30. **Offerings carry visuals**: three Frozen acceptance criteria had been half-satisfied since the surfaces were built, because each says to present the supplied visual *and* not to invent one when absent, and only the second half was reachable. The Frozen documents call them *media* and *visuals*, which is why an earlier survey for the word *image* wrongly reported that the platform had none by decision. **I29's claim that all twenty-two routes speak Turkish was false** — sixteen English submit labels were on screen and all three consolidation increments passed over them. All twenty-two routes speak Turkish, corrected in I30; `<html lang="tr">` is true of the whole application and no route declares an exception. **Nothing can be deployed**: no `Dockerfile`, no deploy workflow, no named hosting target — see `docs/implementation/ROADMAP_2026-08-22.md`. **Nothing checks the OpenAPI document against the contracts** — `openapi.test.ts` asserts the health operations only, so the published description drifted from the schema silently. The first visual-design work in the repository: no Frozen UX document specifies visual design, so the Owner approved a foundation on 2026-08-21 and this implements it. The web application's calls to the API were the last untimed dependency edge in the repository, which made I23's and I24's surfaces unreachable in the failure that produces them most often. UX-0005 and UX-0006 join the public path; four of the eight Error Behaviour documents remain queued. R1.2, R1.4 and all of R2 of `docs/releases/V1_RELEASE_CRITERIA_CANDIDATE.md` need a hosting target and a monitoring system, neither of which exists |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour and §7.2 Search narrowing had none until I15. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,35 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I30 Offering Visuals
+
+An Offering can hold visuals, and the Business logo the platform has stored
+since I1 reaches a screen for the first time. Findings are in
+`docs/implementation/I30_OFFERING_VISUALS.md`.
+
+**Three Frozen acceptance criteria could only ever half-pass.**
+`US-DSC-F06-001` AC-4 asks for the supplied primary visual and
+`listingCardSchema` had no field for one; `US-OFR-F05-001` AC-4 asks for the
+set and the repository filled `visuals` from a literal `[]`; AC-5 names the
+supplied logo and no surface rendered it. A criterion that can only fail in one
+direction is not a criterion that passes.
+
+**A comment claimed three fields and the code rendered two.** It was false for
+as long as the section existed, and is made true by adding the logo rather than
+by being corrected downwards.
+
+**An address, not bytes**, following `business.logo_url`. The guard on what may
+be *rendered* lives in `apps/web/src/image-source.ts`; what may be stored is
+unchanged, because `US-BUS-F02-001` Out of Scope §11 excludes technical URL
+validation and rendering is what made the absence load-bearing.
+
+**I29's closure record was wrong.** Sixteen English submit labels survived all
+three consolidations — the fifth blind spot in the English-detector, which reads
+only what sits between tags and never sees `{pending ? "Saving…" : "Save"}`. A
+sixth, general correction was attempted and abandoned: Turkish and English are
+not separable by character class at word level, so the labels are asserted by
+value.
 
 ## I29 Turkish Consolidation — UX-0006
 

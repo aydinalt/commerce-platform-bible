@@ -138,9 +138,15 @@ export class PgPresentationRepository {
         publishedAt: row.publishedAt.toISOString(),
         slug: row.slug,
         title: row.title,
-        // No Offering can hold media yet. Empty rather than absent: the field
-        // says the Offering supplied none, which is what AC-4 asks it to say.
-        visuals: []
+        /*
+         * The supplied set, in the order it is inspected in (UX-0003 §8.2).
+         *
+         * ~~No Offering can hold media yet.~~ It can, as of I30. Empty still
+         * means the Offering supplied none, which is the half of AC-4 that was
+         * always true — the other half was unreachable because there was
+         * nowhere for a visual to be supplied.
+         */
+        visuals: await this.visuals(client, row.offeringId)
       };
 
       // AC-8. Written here, at the one point where an eligible complete
@@ -182,6 +188,26 @@ export class PgPresentationRepository {
       [categoryId]
     );
     return result.rows.map((row) => row.name);
+  }
+
+  /**
+   * The supplied visuals, in the order the set is inspected in.
+   *
+   * Ordered by `position` rather than by insertion or by id, because the order
+   * is a decision the owner made and `0` is the primary visual. The Listing
+   * Card takes the same first element from the same ordering, so Discovery and
+   * Presentation cannot disagree about which visual is the primary one.
+   */
+  private async visuals(
+    client: PoolClient,
+    offeringId: string
+  ): Promise<string[]> {
+    const result = await client.query<{ url: string }>(
+      `select url from offering_visual
+       where offering_id = $1 order by position asc`,
+      [offeringId]
+    );
+    return result.rows.map((row) => row.url);
   }
 
   /**

@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBMIT, submitLabel } from "../../../../../../form-copy";
+
 import { useActionState } from "react";
 
 import { DESTINATION } from "../../../../../../business/copy";
@@ -57,7 +59,7 @@ export function DestinationForm({
           ) : null}
         </p>
 
-        <button type="submit">{pending ? "Saving…" : "Save"}</button>
+        <button type="submit">{submitLabel(SUBMIT.save, pending)}</button>
       </fieldset>
 
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}

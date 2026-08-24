@@ -572,11 +572,12 @@ const document = {
       ListingCard: {
         additionalProperties: false,
         description:
-          "The Listing Card product minimum. It carries no telephone, email, external contact URL or Affiliate Destination information — those have no representation here at all.",
+          "The Listing Card product minimum. It carries no telephone, email, external contact URL or Affiliate Destination information — those have no representation here at all. `primaryVisualUrl` is the supplied primary visual or `null`; before I30 the shape had no field for one, so `US-DSC-F06-001` AC-4 could only ever be half true.",
         properties: {
           businessName: { type: "string" },
           categoryName: { type: "string" },
           offeringId: { format: "uuid", type: "string" },
+          primaryVisualUrl: { type: ["string", "null"] },
           publishedAt: { format: "date-time", type: "string" },
           slug: { type: "string" },
           title: { type: "string" }
@@ -585,6 +586,7 @@ const document = {
           "businessName",
           "categoryName",
           "offeringId",
+          "primaryVisualUrl",
           "publishedAt",
           "slug",
           "title"
@@ -977,7 +979,7 @@ const document = {
       OfferingPresentation: {
         additionalProperties: false,
         description:
-          "The PRD-0001 §8.2 product minimum for complete public Presentation. It carries no telephone, email, external contact URL or Affiliate Destination — the public Business identity set is exactly the three fields PRD-0005 owns. `visuals` is present and empty because no Offering can hold media yet: the Offering supplied none, rather than media not being part of the minimum.",
+          "The PRD-0001 §8.2 product minimum for complete public Presentation. It carries no telephone, email, external contact URL or Affiliate Destination — the public Business identity set is exactly the three fields PRD-0005 owns. `visuals` carries the supplied set in the order it is inspected in, the first entry being the primary visual. An empty array means the Offering supplied none, rather than media not being part of the minimum.",
         properties: {
           attributes: {
             items: { $ref: "#/components/schemas/PresentedAttribute" },
@@ -1416,7 +1418,14 @@ const document = {
           },
           categoryId: { format: "uuid", type: "string" },
           summary: { maxLength: 1000, type: ["string", "null"] },
-          title: { maxLength: 240, minLength: 1, type: "string" }
+          title: { maxLength: 240, minLength: 1, type: "string" },
+          visuals: {
+            description:
+              "The supplied visuals, in the order the owner arranged them. The array index is the stored position, so the first entry is the primary visual. A replacement like the rest of this shape: an address left out is one the Offering no longer has.",
+            items: { maxLength: 2048, minLength: 1, type: "string" },
+            maxItems: 24,
+            type: "array"
+          }
         },
         required: ["categoryId", "title"],
         type: "object"
@@ -1464,7 +1473,8 @@ const document = {
           },
           summary: { type: ["string", "null"] },
           title: { type: "string" },
-          version: { minimum: 1, type: "integer" }
+          version: { minimum: 1, type: "integer" },
+          visuals: { items: { type: "string" }, type: "array" }
         },
         required: [
           "attributes",
@@ -1476,7 +1486,8 @@ const document = {
           "status",
           "summary",
           "title",
-          "version"
+          "version",
+          "visuals"
         ],
         type: "object"
       },

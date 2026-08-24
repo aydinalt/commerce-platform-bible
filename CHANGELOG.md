@@ -10,6 +10,71 @@ This project follows the principles of:
 
 ---
 
+## [3.15.0] - 2026-08-24
+
+### Added
+
+- **Offerings carry visuals.** `offering_visual` holds an address per row with
+  `position` as the order and `0` as the primary — the same answer
+  `business.logo_url` has given since I1, because object storage would need a
+  hosting target and there is none.
+- `apps/web/src/image-source.ts`, the single owner of what this application will
+  load as an image. `http:` and `https:` only; a refused address is treated
+  exactly like an absent one.
+- Owner authoring: one address per line, the line order being the visual order.
+
+### Fixed
+
+- **Three Frozen acceptance criteria could only ever half-pass.** Each says to
+  present the supplied visual *and* to invent no media when it is absent;
+  `listingCardSchema` had no field for a visual at all, and the Presentation
+  repository filled `visuals` from a literal `[]`. Only the "absent" half was
+  reachable.
+- **The Business logo was stored, contracted, and never rendered** — and the
+  comment above that section claimed it was one of three fields being shown. The
+  sentence was false for as long as the section existed.
+- **A missing check became load-bearing.** `logoUrl` has never been validated,
+  which was harmless until it became an `src`. The guard is at render, so
+  `US-BUS-F02-001` Out of Scope §11 stays true and nothing about what may be
+  stored changes.
+- **I29's closure record claimed all twenty-two routes speak Turkish. It was
+  wrong.** Sixteen English submit labels were on screen — `Save`, `Create`,
+  `Define`, `Rename`, `Move`, `Add`, `Send`, `Record` — through all three
+  consolidations.
+
+### Verified
+
+- 97 test files, 898 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build.
+- Six mutations. **Two passed at first and were the useful ones.** A component
+  test cannot prove which visual the API chose, so pointing the Listing Card
+  query at `position = 1` passed everything until an integration case inserted
+  the rows out of order. And the copy modules sit outside every check that walks
+  the routes, so putting `Save` back into `form-copy.ts` passed — the extraction
+  that made the copy maintainable moved it out of reach of both detectors.
+- **The linter found a real defect**: `String(form.get(...))` turns an uploaded
+  `File` into the literal text `[object File]` and would have saved it as an
+  address.
+- A sixth detector correction was **attempted and abandoned**: applied to the
+  copy modules the shape rule produced twenty-five false positives, because most
+  Turkish words contain none of `ç ğ ı ö ş ü`. Turkish and English are not
+  separable by character class at word level.
+
+### Known
+
+- The Presentation's visual ordering is unproven end to end; flipping
+  `order by position` to `desc` still passes.
+- **Nothing checks the OpenAPI document against the contracts.**
+  `openapi.test.ts` asserts the health operations only, so the published
+  description said a Listing Card has six fields while the schema had seven.
+- No image is fetched, resized, cached or checked for being an image, and image
+  content is unmoderated — `CONTENT_AREA_LABELS` has three values and adding a
+  fourth would redefine a Frozen enumeration.
+- `alt=""` on every visual, defensible from UX-0003 §8.2 and not verified with a
+  screen reader.
+
+---
+
 ## [3.14.0] - 2026-08-22
 
 ### Fixed

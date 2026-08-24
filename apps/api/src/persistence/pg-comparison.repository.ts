@@ -1,3 +1,5 @@
+import { PRIMARY_VISUAL_SQL } from "./listing-card.sql.js";
+
 import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
@@ -251,7 +253,8 @@ export class PgComparisonRepository {
     >(
       `select p.offering_id as "offeringId", p.title,
          p.business_name as "businessName", c.name as "categoryName",
-         o.slug, p.published_at as "publishedAt"
+         o.slug, p.published_at as "publishedAt",
+         ${PRIMARY_VISUAL_SQL}
        from comparison_set_member m
        join offering_search_projection p on p.offering_id = m.offering_id
        join offering o on o.id = m.offering_id

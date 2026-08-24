@@ -281,7 +281,21 @@ export const editOfferingSchema = z
       .transform((value) =>
         value === undefined || value === "" ? null : value
       ),
-    title: z.string().trim().min(1).max(240)
+    title: z.string().trim().min(1).max(240),
+    /**
+     * The supplied visuals, in the order the owner arranged them.
+     *
+     * A replacement like everything else in this shape: an address left out is
+     * one the Offering no longer has. The array's order **is** the `position`
+     * column, so "which one is the primary visual" is expressed by putting it
+     * first rather than by a flag that could disagree with the ordering.
+     *
+     * Length only, and no format check. `US-BUS-F02-001` Out of Scope §11
+     * excludes technical URL validation and `business.logoUrl` is bounded the
+     * same way; what this application is willing to *render* is decided in
+     * `apps/web/src/image-source.ts`, which is where the risk actually is.
+     */
+    visuals: z.array(z.string().trim().min(1).max(2048)).max(24).default([])
   })
   .strict();
 
@@ -306,7 +320,10 @@ export const offeringContentSchema = z
     status: z.enum(["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"]),
     summary: z.string().nullable(),
     title: z.string(),
-    version: z.number().int().positive()
+    version: z.number().int().positive(),
+    /// Read back in `position` order, so the owner sees the arrangement they
+    /// saved rather than one the database happened to return.
+    visuals: z.array(z.string())
   })
   .strict();
 
@@ -1333,6 +1350,19 @@ export const listingCardSchema = z
     businessName: z.string(),
     categoryName: z.string(),
     offeringId: z.string().uuid(),
+    /**
+     * The supplied primary visual, or `null` (`US-DSC-F06-001` AC-4).
+     *
+     * **This field did not exist, so AC-4 could only ever be half true.** The
+     * criterion has two halves — present the supplied visual, and do not invent
+     * media when it is absent — and a shape with no way to carry one satisfies
+     * the second by making the first impossible.
+     *
+     * `null` rather than an empty string: a Listing Card carries one visual or
+     * none, and the two are different answers. The rest of the set is
+     * Presentation's, which is why this is not an array.
+     */
+    primaryVisualUrl: z.string().nullable(),
     publishedAt: z.string().datetime(),
     slug: z.string(),
     title: z.string()
@@ -1391,9 +1421,14 @@ export const presentedAttributeSchema = z
  * Business identity set is exactly the three fields PRD-0005 owns, and this
  * shape cannot express a fourth.
  *
- * `visuals` is present and always empty. No Offering can hold media yet, and
- * an absent field would let a consumer conclude that media is not part of the
- * minimum; an empty one says the Offering supplied none, which is AC-4.
+ * ~~`visuals` is present and always empty. No Offering can hold media yet~~ —
+ * **it can, as of I30.** The field was shaped correctly from the start and the
+ * repository returned a literal `[]` into it; now it carries what the Offering
+ * supplied, in the order the set is inspected in (UX-0003 §8.2), with the first
+ * entry the primary visual.
+ *
+ * An empty array still means the Offering supplied none, which is the half of
+ * AC-4 that was already true.
  */
 export const offeringPresentationSchema = z
   .object({

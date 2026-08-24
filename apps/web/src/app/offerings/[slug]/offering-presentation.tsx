@@ -4,6 +4,7 @@ import type {
 } from "@commerce/contracts";
 
 import type { PreparationContext } from "../../../discovery/entry";
+import { imageSource } from "../../../image-source";
 import { startDecisionFromOffering } from "../../decision/actions";
 import { CompareEntry } from "../../compare/compare-entry";
 
@@ -108,6 +109,43 @@ function DecisionEntries({
   );
 }
 
+/**
+ * The supplied set, or nothing at all (UX-0003 §8.2).
+ *
+ * A `figure` because the visuals are content referred to by the surrounding
+ * text rather than decoration, and a list because §8.2's "inspect the available
+ * set" is a set — one visual and four are the same structure, so a person
+ * navigating by landmark hears the same thing either way.
+ *
+ * **Refused addresses are filtered before the emptiness test, not after.** An
+ * Offering whose only visual is a `data:` URL supplies nothing this application
+ * will show, and rendering an empty figure for it would be a frame around
+ * nothing — which is inventing media in the only way an absent image can.
+ */
+function Visuals({ urls }: { urls: string[] }) {
+  const sources = urls
+    .map((url) => imageSource(url))
+    .filter((url): url is string => url !== null);
+  if (sources.length === 0) return null;
+
+  return (
+    <figure className="offering-visuals">
+      <ul>
+        {sources.map((src) => (
+          <li key={src}>
+            {/* `alt=""` for the same reason as the Listing Card: UX-0003 §8.2
+                says the experience is complete without any visual, so by the
+                Frozen document's own construction these carry no information
+                the page would otherwise be missing. A generated description
+                would be inventing media rather than presenting it. */}
+            <img alt="" loading="lazy" src={src} />
+          </li>
+        ))}
+      </ul>
+    </figure>
+  );
+}
+
 export function OfferingPresentation({
   offering,
   preparation
@@ -115,6 +153,7 @@ export function OfferingPresentation({
   offering: OfferingPresentationResponse;
   preparation?: PreparationContext | undefined;
 }) {
+  const businessLogo = imageSource(offering.business.logoUrl);
   return (
     <main>
       <article>
@@ -123,18 +162,47 @@ export function OfferingPresentation({
         <h1>{offering.title}</h1>
         <p className="category-path">{offering.categoryPath.join(" › ")}</p>
 
-        {/* No `visuals` can exist yet. When the array is empty the experience
-            stays complete through the rest of the minimum, which is exactly
-            what UX-0003 §8.2 asks for. */}
+        {/*
+         * UX-0003 §8.2, both halves. "Where one or more visuals are supplied,
+         * the person may inspect the available set" — so the whole set is here,
+         * in the order the owner arranged it, not just the primary. "Where no
+         * visual is supplied, the experience remains complete through the other
+         * required Offering information and does not invent media" — so an
+         * empty set renders no region at all rather than an empty frame.
+         *
+         * ~~No `visuals` can exist yet.~~ They can, as of I30.
+         */}
+        <Visuals urls={offering.visuals} />
+
         {offering.description === null ? null : <p>{offering.description}</p>}
 
         <Attributes attributes={offering.attributes} />
 
-        {/* AC-5. Display name, supplied logo and supplied short description —
-            the three fields the contract can express. There is no telephone,
-            email or contact URL to omit, because none can arrive. */}
+        {/*
+         * AC-5. Display name, supplied logo and supplied short description —
+         * the three fields the contract can express. There is no telephone,
+         * email or contact URL to omit, because none can arrive.
+         *
+         * **The comment said three and the code rendered two.** `logoUrl` has
+         * been in the schema, the contract and the composed public identity
+         * since I1, and no surface has ever put it on a screen — so a claim
+         * about what this section shows was false for as long as the section
+         * existed. The logo is here now, which is what makes the sentence true
+         * rather than the sentence being corrected downwards.
+         */}
         <section>
           <h2>{offering.business.name}</h2>
+          {businessLogo === null ? null : (
+            /* `alt=""`, and the display name is the heading directly above.
+               An `alt` naming the Business would make a screen reader say it
+               twice, which is worse than saying it once. */
+            <img
+              alt=""
+              className="business-logo"
+              loading="lazy"
+              src={businessLogo}
+            />
+          )}
           {offering.business.shortDescription === null ? null : (
             <p>{offering.business.shortDescription}</p>
           )}

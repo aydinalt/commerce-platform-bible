@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBMIT, submitLabel } from "../../../../../form-copy";
+
 import { useActionState } from "react";
 
 import { CORRECTION } from "../../../../../business/copy";
@@ -141,7 +143,7 @@ export function CorrectionForm({
             })
           : null}
 
-        <button type="submit">{pending ? "Saving…" : "Save"}</button>
+        <button type="submit">{submitLabel(SUBMIT.save, pending)}</button>
       </fieldset>
 
       {state.kind === "REFUSED" ? (

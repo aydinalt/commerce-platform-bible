@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBMIT, submitLabel } from "../../../../form-copy";
+
 import { useActionState } from "react";
 
 import { INFORMATION } from "../../../../business/copy";
@@ -101,7 +103,7 @@ export function InformationForm({
         ))}
       </fieldset>
 
-      <button type="submit">{pending ? "Saving…" : "Save"}</button>
+      <button type="submit">{submitLabel(SUBMIT.save, pending)}</button>
 
       {state.kind === "UNCHANGED" ? <p role="alert">{state.message}</p> : null}
       {state.kind === "SAVED" ? <p role="status">{INFORMATION.saved}</p> : null}

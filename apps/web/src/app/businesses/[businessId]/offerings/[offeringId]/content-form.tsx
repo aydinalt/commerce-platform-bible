@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBMIT, submitLabel } from "../../../../../form-copy";
+
 import { useActionState } from "react";
 
 import { CONTENT } from "../../../../../business/copy";
@@ -159,6 +161,19 @@ export function ContentForm({
           ) : null}
         </p>
 
+        <p>
+          <label htmlFor="visuals">{CONTENT.visualsLabel}</label>
+          <textarea
+            aria-describedby="visuals-hint"
+            defaultValue={content.visuals.join("\n")}
+            id="visuals"
+            name="visuals"
+          />
+          <span className="field-hint" id="visuals-hint">
+            {CONTENT.visualsHint}
+          </span>
+        </p>
+
         {content.applicableAttributes.length > 0 ? (
           <fieldset>
             <legend>{CONTENT.attributesHeading}</legend>
@@ -172,7 +187,7 @@ export function ContentForm({
           </fieldset>
         ) : null}
 
-        <button type="submit">{pending ? "Saving…" : "Save"}</button>
+        <button type="submit">{submitLabel(SUBMIT.save, pending)}</button>
       </fieldset>
 
       {/* §15. A refusal says nothing was saved; it never claims a transition,

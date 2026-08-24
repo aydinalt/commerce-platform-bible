@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBMIT, submitLabel } from "../../../form-copy";
+
 import { useActionState } from "react";
 
 import type { CategoryResponse } from "@commerce/contracts";
@@ -86,7 +88,7 @@ export function CreateCategory({
           </select>
         </p>
 
-        <button type="submit">{pending ? "Creating…" : "Create"}</button>
+        <button type="submit">{submitLabel(SUBMIT.create, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -122,7 +124,7 @@ export function RenameCategory({
           required
           type="text"
         />
-        <button type="submit">{pending ? "Saving…" : "Rename"}</button>
+        <button type="submit">{submitLabel(SUBMIT.rename, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -172,7 +174,7 @@ export function ReparentCategory({
               </option>
             ))}
         </select>
-        <button type="submit">{pending ? "Moving…" : "Move"}</button>
+        <button type="submit">{submitLabel(SUBMIT.move, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>

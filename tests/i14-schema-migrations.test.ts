@@ -180,7 +180,9 @@ describe("Increment I14 schema and migration consistency", () => {
     // Both checks above pass vacuously against an empty parse: a regex that
     // stopped matching would report nothing wrong and nothing at all. These
     // numbers are the evidence that the parses still see the datamodel.
-    expect(ownedRelations()).toHaveLength(53);
-    expect(writtenKeys()).toHaveLength(54);
+    // 54 since I30 added `offering_visual`.
+    expect(ownedRelations()).toHaveLength(54);
+    // 55 since I30 added `offering_visual`'s foreign key.
+    expect(writtenKeys()).toHaveLength(55);
   });
 });

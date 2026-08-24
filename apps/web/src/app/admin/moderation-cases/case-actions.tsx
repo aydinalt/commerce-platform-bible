@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBMIT, submitLabel } from "../../../form-copy";
+
 import { useActionState } from "react";
 
 import type { ModerationCase } from "@commerce/contracts";
@@ -116,7 +118,7 @@ function RequestCorrection({
           <textarea id="note" name="note" />
         </p>
 
-        <button type="submit">{pending ? "Sending…" : "Send"}</button>
+        <button type="submit">{submitLabel(SUBMIT.send, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -136,7 +138,7 @@ function NoActionDecision({ action }: { action: Action }) {
           <label htmlFor="reason">{CASE_FORMS.noActionReason}</label>
           <textarea id="reason" name="reason" required />
         </p>
-        <button type="submit">{pending ? "Recording…" : "Record"}</button>
+        <button type="submit">{submitLabel(SUBMIT.record, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -155,7 +157,7 @@ function ReReview({ action }: { action: Action }) {
           <label htmlFor="note">{CASE_FORMS.note}</label>
           <textarea id="note" name="note" />
         </p>
-        <button type="submit">{pending ? "Recording…" : "Record"}</button>
+        <button type="submit">{submitLabel(SUBMIT.record, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>

@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBMIT, submitLabel } from "../../../form-copy";
+
 import { useActionState } from "react";
 
 import { CREATE } from "../../../business/copy";
@@ -88,7 +90,7 @@ export function CreateOffering({
           ) : null}
         </p>
 
-        <button type="submit">{pending ? "Creating…" : "Create"}</button>
+        <button type="submit">{submitLabel(SUBMIT.create, pending)}</button>
       </fieldset>
 
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}

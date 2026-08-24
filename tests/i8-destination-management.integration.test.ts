@@ -305,7 +305,7 @@ suite("Increment I8 destination management", () => {
     // "not enabled", which is a reading of the destination's status and not a
     // button, so the check is against controls rather than against words.
     expect(markup).not.toMatch(
-      /<button[^>]*>(?![^<]*Save)|<input(?![^>]*name="reference")/u
+      /<button[^>]*>(?![^<]*Kaydet)|<input(?![^>]*name="reference")/u
     );
     expect(markup).toContain(SAVE_CONSEQUENCE);
   });

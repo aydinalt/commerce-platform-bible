@@ -114,7 +114,8 @@ export class OfferingContentService {
         offeringId,
         summary: input.summary,
         title: input.title,
-        userId: principal.userId
+        userId: principal.userId,
+        visuals: input.visuals
       });
       if (!edited) {
         await deny("OFFERING_NOT_OWNED");

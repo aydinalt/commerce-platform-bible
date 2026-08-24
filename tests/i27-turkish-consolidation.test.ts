@@ -14,6 +14,7 @@ import {
 import { REFUSAL_COPY } from "../apps/web/src/identity/outcome.js";
 import { CORRECTION, DASHBOARD } from "../apps/web/src/business/copy.js";
 import { ENTRY_LABELS } from "../apps/web/src/business/inventory.js";
+import { SUBMIT } from "../apps/web/src/form-copy.js";
 import {
   ANALYTICS,
   CASES,
@@ -147,6 +148,109 @@ describe("Increment I27 Turkish consolidation", () => {
       }
 
     expect(offenders).toEqual([]);
+  });
+
+  it("leaves no English inside a JSX expression either", () => {
+    /*
+     * **The fifth correction, and the one that cost the most.** Sixteen English
+     * submit labels survived all three consolidations — `Save`, `Create`,
+     * `Define`, `Rename`, `Move`, `Add`, `Send`, `Record` — and I29's closure
+     * record claimed "all twenty-two routes speak Turkish" while every one of
+     * them was on screen.
+     *
+     * The case above could not see them and still cannot. It reads what sits
+     * between tags; a button's label is `{pending ? "Saving…" : "Save"}`, so
+     * the character after `>` is `{` and the match never starts. Four earlier
+     * corrections each widened what counted as *text between tags* — none
+     * questioned that copy only appears between tags.
+     *
+     * This looks at the other place: a quoted string inside a braced
+     * expression.
+     *
+     * **A compared string is not copy, and that is the discriminator.**
+     * `kind === "REFUSED"` and `valueKind === "NUMBER"` are contract
+     * identifiers being tested; they never reach a screen. So the operands of
+     * `===` and `!==` are removed before the scan, which is a statement about
+     * meaning rather than about spelling — the alternative, excluding
+     * ALL_CAPS, would rely on a naming convention and would miss an enum
+     * somebody wrote in another case.
+     */
+    const inExpression = /\{[^{}]*\?[^{}]*\}/gu;
+    const compared = /[!=]==\s*"[^"]*"/gu;
+    const quoted = /"([A-Za-z][A-Za-z ,.…!?'’-]*)"/gu;
+    const turkish = /[çğıİöşüÇĞÖŞÜ]/u;
+
+    const offenders: string[] = [];
+    for (const file of surfaces(CONSOLIDATED)) {
+      const source = readFileSync(file, "utf8");
+      for (const [expression] of source.matchAll(inExpression))
+        for (const [, text] of expression
+          .replace(compared, "")
+          .matchAll(quoted)) {
+          const words = (text ?? "").trim();
+          /*
+           * A class name also reaches here — `"badge badge-notice"` is two
+           * ASCII words. It is excluded by requiring a character prose has and
+           * a class name does not: sentence punctuation, or a capital letter
+           * starting the string.
+           */
+          const prose = /^[A-Z]|[,.…!?]/u.test(words);
+          if (prose && !turkish.test(words))
+            offenders.push(`${file}: ${words.slice(0, 40)}`);
+        }
+    }
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("names the submit labels, because no rule can derive them", () => {
+    /*
+     * **The extraction moved the copy out of reach of every check.** Both cases
+     * above walk `apps/web/src/app`, because that is where the strings used to
+     * be. They are in `copy.ts` modules now — one directory up — so a mutation
+     * putting `Save` back into `form-copy.ts` passed both of them.
+     *
+     * That is the same failure as the four before it in a new place: the check
+     * followed the shape of the code at the time it was written rather than the
+     * property it was meant to hold.
+     *
+     * **The rule here is a whitelist, and it is the opposite of I27's first
+     * mistake.** That version listed English words to look for and caught only
+     * what somebody remembered. This lists the Turkish words that legitimately
+     * contain no Turkish-specific letter — `Ad`, `Not`, `Genel` — and refuses
+     * every other ASCII-only string. A dictionary cannot tell `Ad` from `Add`;
+     * an explicit list can, it is short, and it grows visibly in a diff.
+     */
+    /*
+     * **A shape-based rule was tried here and abandoned, and the reason is
+     * worth keeping.**
+     *
+     * The version above works on routes because a rendered ASCII-only literal
+     * is suspicious *there*. Applied to the copy modules it reported
+     * twenty-five false positives on the first run — `Ekle`, `Kaydet`,
+     * `Nitelik`, `Kategori`, `Taslak`, `Gizli` — because most Turkish words
+     * contain none of `ç ğ ı ö ş ü`. Turkish and English are not separable by
+     * character class at word level, and a whitelist long enough to fix that
+     * would be a list nobody maintains.
+     *
+     * So the values are asserted. That is what this suite already does for
+     * `TERMS.offering` and `ENTRY_LABELS.RETIRE`, for the same reason: where a
+     * property cannot be derived, naming the value is honest and a rule that
+     * cannot work is not.
+     */
+    expect(SUBMIT.save).toEqual({ idle: "Kaydet", working: "Kaydediliyor…" });
+    expect(SUBMIT.create).toEqual({
+      idle: "Oluştur",
+      working: "Oluşturuluyor…"
+    });
+    expect(SUBMIT.send).toEqual({ idle: "Gönder", working: "Gönderiliyor…" });
+
+    // The pair travels together, so a button cannot say `Kaydet` and
+    // `Saving…`. Every entry has both halves and neither is empty.
+    for (const entry of Object.values(SUBMIT)) {
+      expect(entry.idle.length).toBeGreaterThan(1);
+      expect(entry.working.endsWith("…")).toBe(true);
+    }
   });
 
   it("says every word from the copy module rather than inline", () => {

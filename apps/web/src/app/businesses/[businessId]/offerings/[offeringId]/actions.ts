@@ -32,6 +32,26 @@ import { AUTH_ROUTES, SESSION_COOKIE } from "../../../../../identity/session";
  * has no field for one and the route has none to receive it, so AC-10 holds by
  * construction rather than by care.
  */
+
+/**
+ * One address per line, and the line order is the visual order.
+ *
+ * **A `FormData` entry is a string or a `File`**, so `String(entry)` would turn
+ * an uploaded file into the literal text `[object File]` and save it as an
+ * address. Nothing in this form offers a file today; the guard is here because
+ * what the browser may put in a field is not this module's decision.
+ *
+ * Blank lines are dropped rather than refused: a trailing newline is how a
+ * textarea behaves, not something a person meant.
+ */
+function readLines(entry: FormDataEntryValue | null): string[] {
+  if (typeof entry !== "string") return [];
+  return entry
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+}
+
 export async function saveOffering(
   businessId: string,
   offeringId: string,
@@ -60,7 +80,10 @@ export async function saveOffering(
     // correcting what it says.
     categoryId: current.categoryId,
     summary: form.get("summary"),
-    title: form.get("title")
+    title: form.get("title"),
+    // The array index becomes the `position` column, so the first line the
+    // owner typed is the primary visual.
+    visuals: readLines(form.get("visuals"))
   });
   if (!parsed.success)
     return {

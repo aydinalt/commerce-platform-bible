@@ -1,5 +1,7 @@
 "use client";
 
+import { SUBMIT, submitLabel } from "../../../form-copy";
+
 import { useActionState } from "react";
 
 import type { AttributeResponse, CategoryResponse } from "@commerce/contracts";
@@ -133,7 +135,7 @@ export function CreateAttribute({
           </label>
         </p>
 
-        <button type="submit">{pending ? "Defining…" : "Define"}</button>
+        <button type="submit">{submitLabel(SUBMIT.define, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -195,7 +197,7 @@ export function AttributeProperties({
             {ATTRIBUTES.comparable}
           </label>
         </p>
-        <button type="submit">{pending ? "Saving…" : "Save"}</button>
+        <button type="submit">{submitLabel(SUBMIT.save, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -229,7 +231,7 @@ export function RequiredForPublication({
             {ATTRIBUTES.requiredExplained}
           </label>
         </p>
-        <button type="submit">{pending ? "Saving…" : "Save"}</button>
+        <button type="submit">{submitLabel(SUBMIT.save, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -254,7 +256,7 @@ export function AttributeCategories({
           categories={categories}
           selected={attribute.categoryIds}
         />
-        <button type="submit">{pending ? "Saving…" : "Save"}</button>
+        <button type="submit">{submitLabel(SUBMIT.save, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>
@@ -297,7 +299,7 @@ export function AddOption({ action }: { action: Action }) {
           <label htmlFor="optionKey">{ATTRIBUTES.stableKey}</label>
           <input id="optionKey" name="stableKey" required type="text" />
         </p>
-        <button type="submit">{pending ? "Adding…" : "Add"}</button>
+        <button type="submit">{submitLabel(SUBMIT.add, pending)}</button>
       </fieldset>
       {state.kind === "REFUSED" ? <p role="alert">{state.message}</p> : null}
     </form>

@@ -83,6 +83,16 @@ export const INFORMATION = {
 /** Editing an Offering's content (UX-0005 §9). */
 export const CONTENT = {
   attributesHeading: "Nitelikler",
+  /**
+   * One address per line.
+   *
+   * A textarea rather than a repeating row of inputs, because the order is the
+   * thing being edited and reordering lines is something every person already
+   * knows how to do. The first line is the primary visual, and the hint says so
+   * — a rule a person cannot see is a rule they will break.
+   */
+  visualsHint: `Her satıra bir adres. İlk satır, ${TERMS.offering.toLocaleLowerCase("tr")}ın kapak görselidir.`,
+  visualsLabel: "Görsel adresleri",
   heading: `${TERMS.offering} içeriği`,
   noSummary: "Özet yok.",
   saved: "Kaydedildi.",

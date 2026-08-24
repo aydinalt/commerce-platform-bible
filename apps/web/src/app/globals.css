@@ -472,3 +472,74 @@ tbody th {
 article {
   max-width: var(--measure);
 }
+
+/*
+ * Visuals (I30).
+ *
+ * Every address is somebody else's, so nothing here may depend on the image
+ * arriving: `aspect-ratio` reserves the box before the bytes do, which keeps a
+ * slow or dead image from moving the text underneath it. That is the whole
+ * reason these rules exist rather than being left to the browser.
+ */
+.listing-card-visual,
+.offering-visuals img,
+.business-logo {
+  /* A broken image is a broken image, not a stretched one. */
+  object-fit: cover;
+  /* Borders rather than shadows, like everything else in this file. */
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: block;
+}
+
+.listing-card-visual {
+  aspect-ratio: 4 / 3;
+  margin-bottom: var(--space-3);
+  width: 100%;
+}
+
+.offering-visuals {
+  margin: 0 0 var(--space-6);
+}
+
+.offering-visuals ul {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.offering-visuals img {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+}
+
+/* The set becomes a row once there is room for one. Below this it stays a
+   single column, because two images side by side on a phone are two images
+   nobody can see. */
+@media (min-width: 768px) {
+  .offering-visuals ul {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* A logo is an identifier rather than content, so it is bounded rather than
+   filling its column — and `contain`, because a logo cropped to a square is a
+   different logo. */
+.business-logo {
+  height: auto;
+  margin-bottom: var(--space-2);
+  max-height: 3rem;
+  max-width: 10rem;
+  object-fit: contain;
+  width: auto;
+}
+
+.field-hint {
+  color: var(--text-muted);
+  display: block;
+  font-size: var(--text-small);
+  margin-top: var(--space-1);
+}
