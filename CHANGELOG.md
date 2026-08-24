@@ -10,6 +10,69 @@ This project follows the principles of:
 
 ---
 
+## [3.18.0] - 2026-08-24
+
+### Added
+
+- **A site.** Twenty-two routes existed and there was no header, no navigation,
+  no footer and no brand mark — `layout.tsx` was `<html><body>{children}`. Every
+  page was correct in every rule it enforced and belonged to nothing.
+- A wordmark linking home from every page, two navigation entries, a footer, and
+  a skip link (WCAG 2.4.1) that is off-screen rather than hidden, because a
+  hidden element cannot be focused.
+
+### Changed — an Owner decision reversing an Owner decision
+
+- **I26's approved "calm, content-first" direction is replaced by "dense
+  listings"**, which is that document's own escape clause being used: *"Where
+  density would serve better than calm, this is the wrong foundation and should
+  be replaced rather than eroded."* Four Offerings on a screen instead of twelve
+  is three times the scrolling for the same comparison.
+- Type scale down, `--measure-wide` to 76rem and lists get it, results grid to
+  `auto-fill minmax(15rem, 1fr)` — five across on a wide screen, one on a phone,
+  and no media query at all.
+- **The reversal is of spaciousness, not of restraint.** Lines not shadows, one
+  accent, no animation, the focus ring, the measured contrast and
+  `min-height: 2.75rem` on every control are unchanged. Density comes from
+  spacing and the grid; trading a 44px control for two more rows is paying in
+  the wrong currency.
+
+### Fixed
+
+- **Three checks read files instead of code, in one increment.** `i26` counted a
+  `480px` breakpoint out of a comment recording that it had rejected one; the
+  query was pointless anyway, because `minmax` already collapses on a phone. And
+  `i33` matched `fetch` in `layout.tsx`'s paragraph explaining that it does not
+  fetch a webfont.
+- After the same shape in I31's struck-through `lang="en"`, this is now a rule:
+  **this repository comments heavily and on purpose, so every source-reading
+  check must strip comments first.**
+
+### Verified
+
+- 100 test files, 933 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build.
+- Six mutations, each caught — including a header that names the Admin context
+  and controls shrunk to 24px to buy density.
+- The layout is now async and the header inline: a nested async component
+  suspends, which `renderToStaticMarkup` cannot resolve, so a shell built that
+  way is a shell no test can render.
+
+### Known
+
+- **Still nobody has looked at it.** Every claim is computed from markup and CSS
+  text; no browser has rendered the header and no screen has shown five cards
+  across.
+- The header is not sticky, the footer links to nothing (deliberately — terms
+  and privacy would be promises R4 has no owner for), and the brand is the word
+  `İlanlar` because the platform has no name.
+- **Nothing is deployed.** The Owner chose Vercel with managed Postgres on
+  2026-08-24; no `vercel.json`, no Dockerfile and no deploy workflow exists, and
+  the web is only one of three services — the NestJS API and the worker need a
+  host that runs a process.
+
+---
+
 ## [3.17.0] - 2026-08-24
 
 ### Added

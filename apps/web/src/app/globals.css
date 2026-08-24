@@ -6,10 +6,23 @@
  * application — a number that appears here appears nowhere else, so changing a
  * decision is one edit rather than an archaeology exercise.
  *
- * The direction is **calm, content-first**, and it forbids things:
- * lines rather than shadows, one accent used sparingly, hierarchy carried by
- * type rather than by boxes. Where density would serve better than calm, this
- * is the wrong foundation and should be replaced rather than eroded.
+ * ~~The direction is **calm, content-first**.~~ **The Owner replaced it on
+ * 2026-08-24 with a dense listings direction**, which is the sentence below
+ * being taken up rather than ignored:
+ *
+ * > Where density would serve better than calm, this is the wrong foundation
+ * > and should be replaced rather than eroded.
+ *
+ * A Turkish listings site is read by people comparing many things quickly, and
+ * generous whitespace makes that slower — four Offerings on a screen instead of
+ * twelve is three times the scrolling for the same comparison. So the scale is
+ * tighter, the grid is denser and a Listing Card carries more.
+ *
+ * **What did not change is what was never about calm.** Lines rather than
+ * shadows, one accent, no animation, the focus ring, the measured contrast: all
+ * of those are accessibility or restraint rather than spaciousness, and density
+ * is not a reason to give any of them up. The tests that enforce them are
+ * unchanged.
  *
  * Every colour pairing below is **measured**, not estimated, and the
  * measurements are enforced by `tests/i26-design-foundation.test.ts` so they
@@ -55,8 +68,15 @@
     ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  --text-display: 1.875rem;
-  --text-heading: 1.3125rem;
+  /*
+   * Tightened for the dense direction. `--text-body` stays at 1rem: it is the
+   * browser default and the size below which a phone zooms a focused input,
+   * which is a usability floor rather than a stylistic choice. Everything above
+   * it comes down, because a 30px page heading on a results list is a heading
+   * competing with the results.
+   */
+  --text-display: 1.5rem;
+  --text-heading: 1.1875rem;
   --text-subheading: 1.0625rem;
   --text-body: 1rem;
   --text-small: 0.875rem;
@@ -74,8 +94,18 @@
 
   --radius: 4px;
   --radius-sm: 2px;
+  /*
+   * Wider, because the page is now a grid of Offerings rather than a column of
+   * prose. `--measure` keeps its old job on the surfaces that *are* prose — a
+   * form, a correction notice, an error — where 46rem is still the width a line
+   * stays readable at.
+   */
   --measure: 46rem;
-  --measure-wide: 60rem;
+  --measure-wide: 76rem;
+
+  /* The header's own height, so the skip link and the sticky offset agree
+     without either of them guessing. */
+  --header-height: 3.25rem;
 
   color-scheme: light;
   background: var(--surface);
@@ -96,14 +126,18 @@ body {
 /*
  * Layout.
  *
- * Mobile-first, and the only reason `--measure-wide` exists is the Admin
- * Dashboard: moderation queues and Attribute definitions are genuinely tabular
- * and compress badly. Every other surface reads fine at `--measure`.
+ * Mobile-first. **`--measure` is for prose and `--measure-wide` is for lists**:
+ * a form, a correction notice and an error page stay at the width a line is
+ * readable at, and a page whose content is a grid of Offerings or a table takes
+ * the room it needs. Before the dense direction only tables got the wider one.
+ *
+ * `min-height` is gone. It belonged to a `main` that was the whole document; it
+ * now sits between a header and a footer, and forcing it to a full viewport
+ * pushed the footer off every short page.
  */
 main {
   display: grid;
   justify-items: center;
-  min-height: 100vh;
   padding: var(--space-4);
 }
 
@@ -114,12 +148,14 @@ main > * {
 
 @media (min-width: 768px) {
   main {
-    padding: var(--space-8);
+    padding: var(--space-6);
   }
 }
 
 @media (min-width: 1120px) {
-  main:has(table) > * {
+  main:has(table) > *,
+  main:has(.listing-cards) > *,
+  main:has(.category-choices) > * {
     max-width: var(--measure-wide);
   }
 }
@@ -304,21 +340,59 @@ textarea[aria-invalid="true"] {
   gap: var(--space-3);
 }
 
-@media (min-width: 768px) {
-  .listing-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/*
+ * The grid is told a minimum rather than a column count, and needs no
+ * breakpoint at all.
+ *
+ * **The first version wrapped this in `@media (min-width: 480px)` and
+ * `i26-design-foundation` failed on "three breakpoints and no others".** The
+ * query was not just forbidden, it was pointless: `minmax(15rem, 1fr)` already
+ * collapses to one column below about 15rem plus the gap, which is every phone.
+ * `auto-fill` follows the room available, so the number of columns is a
+ * consequence of the width rather than a fourth layout to maintain.
+ *
+ * 15rem is the width at which a Listing Card still holds a 4:3 visual, a
+ * two-line title and two facts without any of them wrapping badly. On a wide
+ * screen that is five across, which is the density the Owner asked for on
+ * 2026-08-24.
+ */
+.listing-cards {
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
 }
 
 .listing-card {
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: var(--space-4);
+  /*
+   * The visual runs to the card's edge and only the text is inset. A picture
+   * with a margin around it reads as an illustration; one that fills the top of
+   * the card reads as the thing being listed, which is what it is.
+   */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
 }
 
+.listing-card > :not(.listing-card-visual) {
+  padding-inline: var(--space-3);
+}
+
+.listing-card > :last-child {
+  padding-bottom: var(--space-3);
+}
+
+.listing-card h2,
 .listing-card h3 {
-  margin-bottom: var(--space-1);
+  /*
+   * A card title is not a page heading and should not be set like one. The
+   * element stays `h2` because I9 fixed the heading order and a card sits
+   * directly under the page's `h1`; only its size comes down.
+   */
+  font-size: var(--text-body);
+  line-height: 1.35;
+  margin: var(--space-3) 0 var(--space-1);
 }
 
 .listing-card a {
@@ -494,6 +568,10 @@ article {
 
 .listing-card-visual {
   aspect-ratio: 4 / 3;
+  /* Edge to edge: the card owns the inset, and the border here would draw a
+     second line on top of the card's own. */
+  border: 0;
+  border-radius: 0;
   margin-bottom: var(--space-3);
   width: 100%;
 }
@@ -585,3 +663,78 @@ article {
  * the direction eroding rather than being replaced, which is what §3 of that
  * document asks to be caught — and it was, by a test rather than by memory.
  */
+
+/*
+ * The site shell (I33).
+ *
+ * **Twenty-two routes existed and there was no site**: no header, no
+ * navigation, no footer, no brand. Every page was a bare `main`, correct in
+ * every rule it enforced and belonging to nothing.
+ */
+.skip-link {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  left: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  position: absolute;
+  top: var(--space-2);
+  z-index: 2;
+  /*
+   * Off-screen rather than `display: none`, because a hidden element is not
+   * focusable and the whole point is that it can be reached by keyboard. It
+   * comes back the moment it has focus (WCAG 2.4.1).
+   */
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.site-header {
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header-inner {
+  align-items: center;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: var(--measure-wide);
+  min-height: var(--header-height);
+  padding: 0 var(--space-4);
+}
+
+/* A wordmark, not a logo. There is no mark to place, and inventing one would
+   be design work on an asset that has to be right. */
+.brand {
+  color: var(--text);
+  font-size: var(--text-heading);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-header nav {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.site-header nav a {
+  font-size: var(--text-small);
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin-top: var(--space-12);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0;
+}

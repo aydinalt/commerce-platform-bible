@@ -39,6 +39,37 @@ The language decision is the largest of the three and is **not a design
 decision**. It is treated separately in §9, because approving a palette should
 not accidentally approve a scope change.
 
+
+---
+
+## Owner decision, 2026-08-24 — the direction is replaced
+
+**The approved direction was "calm, content-first". It is now "dense listings".**
+
+This is §3's own escape clause being used rather than ignored:
+
+> Where density would serve better than calm, this is the wrong foundation and
+> should be replaced rather than eroded.
+
+A Turkish listings site is read by people comparing many things quickly, and
+generous whitespace makes that slower — four Offerings on a screen instead of
+twelve is three times the scrolling for the same comparison.
+
+**What is replaced** is spaciousness: the type scale, the page width for lists,
+the results grid and the Listing Card's internals. See
+`docs/implementation/I33_SITE_SHELL.md`.
+
+**What survives** is everything that was never about calm — lines rather than
+shadows, one accent and two states, no animation, the focus ring, the measured
+contrast, and `min-height: 2.75rem` on every control. Those are accessibility or
+restraint, and density is not a reason to give any of them up. Density comes
+from spacing and from the grid, not from smaller tap targets.
+
+The constraints in `tests/i26-design-foundation.test.ts` are **unchanged**, and
+`tests/i33-site-shell.test.ts` repeats several of them — because this document
+now describes a direction that no longer applies, and a reader could reasonably
+conclude its constraints went with it.
+
 ---
 
 ## 2. Three defects this replaces

@@ -1,3 +1,9 @@
+import { cookies } from "next/headers";
+
+import { AUTH_ROUTES, SESSION_COOKIE } from "../identity/session";
+
+import { BRAND, FOOTER, NAV } from "./shell-copy";
+
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
@@ -39,35 +45,83 @@ export const metadata: Metadata = {
 };
 
 /**
- * `lang` is the application's language, and now there is only one.
+ * The shell every page sits in (I33).
  *
- * ~~`lang` is the public journey's language, not the whole application's. The
- * Owner's decision put Discovery, the Offering Presentation, Compare and
- * Decision in Turkish and the entered contexts — authentication, the Business
- * Dashboard, Admin — in English, so each English surface declares `lang="en"`
- * on its own `<main>`.~~
+ * **Twenty-two routes existed and there was no site.** No header, no
+ * navigation, no footer, no brand mark — every page a bare `main`, correct in
+ * every rule it enforced and belonging to nothing.
  *
- * **Struck through because it described an accident as a decision.** No Owner
- * ever chose a language division; the surfaces were simply written in the
- * order they were built, and the per-page `lang="en"` was the honest label on
- * an inconsistency rather than the expression of a plan. Saying "the Owner's
- * decision" gave it a provenance it did not have, which is how it survived
- * three increments unexamined.
+ * **Async, and the header is inline rather than a child component.** A nested
+ * async component suspends, which `renderToStaticMarkup` cannot resolve — so a
+ * shell built that way is a shell no test can render. One function that awaits
+ * once is simpler to read and possible to prove.
  *
- * The eighteen markers are gone: I27 translated authentication, I28 the
- * Business Dashboard, I29 Admin. `<html lang="tr">` is now true of all
- * twenty-two routes, and WCAG 3.1.2 is satisfied by the document language
- * alone because no part of it differs.
+ * The cookie costs nothing that was not already being paid: four routes declare
+ * `force-dynamic` and the rest read cookies or fetch on every request, so
+ * nothing here was static to begin with.
  *
- * A per-part marker returns the day a part is genuinely in another language —
- * the mechanism was right, and only the thing it was describing was wrong.
+ * **The header knows two states and no third.** It does not ask whether this
+ * person owns a Business or holds Admin authorization: that costs an API call
+ * on every page, the answer can change between two of them, and a header
+ * offering `Yönetici` would announce to anybody reading the markup that this
+ * account holds Admin authorization — which UX-0008 §5 keeps behind an explicit
+ * context entry.
+ *
+ * The presence of a cookie is not proof of a valid session, and is not used as
+ * one. Every protected route re-checks with the API; this only decides which
+ * links to draw, so being wrong costs a wasted click rather than a leak.
  */
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{ children: ReactNode }>) {
+  const jar = await cookies();
+  const signedIn = jar.get(SESSION_COOKIE)?.value !== undefined;
+
   return (
     <html lang="tr">
-      <body>{children}</body>
+      <body>
+        {/*
+         * WCAG 2.4.1. Somebody arriving by keyboard should not tab through the
+         * header on every page to reach what they came for. It is visually
+         * hidden until focused, which is the one case where hiding something
+         * from sight and not from the keyboard is correct.
+         */}
+        <a className="skip-link" href="#content">
+          {BRAND.skip}
+        </a>
+
+        <header className="site-header">
+          <div className="site-header-inner">
+            {/* The brand links home from every page, which is the one
+                navigation convention nobody has to be taught. */}
+            <a className="brand" href="/">
+              {BRAND.name}
+            </a>
+
+            <nav aria-label={NAV.label}>
+              {signedIn ? (
+                <a href={AUTH_ROUTES.account}>{NAV.account}</a>
+              ) : (
+                <>
+                  <a href={AUTH_ROUTES.login}>{NAV.login}</a>
+                  <a href={AUTH_ROUTES.register}>{NAV.register}</a>
+                </>
+              )}
+            </nav>
+          </div>
+        </header>
+
+        {/*
+         * The target of the skip link, wrapping whatever the page renders. Not
+         * a `main`: every page brings its own, and two would be two landmarks
+         * called the same thing — which I9 fixed once already.
+         */}
+        <div id="content">{children}</div>
+
+        <footer className="site-footer">
+          <p>{FOOTER.rights}</p>
+        </footer>
+      </body>
     </html>
   );
 }

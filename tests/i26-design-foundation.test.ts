@@ -41,11 +41,23 @@ function contrast(a: string, b: string): number {
 
 describe("Increment I26 design foundation", () => {
   let css = "";
+  let code = "";
   /** Every `--token: value;` declared in `:root`. */
   const tokens = new Map<string, string>();
 
   beforeAll(async () => {
     css = await readFile("apps/web/src/app/globals.css", "utf8");
+    /*
+     * **Comments are stripped, because a note about a rule is not the rule.**
+     * I33 recorded, in a comment, that its first version wrapped the listing
+     * grid in `@media (min-width: 480px)` and that this suite rejected it — and
+     * the breakpoint case then read that sentence as a fourth breakpoint.
+     *
+     * The same shape as `layout.tsx`'s struck-through `lang="en"` in I31: a
+     * check that reads the file rather than the code cannot tell a decision
+     * from a description of one. Fixed here for the same reason.
+     */
+    code = css.replace(/\/\*[\s\S]*?\*\//gu, "");
     for (const [, name, value] of css.matchAll(
       /^\s*(--[a-z0-9-]+):\s*([^;]+);/gmu
     ))
@@ -162,7 +174,7 @@ describe("Increment I26 design foundation", () => {
   describe("responsive behaviour", () => {
     it("has the three breakpoints and no others", () => {
       const widths = [
-        ...css.matchAll(/@media \((?:min|max)-width: (\d+)px\)/gu)
+        ...code.matchAll(/@media \((?:min|max)-width: (\d+)px\)/gu)
       ]
         .map(([, px]) => Number(px))
         .sort((a, b) => a - b);
