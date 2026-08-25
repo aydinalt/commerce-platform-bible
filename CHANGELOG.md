@@ -10,6 +10,65 @@ This project follows the principles of:
 
 ---
 
+## [3.19.0] - 2026-08-25
+
+### Added
+
+- **The repository can describe its own deployment.** `vercel.json` for the web,
+  and one Dockerfile for the API and the worker — **Vercel runs functions and
+  both of those are processes**, so the Owner's 2026-08-24 choice covers one
+  service of three.
+- One image rather than two: they share every dependency and differ only in
+  which `main.js` they start. `SERVICE` is a build argument, so a host that
+  names the wrong one fails at build rather than at 3am.
+
+### Fixed
+
+- **`.env.example` documented fourteen variables and the code reads
+  twenty-three.** It is the only instruction sheet a deployment has.
+- **Two of the nine missing ones stop production from starting.**
+  `EMAIL_TRANSPORT` and `CHAT_TRANSPORT` default to `development` and both
+  adapters throw under `NODE_ENV=production` — deliberately, since I13 and I15.
+  A deployment following that file exactly would have failed at boot with an
+  error naming a variable the file had never heard of.
+- **`WEB_PORT` was documented and read by nothing** (Next reads `PORT`). Removed
+  rather than implemented: a variable that does nothing is worse than an absent
+  one, because absence is visible.
+- **Three modules were missing from the Dockerfile's manifest list** —
+  `analytics`, `audit`, `catalog` — written from memory. `npm ci` would have
+  failed on the first build, after somebody waited for it.
+- **The Dockerfile's own comment contradicted its command**: it explained why
+  `exec` matters and then omitted it, so a shell would have sat between the host
+  and node and swallowed every SIGTERM.
+
+### Decided
+
+- **Migrations are a release step**, not a build step and not a boot step. The
+  Vercel build has no reason to hold database credentials and runs again on
+  every preview branch; two API instances starting together would race.
+
+### Verified
+
+- 101 test files, 942 tests, plus formatting, linting, module boundaries, type
+  checking, no OpenAPI drift, dependency audit and a production build.
+- Six mutations, each caught. The environment contract is compared against every
+  `process.env` read **in both directions**, and the Dockerfile's manifest list
+  against the workspaces on disk, so neither can drift again.
+
+### Known
+
+- **Nothing here has ever run.** No image built, no `vercel.json` read by
+  Vercel, no migration applied to a hosted database. A test that reads a
+  Dockerfile is not evidence that it builds.
+- **The API's host is unchosen**, so there is no deploy workflow for it. Writing
+  one against a platform nobody has picked would be a guess with YAML around it.
+- `db:deploy` cannot run in the local environment at all —
+  `binaries.prisma.sh` answers 403 there, which is why it has been proven in CI
+  and nowhere else since I14.
+- Secrets are named, not managed. Where they live is the host's business.
+
+---
+
 ## [3.18.0] - 2026-08-24
 
 ### Added
