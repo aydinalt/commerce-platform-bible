@@ -26,6 +26,18 @@ This project follows the principles of:
   including the one that surprises: **entering the Admin context is a separate
   act**, and a granted account that has not entered gets 403.
 
+### Fixed
+
+- **`verify` ran the type-aware linter before the types existed.** The first
+  push of this increment failed CI with nineteen `no-unsafe-*` errors, every one
+  "a type that could not be resolved", after passing locally.
+  `scripts/first-run.mjs` is the first script to import `@commerce/*`; scripts
+  sit outside every tsconfig project, so those imports resolve through
+  `node_modules` to each package's `dist`, which does not exist on a clean
+  checkout. **In that state every type-aware rule degrades silently to
+  "unresolved" rather than to "fine".** `typecheck` is `tsc -b`, which emits, so
+  it now runs first — and a case asserts the order.
+
 ### Changed
 
 - **The platform was pointed at a brand-new database for the first time.** 39

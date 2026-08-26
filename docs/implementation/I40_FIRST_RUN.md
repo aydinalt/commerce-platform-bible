@@ -95,10 +95,38 @@ Ten cases, seven mutations, each caught.
 | A fourth serverless entry appears | 1 failed |
 | The procedure loses the Admin-context step | 1 failed |
 
+## CI caught what this sandbox could not
+
+The first push failed `npm run verify` with **nineteen `no-unsafe-*` errors in
+`scripts/first-run.mjs`**, every one of them "a type that could not be
+resolved". It had passed here.
+
+`first-run.mjs` is **the first script to import `@commerce/*`**. Scripts sit
+outside every tsconfig project, so those imports resolve through `node_modules`
+to each package's `dist` — which does not exist on a clean checkout. `verify`
+ran `lint` before `typecheck`, so CI's type-aware rules found nothing to read,
+while this sandbox had a `dist` left over from an earlier build and they read
+that.
+
+**The ordering was a latent bug in the chain rather than in the script.** A
+type-aware linter was being run before the types existed, and in that state every
+type-aware rule silently degrades to "unresolved" rather than to "fine". It went
+unnoticed only because nothing linted outside a tsconfig project had ever
+imported a workspace package. `typecheck` is `tsc -b`, which emits; running it
+first is what gives lint something to read.
+
+**And the second finding is about me.** Every "full chain" I have reported in
+this session ran against a sandbox holding build output that CI does not have,
+so those runs were not the chain CI runs. The chain has now been run here from a
+clean tree with every `dist` and `tsbuildinfo` deleted, and the ordering is
+asserted by a case so it cannot quietly go back.
+
 ## Verification
 
-Format, lint, module boundaries, type check, **107 test files / 1010 tests**, no
-OpenAPI drift, 0 vulnerabilities, production build.
+Run from a **clean tree with every `dist` and `tsbuildinfo` deleted**, in the
+order `verify` now uses: no OpenAPI drift, format, type check, lint, module
+boundaries, **107 test files / 1011 tests**, 0 vulnerabilities, production
+build.
 
 ## Known boundaries
 

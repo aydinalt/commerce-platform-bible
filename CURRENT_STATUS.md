@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.66
+Version:      2.67
 Last Updated: 2026-08-26
 -->
 
@@ -204,6 +204,18 @@ minting, same digest. It adds no capability, because anyone who can run it
 already holds `DATABASE_URL`. A case asserts **no fourth serverless entry has
 appeared** beside the three I37 and I38 declared — everything it does would be a
 serious hole as an HTTP endpoint.
+
+**CI caught what this sandbox could not.** The first push failed `verify` with
+nineteen `no-unsafe-*` errors in `scripts/first-run.mjs`, every one "a type that
+could not be resolved", after passing locally. It is the first script to import
+`@commerce/*`, scripts sit outside every tsconfig project, and those imports
+resolve through `node_modules` to each package's `dist` — absent on a clean
+checkout. `verify` ran `lint` before `typecheck`, so **a type-aware linter was
+being run before the types existed**, where every type-aware rule degrades
+silently to "unresolved". `typecheck` is `tsc -b` and emits, so it now runs
+first, asserted by a case. Every "full chain" reported earlier in this session
+ran against a sandbox holding build output CI does not have; the chain has now
+been run from a clean tree.
 
 ## I39 The throttling key
 

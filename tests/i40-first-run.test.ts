@@ -121,6 +121,32 @@ describe("Increment I40 the first run", () => {
       expect(scripts()["first-run"]).toBe("node scripts/first-run.mjs");
     });
 
+    it("is linted after the types it needs have been emitted", () => {
+      /*
+       * **CI caught this and the sandbox could not.**
+       *
+       * `first-run.mjs` is the first script to import `@commerce/*`. Scripts sit
+       * outside every tsconfig project, so those imports resolve through
+       * `node_modules` to each package's `dist` — which does not exist on a
+       * clean checkout. `verify` ran `lint` before `typecheck`, so on CI the
+       * type-aware rules saw nineteen unresolved types and refused, while here
+       * they saw a `dist` left over from an earlier build and passed.
+       *
+       * **The ordering was a latent bug in the chain rather than in the
+       * script**: a type-aware linter was being run before the types existed,
+       * and every type-aware rule silently degrades to "unresolved" in that
+       * state. It went unnoticed only because nothing linted outside a project
+       * had ever imported a workspace package.
+       *
+       * `typecheck` is `tsc -b`, which emits. Running it first is what gives
+       * lint something to read. Asserted as an order rather than a presence,
+       * because both were already present.
+       */
+      const verify = scripts()["verify"] ?? "";
+      expect(verify.indexOf("typecheck")).toBeGreaterThan(-1);
+      expect(verify.indexOf("typecheck")).toBeLessThan(verify.indexOf("lint"));
+    });
+
     it("is not in `verify`, because it writes to a real database", () => {
       // Same separation as `smoke`: `verify` proves the code and never touches
       // a deployment's data.
