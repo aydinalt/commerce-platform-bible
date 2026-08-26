@@ -46,6 +46,7 @@
     "lint": "eslint .",
     "openapi:generate": "npm run openapi:generate --workspace=@commerce/api",
     "security:audit": "npm audit --audit-level=high",
+    "first-run": "node scripts/first-run.mjs",
     "smoke": "node scripts/smoke.mjs",
     "test": "vitest run",
     "typecheck": "tsc -b --pretty false",

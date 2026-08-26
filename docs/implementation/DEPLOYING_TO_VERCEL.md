@@ -80,6 +80,37 @@ Preview deployments get the same variables unless overridden, which means **a
 preview branch will write to production data**. Point previews at a separate
 Supabase project or accept that.
 
+## The first Admin
+
+**A fresh deployment is unusable until an Admin exists**, and the steps are not
+guessable. Measured against a database holding nothing but the migrations (I40).
+
+1. **Register through the real sign-up screen.** There is no other way in;
+   `admin.mjs` answers "No account found" for anything unconfirmed.
+2. **Get the confirmation link.**
+   ```
+   DATABASE_URL='…' PUBLIC_WEB_URL='https://<web>' npm run first-run
+   ```
+   The link cannot be looked up. `outbox.processor.ts` mints the registration
+   token at delivery and stores only its digest, so it exists in memory and in
+   the message and never at rest — a good decision, and the reason this step
+   exists. `first-run` **is** the worker, run once with a dispatcher that prints
+   instead of sends.
+3. **Open the link**, then grant:
+   ```
+   npm run admin:grant -- --email <address> --by <owner>
+   ```
+4. **Enter the Admin context.** This is a separate act and the one that
+   surprises: a granted account that has not entered gets
+   `403 ADMIN_CONTEXT_REQUIRED`, which is UX-0008 §5 working rather than a
+   failure. Use the explicit entry on the site.
+5. **Create the first Categories and Attributes** through the Admin panel.
+   Nothing can be published until an active leaf Category exists.
+
+A fresh database is not entirely empty: a migration seeds the three Domains.
+Home says _"Şu anda açık bir kategori yok."_ until step 5 is done, which is the
+honest empty state rather than a broken page.
+
 ## After the first deploy
 
 Run the smoke checks against the deployed origins rather than trusting the
@@ -115,9 +146,10 @@ failure that looks fine in a browser.
   is `request.ip`, and behind a proxy that is the proxy's address unless the hop
   count is declared — every caller in one bucket, and the platform locking
   itself out after a few dozen attempts globally.
-- **The database is empty.** There is no seed, so a fresh deployment has zero
-  Categories and zero Attributes; the catalogue has to be built through the
-  Admin panel before anything can be published.
+- **The catalogue starts empty.** A migration seeds the three Domains and
+  nothing else, so the first Admin has to build the Categories and Attributes by
+  hand before anything can be published. Home says so plainly rather than
+  looking broken — see The first Admin above.
 - **No legal pages exist** — no privacy notice, terms, or cookie disclosure, and
   no route to put them on.
 - **No backup or restore has been rehearsed**, and the recovery point and

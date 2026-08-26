@@ -10,6 +10,39 @@ This project follows the principles of:
 
 ---
 
+## [3.25.0] - 2026-08-26
+
+### Added
+
+- **`npm run first-run`** — the way to get the first Admin onto a fresh
+  deployment. `admin.mjs` refuses anything unconfirmed, and the registration
+  token is minted at delivery with only its digest written back, so **no amount
+  of database access produces a confirmation link**. That is a good decision and
+  this does not weaken it: `first-run` **is** the worker, run once by an operator
+  with a dispatcher that prints the message instead of sending it — same
+  processor, same minting, same digest. It adds no capability, because anyone who
+  can run it already holds `DATABASE_URL`.
+- The bootstrap written down as five steps in `DEPLOYING_TO_VERCEL.md`,
+  including the one that surprises: **entering the Admin context is a separate
+  act**, and a granted account that has not entered gets 403.
+
+### Changed
+
+- **The platform was pointed at a brand-new database for the first time.** 39
+  tables, three Domains a migration seeds, and nothing else. Home answers 200
+  with "Şu anda açık bir kategori yok." rather than looking broken; Discovery
+  redirects to Home having no criteria; registration writes its four rows.
+- **I38's scheduled endpoint drained a real outbox** —
+  `{"batches":2,"delivered":1,"drained":true}`. That increment was proven against
+  fabricated processors; this is the first time the cron path has delivered a
+  message a registration actually filled.
+- ~~The database is empty and there is no seed.~~ A migration seeds the three
+  Domains. Every Category and Attribute is still hand-built by the first Admin,
+  and what belongs in a starting catalogue is an Owner decision rather than an
+  engineering one.
+
+---
+
 ## [3.24.0] - 2026-08-26
 
 ### Fixed
