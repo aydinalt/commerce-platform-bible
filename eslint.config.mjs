@@ -26,7 +26,15 @@ export default tseslint.config(
             "prisma.config.ts",
             "vitest.config.ts",
             "scripts/*.mjs",
-            "apps/web/next.config.ts"
+            "apps/web/next.config.ts",
+            /*
+             * The file Vercel invokes (I37). It sits outside `apps/api`'s
+             * `rootDir: "src"` on purpose — a TypeScript file there would
+             * either be excluded from the build or force `dist/main.js` to
+             * move, and that is what the Dockerfile and the process host
+             * start.
+             */
+            "apps/api/api/index.js"
           ]
         },
         tsconfigRootDir: import.meta.dirname

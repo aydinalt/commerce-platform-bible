@@ -10,6 +10,47 @@ This project follows the principles of:
 
 ---
 
+## [3.22.0] - 2026-08-26
+
+### Added
+
+- **The API can run as a function.** Vercel runs functions and `main.ts` calls
+  `listen` and never returns, so until now the API had **no way at all** to run
+  on the platform the Owner chose. `apps/api/src/handler.ts` answers
+  `(req, res)`; `apps/api/api/index.js` is what Vercel invokes.
+- **`main.ts` stays**, and that is the point rather than an oversight: a staged
+  decision is only reversible while both shapes exist. `bootstrap.ts` had
+  already separated building the application from listening on a port, so there
+  is one request pipeline entered two ways, not two copies.
+- `docs/implementation/DEPLOYING_TO_VERCEL.md` — two Vercel projects, the
+  Supabase steps including the `alter role` statements, and the environment
+  variables that are not obvious. **Nothing in it has been executed.**
+
+### Changed
+
+- The application is built once per function instance, and the **promise** is
+  what is cached: two requests arriving during a cold start await the same build
+  rather than starting a second one. Building per request would open a new
+  database pool on every call, which against Supabase's connection limit is the
+  whole project falling over rather than one slow response.
+- `fastify.ready()` is awaited before the first request is passed in. Without it
+  a request can be served before `helmet` and the cookie parser register, which
+  is not a slow response but a wrong one — no security headers, no session.
+- I36 predicted "a third entrypoint could forget" the database timeout check.
+  This is the third entrypoint, and it is the one that will actually run against
+  Supabase's pooled port. It runs the check.
+
+### Fixed
+
+- **A test failure that was the test's fault.** The correlation-echo case sent
+  `11111111-2222-3333-4444-555555555555`, which is not a valid UUID — the
+  variant nibble must be one of `89ab`. I17 minted a fresh identifier instead,
+  exactly as it should. The case was corrected, and the behaviour it accidentally
+  found — that a malformed identifier is replaced rather than propagated into the
+  audit record — got a case of its own.
+
+---
+
 ## [3.21.0] - 2026-08-26
 
 ### Added
