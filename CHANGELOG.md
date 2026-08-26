@@ -10,6 +10,45 @@ This project follows the principles of:
 
 ---
 
+## [3.21.0] - 2026-08-26
+
+### Added
+
+- **`DATABASE_CONNECTION_MODE`** — `direct` or `transaction`. The Owner chose
+  Vercel and Supabase on 2026-08-26, staged: ship on Vercel first and move the
+  API to a process host if the measurements demand it.
+- **The timeouts are checked against the server at boot.** Both the API and the
+  worker ask `pg_settings` what `statement_timeout` and
+  `idle_in_transaction_session_timeout` actually are, and refuse to start when
+  they are not the configured values. The check does not care how the setting
+  arrived — what matters is the value in force, not the route it took.
+
+### Fixed
+
+- **A transaction pooler refuses the parameter the timeouts travel on.** Since
+  I18 both have been carried on `pg`'s `options` startup parameter, which is
+  correct while the only thing between the process and PostgreSQL is a socket.
+  Supabase puts Supavisor in between: port 5432 accepts `options`, **port 6543
+  rejects it**, and the code cannot tell the two apart from the URL — same host,
+  same database, only the port differs.
+- On the pooled port the timeouts must come from the database role instead.
+  `.env.example` now carries the `alter role` statements, because a deployment
+  that skips them gets a working connection, correct results and **no statement
+  timeout at all** — one hung query from holding the entire pool of ten.
+- An unrecognised `DATABASE_CONNECTION_MODE` takes `direct` and therefore sends
+  `options`, so a typo fails the connection while somebody is deploying rather
+  than quietly stripping the timeouts.
+
+### Changed
+
+- **One mutation survived the first attempt.** Deleting
+  `verifyDatabaseTimeouts` from the worker left the suite green, because the
+  case asserted the entrypoint source contained the *name* and the import line
+  still did. A check on a name is satisfied by importing it and never calling
+  it. It now matches the call, with imports stripped before the search.
+
+---
+
 ## [3.20.0] - 2026-08-26
 
 ### Added

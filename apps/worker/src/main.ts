@@ -1,5 +1,5 @@
 import { loadEmailConfig, loadRuntimeConfig } from "@commerce/config";
-import { createDatabasePool } from "@commerce/database";
+import { createDatabasePool, verifyDatabaseTimeouts } from "@commerce/database";
 import type { EmailDispatcher } from "@commerce/notification";
 import { createLogger } from "@commerce/observability";
 
@@ -67,6 +67,20 @@ const pool = createDatabasePool((error) => {
   // ended a session it was holding.
   logger.error({ err: error }, "database_connection_lost");
 });
+
+/**
+ * Prove the timeouts before touching the outbox (I36).
+ *
+ * The worker's own pool, because unlike the API it owns one directly.
+ *
+ * **The worker needs this more than the API does, not less.** The retention
+ * sweep is the one statement in the platform that scans whole tables, and it is
+ * also the one nobody is watching — an unbounded sweep against a table with a
+ * real backlog holds locks for as long as it takes. `statement_timeout` is what
+ * turns that from an outage into a logged failure, so a worker that cannot
+ * confirm it has one should not start.
+ */
+await verifyDatabaseTimeouts(pool);
 
 const processor = new OutboxProcessor({
   dispatcher: buildDispatcher(),

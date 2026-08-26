@@ -101,6 +101,36 @@ export function databaseTimeouts(env: NodeJS.ProcessEnv = process.env): {
 }
 
 /**
+ * How this process reaches PostgreSQL: straight at it, or through a pooler that
+ * multiplexes transactions across shared server connections.
+ *
+ * The Owner chose Supabase on 2026-08-26, and Supabase offers both: port 5432
+ * is a session-mode or direct connection, port 6543 is Supavisor in transaction
+ * mode. Which one a deployment uses is not something the code can detect from
+ * the URL — the host and the database name are identical and only the port
+ * differs — so it is stated rather than guessed.
+ *
+ * It matters for exactly one thing, and that thing is invisible until
+ * production: a transaction pooler refuses the `options` startup parameter that
+ * carries this application's statement and idle-transaction timeouts.
+ */
+export type DatabaseConnectionMode = "direct" | "transaction";
+
+/**
+ * Direct, because that is what every environment before Supabase was.
+ *
+ * An unrecognised value takes the default and therefore sends `options` — which
+ * a transaction pooler refuses outright. **That is the right way round.** A typo
+ * fails the connection while somebody is deploying, rather than quietly
+ * stripping the timeouts and looking healthy.
+ */
+export function connectionMode(
+  raw: string | undefined = process.env.DATABASE_CONNECTION_MODE
+): DatabaseConnectionMode {
+  return raw === "transaction" ? "transaction" : "direct";
+}
+
+/**
  * The one pool a process gets.
  *
  * Deliberately a factory rather than a module-level singleton. A singleton
@@ -152,10 +182,26 @@ export function createDatabasePool(
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     connectionTimeoutMillis: timeouts.connectionTimeoutMillis,
-    // Both are PostgreSQL settings applied to every connection the pool opens,
-    // which is why no call site has to remember them. `options` reaches the
-    // server at connection time rather than as a statement somebody could skip.
-    options: `-c statement_timeout=${timeouts.statementTimeoutMs} -c idle_in_transaction_session_timeout=${timeouts.idleTransactionTimeoutMs}`,
+    /*
+     * Both are PostgreSQL settings applied to every connection the pool opens,
+     * which is why no call site has to remember them. `options` reaches the
+     * server at connection time rather than as a statement somebody could skip.
+     *
+     * **Not sent through a transaction pooler.** Supavisor and PgBouncer in
+     * transaction mode reject `options` as an unsupported startup parameter
+     * unless the pooler's own `ignore_startup_parameters` lists it — and on a
+     * managed pooler that file is not ours. Sending it there is not a
+     * degradation, it is a refused connection.
+     *
+     * Omitting it does not mean going without the timeouts. It means they come
+     * from the database role instead, and `verifyDatabaseTimeouts` is what
+     * turns that from an assumption into a checked fact.
+     */
+    ...(connectionMode() === "direct"
+      ? {
+          options: `-c statement_timeout=${timeouts.statementTimeoutMs} -c idle_in_transaction_session_timeout=${timeouts.idleTransactionTimeoutMs}`
+        }
+      : {}),
     max: poolMax()
   });
   // An idle connection's failure arrives here, and only an idle one's.
@@ -165,6 +211,83 @@ export function createDatabasePool(
   // connection rather than once per checkout, so listeners do not accumulate.
   pool.on("connect", (client) => client.on("error", onError));
   return pool;
+}
+
+/** Raised when the server's timeouts are not the ones this process configured. */
+export class DatabaseTimeoutsUnverified extends Error {
+  constructor(
+    readonly setting: string,
+    readonly expectedMs: number,
+    readonly actual: string
+  ) {
+    super(
+      `DATABASE_TIMEOUTS_UNVERIFIED: ${setting} is ${actual} on the server, not ${String(expectedMs)}ms`
+    );
+    this.name = "DatabaseTimeoutsUnverified";
+  }
+}
+
+/**
+ * Ask the server what the timeouts actually are, and refuse to serve if they
+ * are not what this process configured.
+ *
+ * **Every previous increment asserted these by reading the code that sets
+ * them.** That was enough while `options` was the only way they were applied
+ * and the only thing between here and PostgreSQL was a socket. Supabase puts a
+ * pooler in between, and the pooler can drop the parameter *and answer the
+ * connection anyway* — which is the shape of failure this repository keeps
+ * finding: the mechanism is gone, nothing errors, and the number that was
+ * supposed to protect the process is simply absent.
+ *
+ * What it would cost to skip: I18's statement timeout is the only thing keeping
+ * one hung query from holding a connection out of a pool of ten. Without it a
+ * single slow statement is a slow outage, and the first evidence would be an
+ * unreachable API rather than a message naming a setting.
+ *
+ * This does not care *how* the setting arrived. In `direct` mode it proves the
+ * `options` parameter landed; in `transaction` mode it proves the deployment ran
+ * the `ALTER ROLE` statements `.env.example` names. One check covers both,
+ * because what matters is the value in force, not the route it took.
+ *
+ * Called from each entrypoint rather than from `createDatabasePool`, so that
+ * building a pool stays synchronous and every test that hands a repository a
+ * substitute pool keeps working unchanged.
+ */
+export async function verifyDatabaseTimeouts(pool: Pool): Promise<void> {
+  const timeouts = databaseTimeouts();
+  const expected = new Map([
+    ["idle_in_transaction_session_timeout", timeouts.idleTransactionTimeoutMs],
+    ["statement_timeout", timeouts.statementTimeoutMs]
+  ]);
+
+  /*
+   * `pg_settings` rather than `show`, because it reports the unit alongside the
+   * value. `show statement_timeout` answers `5s` or `5000ms` depending on the
+   * number, so a string comparison against it is a comparison against
+   * PostgreSQL's formatting preferences.
+   */
+  const { rows } = await pool.query<{
+    name: string;
+    setting: string;
+    unit: string | null;
+  }>(
+    `select name, setting, unit from pg_settings
+     where name in ('statement_timeout', 'idle_in_transaction_session_timeout')`
+  );
+
+  for (const [name, expectedMs] of expected) {
+    const row = rows.find((candidate) => candidate.name === name);
+    // A server that does not report the setting at all is not a server whose
+    // timeouts are known, which is the same failure with a different cause.
+    if (row === undefined || row.unit !== "ms")
+      throw new DatabaseTimeoutsUnverified(name, expectedMs, "unreported");
+    if (Number(row.setting) !== expectedMs)
+      throw new DatabaseTimeoutsUnverified(
+        name,
+        expectedMs,
+        `${row.setting}ms`
+      );
+  }
 }
 
 /**
