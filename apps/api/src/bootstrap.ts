@@ -13,6 +13,7 @@ import type { RuntimeConfig } from "@commerce/config";
 
 import { AppModule } from "./app.module.js";
 import { correlationIdFrom } from "./http/correlation.js";
+import { trustProxySetting } from "./http/trusted-proxy.js";
 
 /**
  * Single definition of how the API is assembled, so tests exercise the same
@@ -49,7 +50,20 @@ export async function createApiApp(
         "api",
         config.logLevel,
         config.loggerDestination
-      )
+      ),
+      /*
+       * How far `request.ip` may look into `x-forwarded-for` (I39).
+       *
+       * `identity.controller.ts` uses it as the throttling key. Left unset it
+       * is the socket address — **the proxy's, identical for every caller
+       * behind one** — so the platform's whole traffic would share a single
+       * counter and lock itself out. Set to `true` it is the leftmost entry,
+       * which the caller writes, so the throttle would never fire.
+       *
+       * The hop count is stated rather than detected, because nothing in a
+       * request distinguishes an entry a proxy appended from one a caller sent.
+       */
+      trustProxy: trustProxySetting()
     })
   );
 

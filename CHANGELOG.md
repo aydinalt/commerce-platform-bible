@@ -10,6 +10,49 @@ This project follows the principles of:
 
 ---
 
+## [3.24.0] - 2026-08-26
+
+### Fixed
+
+- **The throttling key was the proxy's address, not the caller's.**
+  `identity.controller.ts` uses `request.ip` and calls it "the caller's
+  address", and Fastify populates that from `x-forwarded-for` only when told to
+  — which it had not been. Behind a proxy every caller would have shared one
+  counter, and the platform would have locked itself out after a few dozen
+  attempts globally.
+- **The obvious fix is the other failure.** `trustProxy: true` takes the
+  leftmost `x-forwarded-for` entry, which is the one the caller writes, so the
+  throttle could be stepped around by changing a header between requests.
+  Measured, both ways, against a forged header.
+
+### Added
+
+- `TRUSTED_PROXY_HOPS`, default `0`. Nothing in a request distinguishes an entry
+  a proxy appended from one a caller sent, so the number is stated rather than
+  detected — the same shape as `DATABASE_CONNECTION_MODE`. The default fails
+  towards refusing rather than towards allowing.
+- **Too high is as bad as trust-all**, and a case here was written to assert the
+  opposite before the measurement said no: when the chain is shorter than the
+  number declared, the resolver returns the leftmost entry — the caller's. There
+  is no safe margin, so the number must be verified against a real request.
+
+### Changed
+
+- ~~"There is no rate limiting anywhere in the repository."~~ **That claim, made
+  earlier in this session, was false.** `auth_throttle` has counted attempts per
+  hashed subject since I13, across registration, recovery and both sign-in
+  scopes, in one atomic statement so the count is shared by every instance. The
+  survey searched for the names of libraries rather than for the behaviour, and
+  this repository writes such things itself. Struck through rather than deleted,
+  and a case asserts it stays struck.
+- Two checks in this increment matched themselves: one read its own
+  struck-through correction as the claim it was asserting gone, and one accepted
+  `TRUSTED_PROXY_HOPS_X` as documentation of `TRUSTED_PROXY_HOPS`. Document
+  checks now strip `~~…~~` as source checks strip comments, and the name is
+  matched as an assignment.
+
+---
+
 ## [3.23.0] - 2026-08-26
 
 ### Added
