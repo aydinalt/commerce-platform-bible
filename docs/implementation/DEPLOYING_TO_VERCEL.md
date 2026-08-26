@@ -16,7 +16,7 @@ instance has been created, and no deployment has happened. This is the procedure
 as the repository is built to support it, and the first person to run it should
 expect to correct it.
 
-## Two Vercel projects, one repository
+## Three Vercel projects, one repository
 
 Vercel serves a project's root `api/` directory as functions itself, and a
 Next.js project already owns its own routing. The two conflict, and the
@@ -27,12 +27,16 @@ Root Directory pointing at a workspace.
 |---|---|---|---|
 | web | *(repository root)* | `vercel.json` | the Next.js application |
 | api | `apps/api` | `apps/api/vercel.json` | `apps/api/api/index.js` |
+| worker | `apps/worker` | `apps/worker/vercel.json` | `api/outbox.js`, `api/sweep.js` on a schedule |
 
-Both need **Include source files outside of the Root Directory** enabled, because
+All three need **Include source files outside of the Root Directory** enabled, because
 `npm ci` reads the root lockfile and every workspace manifest.
 
-The worker has no Vercel project. It is still a 2-second poll loop with a
-5-minute sweeper and nothing here runs it — see Known gaps.
+**The worker's frequency is a plan decision, not a code one.** Vercel's Hobby
+plan runs a cron **once per day**; Pro runs it every minute. `vercel.json` asks
+for every minute, which Hobby will silently reduce — and a registration
+confirmation that arrives up to 24 hours later is not a working sign-up. The
+worker needs the Pro plan or a process host.
 
 ## Supabase
 
@@ -92,10 +96,12 @@ failure that looks fine in a browser.
 
 ## Known gaps this procedure does not cover
 
-- **The worker has no home.** It is a poll loop, so Vercel would need it
-  rewritten as a Cron-invoked endpoint — which moves outbox delivery from ~2
-  seconds to up to 60. Until then **no email is ever sent**: registration
-  confirmations sit in the outbox unread, so nobody can complete a sign-up.
+- **Outbox delivery moves from ~2 seconds to the cron cadence** — up to 60
+  seconds on Pro, and **up to 24 hours on Hobby**, where a cron may run only
+  once a day. On Hobby nobody can practically complete a sign-up.
+- **The drain stops before a batch it could not finish**, so a busy minute
+  leaves work queued. `drained: false` in the response is the signal that the
+  schedule is not keeping up; nothing watches for it yet.
 - **`/metrics` counts in memory.** Each function instance has its own counters
   and they reset when it recycles, so the numbers are per-instance and
   short-lived. I19's design assumed a process.

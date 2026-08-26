@@ -31,10 +31,28 @@ describe("Increment I34 deployment", () => {
         if (!entry.name.endsWith(".ts") && !entry.name.endsWith(".tsx"))
           continue;
         const source = readFileSync(path, "utf8");
-        for (const [, name] of source.matchAll(
-          /(?:process\.env|\benv)\.([A-Z][A-Z0-9_]+)/gu
-        ))
+        /*
+         * **Both notations, because the first version saw only one.**
+         *
+         * `process.env.NAME` was all this matched, and I38 read
+         * `process.env["CRON_SECRET"]` — which the detector could not see. That
+         * failed in the harmless direction here, reporting a documented
+         * variable as invented, but **the same blindness in the other direction
+         * is the failure this whole test exists to prevent**: a variable the
+         * code reads only through a bracket would have been invisible, and
+         * `.env.example` could have gone on not mentioning it.
+         *
+         * `noPropertyAccessFromIndexSignature` makes the bracket form the
+         * correct one for anything not on a known interface, so this was going
+         * to happen; it is a property of the codebase rather than of one
+         * increment's style.
+         */
+        for (const [, dotted, bracketed] of source.matchAll(
+          /(?:process\.env|\benv)(?:\.([A-Z][A-Z0-9_]+)|\["([A-Z][A-Z0-9_]*)"\])/gu
+        )) {
+          const name = dotted ?? bracketed;
           if (name !== undefined) found.add(name);
+        }
       }
     };
     for (const root of ["apps", "packages", "modules"]) walk(root);

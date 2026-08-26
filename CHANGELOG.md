@@ -10,6 +10,54 @@ This project follows the principles of:
 
 ---
 
+## [3.23.0] - 2026-08-26
+
+### Added
+
+- **The worker can be invoked by a scheduler.** Until now **no email was ever
+  sent on the platform the Owner chose**: the worker is a `while (running)` loop
+  and Vercel has nowhere to loop, so registration confirmations would have sat
+  unread in the outbox, nobody could have completed a sign-up, and the
+  deployment would have looked entirely healthy.
+- `drain.ts` — the draining, separated from what drives it. `main.ts` still
+  calls it in a loop and is what the Dockerfile starts; `handler.ts` calls it
+  once. **One draining path, two shapes**, so a staged hosting decision stays
+  reversible.
+- Two endpoints with two schedules. The loop's five-minute sweep timer cannot
+  survive a process with no memory between invocations, so the cadence had to
+  move into the schedule rather than be guessed at.
+- `CRON_SECRET` and `CRON_BUDGET_MS` in `.env.example`.
+
+### Changed
+
+- **The drain stops before a batch it could not finish**, rather than when the
+  time is gone. A function is killed mid-statement when it exceeds its duration;
+  `processBatch` marks what it delivered before returning, so a kill *between*
+  batches loses nothing — but a kill *inside* one is a delivery whose outcome
+  nobody recorded, and the outbox then sends it again.
+- `drained: false` is returned rather than treated as a failure. **An outbox
+  that never reports `true` is one the schedule cannot keep up with**, and that
+  is invisible if a partial drain answers the same as a complete one.
+- `buildDispatcher` moved out of `main.ts` into its own module. **A second copy
+  of "does this deployment send real mail" is the duplicate that matters most**:
+  the two could disagree, and one deployment would silently write every
+  registration to a log while looking healthy.
+- Unauthorised invocations get **404, not 401**, matching I19's decision for
+  `/metrics`. An unset or empty `CRON_SECRET` never matches, because the
+  endpoint sends real email and deletes real rows.
+
+### Fixed
+
+- **I34's environment detector was half-blind.** It matched `process.env.NAME`
+  and not `process.env["NAME"]`, and four bracket-notation reads already
+  existed. It failed in the harmless direction — reporting a documented variable
+  as invented — but **the same blindness in the other direction is the boot
+  failure that test was written about**: a variable read only through a bracket
+  would have been invisible, and `.env.example` could have gone on not
+  mentioning it. It now matches both notations.
+
+---
+
 ## [3.22.0] - 2026-08-26
 
 ### Added

@@ -21,6 +21,16 @@ export default tseslint.config(
       globals: { ...globals.node },
       parserOptions: {
         projectService: {
+          /*
+           * Nine files, one over the default of eight (I38).
+           *
+           * The flag's name is a warning about linting speed rather than about
+           * correctness, and every file on the list below is a configuration
+           * file or a one-line re-export. The alternative was to stop linting
+           * the platform's entry points, and an unlinted entry point is exactly
+           * where a wrong import path would sit unnoticed.
+           */
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 12,
           allowDefaultProject: [
             "*.mjs",
             "prisma.config.ts",
@@ -34,7 +44,10 @@ export default tseslint.config(
              * move, and that is what the Dockerfile and the process host
              * start.
              */
-            "apps/api/api/index.js"
+            "apps/api/api/index.js",
+            // The two the scheduler invokes (I38), outside `rootDir` for the
+            // same reason.
+            "apps/worker/api/*.js"
           ]
         },
         tsconfigRootDir: import.meta.dirname

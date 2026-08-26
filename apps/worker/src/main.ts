@@ -1,12 +1,9 @@
 import { loadEmailConfig, loadRuntimeConfig } from "@commerce/config";
 import { createDatabasePool, verifyDatabaseTimeouts } from "@commerce/database";
-import type { EmailDispatcher } from "@commerce/notification";
 import { createLogger } from "@commerce/observability";
 
-import { HttpEmailDispatcher } from "./http.dispatcher.js";
-import { LoggingEmailDispatcher } from "./logging.dispatcher.js";
+import { buildDispatcher } from "./dispatcher.js";
 import { OutboxProcessor } from "./outbox.processor.js";
-import { postmarkProvider } from "./postmark.provider.js";
 import { RetentionSweeper } from "./retention.sweeper.js";
 
 const POLL_INTERVAL_MS = 2000;
@@ -26,35 +23,11 @@ const logger = createLogger("worker", config.logLevel);
 const environment = process.env.NODE_ENV ?? "development";
 const email = loadEmailConfig(environment);
 
-/**
- * Builds the dispatcher the configuration names.
- *
- * `loadEmailConfig` has already refused a production deployment naming a vendor
- * without a credential or a sender, so by the time this runs the values exist.
- * Adding a second vendor is a second branch and a second `EmailProvider`;
- * nothing else here moves.
- *
- * There is no fallback to the development adapter. A deployment that asked for
- * real delivery and silently got none would look healthy while every
- * registration expired unanswered — the worst of the outcomes, and the only one
- * nobody would notice.
+/*
+ * The dispatcher now comes from `dispatcher.ts` (I38), so this entry and the
+ * scheduled one cannot end up with different answers to "does this deployment
+ * send real mail".
  */
-function buildDispatcher(): EmailDispatcher {
-  if (email.transport === "development")
-    return new LoggingEmailDispatcher(logger, environment);
-
-  return new HttpEmailDispatcher({
-    logger,
-    provider: postmarkProvider({
-      // Non-null because `loadEmailConfig` throws without them, which is where
-      // the operator gets an error naming the setting rather than a stack.
-      apiKey: email.apiKey ?? "",
-      sender: email.sender ?? ""
-    }),
-    timeoutMs: email.timeoutMs
-  });
-}
-
 /*
  * One pool for the process, shared by both components that use it.
  *
@@ -83,7 +56,7 @@ const pool = createDatabasePool((error) => {
 await verifyDatabaseTimeouts(pool);
 
 const processor = new OutboxProcessor({
-  dispatcher: buildDispatcher(),
+  dispatcher: buildDispatcher(email, logger, environment),
   logger,
   pool,
   publicWebUrl: process.env.PUBLIC_WEB_URL ?? "http://localhost:3000"
