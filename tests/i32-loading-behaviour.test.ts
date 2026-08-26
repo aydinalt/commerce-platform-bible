@@ -29,20 +29,55 @@ describe("Increment I32 Loading Behaviour", () => {
       .map((entry) => String(entry.parentPath ?? entry.path).replace(APP, ""));
 
   describe("where a navigation waits", () => {
-    it("covers each area with one file rather than each route", () => {
+    it("covers only the segments that cannot answer 404", () => {
       /*
-       * A segment inherits its nearest ancestor's loading state, so five files
-       * cover fourteen routes. Asserted as a set because the placement is the
-       * decision: one directory higher would swallow a sibling that must not
-       * have one, and one lower would leave routes uncovered.
+       * ~~Five files cover fourteen routes.~~ **Three of the five were wrong and
+       * I35 found it by running the thing.**
+       *
+       * A `loading.tsx` makes Next stream the segment: the shell and the
+       * fallback are flushed immediately, which commits the HTTP status as 200
+       * before `page.tsx` has decided anything. A `notFound()` raised afterwards
+       * still swaps in the right body — a person sees "Bu sayfa bulunamadı" —
+       * but the response says **200 OK for a page that does not exist**.
+       *
+       * Measured over a real socket, on the same build, one file apart:
+       *
+       *   with    /offerings/[slug]/loading.tsx → 200, body "Bu sayfa bulunamadı"
+       *   without                               → 404, body "Bu sayfa bulunamadı"
+       *
+       * Twelve pages sat under `/admin`, `/businesses` and `/offerings/[slug]`
+       * calling `notFound()`. **Every test in this repository passed the whole
+       * time**, because `renderToStaticMarkup` and `app.inject()` never produce
+       * a streamed response and so have no status to get wrong.
+       *
+       * `/compare` and `/decision` contain no `notFound()` at all, so streaming
+       * costs them nothing and they keep their skeleton. The set is asserted
+       * rather than a rule, because the placement is the decision.
        */
-      expect(segments().sort()).toEqual([
-        "/admin",
-        "/businesses",
-        "/compare",
-        "/decision",
-        "/offerings/[slug]"
-      ]);
+      expect(segments().sort()).toEqual(["/compare", "/decision"]);
+    });
+
+    it("keeps a loading state only where nothing can be missing", () => {
+      /*
+       * The rule behind the set above, checked against the source so the two
+       * cannot drift apart. Re-adding `loading.tsx` to a segment that can 404
+       * fails here with the reason attached, rather than silently turning
+       * twelve pages back into soft 404s.
+       */
+      const canBeMissing = (segment: string): boolean =>
+        readdirSync(join(APP, segment), {
+          recursive: true,
+          withFileTypes: true
+        })
+          .filter((entry) => entry.name.endsWith(".tsx"))
+          .some((entry) =>
+            readFileSync(
+              join(String(entry.parentPath ?? entry.path), entry.name),
+              "utf8"
+            ).includes("notFound()")
+          );
+
+      expect(segments().filter((segment) => canBeMissing(segment))).toEqual([]);
     });
 
     it("has no root loading state, because it would cascade", () => {

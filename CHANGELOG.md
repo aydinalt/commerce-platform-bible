@@ -10,6 +10,48 @@ This project follows the principles of:
 
 ---
 
+## [3.20.0] - 2026-08-26
+
+### Added
+
+- **The first end-to-end run.** `npm run smoke` starts the API and the web
+  application as real processes and drives them over `127.0.0.1`. All 942 tests
+  before this one called `app.inject()` or `renderToStaticMarkup` — **no socket
+  had ever been opened, no page had ever been served, and the web application
+  had never called the API over a network.** Five consecutive closure records
+  named the gap; naming it five times did not close it.
+- Thirteen checks against running processes, including the three values no test
+  can see: `API_BASE_URL`, the port, and the `/api/v1` prefix that the web
+  application's server-side fetch depends on.
+
+### Fixed
+
+- **A 404 that answered 200.** `/offerings/there-is-no-such-offering` returned
+  `200 OK` with `Bu sayfa bulunamadı` in the body. A `loading.tsx` makes Next
+  stream the segment, and the HTTP status is committed at the first flush —
+  before `page.tsx` calls `notFound()`. The body was right and the status was a
+  lie, which is the worst of both: a person sees the correct screen, and every
+  crawler, uptime monitor and cache sees a page that exists.
+- **Twelve pages were affected**, under `/admin`, `/businesses` and
+  `/offerings/[slug]`, and every test in the repository passed the whole time.
+  `renderToStaticMarkup` has no status code and `app.inject()` does not stream,
+  so the suite would have kept passing forever.
+
+### Changed
+
+- Three of I32's five `loading.tsx` files are removed. `/compare` and
+  `/decision` contain no `notFound()`, so streaming costs them nothing and they
+  keep their skeleton. **Twelve pages lose a loading state, because a correct
+  status code outranks a skeleton.** The reversal is recorded in
+  `tests/i32-loading-behaviour.test.ts` with I32's claim struck through rather
+  than deleted, and a second case derives the rule from the source so a
+  `loading.tsx` beside anything calling `notFound()` now fails the suite.
+- `smoke` is a script rather than a test, and deliberately outside `verify`: it
+  needs a production build and a migrated database, and a test that skips when
+  its preconditions are absent still reports the suite green.
+
+---
+
 ## [3.19.0] - 2026-08-25
 
 ### Added

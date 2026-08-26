@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.60
-Last Updated: 2026-08-24
+Version:      2.61
+Last Updated: 2026-08-26
 -->
 
 # CURRENT STATUS
@@ -14,7 +14,7 @@ Last Updated: 2026-08-24
 |---|---|
 | Repository | Commerce Platform Bible |
 | Repository health | Frozen baselines. Every increment through I13 was proven green in target CI before the next opened, on evidence recorded here run by run. I14 through I19 are green in target CI too, **on the Owner's confirmation of 2026-08-18 rather than on a run recorded in this document** — the distinction is kept because a claim about CI should say how it is known. That confirmation is what closes the three database gates for those six increments: `db:validate`, `db:deploy` and `db:drift` cannot run in the local environment and had gone unproven since I13 |
-| Current phase | M12 Increment I34 Deployment — closed. Thirty-five increments, I0 through I34. **The repository can now describe its own deployment**: `.env.example` documents all twenty-three variables the code reads instead of fourteen, `vercel.json` builds the web, and one Dockerfile carries the API and the worker — Vercel runs functions and both of those are processes. **Nothing has run**: no image built, no `vercel.json` read by Vercel, no migration applied to a hosted database, and the API's host is still unchosen. **Twenty-two routes existed and there was no site**: no header, no navigation, no footer, no brand mark — `layout.tsx` was `<html><body>{children}`. The Owner said "we still haven't moved to the frontend" twice and was answered twice with "the frontend already exists"; the Owner was right both times. **The Owner also replaced I26's approved calm direction with a dense listings one on 2026-08-24, and chose Vercel with managed Postgres as the hosting target** — no deploy artefact exists yet for any of the three services. **Eight Frozen sections name Loading Behaviour and there were zero `loading.tsx` files.** Five now cover the fourteen routes that wait; Home and Discovery are deliberately excluded, and Discovery's exclusion is an Owner question rather than a refactoring — UX-0002 §13 wants the criteria visible *and* the old actions inert, and neither option available today gives both. **Twenty-two routes had no error boundary and twenty-nine `notFound()` calls had no page**, so every uncaught error and every one of those calls produced Next.js's built-in English screen — including the thirteen `notFound()` answers I24 deliberately preserved. **Offerings carry visuals**: three Frozen acceptance criteria had been half-satisfied since the surfaces were built, because each says to present the supplied visual *and* not to invent one when absent, and only the second half was reachable. The Frozen documents call them *media* and *visuals*, which is why an earlier survey for the word *image* wrongly reported that the platform had none by decision. **I29's claim that all twenty-two routes speak Turkish was false** — sixteen English submit labels were on screen and all three consolidation increments passed over them. All twenty-two routes speak Turkish, corrected in I30; `<html lang="tr">` is true of the whole application and no route declares an exception. **Nothing can be deployed**: no `Dockerfile`, no deploy workflow, no named hosting target — see `docs/implementation/ROADMAP_2026-08-22.md`. **Nothing checks the OpenAPI document against the contracts** — `openapi.test.ts` asserts the health operations only, so the published description drifted from the schema silently. The first visual-design work in the repository: no Frozen UX document specifies visual design, so the Owner approved a foundation on 2026-08-21 and this implements it. The web application's calls to the API were the last untimed dependency edge in the repository, which made I23's and I24's surfaces unreachable in the failure that produces them most often. UX-0005 and UX-0006 join the public path; four of the eight Error Behaviour documents remain queued. R1.2, R1.4 and all of R2 of `docs/releases/V1_RELEASE_CRITERIA_CANDIDATE.md` need a hosting target and a monitoring system, neither of which exists |
+| Current phase | M12 Increment I35 The first end-to-end run — closed. Thirty-six increments, I0 through I35. **Both services have now run as real processes and been driven over a socket, and the first run found a defect**: `/offerings/there-is-no-such-offering` answered 200 OK with "Bu sayfa bulunamadı" in the body, because a `loading.tsx` makes Next stream the segment and the status is committed at the first flush, before `page.tsx` calls `notFound()`. Twelve pages under `/admin`, `/businesses` and `/offerings/[slug]` were soft 404s and every test passed the whole time — `renderToStaticMarkup` has no status code and `app.inject()` does not stream. Three of I32's five `loading.tsx` files are removed; twelve pages lose a loading state because a correct status code outranks a skeleton. **All 942 tests before this one called `app.inject()` or `renderToStaticMarkup`** — no socket had ever been opened, no page had ever been served, and the web application had never called the API over a network. **Still nobody has looked at it**: `npm run smoke` drives HTTP and reads markup, with no browser, no client bundle and no viewport. **The repository can describe its own deployment**: `.env.example` documents all twenty-three variables the code reads instead of fourteen, `vercel.json` builds the web, and one Dockerfile carries the API and the worker — Vercel runs functions and both of those are processes. **Nothing has run**: no image built, no `vercel.json` read by Vercel, no migration applied to a hosted database, and the API's host is still unchosen. **Twenty-two routes existed and there was no site**: no header, no navigation, no footer, no brand mark — `layout.tsx` was `<html><body>{children}`. The Owner said "we still haven't moved to the frontend" twice and was answered twice with "the frontend already exists"; the Owner was right both times. **The Owner also replaced I26's approved calm direction with a dense listings one on 2026-08-24, and chose Vercel with managed Postgres as the hosting target** — no deploy artefact exists yet for any of the three services. **Eight Frozen sections name Loading Behaviour and there were zero `loading.tsx` files.** Five now cover the fourteen routes that wait; Home and Discovery are deliberately excluded, and Discovery's exclusion is an Owner question rather than a refactoring — UX-0002 §13 wants the criteria visible *and* the old actions inert, and neither option available today gives both. **Twenty-two routes had no error boundary and twenty-nine `notFound()` calls had no page**, so every uncaught error and every one of those calls produced Next.js's built-in English screen — including the thirteen `notFound()` answers I24 deliberately preserved. **Offerings carry visuals**: three Frozen acceptance criteria had been half-satisfied since the surfaces were built, because each says to present the supplied visual *and* not to invent one when absent, and only the second half was reachable. The Frozen documents call them *media* and *visuals*, which is why an earlier survey for the word *image* wrongly reported that the platform had none by decision. **I29's claim that all twenty-two routes speak Turkish was false** — sixteen English submit labels were on screen and all three consolidation increments passed over them. All twenty-two routes speak Turkish, corrected in I30; `<html lang="tr">` is true of the whole application and no route declares an exception. **Nothing can be deployed**: no `Dockerfile`, no deploy workflow, no named hosting target — see `docs/implementation/ROADMAP_2026-08-22.md`. **Nothing checks the OpenAPI document against the contracts** — `openapi.test.ts` asserts the health operations only, so the published description drifted from the schema silently. The first visual-design work in the repository: no Frozen UX document specifies visual design, so the Owner approved a foundation on 2026-08-21 and this implements it. The web application's calls to the API were the last untimed dependency edge in the repository, which made I23's and I24's surfaces unreachable in the failure that produces them most often. UX-0005 and UX-0006 join the public path; four of the eight Error Behaviour documents remain queued. R1.2, R1.4 and all of R2 of `docs/releases/V1_RELEASE_CRITERIA_CANDIDATE.md` need a hosting target and a monitoring system, neither of which exists |
 | Development | Every Frozen Generated Story implemented, and every Frozen UX document now has a surface — though not every section of one: UX-0002 §9 Filter Behaviour and §7.2 Search narrowing had none until I15. The surfaces are: authentication and the three context entries, the Business Dashboard through to the bounded correction path and Affiliate Destination management, the Decision flow through to its two Completions, and the Admin Dashboard through to Category and Attribute management. Twenty-two routes, none of which composes an availability rule of its own |
 | Delivery Status of Frozen Stories | **50 of 50 `Done`**, none `In Progress`, none `Not Started`. Every criterion is matched to the test that verifies it in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`. `US-OFR-F05-001` was the exception until the Owner read AC-3 as satisfied by one ordered set — `docs/implementation/AC3_ATTRIBUTE_GROUPING_DECISION.md` |
 
@@ -178,6 +178,39 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## I35 The first end-to-end run
+
+Both services started as real processes and driven over `127.0.0.1`. Findings
+are in `docs/implementation/I35_END_TO_END.md`.
+
+**All 942 tests called `app.inject()` or `renderToStaticMarkup`.** No socket had
+ever been opened, no page had ever been served, and the web application had
+never called the API over a network. Five consecutive closure records named the
+gap; naming it five times did not close it.
+
+**The first run found a defect.**
+`/offerings/there-is-no-such-offering` answered **200 OK** with
+`Bu sayfa bulunamadı` in the body. A `loading.tsx` makes Next stream the
+segment, and the status is committed at the first flush — before `page.tsx`
+calls `notFound()`. The body was right and the status was a lie, which is the
+worst of both: a person sees the correct screen, and every crawler, monitor and
+cache sees a page that exists. **Twelve pages** under `/admin`, `/businesses`
+and `/offerings/[slug]` were affected, and every test in the repository passed
+the whole time — `renderToStaticMarkup` has no status code and `app.inject()`
+does not stream.
+
+Three of I32's five `loading.tsx` files are removed; `/compare` and `/decision`
+contain no `notFound()` and keep their skeleton. **Twelve pages lose a loading
+state, because a correct status code outranks a skeleton.** The reversal is
+recorded in `tests/i32-loading-behaviour.test.ts` with the original claim struck
+through, and a second case derives the rule from the source so it cannot recur.
+
+`npm run smoke` is a script rather than a test, and deliberately outside
+`npm run verify`: it needs a production build and a migrated database, and a
+test that skips when its preconditions are absent still reports green. **13/13
+checks pass against two running processes.** Still nobody has looked at it — no
+browser, no client bundle, no viewport.
 
 ## I34 Deployment
 
