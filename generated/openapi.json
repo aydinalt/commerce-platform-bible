@@ -2313,6 +2313,14 @@
               }
             },
             "description": "Too many registration attempts"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2353,6 +2361,14 @@
               }
             },
             "description": "Request origin is missing or not allowed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2387,6 +2403,14 @@
               }
             },
             "description": "Too many recovery attempts"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2413,6 +2437,14 @@
               }
             },
             "description": "Recovery link is invalid or has expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2462,6 +2494,14 @@
               }
             },
             "description": "Request origin is missing or not allowed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2479,6 +2519,14 @@
               }
             },
             "description": "Request origin is missing or not allowed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2501,6 +2549,14 @@
               }
             },
             "description": "No authenticated session"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2533,6 +2589,14 @@
               }
             },
             "description": "Request origin is missing or not allowed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2564,6 +2628,14 @@
               }
             },
             "description": "Admin context is unavailable, or the request origin is not allowed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2591,6 +2663,14 @@
               }
             },
             "description": "No authenticated session"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2623,6 +2703,14 @@
               }
             },
             "description": "Request origin is missing or not allowed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2677,6 +2765,14 @@
               }
             },
             "description": "No authorized Business matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Identity"]
@@ -2701,6 +2797,14 @@
               }
             },
             "description": "Authentication required"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -2756,6 +2860,14 @@
               }
             },
             "description": "Business slug conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -2789,6 +2901,14 @@
               }
             },
             "description": "An entered Admin context is required"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -2860,6 +2980,14 @@
               }
             },
             "description": "The properties contradict the value kind: filterable Text, a unit outside Number, or a Select with no allowed value"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -2935,6 +3063,14 @@
               }
             },
             "description": "The properties contradict the value kind"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3018,6 +3154,14 @@
               }
             },
             "description": "The value kind contradicts other properties"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3093,6 +3237,14 @@
               }
             },
             "description": "An Offering in a removed Category holds a value"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3166,6 +3318,14 @@
               }
             },
             "description": "An existing Offering has no value yet"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3247,6 +3407,14 @@
               }
             },
             "description": "The definition is not a Select kind"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3328,6 +3496,14 @@
               }
             },
             "description": "An Offering still uses this allowed value"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3407,6 +3583,14 @@
               }
             },
             "description": "It is the last allowed value"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3426,6 +3610,14 @@
               }
             },
             "description": "Assignable Categories"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Catalog"]
@@ -3459,6 +3651,14 @@
               }
             },
             "description": "An entered Admin context is required"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3522,6 +3722,14 @@
               }
             },
             "description": "The parent is retired, or the slug or stable key is taken"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3587,6 +3795,14 @@
               }
             },
             "description": "No Category matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3660,6 +3876,14 @@
               }
             },
             "description": "The proposed parent is in another Domain or inside the Category's own ancestry"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3725,6 +3949,14 @@
               }
             },
             "description": "An active dependency remains"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -3774,6 +4006,14 @@
               }
             },
             "description": "No owned Business matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -3839,6 +4079,14 @@
               }
             },
             "description": "No owned Business matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -3888,6 +4136,14 @@
               }
             },
             "description": "No owned Business matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -3958,6 +4214,14 @@
               }
             },
             "description": "Offering slug conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4020,6 +4284,14 @@
               }
             },
             "description": "Offering not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4077,6 +4349,14 @@
               }
             },
             "description": "No owned Offering matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4154,6 +4434,14 @@
               }
             },
             "description": "The edit would leave a Published or Hidden Offering below the Universal Publication Minimum, or a value does not match its Attribute kind"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4233,6 +4521,14 @@
               }
             },
             "description": "The Offering does not satisfy the Universal Publication Minimum"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4304,6 +4600,14 @@
               }
             },
             "description": "The Offering is already Archived"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4361,6 +4665,14 @@
               }
             },
             "description": "No owned Offering matches"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4418,6 +4730,14 @@
               }
             },
             "description": "No owned Offering or Affiliate Destination matches"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4499,6 +4819,14 @@
               }
             },
             "description": "This Offering already has a destination"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4572,6 +4900,14 @@
               }
             },
             "description": "No owned Offering or Affiliate Destination matches"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4629,6 +4965,14 @@
               }
             },
             "description": "No Offering matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]
@@ -4694,6 +5038,14 @@
               }
             },
             "description": "Only a Published Offering may be hidden"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -4759,6 +5111,14 @@
               }
             },
             "description": "Only a Hidden Offering may be restored"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -4792,6 +5152,14 @@
               }
             },
             "description": "Admin context required"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -4851,6 +5219,14 @@
               }
             },
             "description": "No Affiliate Destination matches that Offering"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -4920,6 +5296,14 @@
               }
             },
             "description": "No Affiliate Destination matches that Offering"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -4989,6 +5373,14 @@
               }
             },
             "description": "No Affiliate Destination matches that Offering"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5056,6 +5448,14 @@
               }
             },
             "description": "The destination is not Valid"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5123,6 +5523,14 @@
               }
             },
             "description": "The destination is not Enabled"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5164,6 +5572,14 @@
               }
             },
             "description": "That Comparison Set has expired or never existed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5205,6 +5621,14 @@
               }
             },
             "description": "That Decision flow has expired or never existed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5246,6 +5670,14 @@
               }
             },
             "description": "That Decision flow has expired or never existed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5295,6 +5727,14 @@
               }
             },
             "description": "Nothing is selected, the Offering is no longer publicly eligible, or the Business supplied no channel"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5343,6 +5783,14 @@
             },
             "description": "Authentication required"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "The request did not declare an acceptable origin"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -5358,6 +5806,14 @@
               }
             },
             "description": "Nothing is selected, the Offering is no longer publicly eligible, the Business supplied no channel, or that channel is not available"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5407,6 +5863,14 @@
               }
             },
             "description": "Nothing is selected, the Offering is no longer publicly eligible, or it has no eligible Affiliate Destination"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5464,6 +5928,14 @@
               }
             },
             "description": "Select an Offering from the current Decision Context"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5505,6 +5977,14 @@
               }
             },
             "description": "That Decision flow has expired or never existed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5560,6 +6040,14 @@
               }
             },
             "description": "The Decision Context is not currently valid, or the reply would have stated something the context did not contain"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -5617,6 +6105,14 @@
               }
             },
             "description": "No owned Business matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -5669,6 +6165,14 @@
               }
             },
             "description": "Admin context required"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5702,6 +6206,14 @@
               }
             },
             "description": "Admin context required"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5767,6 +6279,14 @@
               }
             },
             "description": "Only an Enabled account may be suspended"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5832,6 +6352,14 @@
               }
             },
             "description": "Only a Suspended account may be reinstated"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5881,6 +6409,14 @@
               }
             },
             "description": "Admin context required"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5936,6 +6472,14 @@
               }
             },
             "description": "No target matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -5993,6 +6537,14 @@
               }
             },
             "description": "No case matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -6058,6 +6610,14 @@
               }
             },
             "description": "No case matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -6123,6 +6683,14 @@
               }
             },
             "description": "No case matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -6188,6 +6756,14 @@
               }
             },
             "description": "The case has no approved action or recorded no-action decision, or the owner's correction has not been re-reviewed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Platform"]
@@ -6237,6 +6813,14 @@
               }
             },
             "description": "No owned Business matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -6324,6 +6908,14 @@
               }
             },
             "description": "The saved correction would leave the Offering below the Universal Publication Minimum"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -6389,6 +6981,14 @@
               }
             },
             "description": "No Business matches that identifier"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -6454,6 +7054,14 @@
               }
             },
             "description": "Only an Unrestricted Business may be restricted"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -6519,6 +7127,14 @@
               }
             },
             "description": "Only a Restricted Business may be restored"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Business"]
@@ -6560,6 +7176,14 @@
               }
             },
             "description": "That Offering is not publicly eligible"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -6601,6 +7225,14 @@
               }
             },
             "description": "That Comparison Set has expired or never existed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -6658,6 +7290,14 @@
               }
             },
             "description": "The Offering is ineligible, belongs to another leaf Category, or the set is full"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -6705,6 +7345,14 @@
               }
             },
             "description": "That Comparison Set has expired or never existed"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -6754,6 +7402,14 @@
               }
             },
             "description": "Compare needs between two and five eligible Offerings"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Decision"]
@@ -6771,6 +7427,14 @@
               }
             },
             "description": "Active root Categories"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Discovery"]
@@ -6820,6 +7484,14 @@
               }
             },
             "description": "A Filter was applied outside an active leaf Category, or names an Attribute that is not a Filter here"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Discovery"]
@@ -6877,6 +7549,14 @@
               }
             },
             "description": "A Filter was applied to a non-leaf Category, or names an Attribute that is not a Filter here"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Discovery"]
@@ -6912,6 +7592,14 @@
               }
             },
             "description": "No publicly eligible Offering matches that address"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+              }
+            },
+            "description": "A required dependency is unavailable"
           }
         },
         "tags": ["Offering"]

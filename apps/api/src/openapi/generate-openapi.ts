@@ -4100,6 +4100,17 @@ const document = {
           },
           "400": errorResponse("Choose one available contact channel"),
           "401": errorResponse("Authentication required"),
+          /*
+           * The only Decision operation that calls `OriginValidator` — a reveal
+           * carries a session, so ADR-0012 §2 applies and a request without an
+           * acceptable `Origin` is refused before anything else runs.
+           *
+           * **Undeclared until I44**, which found it by driving the operation
+           * rather than by reading either side.
+           */
+          "403": errorResponse(
+            "The request did not declare an acceptable origin"
+          ),
           "404": errorResponse(
             "That Decision flow has expired or never existed"
           ),
@@ -5077,6 +5088,46 @@ const document = {
     }
   }
 };
+/**
+ * The one operation that answers without consulting a dependency.
+ *
+ * **Measured, not assumed.** I44 drove all eighty-seven operations with no
+ * database reachable at all: `GET /api/v1/health/live` answered `200` and
+ * `GET /api/v1/health/ready` answered `503`. Liveness is the single operation
+ * that can still answer when nothing behind it can, which is the whole point of
+ * separating it from readiness — so it is the single operation for which `503`
+ * would be a promise the API does not make.
+ */
+const ANSWERS_WITHOUT_DEPENDENCIES = "/api/v1/health/live";
+
+/**
+ * `503` is added here rather than written into eighty-six operation literals.
+ *
+ * `ErrorEnvelopeFilter` is registered as an `APP_FILTER`, so it is not a
+ * property of any one operation that it can answer `503 DEPENDENCY_UNAVAILABLE`
+ * — it is a property of **every** operation that reaches the database. Writing
+ * it out per operation would make a platform-wide response look like
+ * eighty-six independent decisions, and lose it again the ordinary way: a
+ * ninetieth operation added, and one more literal not edited.
+ *
+ * Until I44 the document declared `503` on **one** operation out of
+ * eighty-seven, so a client generated from it had no `503` branch anywhere but
+ * readiness. Driving the API with no database returned `503` from thirteen
+ * operations, and thirteen was only what an anonymous caller could reach.
+ */
+const paths = document.paths as unknown as Record<
+  string,
+  Record<string, { responses?: Record<string, unknown> }>
+>;
+for (const [path, methods] of Object.entries(paths)) {
+  if (path === ANSWERS_WITHOUT_DEPENDENCIES) continue;
+  for (const operation of Object.values(methods)) {
+    const { responses } = operation;
+    if (responses === undefined || "503" in responses) continue;
+    responses["503"] = errorResponse("A required dependency is unavailable");
+  }
+}
+
 const destination = resolve(process.cwd(), "../../generated/openapi.json");
 
 await writeFile(

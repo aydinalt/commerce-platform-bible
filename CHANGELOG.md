@@ -10,6 +10,42 @@ This project follows the principles of:
 
 ---
 
+## [3.29.0] - 2026-08-27
+
+### Added
+
+- **The API is now driven against its own published description.** I41, I42 and
+  I43 each compared the document with the contracts — two files, read and
+  compared with each other. This calls every documented operation for real and
+  checks the response: first that the status is one the document declares, then
+  that the body satisfies the contract the document names for it. The map from
+  operation to contract is **derived from the document**, because all 379
+  declared responses point at a schema by `$ref` and none is inlined.
+
+### Fixed
+
+- **`POST /decision/flows/{id}/direct-contact` answers `403` and never declared
+  it.** The reveal carries a session, so `OriginValidator` refuses a request
+  without an acceptable origin under ADR-0012 §2 before anything else runs. It
+  is the only Decision operation that carries a session, which is why it is the
+  only one that should declare `403` — and the only one that did not.
+- **`503` was declared on one operation out of eighty-seven.**
+  `ErrorEnvelopeFilter` is an `APP_FILTER`, so answering
+  `503 DEPENDENCY_UNAVAILABLE` is a property of every operation that reaches the
+  database rather than of any one of them. A client generated from the published
+  description had no `503` branch anywhere but readiness. It is now added in one
+  pass over the finished document, not written into eighty-six literals.
+
+### Verified
+
+- 73 response bodies already satisfied their contracts, with nothing to repair.
+- `GET /health/live` is the single operation that does not declare `503`, and
+  the exception is **measured**: driven with no database reachable it answered
+  `200` while readiness answered `503`.
+- Five cases, five mutations, each caught; run both with and without a database.
+
+---
+
 ## [3.28.0] - 2026-08-26
 
 ### Added
