@@ -10,6 +10,41 @@ This project follows the principles of:
 
 ---
 
+## [3.26.0] - 2026-08-26
+
+### Added
+
+- **The published OpenAPI document is now compared against the routes the API
+  actually serves**, in both directions. CI's `git diff --exit-code` proves the
+  generator's output matches the committed file and nothing else — and the
+  generator is 5073 hand-written lines with no introspection, so the description
+  could have drifted from the API in every direction with every check green. The
+  only assertions on it named six operations out of eighty-seven.
+- `createApiApp` accepts an optional `onRoute` observer, because **a Fastify
+  instance cannot be asked what it serves afterwards.** Unset in production.
+
+### Fixed
+
+- **A smoke check that had passed for the wrong reason since I35.** It asserted
+  `/metrics` answers 404 to an anonymous caller; the real path is
+  `/api/v1/metrics`, so it was asking about a path the application has never had
+  and 404 was the answer to a wall rather than to a closed door. It now asks the
+  right path and asks the second half too — a wrong token is refused **the same
+  way** as none, which a check that only ever sees 404 cannot establish.
+- **A comment written in this increment was wrong and mutation testing caught
+  it.** The route observer does not need to precede `NestFactory.create`; it
+  needs to precede `app.init()`, which is where Nest mounts the controllers.
+
+### Changed
+
+- The document was found in good order: 88 operations served, 87 documented, 0
+  documented that are not served, `GET /api/v1/metrics` excluded on I19's
+  decision and **named rather than filtered silently**. A clean result is the
+  point — it is the state a hand-maintained file drifts out of one commit at a
+  time.
+
+---
+
 ## [3.25.0] - 2026-08-26
 
 ### Added

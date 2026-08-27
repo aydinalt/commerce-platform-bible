@@ -228,15 +228,36 @@ const run = async () => {
   );
 
   /*
-   * `/metrics` answers 404 rather than 401 to anyone without the token, so the
-   * endpoint's existence is not announced. Asserted through `inject()` since
-   * I19; asserted here against the server that will actually be exposed.
+   * **This check was hitting a path the application has never had.**
+   *
+   * It requested `/metrics`, and the global prefix makes the real path
+   * `/api/v1/metrics`. So it answered 404 because nothing was there, not
+   * because the endpoint was closed — a check that passes for the wrong
+   * reason, and the second one this script has had after the wordmark in I35.
+   *
+   * I19's property is real and now actually tested: an anonymous caller gets
+   * **404 rather than 401**, because 401 confirms there is something here to
+   * be authorised against.
    */
-  const metrics = await fetch(`${API}/metrics`);
+  const metrics = await fetch(`${API}/api/v1/metrics`);
   check(
     "/metrics is not announced to an anonymous request",
     metrics.status === 404,
     String(metrics.status)
+  );
+
+  /*
+   * And the other half, which the wrong path made unaskable: the endpoint does
+   * exist. A check that only ever sees 404 cannot tell a closed door from a
+   * wall, and a wall is what a deployment that lost the route would look like.
+   */
+  const wrongToken = await fetch(`${API}/api/v1/metrics`, {
+    headers: { authorization: "Bearer not-the-token" }
+  });
+  check(
+    "a wrong scrape token is refused the same way as none",
+    wrongToken.status === 404,
+    String(wrongToken.status)
   );
 
   // ─── The web application, built and served ────────────────────────────────

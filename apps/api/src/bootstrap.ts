@@ -31,40 +31,71 @@ export async function createApiApp(
      * destination is what a deployment collects.
      */
     loggerDestination?: { write: (line: string) => void };
+    /**
+     * Told about every route as it is registered.
+     *
+     * The same shape of concession as `loggerDestination` above, for the same
+     * reason: **a Fastify instance cannot be asked what it serves after the
+     * fact.** `onRoute` fires during registration and there is no enumerable
+     * route table afterwards, so the only way to compare the published OpenAPI
+     * document against reality is to be listening while reality is assembled.
+     *
+     * Optional and unset in production, where nothing needs to know.
+     */
+    onRoute?: (route: { method: string | string[]; url: string }) => void;
   }
 ): Promise<NestFastifyApplication> {
+  const adapter = new FastifyAdapter({
+    /*
+     * The caller's correlation identifier *is* the request id (§12.3).
+     *
+     * Fastify would otherwise generate `req-1`, `req-2`, … and stamp that on
+     * every automatic request and response line, while the application
+     * stamped the correlation identifier on its own — two identifiers for one
+     * request, joined by nothing. A per-process counter also collides across
+     * instances, so `req-1` means a different request on every replica.
+     */
+    genReqId: correlationIdFrom,
+    loggerInstance: createLogger(
+      "api",
+      config.logLevel,
+      config.loggerDestination
+    ),
+    /*
+     * How far `request.ip` may look into `x-forwarded-for` (I39).
+     *
+     * `identity.controller.ts` uses it as the throttling key. Left unset it
+     * is the socket address — **the proxy's, identical for every caller
+     * behind one** — so the platform's whole traffic would share a single
+     * counter and lock itself out. Set to `true` it is the leftmost entry,
+     * which the caller writes, so the throttle would never fire.
+     *
+     * The hop count is stated rather than detected, because nothing in a
+     * request distinguishes an entry a proxy appended from one a caller sent.
+     */
+    trustProxy: trustProxySetting()
+  });
+
+  /*
+   * Attached before `app.init()`, because that is where Nest registers routes
+   * and `onRoute` only fires forward (I41).
+   *
+   * **A first version of this comment said "before `NestFactory.create`" and
+   * the mutation testing proved it wrong**: moving the hook to just after
+   * `create` still collects all eighty-eight routes, because `create` builds
+   * the container and `init` is what mounts the controllers. Moving it after
+   * `init` collects nothing.
+   *
+   * The boundary is `init`, and it is written here rather than assumed because
+   * a comment naming the wrong line is how somebody later moves the hook to a
+   * place that looks equivalent and is not.
+   */
+  if (config.onRoute !== undefined)
+    adapter.getInstance().addHook("onRoute", config.onRoute);
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({
-      /*
-       * The caller's correlation identifier *is* the request id (§12.3).
-       *
-       * Fastify would otherwise generate `req-1`, `req-2`, … and stamp that on
-       * every automatic request and response line, while the application
-       * stamped the correlation identifier on its own — two identifiers for one
-       * request, joined by nothing. A per-process counter also collides across
-       * instances, so `req-1` means a different request on every replica.
-       */
-      genReqId: correlationIdFrom,
-      loggerInstance: createLogger(
-        "api",
-        config.logLevel,
-        config.loggerDestination
-      ),
-      /*
-       * How far `request.ip` may look into `x-forwarded-for` (I39).
-       *
-       * `identity.controller.ts` uses it as the throttling key. Left unset it
-       * is the socket address — **the proxy's, identical for every caller
-       * behind one** — so the platform's whole traffic would share a single
-       * counter and lock itself out. Set to `true` it is the leftmost entry,
-       * which the caller writes, so the throttle would never fire.
-       *
-       * The hop count is stated rather than detected, because nothing in a
-       * request distinguishes an entry a proxy appended from one a caller sent.
-       */
-      trustProxy: trustProxySetting()
-    })
+    adapter
   );
 
   /*
