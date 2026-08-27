@@ -10,6 +10,38 @@ This project follows the principles of:
 
 ---
 
+## [3.28.0] - 2026-08-26
+
+### Added
+
+- **The document's declared types are now compared with the contracts.** I42
+  closed property names and named this as the remaining gap. 301 properties are
+  compared on both sides and **they all agree**, so this locks a good state in
+  rather than repairing a bad one.
+- Both sides are normalised to a primitive kind and whether null is permitted:
+  `$ref` resolved, an `anyOf` with a null branch collapsed to nullable, an enum
+  of strings read as a string.
+
+### Changed
+
+- **The measurement was wrong before it was right.** The first comparison
+  reported 62 differences out of 301 and every one was the comparison's fault —
+  `type: ["string","null"]` against `anyOf: [{string},{null}]`, a `$ref` to a
+  shared enum against the enum inlined, `enum: ["ok"]` against `type: "string"`.
+  **Trusting that number would have edited sixty-two correct declarations into
+  wrong ones**, which is worse than the gap it was meant to close and reached by
+  doing exactly what the increment was for.
+- A case asserts on the normaliser itself that a nullable and a plain one still
+  read as different, because the fix for over-strictness can overshoot into
+  over-permissiveness.
+- Eight contracts carry a `transform`, which JSON Schema cannot express — all
+  eight are input schemas and none describes a response. They are skipped, and
+  **the set is asserted rather than a count**: a count is a budget somebody
+  spends, and naming them means a ninth fails and has to be acknowledged. The
+  first version of that case guessed "fewer than six" and there were eight.
+
+---
+
 ## [3.27.0] - 2026-08-26
 
 ### Fixed
