@@ -1051,6 +1051,11 @@ const document = {
             type: "string"
           },
           offeringId: { format: "uuid", type: "string" },
+          primaryVisualUrl: {
+            description:
+              "The Listing Card's one visual, or null. `null` rather than an empty string: a card carries one visual or none, and the two are different answers. The rest of the set belongs to Presentation, which is why this is not an array.",
+            type: ["string", "null"]
+          },
           publishedAt: { format: "date-time", type: "string" },
           slug: { type: "string" },
           title: { type: "string" }
@@ -1060,6 +1065,7 @@ const document = {
           "categoryName",
           "matchLevel",
           "offeringId",
+          "primaryVisualUrl",
           "publishedAt",
           "slug",
           "title"
@@ -1581,7 +1587,13 @@ const document = {
           },
           summary: { type: ["string", "null"] },
           title: { type: "string" },
-          version: { minimum: 1, type: "integer" }
+          version: { minimum: 1, type: "integer" },
+          visuals: {
+            description:
+              "The supplied visuals as addresses, read back in `position` order so the owner sees the arrangement they saved rather than one the database happened to return.",
+            items: { type: "string" },
+            type: "array"
+          }
         },
         required: [
           "applicableAttributes",
@@ -1594,7 +1606,8 @@ const document = {
           "status",
           "summary",
           "title",
-          "version"
+          "version",
+          "visuals"
         ],
         type: "object"
       },

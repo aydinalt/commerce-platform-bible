@@ -10,6 +10,34 @@ This project follows the principles of:
 
 ---
 
+## [3.27.0] - 2026-08-26
+
+### Fixed
+
+- **The published contract had been hiding two fields since I30.** That
+  increment gave Offerings visuals and updated the Zod contracts, the migration,
+  the projection, the repositories, the API and the web application — but not the
+  five-thousand-line hand-written OpenAPI generator. `SearchResult` lost
+  `primaryVisualUrl` and `EditableOfferingContent` lost `visuals` from the
+  published description for **eleven increments**, and a client generated from it
+  would have looked correct while quietly dropping both.
+- Nothing could tell: I41 compared method and path, and CI's
+  `git diff --exit-code` only ever proved the generator matches its own
+  committed output.
+
+### Added
+
+- **The document's schemas are now compared with the Zod contracts**, in both
+  directions. 81 of 92 document schemas pair with a contract by name; the eleven
+  that do not are shapes one side inlines, and are recorded as **unchecked
+  rather than as fine**.
+- The same guard I41's own comparison needed: a rename on either side would
+  silently reduce the pairs to zero and leave both directions comparing nothing.
+  The two recovered fields are also asserted by name, because a rule that has
+  never been violated is indistinguishable from one that cannot be.
+
+---
+
 ## [3.26.0] - 2026-08-26
 
 ### Added
