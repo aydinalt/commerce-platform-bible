@@ -10,6 +10,38 @@ This project follows the principles of:
 
 ---
 
+## [3.32.0] - 2026-08-28
+
+### Fixed
+
+- **An API that is not there took the whole page down.** Every honest failure
+  surface I23, I24, I45 and I46 built is reached by an `ApiRequestError`, and
+  only a `5xx` and a timeout produced one — so a refused connection, the
+  plainest failure of the three, reached none of them. `/offerings/{slug}`
+  answered `500` with a body whose visible text was the page title alone, and
+  the crash screen was not in the document at all.
+- **The page was already correct.** It has caught `isApiUnavailable` since I24;
+  one classification three files away made it unreachable. The repair is in
+  `fetchWithBudget`, which all **19** reads pass through.
+
+### Verified
+
+- A system call is the discriminator, not a list of codes: a refused connection
+  and a DNS failure carry `cause.syscall`, while an unsupported scheme and a
+  malformed URL — the two ways this application can be wrong — do not. A
+  malformed `API_BASE_URL` still reaches the crash screen, and a mutation that
+  widens the test to any `TypeError` fails.
+- **Three smoke checks now run against a second web instance pointed at a closed
+  port**, because `app.inject()` has no socket and `renderToStaticMarkup` has no
+  status code. Reverting the repair takes smoke from 17/17 to 15/17.
+- **One mutation survived, and the claim it falsified was ours.** A case said the
+  abort check must precede the transport check; an aborted `fetch` throws an
+  `AbortError`, which is not a `TypeError`, so the two are disjoint and the
+  order is incidental. The stub was also a shape `fetch` never produces. Both
+  corrected.
+
+---
+
 ## [3.31.0] - 2026-08-27
 
 ### Fixed

@@ -62,10 +62,17 @@ export function apiTimeoutMs(
  * person, and to the retry they will make, "the API did not answer in time" and
  * "the API is not there" are one situation.
  *
- * **A network failure is not swallowed here.** `ECONNREFUSED` and DNS failures
+ * ~~**A network failure is not swallowed here.** `ECONNREFUSED` and DNS failures
  * arrive as `TypeError` and are left to propagate, because they are not this
  * request being too slow — and I23's discipline is that only what is known to
- * be the dependency's is presented as retryable.
+ * be the dependency's is presented as retryable.~~
+ *
+ * **Struck through by I47.** The discipline is right and the classification was
+ * wrong: a refused connection *is* known to be the dependency's, and Node says
+ * so with `cause.syscall`. Two paragraphs above, this file already argues that
+ * "the API did not answer in time" and "the API is not there" are one
+ * situation to the person — and then treated the second as a crash. See
+ * `isTransportFailure`.
  *
  * **Used by the sixteen reads and by none of the eight writes, deliberately.**
  * Aborting a write does not undo it: the API may have created the Offering,
@@ -91,10 +98,49 @@ export async function fetchWithBudget(
     return await fetch(input, { ...init, signal: abort.signal });
   } catch (error) {
     if (abort.signal.aborted) throw new ApiRequestError(operation, 504);
+    if (isTransportFailure(error)) throw new ApiRequestError(operation, 503);
     throw error;
   } finally {
     clearTimeout(expiry);
   }
+}
+
+/**
+ * Whether the request left this process and the network refused it.
+ *
+ * **The comment above this function used to say the opposite**, and said it for
+ * a reason worth keeping: only what is *known* to be the dependency's may be
+ * presented as retryable, or the application hides its own bugs behind "please
+ * try again" for ever. `ECONNREFUSED` was left to propagate on that principle.
+ *
+ * The principle is right and the classification was wrong, because the two
+ * cases are told apart by something Node already reports. Measured:
+ *
+ * | | `cause.syscall` | `cause.code` |
+ * |---|---|---|
+ * | connection refused | `connect` | `ECONNREFUSED` |
+ * | DNS failure | `getaddrinfo` | `EAI_AGAIN` |
+ * | unsupported scheme | *absent* | *absent* |
+ * | malformed URL | *absent* | `ERR_INVALID_URL` |
+ *
+ * **A system call is the discriminator, not a list of codes.** A list is a
+ * budget somebody spends: the next code nobody enumerated arrives, falls to the
+ * crash screen, and no one decides. `syscall` says something structural — the
+ * request reached the operating system and the network answered — while every
+ * way this application can construct a request wrongly fails before that.
+ *
+ * Until I47 this meant the honest surfaces I23, I24, I45 and I46 built were
+ * unreachable in **the failure that produces them most often**: an API that is
+ * not there at all. A timeout already mapped to `504` and a `503` already
+ * mapped to itself, so a hung API and a broken database both reached the
+ * bounded surface — and only the plainest failure of the three, nothing
+ * listening on the port, took the whole page down.
+ */
+function isTransportFailure(error: unknown): boolean {
+  if (!(error instanceof TypeError)) return false;
+  const cause: unknown = error.cause;
+  if (typeof cause !== "object" || cause === null) return false;
+  return typeof (cause as { syscall?: unknown }).syscall === "string";
 }
 
 export class ApiRequestError extends Error {

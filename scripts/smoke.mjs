@@ -53,6 +53,19 @@ const WEB_PORT = 31_000;
 const API = `http://127.0.0.1:${API_PORT}`;
 const WEB = `http://127.0.0.1:${WEB_PORT}`;
 
+/**
+ * A second web instance pointed at a port nothing is listening on.
+ *
+ * **The only way to see this.** `app.inject()` has no socket and
+ * `renderToStaticMarkup` has no status code, so a page that answers `500` and
+ * an empty shell looks identical to a correct one from inside the suite — which
+ * is how I45 measured this defect with a script and could not have caught it
+ * with a test. I47 is checked here for the same reason.
+ */
+const DEAD_PORT = 41_999;
+const OFFLINE_WEB_PORT = 31_999;
+const OFFLINE_WEB = `http://127.0.0.1:${OFFLINE_WEB_PORT}`;
+
 /** @typedef {{ detail: string; name: string; ok: boolean }} Outcome */
 
 /** @type {Outcome[]} */
@@ -338,6 +351,63 @@ const run = async () => {
   check(
     "a missing page is not left saying it is loading",
     !missingHtml.includes(RESOLVING.heading)
+  );
+
+  // ─── With nothing listening where the API should be (I47) ─────────────────
+
+  /*
+   * Started last and on its own port, so every check above ran against a
+   * healthy pair and this one adds a failure rather than replacing the run.
+   */
+  start(
+    "web-offline",
+    "npx",
+    ["next", "start", "apps/web", "-p", String(OFFLINE_WEB_PORT)],
+    {
+      API_BASE_URL: `http://127.0.0.1:${DEAD_PORT}/api/v1`,
+      NODE_ENV: "production",
+      PORT: String(OFFLINE_WEB_PORT)
+    }
+  );
+  if (!(await wait(`${OFFLINE_WEB}/`, "the offline web application"))) return;
+
+  const offline = await fetch(`${OFFLINE_WEB}/offerings/any-offering`, {
+    redirect: "manual"
+  });
+  const offlineHtml = await offline.text();
+
+  /*
+   * **The measurement I45 recorded and did not diagnose.** With nothing on the
+   * port this answered `500` with a body holding only the page title — not even
+   * the crash screen, because `error.tsx` is a client boundary and a server
+   * render that throws mid-stream sends a shell and stops.
+   *
+   * The page itself was never wrong. It has caught `isApiUnavailable` since
+   * I24; a refused connection was simply not classified as one.
+   */
+  check(
+    "an Offering page does not crash when the API is not there",
+    offline.status !== 500,
+    String(offline.status)
+  );
+  check(
+    "and it says so, rather than sending an empty shell",
+    offlineHtml.length > 1000 &&
+      /şu anda|kullanılamıyor|yüklenemedi/u.test(offlineHtml),
+    `${offlineHtml.length} bytes`
+  );
+
+  /*
+   * Home already degraded honestly before I47, because its read reaches the
+   * API through the same budget and it was the `TypeError` rather than the
+   * route that decided. Checked so the pair is visible: the same failure, two
+   * routes, one classification.
+   */
+  const offlineHome = await fetch(OFFLINE_WEB, { redirect: "manual" });
+  check(
+    "the homepage stays up with no API at all",
+    offlineHome.status === 200,
+    String(offlineHome.status)
   );
 };
 
