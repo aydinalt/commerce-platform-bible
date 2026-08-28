@@ -6,6 +6,8 @@ import { readOwnedBusinesses, readSession } from "../../identity/api";
 import { ACCOUNT, ACTIONS, REFUSALS, TITLES } from "../../identity/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../identity/session";
 import { logout } from "../login/actions";
+import { ServiceUnavailable } from "../service-unavailable";
+import { isUnavailable, orUnavailable } from "../unavailable";
 import { enterAdmin, enterBusiness } from "./actions";
 
 import type { Metadata } from "next";
@@ -36,13 +38,37 @@ export default async function AccountPage({
 }) {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
-  const session = await readSession(token);
+  const session = await orUnavailable(readSession(token));
+  /*
+   * **The outage, before the refusal.** Until I45 this page asked one question
+   * of its read and sent every negative answer to the sign-in screen — which
+   * meant that during a database outage it told somebody holding a perfectly
+   * valid token that they were signed out, and sent them to a form that calls
+   * the same API and would have failed too.
+   *
+   * I24 gave thirteen routes this exact vocabulary and did not reach here, so
+   * "distinguish zero from unavailable" was applied everywhere except the one
+   * read whose false answer is about the person rather than the catalogue.
+   */
+  if (isUnavailable(session))
+    return <ServiceUnavailable retryPath={AUTH_ROUTES.account} />;
   // A Suspended account resolves to no session at all, so it lands here and is
   // sent to sign in — §7's "does not enter authenticated User, Business, or
-  // Admin context", reached without this page needing to know why.
+  // Admin context", reached without this page needing to know why. That is
+  // still right for a refusal, and it was never right for an outage.
   if (session === null || token === undefined) redirect(AUTH_ROUTES.login);
 
-  const { businesses } = await readOwnedBusinesses(token);
+  const owned = await orUnavailable(readOwnedBusinesses(token));
+  /*
+   * **Zero was the ordinary answer, which is what hid this.** Most people own
+   * no Business, so an outage that produced an empty list looked exactly like
+   * the truth — and a person who owns three saw none of them, with UX-0008
+   * §8.1's explicit entries silently absent and nothing saying anything had
+   * gone wrong.
+   */
+  if (isUnavailable(owned))
+    return <ServiceUnavailable retryPath={AUTH_ROUTES.account} />;
+  const { businesses } = owned;
   const { entry } = await searchParams;
 
   return (

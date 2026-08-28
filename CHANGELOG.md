@@ -10,6 +10,38 @@ This project follows the principles of:
 
 ---
 
+## [3.30.0] - 2026-08-27
+
+### Fixed
+
+- **An outage told a signed-in person they were signed out.** `readSession`
+  turned every non-`200` into `null` and `/account` turned `null` into the
+  sign-in screen — so during a database outage somebody holding a perfectly
+  valid token was told their session was gone and sent to a form that calls the
+  same API and would have failed too. `4xx` still means no session, which was
+  never the defect.
+- **An outage told an owner they own no Businesses.** `readOwnedBusinesses`
+  answered `{ businesses: [] }` for any failure. Most people own none, so zero
+  is the ordinary answer and an outage wearing it was invisible — an owner of
+  three saw none, with UX-0008 §8.1's entries absent and nothing saying why.
+- **Both reads were outside I25's timeout budget.** `identity/api.ts` called
+  `fetch` directly, so a hung API held `/account` open with no ceiling. The
+  eight writes sharing the same function stay off the budget, which is I25's
+  decision: aborting a write does not undo it.
+
+### Verified
+
+- I24 gave fourteen readers the vocabulary for this and reached neither of
+  these two. The rule was applied everywhere except the module whose false
+  answer is about the person rather than the catalogue.
+- **Fifteen Decision functions still collapse an outage into a confident
+  nothing**, measured by driving them with a `503` and asserted as an exact set
+  so repairing them forces an acknowledgement.
+- Six cases, five mutations, each caught — including the overshoot that would
+  present a refusal as an outage.
+
+---
+
 ## [3.29.0] - 2026-08-27
 
 ### Added
