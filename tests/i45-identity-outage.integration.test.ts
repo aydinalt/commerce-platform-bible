@@ -199,7 +199,7 @@ describe("Increment I45 the identity reads", () => {
     });
   });
 
-  it("names the two Decision modules still outside the vocabulary", async () => {
+  it("no longer names any module outside the vocabulary", async () => {
     /*
      * **The first version of this case matched something other than what it
      * meant.** It searched for `status !== 200` and flagged `identity/api.ts`
@@ -230,6 +230,10 @@ describe("Increment I45 the identity reads", () => {
      * here, and so does repairing these two — which is the point: the second
      * failure is somebody deleting a name and recording that it is fixed,
      * rather than the finding quietly ageing out of a closure record.
+     *
+     * **I46 repaired them, and this is where it had to say so.** Both names
+     * were deleted from the list below, which is the forcing function working
+     * as designed rather than a check being loosened to pass.
      */
     const { readFileSync, readdirSync } = await import("node:fs");
     const areas = ["business", "decision", "discovery", "identity", "platform"];
@@ -244,9 +248,6 @@ describe("Increment I45 the identity reads", () => {
           withoutVocabulary.push(`${area}/${name}`);
       }
     }
-    expect(withoutVocabulary.sort()).toEqual([
-      "decision/comparison.ts",
-      "decision/flow.ts"
-    ]);
+    expect(withoutVocabulary.sort()).toEqual([]);
   });
 });

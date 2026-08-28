@@ -36,6 +36,8 @@ import {
   revealChannel,
   startAffiliateHandoff
 } from "./actions";
+import { ServiceUnavailable } from "../service-unavailable";
+import { isUnavailable, orUnavailable } from "../unavailable";
 import { DecisionChat } from "./chat";
 import { HandoffChoice } from "./handoff";
 import { SelectionButton } from "./selection";
@@ -75,12 +77,22 @@ export default async function DecisionPage() {
       </main>
     );
 
-  const [context, chat, channels, completions] = await Promise.all([
-    readDecision(decisionFlowId, session),
-    readChat(decisionFlowId),
-    readContactChannels(decisionFlowId, session),
-    readCompletions(decisionFlowId)
-  ]);
+  const reads = await orUnavailable(
+    Promise.all([
+      readDecision(decisionFlowId, session),
+      readChat(decisionFlowId),
+      readContactChannels(decisionFlowId, session),
+      readCompletions(decisionFlowId)
+    ])
+  );
+  /*
+   * **Wrapped around all four rather than each.** A Decision page drawn from
+   * three of four reads would be the dashboard-of-zeroes UX-0006 §14 forbids,
+   * in a place where the missing quarter might be the Completions — so a person
+   * would be told nothing had completed when the platform simply could not say.
+   */
+  if (isUnavailable(reads)) return <ServiceUnavailable retryPath="/decision" />;
+  const [context, chat, channels, completions] = reads;
 
   // §16, "No eligible context" — including the case where the flow itself has
   // expired. A flow is current-flow state and is allowed to disappear.

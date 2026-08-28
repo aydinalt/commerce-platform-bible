@@ -10,6 +10,38 @@ This project follows the principles of:
 
 ---
 
+## [3.31.0] - 2026-08-27
+
+### Fixed
+
+- **An outage told a person their Decision flow had expired.** `/decision` read
+  `null` from a `503` and said so, then offered to start again — so a person
+  who took the offer lost a Decision in progress on the strength of a claim the
+  platform had no way to make.
+- **An outage told a person their Comparison had ended.** `/compare` reasoned
+  about exactly two states, *not openable* and *gone*, told apart by whether
+  anything was left to describe. A third state broke that: during an outage
+  there is nothing left to describe either, so the page offered to start a set
+  the person still had.
+- **Five Decision reads joined I25's timeout budget.** The rule is derived from
+  the method rather than a list of names — a `GET` reports what is, everything
+  else changes something — which is how both modules came to be outside I24's
+  and I25's rules at once.
+
+### Verified
+
+- **The eight writes were already honest and are left alone.** Measured rather
+  than assumed: the Affiliate Handoff refusal says "nothing was initiated and
+  no information was shared", which is as true of an outage as of a refusal
+  because the API refuses inside the transaction. A case asserts the sentence so
+  a later increment does not "fix" correct copy.
+- I45 asserted the set of modules outside the vocabulary precisely so repairing
+  them would fail there. Both names are now deleted and the set is empty.
+- Seven cases, five mutations, each caught — including the overshoot that would
+  report a flow that genuinely expired as an outage.
+
+---
+
 ## [3.30.0] - 2026-08-27
 
 ### Fixed

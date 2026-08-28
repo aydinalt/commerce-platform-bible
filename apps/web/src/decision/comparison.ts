@@ -5,6 +5,8 @@ import {
   type ComparisonViewResponse
 } from "@commerce/contracts";
 
+import { ApiRequestError, fetchWithBudget } from "../api-error";
+
 /**
  * The Compare flow, as the web application holds it.
  *
@@ -48,7 +50,7 @@ async function call(
   path: string,
   body?: unknown
 ): Promise<{ payload: unknown; status: number }> {
-  const response = await fetch(`${apiBaseUrl()}${path}`, {
+  const request: RequestInit = {
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     cache: "no-store",
     headers: {
@@ -56,7 +58,25 @@ async function call(
       ...(body === undefined ? {} : { "content-type": "application/json" })
     },
     method
-  });
+  };
+  const url = `${apiBaseUrl()}${path}`;
+  const response =
+    method === "GET"
+      ? await fetchWithBudget(url, request, "COMPARISON")
+      : await fetch(url, request);
+  /*
+   * **A `503` used to become "your Comparison session has ended".** The page
+   * asked `currentComparison` and, getting `null`, offered to start again —
+   * which throws away a set the person built one Offering at a time, on the
+   * strength of a claim nothing here could support.
+   *
+   * The comment above `openComparison`'s caller reasoned about two states,
+   * *not openable* and *gone*, and told them apart by whether anything was left
+   * to describe. A third state breaks that: during an outage there is nothing
+   * left to describe either, and the page read it as gone.
+   */
+  if (method === "GET" && response.status >= 500)
+    throw new ApiRequestError("COMPARISON", response.status);
   return {
     payload: response.status === 204 ? null : await response.json(),
     status: response.status

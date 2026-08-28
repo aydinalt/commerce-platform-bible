@@ -7,6 +7,8 @@ import {
   readComparisonSetId
 } from "../../decision/comparison";
 
+import { ServiceUnavailable } from "../service-unavailable";
+import { isUnavailable, orUnavailable } from "../unavailable";
 import { ComparisonTable } from "./comparison-table";
 
 import type { Metadata } from "next";
@@ -49,8 +51,11 @@ export default async function ComparePage() {
   if (view) return <ComparisonTable view={view} />;
 
   // Not openable, or gone. The two are told apart because the second has
-  // nothing left to describe.
-  const set = await currentComparison(comparisonSetId);
+  // nothing left to describe — and **a third state broke that**, because
+  // during an outage there is nothing left to describe either, so the page
+  // read an outage as gone and offered to start a set the person still has.
+  const set = await orUnavailable(currentComparison(comparisonSetId));
+  if (isUnavailable(set)) return <ServiceUnavailable retryPath="/compare" />;
   return (
     <main>
       <section>

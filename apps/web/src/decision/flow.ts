@@ -12,6 +12,7 @@ import {
   type DirectContactRevealResponse
 } from "@commerce/contracts";
 
+import { ApiRequestError, fetchWithBudget } from "../api-error";
 import { SESSION_COOKIE } from "../identity/api";
 
 /**
@@ -48,12 +49,22 @@ function apiBaseUrl(): string {
  * reveal before they ask to. A read that dropped the cookie would report a
  * Guest's answer to someone who is not one.
  */
+/**
+ * A read is a `GET`, and that is the whole rule.
+ *
+ * **Derived from the method rather than listed.** I25 split reads from writes
+ * and I24 split an outage from an absence, and both distinctions land on
+ * exactly the same line here: the four `GET`s report what is, and everything
+ * else changes something. A hand-kept list of read function names would have
+ * been a fifth place to forget one — which is how `flow.ts` came to be outside
+ * both rules in the first place.
+ */
 async function call(
   method: "GET" | "POST" | "PUT",
   path: string,
   options: { body?: unknown; session?: string | undefined } = {}
 ): Promise<{ payload: unknown; status: number }> {
-  const response = await fetch(`${apiBaseUrl()}${path}`, {
+  const request: RequestInit = {
     ...(options.body === undefined
       ? {}
       : { body: JSON.stringify(options.body) }),
@@ -69,7 +80,27 @@ async function call(
         : { cookie: `${SESSION_COOKIE}=${options.session}` })
     },
     method
-  });
+  };
+  const url = `${apiBaseUrl()}${path}`;
+  const response =
+    method === "GET"
+      ? await fetchWithBudget(url, request, "DECISION")
+      : await fetch(url, request);
+  /*
+   * **A `503` used to become "this Decision flow has expired".** The page read
+   * `null` and said so, and told the person to go back and start again —
+   * throwing away a Decision in progress on the strength of a claim the
+   * platform had no way to make. UX-0006 §14's *distinguish zero from
+   * unavailable*, on a surface where the false answer costs the person their
+   * work rather than a reload.
+   *
+   * Only for a read. A write's refusal is an ordinary answer somebody is
+   * entitled to see, and its copy already claims nothing that a `5xx` would
+   * make untrue — the Affiliate Handoff says "nothing was initiated and no
+   * information was shared", which is as true of an outage as of a refusal.
+   */
+  if (method === "GET" && response.status >= 500)
+    throw new ApiRequestError("DECISION", response.status);
   return {
     payload: response.status === 204 ? null : await response.json(),
     status: response.status
