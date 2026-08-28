@@ -10,6 +10,39 @@ This project follows the principles of:
 
 ---
 
+## [3.33.0] - 2026-08-28
+
+### Added
+
+- **The seventeen management surfaces have a visual system.** Measured first:
+  **twenty of twenty-two `page.tsx` files carried no `className` at all**, and
+  the Business Dashboard, every Admin screen, sign-in, registration and recovery
+  were headings, paragraphs, forms and tables on a bare page. The site was never
+  unstyled — it was typographically dressed and architecturally undressed.
+- A page header with a rule, a panel drawn from `section`, a two-column form at
+  the breakpoint that already exists, a row list for unclassed lists, a table
+  that runs to the panel's edge, and a card for the identity routes.
+
+### Verified
+
+- **Nothing here is a new direction.** Every rule is built from tokens that
+  already existed; no colour, no type size, no new breakpoint. The Owner's
+  instruction was to complete the approved "dense listings" direction, and
+  `i26-design-foundation` reads the whole stylesheet, so the constraints were
+  inherited rather than re-litigated — each of the four mutations fails both
+  suites.
+- **No page file was touched.** Six one-element segment layouts carry the scope,
+  and a case asserts the pages stay bare so a later class has to be argued for.
+- `.workspace ul:not([class])` keeps the row treatment away from
+  `.listing-cards`, which a bare `ul` selector would have redrawn on the one
+  screen where an owner compares their listings with what a visitor sees.
+- **Two of the new cases were wrong first.** One matched a comment — finding a
+  `480px` breakpoint inside a sentence explaining that it had been removed, the
+  eighth time a check here has matched something other than what it meant. The
+  other used a pattern that matched the `2.75rem` it existed to permit.
+
+---
+
 ## [3.32.0] - 2026-08-28
 
 ### Fixed

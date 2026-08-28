@@ -738,3 +738,180 @@ article {
 .site-footer p {
   margin: 0;
 }
+
+/* ─── The management surfaces (I48) ────────────────────────────────────────
+ *
+ * Twenty of twenty-two routes carried no `className` at all. That was not an
+ * oversight: the public surfaces got component classes as they were built, and
+ * the seventeen an owner or an Admin actually works in — the Business
+ * Dashboard, every Admin screen, sign-in, registration and recovery — were left
+ * as headings, paragraphs, forms and tables on a bare page.
+ *
+ * **Nothing below is a new direction.** The Owner replaced "calm" with "dense
+ * listings" on 2026-08-24 and listed what survives regardless: lines rather
+ * than shadows, one accent and two states, no animation, the focus ring, the
+ * measured contrast, `min-height: 2.75rem` on every control. Every rule here
+ * is built from tokens that already existed, and `i26-design-foundation`
+ * reads this whole file, so a shadow, an animation or a fourth breakpoint
+ * added here fails that suite rather than this one.
+ *
+ * **No page file is touched.** The markup is already semantic — `main`,
+ * `section`, `h1`, `form`, `table`, `ul` — so the scope arrives through six
+ * one-element segment layouts and everything else is a selector. Seventeen page
+ * edits would have been seventeen chances to style one of them differently.
+ */
+
+/*
+ * A workspace is wide because its content is a queue, a table or an inventory,
+ * and `--measure` exists for prose. `--measure-wide` is I33's, unchanged.
+ */
+.workspace main > * {
+  max-width: var(--measure-wide);
+}
+
+/*
+ * The page header: a title, whatever sits beside it, and a rule. The rule is
+ * the density direction doing the work a margin would otherwise do — it
+ * separates without spending vertical space.
+ */
+.workspace h1 {
+  border-bottom: 2px solid var(--border-strong);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+}
+
+/*
+ * A panel. `section` already means "a part of this page with its own heading"
+ * in every one of these files, so it needs no class to become one — and a class
+ * would have to be added seventeen times and forgotten once.
+ */
+.workspace section {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+}
+
+.workspace section > :first-child {
+  margin-top: 0;
+}
+
+.workspace section > :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * A section's own heading, marked by a rule the width of the panel rather than
+ * by size — the type scale came down for density and cannot be spent here.
+ */
+.workspace section > h2 {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+}
+
+/*
+ * Forms are two-column where there is room and one where there is not, at the
+ * breakpoint that already exists. A field that must not be halved says so with
+ * `.field-wide`; nothing else has to know.
+ */
+.workspace form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .workspace form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .workspace form > button,
+  .workspace form > fieldset,
+  .workspace form > table,
+  .workspace form > .field-wide,
+  .workspace form > [role="alert"],
+  .workspace form > [role="status"] {
+    grid-column: 1 / -1;
+  }
+}
+
+/*
+ * A button in a form sits at the start rather than stretching, because a
+ * full-width submit inside a grid column is a button pretending to be a banner.
+ */
+.workspace form > button {
+  justify-self: start;
+}
+
+/*
+ * An unclassed list in a workspace is a list of records — cases, destinations,
+ * categories — so it is drawn as rows. `:not([class])` keeps it away from every
+ * list that already knows what it is, `.listing-cards` above all.
+ */
+.workspace ul:not([class]) {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workspace ul:not([class]) > li {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+}
+
+.workspace ul:not([class]) > li:last-child {
+  border-bottom: 0;
+}
+
+.workspace ul:not([class]) > li > :first-child {
+  margin-top: 0;
+}
+
+.workspace ul:not([class]) > li > :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * A table inside a panel loses the panel's padding on its own edges, so the
+ * header rule runs the full width and the rows line up with the heading above
+ * them.
+ */
+.workspace section > table {
+  margin-left: calc(var(--space-4) * -1);
+  width: calc(100% + var(--space-4) * 2);
+}
+
+.workspace section > table th:first-child,
+.workspace section > table td:first-child {
+  padding-left: var(--space-4);
+}
+
+.workspace section > table th:last-child,
+.workspace section > table td:last-child {
+  padding-right: var(--space-4);
+}
+
+/*
+ * The identity routes are the opposite shape: one short form, read once, by
+ * somebody who is not working. They keep the prose measure and sit in a panel
+ * of their own so the page is not a form floating on a background.
+ */
+.auth main > * {
+  max-width: var(--measure);
+}
+
+.auth main form {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.auth main form > button {
+  justify-self: start;
+}
