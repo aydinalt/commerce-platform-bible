@@ -99,11 +99,19 @@ describe("Increment I10 accessibility", () => {
       "utf8"
     );
 
-    // WCAG 1.3.1. A Listing Card is content directly beneath a page's `h1`, in
-    // Search Results and in the Compare recovery list alike. At `h3` the level
-    // between them is missing, and somebody moving by heading hears a section
-    // that is not there.
-    expect(search).toMatch(/<h1>“\{view\.query\}” için sonuçlar<\/h1>/u);
+    /*
+     * WCAG 1.3.1. A Listing Card is content directly beneath a page's `h1`, in
+     * Search Results and in the Compare recovery list alike. At `h3` the level
+     * between them is missing, and somebody moving by heading hears a section
+     * that is not there.
+     *
+     * **The pattern used to require an attribute-free tag.** It read
+     * `<h1>“{view.query}”…` exactly, so I49 giving that heading a `className`
+     * failed a case about *heading levels* for a reason that has nothing to do
+     * with levels. The level is what is asserted now, and attributes are
+     * allowed — matching what the case has always claimed to mean.
+     */
+    expect(search).toMatch(/<h1[^>]*>“\{view\.query\}” için sonuçlar<\/h1>/u);
     expect(card).toContain("<h2>");
     expect(card).not.toContain("<h3>");
     expect(compare).not.toContain("<h3>");

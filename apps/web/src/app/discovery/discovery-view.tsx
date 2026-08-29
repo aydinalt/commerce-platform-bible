@@ -41,7 +41,7 @@ function CategoryChoices({
     // Named, because a page may hold two of these — children and ancestors —
     // and a landmark list of two unlabelled "navigation" entries tells
     // somebody moving by landmark nothing about which is which.
-    <nav aria-labelledby={`category-nav-${heading}`}>
+    <nav aria-labelledby={`category-nav-${heading}`} className="entry-nav">
       <h2 id={`category-nav-${heading}`}>{heading}</h2>
       {/* Selecting stays a submission, exactly as it is on Home: a Category
           chosen by being linked to could be chosen by a prefetch. */}
@@ -99,7 +99,7 @@ function SearchNarrowing({
 }) {
   if (categories.length === 0 && !narrowed) return null;
   return (
-    <nav aria-labelledby="search-narrowing">
+    <nav aria-labelledby="search-narrowing" className="entry-nav">
       <h2 id="search-narrowing">Kategoriye göre daralt</h2>
       <form action={narrowSearch}>
         <ul className="category-choices">
@@ -131,7 +131,7 @@ export function SearchResultsView({
   return (
     <main>
       <section>
-        <h1>“{view.query}” için sonuçlar</h1>
+        <h1 className="results-heading">“{view.query}” için sonuçlar</h1>
 
         <SearchNarrowing
           categories={view.narrowing}
@@ -195,7 +195,7 @@ export function BrowseResultsView({
   return (
     <main>
       <section>
-        <h1>{view.category.name}</h1>
+        <h1 className="results-heading">{view.category.name}</h1>
 
         {preparation === undefined ? null : (
           <PreparationNotice preparation={preparation} />

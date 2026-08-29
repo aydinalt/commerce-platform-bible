@@ -50,10 +50,10 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section>
+      <section className="entry">
         <SearchEntry />
 
-        <nav aria-labelledby="browse-entry-heading">
+        <nav aria-labelledby="browse-entry-heading" className="entry-nav">
           <h2 id="browse-entry-heading">Ya da bir kategoriden başlayın</h2>
           {categories === null ? (
             // Bounded, and honest about which of the two entries is affected.

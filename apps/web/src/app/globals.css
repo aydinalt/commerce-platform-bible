@@ -915,3 +915,62 @@ article {
 .auth main form > button {
   justify-self: start;
 }
+
+/* ─── The public page architecture (I49) ───────────────────────────────────
+ *
+ * I48 gave the seventeen management surfaces a visual system and left the
+ * public side as the Owner's next choice. The components there were never the
+ * problem: `.listing-card` has thirteen rules, `.comparison` four,
+ * `.category-choices` its own button treatment. What the public routes lacked
+ * was the layer *above* the components — the block a heading and a list of
+ * buttons sit in, and the rule that separates a results heading from the
+ * results.
+ *
+ * **A public block is not a workspace panel.** A panel is a container for work;
+ * these are entrances, and a results grid boxed inside a card reads as a widget
+ * rather than as the page. So the treatment is a rule and a tint rather than a
+ * border on four sides — lines doing the work, which is the direction's own
+ * instruction.
+ */
+
+/*
+ * Home's entrance. Narrower than the grid on purpose: the search field is one
+ * decision and a 76rem-wide input invites nothing.
+ */
+.entry {
+  margin: 0 auto;
+  max-width: var(--measure);
+}
+
+/*
+ * The "or start from a category" block, and Discovery's narrowing and widening
+ * blocks. One pattern, three places — they are the same act.
+ */
+.entry-nav {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+}
+
+/*
+ * The heading reads as a label rather than as a section title, because what
+ * follows it is a row of choices rather than prose. Size stays on the scale;
+ * only weight and colour change.
+ */
+.entry-nav > h2 {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: 0 0 var(--space-3);
+}
+
+/*
+ * A results heading carries the same rule the workspace gives `h1`, so the two
+ * halves of the product read as one thing. It is the only structural idea
+ * borrowed across the boundary, and it is borrowed deliberately: a person who
+ * signs in should not feel they have arrived somewhere else.
+ */
+.results-heading {
+  border-bottom: 2px solid var(--border-strong);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+}

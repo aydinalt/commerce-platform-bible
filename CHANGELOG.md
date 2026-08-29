@@ -10,6 +10,37 @@ This project follows the principles of:
 
 ---
 
+## [3.34.0] - 2026-08-28
+
+### Added
+
+- **The public surfaces have a page architecture.** I48 covered the seventeen
+  management routes; the Owner chose the public side next. The components there
+  were never the problem — `.listing-card` carries 13 rules and 29 of 31 classes
+  were already referenced — but Home and Discovery had **four sections, two navs
+  and two lists with no structural treatment at all**.
+- `.entry` (Home's entrance at the prose measure), `.entry-nav` (one pattern for
+  the three places that choose a Category from a row of buttons), and
+  `.results-heading` (the same rule `.workspace h1` carries, asserted as an
+  identical declaration so the two halves cannot drift apart).
+
+### Verified
+
+- **A public block is not a workspace panel.** A results grid boxed in a card
+  reads as a widget rather than as the page, so the treatment is a rule and a
+  muted label; a case fails if either class grows a border or a radius.
+- **I48's forcing function fired and was answered.** Adding a class to Home
+  failed the case asserting management pages stay bare, and the argument was
+  recorded rather than the list quietly widened.
+- **Three versions of one case, and the ninth wrong match.** The guard on the
+  public components was satisfied first by a plural covering for a singular —
+  the collision I28 found and I29 answered — and then by a name appearing in
+  five other selectors. It asserts the whole 34-name vocabulary now.
+- The 24 constraints in `i26-design-foundation` and `i33-site-shell` pass
+  unchanged.
+
+---
+
 ## [3.33.0] - 2026-08-28
 
 ### Added

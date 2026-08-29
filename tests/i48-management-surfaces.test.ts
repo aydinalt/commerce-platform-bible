@@ -70,6 +70,13 @@ describe("Increment I48 the management surfaces", () => {
      * measured before this increment — Compare carries its own table classes
      * and the Dashboard one inventory class — and both are named so the count
      * cannot drift by accident.
+     *
+     * **I49 added `/` and had to say so here.** Home's entrance needed a width
+     * narrower than the results grid, and that is a fact about Home rather than
+     * a pattern the layer should carry — a `.entry` rule applied to every page
+     * would cap the Discovery grid it exists to leave open. So the class went
+     * on the page, this list grew by one, and the question the case exists to
+     * force was asked and answered rather than skipped.
      */
     const classed: string[] = [];
     const walk = (directory: string): void => {
@@ -84,7 +91,11 @@ describe("Increment I48 the management surfaces", () => {
       }
     };
     walk("apps/web/src/app");
-    expect(classed.sort()).toEqual(["/businesses/[businessId]", "/compare"]);
+    expect(classed.sort()).toEqual([
+      "",
+      "/businesses/[businessId]",
+      "/compare"
+    ]);
   });
 
   it("gives a workspace the wide measure and prose the narrow one", () => {
