@@ -974,3 +974,72 @@ article {
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-2);
 }
+
+/* ─── The Decision flow's stages (I50) ─────────────────────────────────────
+ *
+ * I49 closed the public entrances and wrote down what it had not touched: the
+ * Decision flow, *the densest screen in the product*, whose sections were
+ * separated by margin alone.
+ *
+ * There are five, and they are **stages rather than panels** — a person moves
+ * through them in one sitting and needs to see where they are, not to work
+ * inside each one. So the treatment is a rule between them, which is the same
+ * answer I49 gave the public entrances and for the same reason: a card around a
+ * step makes the step look optional.
+ */
+.flow section {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+}
+
+/*
+ * The first stage has nothing above it to be separated from, and a rule under
+ * the page heading would be the second horizontal line in eighty pixels.
+ */
+.flow section:first-of-type {
+  border-top: 0;
+  margin-top: var(--space-4);
+  padding-top: 0;
+}
+
+.flow section > h2 {
+  margin-top: 0;
+}
+
+/* ─── Colour marks the message, not the container it arrived in (I50) ──────
+ *
+ * `[role="alert"]` sets `color: var(--critical)`, which is right for the
+ * forty-three places it lands on a `<p>` and wrong for the **four** where it
+ * lands on a container: three `div`s wrapping a list of shortfalls, and the
+ * Decision flow's "Devam edilemiyor" `section`, whose heading, explanation and
+ * list of recoveries were **all** painted red.
+ *
+ * The direction's own words: *colour marks what is interactive or what demands
+ * attention; a screen where four things are coloured has said nothing.* A block
+ * where everything is coloured has said it four times.
+ *
+ * So a container announces itself with a tinted surface and a rule, and keeps
+ * the critical ink for the sentence that is actually the refusal. The pairing
+ * `--text` on `--critical-surface` is added to `i26-design-foundation`'s
+ * contrast list rather than assumed — it is a new pairing, and every other one
+ * in this palette is measured.
+ */
+div[role="alert"],
+section[role="alert"] {
+  background: var(--critical-surface);
+  border-left: 2px solid var(--critical);
+  color: var(--text);
+  padding: var(--space-3) var(--space-4);
+}
+
+div[role="alert"] > :first-child,
+section[role="alert"] > h2 {
+  color: var(--critical);
+  margin-top: 0;
+}
+
+div[role="alert"] > :last-child,
+section[role="alert"] > :last-child {
+  margin-bottom: 0;
+}

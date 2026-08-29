@@ -120,7 +120,14 @@ describe("Increment I26 design foundation", () => {
         ["--critical", "--critical-surface"],
         ["--notice", "--notice-surface"],
         ["--accent", "--accent-surface"],
-        ["--text", "--accent-surface"]
+        ["--text", "--accent-surface"],
+        /*
+         * Added by I50. A container carrying `role="alert"` — a shortfall list,
+         * the Decision flow's invalidity notice — now sets ordinary ink on the
+         * tinted surface and keeps `--critical` for the sentence that is the
+         * refusal, rather than painting every word in the block red.
+         */
+        ["--text", "--critical-surface"]
       ] as const)
         expect(
           contrast(token(ink), token(paper)),

@@ -123,6 +123,10 @@ describe("Increment I49 the public surfaces", () => {
      * removal fails here and has to be acknowledged — which is what the two
      * broken versions were reaching for and could not express. It is the same
      * forcing function I45 used and I46 had to answer.
+     *
+     * **I50 added `.flow` and had to say so here**, one increment later. The
+     * Decision flow's five sections needed a scope of their own, and this list
+     * grew by one deliberately rather than by a check being loosened.
      */
     const declared = [...new Set(rules.match(/\.[a-z][a-z0-9-]*/gu) ?? [])]
       .map((selector) => selector.slice(1))
@@ -146,6 +150,7 @@ describe("Increment I49 the public surfaces", () => {
       "entry-nav",
       "field-hint",
       "field-wide",
+      "flow",
       "listing-card",
       "listing-card-facts",
       "listing-card-visual",

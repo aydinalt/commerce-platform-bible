@@ -10,6 +10,43 @@ This project follows the principles of:
 
 ---
 
+## [3.35.0] - 2026-08-28
+
+### Added
+
+- **The Decision flow has stages.** I49 named it as untouched: *the densest
+  screen in the product, sections separated by margin alone*. Measured, it was
+  **five files, 557 lines, not one `className`**. Five stages now read as steps,
+  separated by a rule — not by a card, because a card around a step makes the
+  step look optional. The first stage is spared its rule, which would have been
+  the second horizontal line in eighty pixels.
+
+### Fixed
+
+- **Colour marked the container instead of the message.** `[role="alert"]` sets
+  `color: var(--critical)` and lands **56 times: 43 on a `<p>`**, where a red
+  sentence is right, and **4 on a container** — including the Decision flow's
+  "Devam edilemiyor" section, whose heading, explanation and list of recovery
+  links were all red. A container now takes a tinted surface and a rule and
+  keeps critical ink for the sentence that is the refusal.
+- `--text` on `--critical-surface` was **added to the contrast list rather than
+  assumed**, because every other pairing in this palette is measured.
+
+### Verified
+
+- **The overshoot is guarded.** Narrowing the base rule to `p[role="alert"]` was
+  the obvious move and would have broken forty-three things to mend four.
+- **I49's forcing function fired one increment after it was built**: adding
+  `.flow` failed its exact-vocabulary case, and the list grew by one with the
+  reason recorded.
+- **The eleventh wrong match, and the third of mine in three increments.** The
+  case protecting the inline alerts was passed by the mutation it exists to
+  catch, because `p[role="alert"] {` contains `[role="alert"] {`. Anchored now —
+  and the shape is worth naming: asking whether a substring is present in a
+  large blob keeps failing where the blob holds near-identical strings.
+
+---
+
 ## [3.34.0] - 2026-08-28
 
 ### Added
