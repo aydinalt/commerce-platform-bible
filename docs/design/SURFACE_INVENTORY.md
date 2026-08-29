@@ -29,6 +29,7 @@ page is counted once under identity). One shell wraps all of them.
 
 # 0 — The shell, on every route
 
+## 0.1 Header (`site-header`), 3.25rem tall
 
 | Element | Content |
 |---|---|
