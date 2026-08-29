@@ -7,13 +7,15 @@ import {
   DISCOVERY_ENTRY_COOKIE,
   readDiscoveryEntry
 } from "../../../discovery/entry";
+import { TERMS } from "../../../vocabulary";
 
 import { OfferingPresentation } from "./offering-presentation";
 import { PresentationUnavailable } from "./presentation-unavailable";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "İlan" };
+/* The same word as the owner's view of the same thing, from one place (I51). */
+export const metadata: Metadata = { title: TERMS.offering };
 
 /**
  * The Offering a Listing Card opens (`US-DSC-F09-001`).

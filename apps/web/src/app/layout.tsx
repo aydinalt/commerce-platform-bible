@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 import { AUTH_ROUTES, SESSION_COOKIE } from "../identity/session";
 
-import { BRAND, FOOTER, NAV } from "./shell-copy";
+import { BRAND, FOOTER, NAV, SITE } from "./shell-copy";
 
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -39,9 +39,22 @@ import "./globals.css";
  * is a decision rather than a rediscovery.
  */
 
+/**
+ * What every tab says (I51).
+ *
+ * **The document title was outside every language check this repository has.**
+ * I27, I28 and I29 each consolidated an area onto Turkish and each proved it
+ * with a detector that reads markup — text between tags, then strings inside
+ * JSX expressions. `export const metadata` is neither, so `Commerce Platform`
+ * and `Decision-completion marketplace` survived all three consolidations
+ * unexamined, on a site whose header says `İlanlar`.
+ *
+ * `default` is what Home and any page without its own title gets; `template`
+ * puts the site's name after the page's on the other twenty-one.
+ */
 export const metadata: Metadata = {
-  description: "Decision-completion marketplace",
-  title: "Commerce Platform"
+  description: SITE.description,
+  title: { default: BRAND.name, template: SITE.titleTemplate }
 };
 
 /**

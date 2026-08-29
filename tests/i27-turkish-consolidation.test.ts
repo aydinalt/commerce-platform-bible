@@ -210,9 +210,23 @@ describe("Increment I27 Turkish consolidation", () => {
      * ALL_CAPS, would rely on a naming convention and would miss an enum
      * somebody wrote in another case.
      */
+    /*
+     * **The sixth correction, and it cost a word on screen for three
+     * increments.** The pattern below used to be
+     * `/"([A-Za-z][A-Za-z ,.…!?'’-]*)"/` — the character after the opening
+     * quote had to be a letter, and parentheses were outside the permitted
+     * set. `{required ? " (required)" : null}` on the Business Information
+     * form failed both conditions in one string and was invisible to a case
+     * whose entire purpose is finding exactly that.
+     *
+     * A leading space and a bracket now count as part of a sentence, which
+     * they are. The twelfth time something in this repository has matched
+     * other than what it meant, and the fifth of them in a detector that had
+     * already been corrected five times.
+     */
     const inExpression = /\{[^{}]*\?[^{}]*\}/gu;
     const compared = /[!=]==\s*"[^"]*"/gu;
-    const quoted = /"([A-Za-z][A-Za-z ,.…!?'’-]*)"/gu;
+    const quoted = /"([ (]*[A-Za-z][A-Za-z ,.…!?'’()-]*)"/gu;
     const turkish = /[çğıİöşüÇĞÖŞÜ]/u;
 
     const offenders: string[] = [];
@@ -226,10 +240,14 @@ describe("Increment I27 Turkish consolidation", () => {
           /*
            * A class name also reaches here — `"badge badge-notice"` is two
            * ASCII words. It is excluded by requiring a character prose has and
-           * a class name does not: sentence punctuation, or a capital letter
-           * starting the string.
+           * a class name does not: sentence punctuation, an opening bracket,
+           * or a capital letter starting the string.
+           *
+           * **The bracket was added by I51**, with the pattern above. A
+           * parenthesised aside beside a label — `(zorunlu)` — is prose, and
+           * the previous test for prose could not say so.
            */
-          const prose = /^[A-Z]|[,.…!?]/u.test(words);
+          const prose = /^[A-Z(]|[,.…!?]/u.test(words);
           if (prose && !turkish.test(words))
             offenders.push(`${file}: ${words.slice(0, 40)}`);
         }

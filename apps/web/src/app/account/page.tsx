@@ -12,7 +12,12 @@ import { enterAdmin, enterBusiness } from "./actions";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Your account" };
+/*
+ * **The same fact, in two languages, sixty lines apart (I51).** The heading
+ * below is `{TITLES.account}` — `Hesabınız` — and this said `Your account`. I27
+ * translated the one it could see and left the one nothing reads.
+ */
+export const metadata: Metadata = { title: TITLES.account };
 
 /**
  * The authenticated-context entries (UX-0008 §8.1).

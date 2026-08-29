@@ -39,6 +39,24 @@ export const SUBMIT = {
   send: { idle: "Gönder", working: "Gönderiliyor…" }
 } as const;
 
+/**
+ * What marks a field the form will not let a person empty (I51).
+ *
+ * **`" (required)"` was on the Business Information screen from I28 until I51**,
+ * beside `Görünen ad`, on a form whose every other word is Turkish.
+ *
+ * It survived because of **the sixth blind spot in the English detector**. The
+ * expression scan added above finds a quoted string inside a braced expression,
+ * and its pattern required the character after the opening quote to be a
+ * letter — this string begins with a space. The parentheses were outside the
+ * permitted set as well, so it was missed twice over in one string.
+ *
+ * The leading space is part of the value rather than left to the caller. A
+ * marker concatenated onto a label is one forgotten space away from reading
+ * `Görünen ad(zorunlu)`, and the space is not the caller's decision to make.
+ */
+export const REQUIRED_MARKER = " (zorunlu)";
+
 /** The label for a button in whichever of its two states it is in. */
 export function submitLabel(
   entry: (typeof SUBMIT)[keyof typeof SUBMIT],

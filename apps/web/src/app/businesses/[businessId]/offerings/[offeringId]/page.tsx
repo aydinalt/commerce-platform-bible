@@ -20,12 +20,18 @@ import {
   offersEdit
 } from "../../../../../business/offering-content";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../../../identity/session";
+import { TERMS } from "../../../../../vocabulary";
 import { saveOffering } from "./actions";
 import { ContentForm } from "./content-form";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Offering" };
+/*
+ * **`Offering` until I51.** The word the whole product uses for this is
+ * `TERMS.offering`, and the tab is the one place it was still English — named
+ * from the vocabulary now rather than restated, so a rename lands in one file.
+ */
+export const metadata: Metadata = { title: TERMS.offering };
 
 /**
  * One Offering, as its owner (UX-0005 §9 Edit, §8's View).

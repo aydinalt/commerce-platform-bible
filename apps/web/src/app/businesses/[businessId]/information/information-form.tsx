@@ -1,6 +1,6 @@
 "use client";
 
-import { SUBMIT, submitLabel } from "../../../../form-copy";
+import { REQUIRED_MARKER, SUBMIT, submitLabel } from "../../../../form-copy";
 
 import { useActionState } from "react";
 
@@ -30,7 +30,7 @@ function Field({
     <p>
       <label htmlFor={name}>
         {FIELD_LABELS[name]}
-        {required ? " (required)" : null}
+        {required ? REQUIRED_MARKER : null}
       </label>
       <input
         aria-describedby={errors ? `${name}-error` : undefined}

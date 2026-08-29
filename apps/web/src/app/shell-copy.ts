@@ -30,6 +30,38 @@ export const BRAND = {
 } as const;
 
 /**
+ * What the document says about itself (I51).
+ *
+ * **The tab was never part of the Turkish consolidation.** The root layout
+ * declared `title: "Commerce Platform"` and
+ * `description: "Decision-completion marketplace"`, so a site whose header says
+ * `İlanlar` on every page said something else in every browser tab, every
+ * bookmark and every search result — and the description is the sentence a
+ * search engine shows underneath the link.
+ *
+ * The name is not restated here. `BRAND.name` is the product's name and the
+ * document title is the same name, so it is referenced rather than spelled a
+ * second time: a platform with two names is what "Commerce Platform" in the tab
+ * and `İlanlar` in the header already was.
+ *
+ * `description` is a translation of the Frozen phrase rather than a new
+ * positioning claim. *Decision-completion marketplace* is what PRD-0001 calls
+ * this; deciding here that it is something more appealing would be this file
+ * deciding what the product promises.
+ */
+export const SITE = {
+  description: "Kararın tamamlandığı bir ilan platformu.",
+  /**
+   * `%s — İlanlar`, so a page's own title comes first.
+   *
+   * A tab is truncated from the right, and the part that identifies *which*
+   * page is the part worth keeping. The site's name second is also what makes
+   * `Karar` legible among twenty open tabs.
+   */
+  titleTemplate: `%s — ${BRAND.name}`
+} as const;
+
+/**
  * The header's navigation, which changes with who is looking.
  *
  * **Two states and no third.** A person is either signed in or not; the header

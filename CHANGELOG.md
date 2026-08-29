@@ -10,6 +10,38 @@ This project follows the principles of:
 
 ---
 
+## [3.36.0] - 2026-08-29
+
+### Fixed
+
+- **Every browser tab said the wrong thing, and no check had ever read one.**
+  I27, I28 and I29 consolidated the application onto Turkish and each proved it
+  with a detector that reads markup; `export const metadata` is not markup.
+  Measured across 22 routes: the site's own title was `Commerce Platform` while
+  its header says `İlanlar` on every page, its description was
+  `Decision-completion marketplace`, and two route titles were English —
+  `Your account` and `Offering`. `/account` renders `<h1>{TITLES.account}</h1>`
+  — *Hesabınız* — sixty lines below a title that said `Your account`: the same
+  fact, in two languages, in one file.
+- **`" (required)"` was on the Business Information form**, beside
+  `Görünen ad`, since I28. `i27`'s expression scan exists to catch exactly this
+  and was defeated twice over by one string: its pattern required a letter after
+  the opening quote, and this begins with a space; parentheses were outside its
+  permitted set. The **twelfth** wrong match here, and the sixth correction to
+  that one detector. The hole was proven rather than asserted — reverting the
+  detector with the English string back on screen leaves all fourteen of `i27`'s
+  cases passing.
+
+### Added
+
+- The site names itself once: the root layout takes `default` and `template`
+  from `BRAND.name`, so the tab cannot drift from the header. `%s — İlanlar`,
+  page first, because a tab is truncated from the right.
+- `tests/i51-page-titles.test.ts`, seven cases. The literal-title case asserts
+  the **exact set** rather than testing for English, because `Karar` is Turkish
+  and a heuristic would report it as a defect — the three remaining public
+  literals are acknowledged and pinned, not repaired.
+
 ## [3.35.0] - 2026-08-28
 
 ### Added
