@@ -114,7 +114,7 @@ are not known to be right.
 | R4.5 | **Postmark has delivered one real message** and the failure modes that only appear live have been seen or ruled out | The delivery, and the sender signature verified | Engineering, needs credentials |
 | R4.6 | **Anthropic has answered one real question** through the production path | The exchange, with the model name confirmed | Engineering, needs credentials |
 | R4.7 | At least one complete journey has been **heard through a real screen reader** | The session notes | Needs hardware and a person |
-| R4.8 | `docs/traceability-v1.1-candidate.md` is reviewed and either approved and frozen, or explicitly declined | The Owner's note in that document | Owner |
+| R4.8 | ~~`docs/traceability-v1.1-candidate.md` is reviewed and either approved and frozen, or explicitly declined~~ **Met 2026-08-31** — reviewed, approved and frozen as v1.1 | The Approval and Freeze Notes in `docs/traceability.md` | Owner |
 
 **R4 cannot be compressed by working harder.** Every row waits on somebody who
 is not writing code, and R4.1–R4.4 need competence this repository does not

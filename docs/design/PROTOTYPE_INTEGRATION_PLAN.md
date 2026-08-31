@@ -21,23 +21,59 @@ bugünkü sağlam API'ye bağlamak en güvenli ilerleyiş.
 > yazılacak. Bu, seçeneğin bir yan etkisi değil, ta kendisidir — plan onu
 > "en hızlı yol, en çok test değişimi" diye adlandırmıştı.
 
-### Hâlâ açık olan ve Yol A'nın içinden çıkan karar
+### §5'in ikinci engeli yanlış yazılmıştı — düzeltmesi
 
-§5'in ikinci teknik engeli bir Owner kararı gerektiriyor ve bu kararla
-kapanmadı: **prototip yazdıkça filtreliyor, kurulu ürün Kategori seçimini form
-gönderimi sayıyor.** Frozen `US-DSC-F06-001` bir Discovery Start'ı kasıtlı bir
-olay olarak tanımlıyor ve prefetch ya da yer imiyle tetiklenmesini yasaklıyor;
-prototipin anlık filtrelemesi hiçbir olay kaydetmiyor.
+> **Düzeltme (2026-08-31).** Bu belgenin §5'i şunu iddia ediyordu: *"Frozen
+> `US-DSC-F06-001` bir Discovery Start'ı kasıtlı bir olay sayıyor ve prefetch ya
+> da yer imiyle tetiklenmesini yasaklıyor."* **İddianın üç parçası da yanlıştı**
+> ve hiçbiri bir belgeye karşı doğrulanmamıştı:
+>
+> - `US-DSC-F06-001` **Listing Card'larla ilgilidir.** Sekiz kabul kriterinin
+>   hiçbiri Discovery Start'tan söz etmez.
+> - **"prefetch" ve "bookmark" kelimeleri** hiçbir Story, PRD veya UX belgesinde
+>   **geçmez.** Öyle bir yasak yok.
+> - Çatışma, tarif edilenden çok daha dardır — aşağıda.
 
-İkisi bir arada duramaz, ve seçenekler eşit ağırlıkta değil:
+Kuralın gerçek sahibi **Frozen `PRD-0002-discovery.md` v2.1 §5.10**:
 
-- **Prototipin etkileşimini gönderime çevir.** Frozen kurala dokunmaz, işin
-  tamamı arayüzde kalır. Prototipin en akıcı yanını kaybeder.
-- **Frozen kuralı değiştir.** `US-DSC-F06-001` için kontrollü bir üstün gelen
-  revizyon gerekir — ve Discovery Start'ın kasıtlı olması, analitiğin ne saydığı
-  hakkında bir karardı, üslup tercihi değil.
+> The bounded product occurrence when a person:
+> - **submits** a valid Search query; or
+> - **selects** the first active Category that begins a Browse path.
 
-Bu belge kararı kaydeder, vermez.
+Ve onu tüketen Story, Frozen `US-DSC-F02-001` v1.0 **AC-1**: *"whenever a person
+**explicitly submits** a valid non-empty Search query."*
+
+**Bu ayrım, çatışmayı ikiye böler ve yarısını yok eder:**
+
+| Prototipin davranışı | Frozen kuralla çatışır mı |
+|---|---|
+| Kategori açılırından seçim — anlık filtreler | **Hayır.** §5.10 Browse için *"selects"* der, *"submits"* değil. Bir tıklama zaten bir seçimdir. |
+| Serbest metin aramada yazdıkça filtreleme | **Evet** — ve yalnızca tek bir kelimede: *"submits"* / *"explicitly submits"*. |
+
+Yani prototipin en görünür akıcılığı olan kategori seçimi için **hiçbir Frozen
+belgeye dokunmaya gerek yok.** Yol A'nın o kısmı bugün engelsiz ilerleyebilir.
+
+### Owner kararı — 2026-08-31 (düzeltilmiş kapsamla)
+
+**Revizyon yazılacak, ama `US-DSC-F06-001`'e değil.** Owner, düzeltilmiş ölçümü
+gördükten sonra gerçek sahipleri seçti: **PRD-0002 §5.10** ve onu tüketen
+**US-DSC-F02-001 AC-1**. Her ikisi de Frozen, dolayısıyla her biri
+`DOCUMENT_LIFECYCLE.md` §7 uyarınca kendi Draft adayını alır — yerinde
+düzenlenmez.
+
+Kaydedilen tanım:
+
+> Bir Search Discovery Start, bir Discovery yolunda **en fazla bir kez** oluşur
+> ve o yolda **ilk geçerli boş olmayan sorgunun sunucuya ulaştığı anda** oluşur
+> — ister açık bir gönderimle, ister debounce sonrası. Aynı yol içindeki sonraki
+> daraltmalar Start üretmez.
+
+**"İlk karakter girildiğinde" tanımı bilerek alınmadı**, ve gerekçe kayda değer:
+tek harf yazıp vazgeçen herkes bir Start sayılırdı, ve Start sayıları bugüne
+kadar kaydedilenlerle kıyaslanamaz hâle gelirdi. "Yolda tek Start" kavramı ise
+kodda zaten var — `i3-browse` testi *"creates no further Start for descendants
+of the same path"* diye adlandırılmış — dolayısıyla bu tanım yeni bir kavram
+getirmiyor, mevcut olanı serbest metin aramasına da uyguluyor.
 
 # Prototipi altyapıya bağlamak — ölçülmüş plan
 

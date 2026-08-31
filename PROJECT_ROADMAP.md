@@ -65,7 +65,7 @@ guessed at.
 
 ## Immediate Sequence
 
-1. Review, approve and — if decided — freeze `docs/traceability-v1.1-candidate.md`.
+1. ~~Review, approve and — if decided — freeze `docs/traceability-v1.1-candidate.md`.~~ **Done 2026-08-31.** Independent review passed on all four claims, and the Owner took approval and freeze as separate decisions the same day. Frozen v1.1 is now `docs/traceability.md`; v1.0 is preserved at `docs/traceability-v1.0-superseded.md`.
 2. Resolve the milestone numbering above, or record that the records are renumbered to match this table.
 3. Send one real message through Postmark and ask one real question through Anthropic. Every test to date drives a stub.
 4. Test with a real screen reader.

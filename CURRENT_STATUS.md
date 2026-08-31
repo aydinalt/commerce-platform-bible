@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.84
+Version:      2.85
 Last Updated: 2026-08-31
 -->
 
@@ -183,8 +183,9 @@ each was something the platform already knew and had not published.
 
 | Decision | Taken | What is still outstanding |
 |---|---|---|
-| Traceability v1.1 | Approved 2026-08-31 after an independent review that passed on all four claims | **The freeze.** A separate Owner decision under `DOCUMENT_LIFECYCLE.md`; Frozen v1.0 remains the baseline until it is taken |
-| Prototype integration — **Path A**, and Tailwind into `apps/web` | 2026-08-31 | **How a Category is selected.** Frozen `US-DSC-F06-001` makes a Discovery Start a deliberate event; the prototype filters as you type. One of the two has to move |
+| Traceability v1.1 | **Frozen 2026-08-31.** Review passed on all four claims; approval and freeze taken as separate decisions | Nothing. v1.1 is at `docs/traceability.md`; v1.0 preserved at `docs/traceability-v1.0-superseded.md` |
+| Prototype integration — **Path A**, and Tailwind into `apps/web` | 2026-08-31 | Tailwind's cost is accepted and named: `i26`, `i32`, `i33`, `i48`, `i49`, `i50` all read `globals.css` whole and will be rewritten |
+| Discovery Start may occur without a submission | 2026-08-31 | **Two revision candidates at Draft**, neither approvable without the other: `PRD-0002` v2.2 owns the definition, `US-DSC-F02-001` v1.1 consumes it |
 | The Domain set is open | Recorded in `DOMAIN_SET_OPEN_DECISION.md`, Draft awaiting acceptance | The code — measured at six `z.enum` sites, three declarations, one label map, six OpenAPI enums and **81 tests** |
 
 The traceability correction turned out not to need writing: `traceability-v1.1-candidate.md`

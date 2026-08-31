@@ -123,6 +123,14 @@ it records what was true at its close, and a record edited to agree with a later
 decision stops being evidence of anything — and now carries a note pointing
 here.
 
+> **Superseded (2026-08-31):** the paragraph below described a correction that
+> was still waiting. It is no longer. `traceability-v1.1-candidate.md` — written
+> on 2026-08-17 and carrying exactly the two corrections named here — passed
+> independent review and was approved and frozen as v1.1 on 2026-08-31. It is
+> now `docs/traceability.md`; v1.0 is preserved at
+> `docs/traceability-v1.0-superseded.md`. The paragraph is left as written,
+> because what a record claimed at its close is part of what it records.
+
 Frozen `docs/traceability.md` §5 still asserts that all 50 Generated Stories
 carry `Delivery Status: Not Started`. It remains untouched, for the same reason
 as before: `DOCUMENT_LIFECYCLE.md` forbids editing a Frozen document in place.

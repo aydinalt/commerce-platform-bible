@@ -25,7 +25,7 @@ Last Updated: 2026-08-17
 | `docs/repository/DOCUMENT_DEPENDENCY_MAP.md` | Documentation dependency direction |
 | `docs/traceability.md` | Frozen v1.0 cross-tier traceability baseline |
 | `docs/glossary.md` | Canonical terminology reference; records terms, resolves none |
-| `docs/traceability-v1.1-candidate.md` | Draft superseding revision of the baseline; carries no authority until approved |
+| `docs/traceability-v1.0-superseded.md` | Frozen v1.0, preserved unchanged. Superseded by v1.1 on 2026-08-31; kept because a superseded baseline is the evidence that the correction was one |
 
 ## Governance and Standards
 

@@ -11,6 +11,59 @@ This project follows the principles of:
 
 ---
 
+## [3.38.5] - 2026-08-31
+
+### Changed
+
+- **`docs/traceability.md` is now Frozen v1.1.** The Owner took the freeze as a
+  decision separate from the approval, as `DOCUMENT_LIFECYCLE.md` requires. v1.1
+  is installed at the authoritative path; **v1.0 is preserved unchanged at
+  `docs/traceability-v1.0-superseded.md`**, because a superseded baseline is the
+  evidence that the correction was a correction, and deleting it would remove
+  the only proof of that.
+
+  Present-state documents were corrected outright — `REPOSITORY_INDEX.md`,
+  `PROJECT_ROADMAP.md`, `V1_RELEASE_CRITERIA_CANDIDATE.md` R4.8. Records were
+  left as written and given a dated superseding note beside the sentence, which
+  is the convention this repository already uses.
+
+### Added
+
+- **Two superseding revision candidates, at Draft under new versions:**
+  `PRD-0002-discovery-v2.2-candidate.md` and
+  `US-DSC-F02-001-search-v1.1-candidate.md`. Neither carries an Approval Note or
+  a Freeze Note. **Neither may be approved without the other**, because the
+  Story consumes a definition the PRD owns.
+
+  The change is one sentence and its consequence. §5.10 defined a Search
+  Discovery Start as occurring when a person *"submits"* a valid query; it now
+  occurs when a valid non-empty query **reaches the platform**, by submission or
+  after the interface settles on what has been typed — with the bound the word
+  "submits" used to supply implicitly: **at most one per Discovery path.**
+  Without that bound, filter-as-you-type would record a Discovery Start on every
+  keystroke surviving a debounce, and the figure Basic Analytics has reported
+  since I3 would stop meaning the same thing.
+
+### Notes
+
+- **I had to correct my own unverified claim before the decision could be
+  executed, and the correction changed its scope.**
+  `PROTOTYPE_INTEGRATION_PLAN.md` §5 asserted that Frozen `US-DSC-F06-001`
+  makes a Discovery Start a deliberate event and forbids prefetch or a bookmark
+  triggering it. Measured against the documents: `US-DSC-F06-001` is about
+  Listing Cards and none of its eight criteria mentions Discovery Start, and the
+  words *prefetch* and *bookmark* appear in no Story, PRD or UX document at all.
+  The rule lives in `PRD-0002` §5.10 and is consumed by `US-DSC-F02-001` AC-1.
+
+  **The real conflict was half the size described.** §5.10's Browse half already
+  read *"**selects** the first active Category"*, and a selection is a selection
+  whether or not it posts a form — so the prototype's category dropdown, its
+  most visible fluency, never conflicted with anything and needed no revision.
+  Only free-text search did, and only on one word. The Owner was given the
+  corrected measurement and chose the real owners.
+
+---
+
 ## [3.38.4] - 2026-08-31
 
 ### Changed
