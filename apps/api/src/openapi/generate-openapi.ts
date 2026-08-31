@@ -1412,10 +1412,132 @@ const document = {
           }
         ]
       },
+      OfferingPriceInput: {
+        description:
+          "What a submission may say about price. The Kind is the fact and the amount is a detail: `ON_REQUEST` means the Offering has no amount by its nature and its cost is settled after the Handoff, while `UNKNOWN` means the platform does not know yet. These are different answers and a single nullable amount would conflate them. Only `FIXED` carries money. `amountSetAt` is absent by design — the instant an amount was established is stamped where it is written, so a caller cannot present a stale amount as current.",
+        discriminator: { propertyName: "kind" },
+        oneOf: [
+          {
+            additionalProperties: false,
+            properties: {
+              amount: {
+                description:
+                  "Decimal text, not a number. `NUMERIC(12,2)` is exact and IEEE-754 is not, and the ordering of these amounts is what a comparison offers.",
+                pattern: "^(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$",
+                type: "string"
+              },
+              currency: {
+                description: "ISO 4217 alphabetic.",
+                pattern: "^[A-Z]{3}$",
+                type: "string"
+              },
+              deliveryCost: {
+                description:
+                  "`0` is free delivery and `null` is not stated. Included in the amount a person would pay, which is what price ordering uses.",
+                pattern: "^(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$",
+                type: ["string", "null"]
+              },
+              kind: { enum: ["FIXED"], type: "string" },
+              priorAmount: {
+                description:
+                  "Refused unless it exceeds `amount`. A prior amount at or below the current one describes no reduction.",
+                pattern: "^(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$",
+                type: ["string", "null"]
+              },
+              stockState: {
+                enum: ["IN_STOCK", "OUT_OF_STOCK", "UNKNOWN"],
+                type: "string"
+              }
+            },
+            required: ["amount", "currency", "kind"],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: {
+              kind: { enum: ["ON_REQUEST"], type: "string" },
+              stockState: {
+                enum: ["IN_STOCK", "OUT_OF_STOCK", "UNKNOWN"],
+                type: "string"
+              }
+            },
+            required: ["kind"],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: {
+              kind: { enum: ["UNKNOWN"], type: "string" },
+              stockState: {
+                enum: ["IN_STOCK", "OUT_OF_STOCK", "UNKNOWN"],
+                type: "string"
+              }
+            },
+            required: ["kind"],
+            type: "object"
+          }
+        ]
+      },
+      OfferingPrice: {
+        description:
+          "The Offering's price as it is read back. A Fixed price always carries the instant it was established: a price without one is a claim about the present the platform cannot keep.",
+        discriminator: { propertyName: "kind" },
+        oneOf: [
+          {
+            additionalProperties: false,
+            properties: {
+              amount: { type: "string" },
+              amountSetAt: { format: "date-time", type: "string" },
+              currency: { type: "string" },
+              deliveryCost: { type: ["string", "null"] },
+              kind: { enum: ["FIXED"], type: "string" },
+              priorAmount: { type: ["string", "null"] },
+              stockState: {
+                enum: ["IN_STOCK", "OUT_OF_STOCK", "UNKNOWN"],
+                type: "string"
+              }
+            },
+            required: [
+              "amount",
+              "amountSetAt",
+              "currency",
+              "deliveryCost",
+              "kind",
+              "priorAmount",
+              "stockState"
+            ],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: {
+              kind: { enum: ["ON_REQUEST"], type: "string" },
+              stockState: {
+                enum: ["IN_STOCK", "OUT_OF_STOCK", "UNKNOWN"],
+                type: "string"
+              }
+            },
+            required: ["kind", "stockState"],
+            type: "object"
+          },
+          {
+            additionalProperties: false,
+            properties: {
+              kind: { enum: ["UNKNOWN"], type: "string" },
+              stockState: {
+                enum: ["IN_STOCK", "OUT_OF_STOCK", "UNKNOWN"],
+                type: "string"
+              }
+            },
+            required: ["kind", "stockState"],
+            type: "object"
+          }
+        ]
+      },
       EditOffering: {
         additionalProperties: false,
         description:
-          "Replaces the Offering's content. An Attribute left out is one the Offering no longer holds a value for. There is no lifecycle field: a saved edit publishes, retires, hides and restores nothing.",
+          "Replaces the Offering's content. An Attribute left out is one the Offering no longer holds a value for. There is no lifecycle field: a saved edit publishes, retires, hides and restores nothing. There is no Source field either: how a record came to exist is a property of the path that wrote it, not a claim a body may make.",
         properties: {
           attributes: {
             items: { $ref: "#/components/schemas/OfferingAttributeValueInput" },
@@ -1423,6 +1545,17 @@ const document = {
             type: "array"
           },
           categoryId: { format: "uuid", type: "string" },
+          pricing: {
+            allOf: [{ $ref: "#/components/schemas/OfferingPriceInput" }],
+            description:
+              "Absent means the Offering states no price, because this shape is a replacement. Harmless: no Pricing Kind blocks publication, so clearing a price never withdraws an Offering."
+          },
+          productKey: {
+            description:
+              "A value identifying the product this Offering is an instance of, where one exists and is known. Offerings sharing a key may be presented together. It creates no Product entity, and Offerings are grouped only when their keys are equal — similar titles and prices are not evidence.",
+            maxLength: 64,
+            type: ["string", "null"]
+          },
           summary: { maxLength: 1000, type: ["string", "null"] },
           title: { maxLength: 240, minLength: 1, type: "string" },
           visuals: {
@@ -1466,6 +1599,8 @@ const document = {
           businessId: { format: "uuid", type: "string" },
           categoryId: { format: "uuid", type: "string" },
           id: { format: "uuid", type: "string" },
+          pricing: { $ref: "#/components/schemas/OfferingPrice" },
+          productKey: { type: ["string", "null"] },
           publishedAt: {
             description:
               "Initial Published At. Immutable once set; an edit never changes it.",
@@ -1473,6 +1608,12 @@ const document = {
             type: ["string", "null"]
           },
           slug: { type: "string" },
+          source: {
+            description:
+              "How this record came to exist. Provenance only: it grants no capability, does not affect Final Offering Public Eligibility, and does not change moderation. An automated intake may modify only Offerings whose Source is `FEED`.",
+            enum: ["MANUAL", "FEED", "BUSINESS"],
+            type: "string"
+          },
           status: {
             enum: ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"],
             type: "string"
@@ -1487,8 +1628,11 @@ const document = {
           "businessId",
           "categoryId",
           "id",
+          "pricing",
+          "productKey",
           "publishedAt",
           "slug",
+          "source",
           "status",
           "summary",
           "title",
@@ -1574,6 +1718,8 @@ const document = {
           businessId: { format: "uuid", type: "string" },
           categoryId: { format: "uuid", type: "string" },
           id: { format: "uuid", type: "string" },
+          pricing: { $ref: "#/components/schemas/OfferingPrice" },
+          productKey: { type: ["string", "null"] },
           publishedAt: {
             description:
               "Initial Published At. Immutable once set; an edit never changes it.",
@@ -1581,6 +1727,12 @@ const document = {
             type: ["string", "null"]
           },
           slug: { type: "string" },
+          source: {
+            description:
+              "How this record came to exist. Provenance only: it grants no capability, does not affect Final Offering Public Eligibility, and does not change moderation. An automated intake may modify only Offerings whose Source is `FEED`.",
+            enum: ["MANUAL", "FEED", "BUSINESS"],
+            type: "string"
+          },
           status: {
             enum: ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"],
             type: "string"
@@ -1601,8 +1753,11 @@ const document = {
           "businessId",
           "categoryId",
           "id",
+          "pricing",
+          "productKey",
           "publishedAt",
           "slug",
+          "source",
           "status",
           "summary",
           "title",

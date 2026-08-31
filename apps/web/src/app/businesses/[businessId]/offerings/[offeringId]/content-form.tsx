@@ -2,14 +2,16 @@
 
 import { SUBMIT, submitLabel } from "../../../../../form-copy";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
-import { CONTENT } from "../../../../../business/copy";
+import { CONTENT, PRICING } from "../../../../../business/copy";
 
 import type {
   ApplicableAttribute,
   EditableOfferingContent
 } from "@commerce/contracts";
+
+import { PRICING_KINDS, STOCK_STATES } from "@commerce/contracts";
 
 import {
   ACTION_IDLE,
@@ -107,6 +109,130 @@ function AttributeField({
 }
 
 /**
+ * Price, stock and product key (PRD-0001 v4.0 §5.10, §5.12).
+ *
+ * The amount fields appear only for a Fixed price. Offering an amount box
+ * beside "sorulduğunda belirlenir" would invite a value the contract refuses —
+ * `offering_unpriced_carries_no_amount` at the database and
+ * `unrecognized_keys` before that — and a form that collects what cannot be
+ * saved is a form that lies about what it is for.
+ *
+ * The controls carry no `required`. §5.10.2 says no Pricing Kind blocks
+ * publication, and a required marker here would tell a person the opposite.
+ */
+function PriceFields({ content }: { content: EditableOfferingContent }) {
+  const [kind, setKind] = useState(content.pricing.kind);
+  const held = content.pricing.kind === "FIXED" ? content.pricing : null;
+
+  return (
+    <fieldset>
+      <legend>{PRICING.heading}</legend>
+
+      <p>
+        <label htmlFor="pricingKind">{PRICING.kindLabel}</label>
+        <select
+          defaultValue={content.pricing.kind}
+          id="pricingKind"
+          name="pricingKind"
+          onChange={(event) => {
+            setKind(event.target.value as (typeof PRICING_KINDS)[number]);
+          }}
+        >
+          {PRICING_KINDS.map((option) => (
+            <option key={option} value={option}>
+              {PRICING.kinds[option]}
+            </option>
+          ))}
+        </select>
+      </p>
+
+      {kind === "FIXED" ? (
+        <>
+          <p>
+            <label htmlFor="amount">{PRICING.amountLabel}</label>
+            <input
+              defaultValue={held?.amount ?? ""}
+              id="amount"
+              inputMode="decimal"
+              name="amount"
+              type="text"
+            />
+          </p>
+          <p>
+            <label htmlFor="currency">{PRICING.currencyLabel}</label>
+            <input
+              defaultValue={held?.currency ?? PRICING.defaultCurrency}
+              id="currency"
+              maxLength={3}
+              name="currency"
+              type="text"
+            />
+          </p>
+          <p>
+            <label htmlFor="priorAmount">{PRICING.priorAmountLabel}</label>
+            <input
+              aria-describedby="prior-amount-hint"
+              defaultValue={held?.priorAmount ?? ""}
+              id="priorAmount"
+              inputMode="decimal"
+              name="priorAmount"
+              type="text"
+            />
+            <span className="field-hint" id="prior-amount-hint">
+              {PRICING.priorAmountHint}
+            </span>
+          </p>
+          <p>
+            <label htmlFor="deliveryCost">{PRICING.deliveryCostLabel}</label>
+            <input
+              aria-describedby="delivery-cost-hint"
+              defaultValue={held?.deliveryCost ?? ""}
+              id="deliveryCost"
+              inputMode="decimal"
+              name="deliveryCost"
+              type="text"
+            />
+            <span className="field-hint" id="delivery-cost-hint">
+              {PRICING.deliveryCostHint}
+            </span>
+          </p>
+        </>
+      ) : null}
+
+      <p>
+        <label htmlFor="stockState">{PRICING.stockLabel}</label>
+        <select
+          defaultValue={content.pricing.stockState}
+          id="stockState"
+          name="stockState"
+        >
+          {STOCK_STATES.map((option) => (
+            <option key={option} value={option}>
+              {PRICING.stocks[option]}
+            </option>
+          ))}
+        </select>
+      </p>
+
+      <p>
+        <label htmlFor="productKey">{PRICING.productKeyLabel}</label>
+        <input
+          aria-describedby="product-key-hint"
+          defaultValue={content.productKey ?? ""}
+          id="productKey"
+          maxLength={64}
+          name="productKey"
+          type="text"
+        />
+        <span className="field-hint" id="product-key-hint">
+          {PRICING.productKeyHint}
+        </span>
+      </p>
+    </fieldset>
+  );
+}
+
+/**
  * The Offering content form (UX-0005 §9 Edit).
  *
  * Rendered only where the Dashboard's entries offered `EDIT`, so this
@@ -173,6 +299,8 @@ export function ContentForm({
             {CONTENT.visualsHint}
           </span>
         </p>
+
+        <PriceFields content={content} />
 
         {content.applicableAttributes.length > 0 ? (
           <fieldset>

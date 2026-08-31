@@ -10,6 +10,69 @@ This project follows the principles of:
 
 ---
 
+## [3.37.0] - 2026-08-31
+
+### Added
+
+- **An Offering can say what it costs — and can say it has no price without
+  claiming the platform failed.** The Owner named the case the obvious design
+  would have lost: *"ilan fiyatı olmayan ürünlerde olabilir örnek hizmet
+  veriliyordur ama bir fiyatı yok — yönlendirme sonrası istenen hizmete göre
+  belirlenen fiyat olabilir."* A consultancy has no amount **by its nature**; a
+  feed that carried nothing has one the platform has not read. A single nullable
+  `price` makes those the same row and forces every surface to guess. So price
+  is a **Kind first and an amount second**: `FIXED`, `ON_REQUEST`, `UNKNOWN` —
+  the same distinction PRD-0002 §14 already draws between zero results and
+  results unavailable.
+- **Nine columns and four CHECK constraints** on `offering`
+  (`20260830000100_offering_price_source_product_key`). The constraints are the
+  substance: a Fixed price without an amount, a currency or the instant it was
+  established is refused; an unpriced Offering carrying money is refused;
+  negative money is refused; a prior amount at or below the current one — which
+  would render `−%0`, or an increase dressed as a saving — is refused.
+  `NUMERIC(12,2)` and never a float, kept as text end to end, because §5.10.5
+  makes the ordering of these amounts the product.
+- **`Offering.source`** — `MANUAL`, `FEED`, `BUSINESS`. Provenance only: it
+  grants nothing and changes no moderation. It exists so an automated intake can
+  modify **only** what it created, and it is absent from the write shape so an
+  owner cannot label their own Offering `FEED` and hand it to the intake.
+- **`Offering.productKey`** — a nullable matching hint. Offerings sharing a key
+  may be presented as one product. It creates no Product entity, and two
+  Offerings are grouped only when their keys are **equal**: similar titles and
+  prices are not evidence.
+
+### Changed
+
+- **PRD-0001 — Offering is now Frozen v4.0**, superseding Frozen v3.1 under
+  `DOCUMENT_LIFECYCLE.md` §7–§8, approved by the Owner on 2026-08-30. Adds
+  §5.10 Offering Price, §5.11 Offering Source, §5.12 Product Key; lifts the V1
+  restriction of the Domain set to three; restates §6.1.1 to record explicitly
+  that the Universal Publication Minimum is **not** extended by any of them.
+  The datamodel waited for the document rather than the reverse — writing the
+  columns first would have made the schema the definition of an Offering.
+- **The owner's edit screen gained a price fieldset**, because it had to: the
+  write shape is a replacement, so an edit that says nothing about price says
+  the price is gone, and leaving the form alone would have made every routine
+  save silently wipe one.
+
+### Fixed
+
+- **`inconsistent types deduced for parameter $6`.** Postgres infers a
+  parameter's type from where it appears, and `$6` was the enum in
+  `pricing_kind = $6` and `text` in `$6 = 'FIXED'`. A runtime failure no
+  type-checker could have named; both uses now carry `::"PricingKind"`.
+- **The raw price columns rode along on the read** and every request answered
+  `500`. `offeringContentSchema` is `.strict()`, so a stray `pricingKind` beside
+  the composed `pricing` was a refusal rather than a harmless extra — which is
+  what strict is for, and it caught this on the first request rather than
+  leaving a client to wonder which of `amount` and `pricing.amount` to trust.
+- **The thirteenth wrong match, and the first that was mine.** Two `perl`
+  substitutions in my own mutation harness matched nothing and reported the
+  tests as *surviving* — which would have led me to weaken two correct tests.
+  The harness now asserts the substitution applied before running anything.
+
+---
+
 ## [3.36.0] - 2026-08-29
 
 ### Fixed

@@ -52,6 +52,39 @@ function readLines(entry: FormDataEntryValue | null): string[] {
     .filter((line) => line !== "");
 }
 
+/// A text field's value, or `undefined` when the browser sent something that
+/// is not text. Same reason as `readLines`: what arrives in a field is not
+/// this module's decision.
+function readText(entry: FormDataEntryValue | null): string | undefined {
+  return typeof entry === "string" ? entry : undefined;
+}
+
+/**
+ * The price fields as the one shape `offeringPriceInputSchema` accepts.
+ *
+ * The amount fields are read **only** when the Kind is `FIXED`. The form does
+ * not render them otherwise, but a submission is not the form: passing them
+ * through unconditionally would let a hand-made request attach an amount to an
+ * On Request Offering and be refused with `unrecognized_keys`, which is a
+ * confusing way to say what the shape already says.
+ *
+ * The Kind itself is not validated here — an unrecognised value falls through
+ * to the schema, which refuses it by name.
+ */
+function readPricing(form: FormData): unknown {
+  const kind = readText(form.get("pricingKind")) ?? "UNKNOWN";
+  const stockState = readText(form.get("stockState")) ?? "UNKNOWN";
+  if (kind !== "FIXED") return { kind, stockState };
+  return {
+    amount: readText(form.get("amount")) ?? "",
+    currency: (readText(form.get("currency")) ?? "").toLocaleUpperCase("en-US"),
+    deliveryCost: readText(form.get("deliveryCost")),
+    kind,
+    priorAmount: readText(form.get("priorAmount")),
+    stockState
+  };
+}
+
 export async function saveOffering(
   businessId: string,
   offeringId: string,
@@ -79,6 +112,8 @@ export async function saveOffering(
     // the content areas a correction may touch — moving an Offering is not
     // correcting what it says.
     categoryId: current.categoryId,
+    pricing: readPricing(form),
+    productKey: form.get("productKey"),
     summary: form.get("summary"),
     title: form.get("title"),
     // The array index becomes the `position` column, so the first line the

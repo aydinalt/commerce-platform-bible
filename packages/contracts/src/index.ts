@@ -263,16 +263,187 @@ export const offeringAttributeValueSchema = z.discriminatedUnion("kind", [
 ]);
 
 /**
+ * PRD-0001 v4.0 §5.10.1. **The Kind is the fact and the amount is a detail.**
+ *
+ * `ON_REQUEST` and `UNKNOWN` are two different absences and a single nullable
+ * amount would conflate them. An Offering priced on request — a consultancy, a
+ * repair, a bespoke installation — has no amount *by its nature*, and telling a
+ * person its price is unknown reports a failure where none occurred. This is
+ * the distinction PRD-0002 §14 already draws between zero results and results
+ * unavailable.
+ */
+export const PRICING_KINDS = ["FIXED", "ON_REQUEST", "UNKNOWN"] as const;
+
+export const STOCK_STATES = ["IN_STOCK", "OUT_OF_STOCK", "UNKNOWN"] as const;
+
+/// §5.11. Provenance, and provenance only: §5.11.2 gives Source no authority
+/// over eligibility, moderation or anything else.
+export const OFFERING_SOURCES = ["MANUAL", "FEED", "BUSINESS"] as const;
+
+/**
+ * An amount, as the decimal text the column holds.
+ *
+ * **Not a `number`.** `NUMERIC(12,2)` is exact and IEEE-754 is not, and `pg`
+ * hands NUMERIC back as a string precisely so nothing rounds it on the way out.
+ * Keeping it a string here means an amount crosses every boundary it has to
+ * cross — column, driver, contract, JSON — without ever becoming a float that
+ * could disagree with the database about what a price is. A comparison site's
+ * only product is the correctness of its ordering.
+ *
+ * Ten integer digits and at most two decimals, which is exactly what
+ * `NUMERIC(12,2)` accepts. No sign is expressible, so
+ * `offering_amounts_are_not_negative` cannot be reached from here.
+ */
+const MONEY_AMOUNT = /^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/u;
+
+const moneyAmountSchema = z.string().trim().regex(MONEY_AMOUNT);
+
+/// `0` is free and absence is "not stated". A field that turns `""` into `0`
+/// would answer a question nobody asked.
+const optionalMoneyAmountSchema = z
+  .string()
+  .trim()
+  .nullish()
+  .transform((value) =>
+    value === undefined || value === null || value === "" ? null : value
+  )
+  .pipe(moneyAmountSchema.nullable());
+
+/**
+ * ISO 4217 alphabetic, checked as a shape rather than against a list.
+ *
+ * PRD-0001 v4.0 §5.10.3 names a currency and does not name a set of them.
+ * Enumerating one here would create a second place where "which currencies
+ * exist" is decided, and the Single Information Owner rule says there is only
+ * ever one.
+ */
+const currencySchema = z
+  .string()
+  .trim()
+  .regex(/^[A-Z]{3}$/u);
+
+/**
+ * What a submission may say about price.
+ *
+ * A discriminated union rather than seven optional fields, because §5.10.3's
+ * rule — a Fixed price carries an amount and a currency, and the other two
+ * Kinds carry no money at all — is then a shape rather than a check. The four
+ * `CHECK` constraints in
+ * `20260830000100_offering_price_source_product_key` say the same thing at the
+ * database. Neither is redundant: the contract refuses a request and the column
+ * refuses a row, and rows arrive by paths that are not requests.
+ *
+ * **`amountSetAt` is absent by construction.** §5.10.3 makes the instant part
+ * of the price, and a caller that could name it could claim a stale amount was
+ * established just now. It is stamped where the amount is written, the way the
+ * registration token is minted at delivery rather than accepted from a body.
+ */
+export const offeringPriceInputSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      amount: moneyAmountSchema,
+      currency: currencySchema,
+      /// §5.10.5. Part of the amount a person would pay, so it belongs to a
+      /// Fixed price and nowhere else — beside no amount there is nothing for
+      /// it to be added to.
+      deliveryCost: optionalMoneyAmountSchema,
+      kind: z.literal("FIXED"),
+      priorAmount: optionalMoneyAmountSchema,
+      stockState: z.enum(STOCK_STATES).default("UNKNOWN")
+    })
+    .strict()
+    /// §5.10.4. A prior amount at or below the current one describes no
+    /// reduction, and presenting it would show `−%0` or an increase dressed as
+    /// a saving.
+    .refine(
+      (price) =>
+        price.priorAmount === null ||
+        Number(price.priorAmount) > Number(price.amount),
+      { error: "PRIOR_AMOUNT_IS_NOT_A_REDUCTION", path: ["priorAmount"] }
+    ),
+  z
+    .object({
+      kind: z.literal("ON_REQUEST"),
+      stockState: z.enum(STOCK_STATES).default("UNKNOWN")
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("UNKNOWN"),
+      stockState: z.enum(STOCK_STATES).default("UNKNOWN")
+    })
+    .strict()
+]);
+
+/// The same three shapes as they are read back, plus the instant §5.10.3
+/// requires a Fixed price to carry.
+export const offeringPriceSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      amount: z.string(),
+      amountSetAt: z.string().datetime(),
+      currency: z.string(),
+      deliveryCost: z.string().nullable(),
+      kind: z.literal("FIXED"),
+      priorAmount: z.string().nullable(),
+      stockState: z.enum(STOCK_STATES)
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("ON_REQUEST"),
+      stockState: z.enum(STOCK_STATES)
+    })
+    .strict(),
+  z
+    .object({ kind: z.literal("UNKNOWN"), stockState: z.enum(STOCK_STATES) })
+    .strict()
+]);
+
+/**
+ * §5.12. A matching hint, never an identity.
+ *
+ * Stored as supplied, apart from trimming. Case-folding it would be the
+ * platform deciding that `ean123` and `EAN123` name one product, and §5.12.3
+ * says the platform does not guess — an MPN's case is the manufacturer's to
+ * choose, not ours to normalise away.
+ */
+const productKeySchema = z
+  .string()
+  .trim()
+  .max(64)
+  .nullish()
+  .transform((value) =>
+    value === undefined || value === null || value === "" ? null : value
+  );
+
+/**
  * `US-OFR-F02-001` edits the Offering's content as a whole. It is a
  * replacement, like the Business Information edit: an Attribute left out of
  * `attributes` is one the Offering no longer holds a value for. Anything that
  * would move the lifecycle is absent by construction (AC-10) — there is no
  * status here to send.
+ *
+ * **Source is not here.** §5.11 records how a record came to exist, which is a
+ * property of the path that wrote it rather than a claim a body may make. A
+ * field for it would let an owner declare their own Offering came from a feed,
+ * and §5.11.1 then protects it from the intake that did not create it.
  */
 export const editOfferingSchema = z
   .object({
     attributes: z.array(offeringAttributeValueSchema).max(200).default([]),
     categoryId: z.string().uuid(),
+    /**
+     * Absent means the Offering states no price, because this shape is a
+     * replacement and silence about a field is a decision about it everywhere
+     * else in it. §5.10.2 makes that harmless: no Pricing Kind blocks
+     * publication, so clearing a price never withdraws an Offering.
+     */
+    pricing: offeringPriceInputSchema.default({
+      kind: "UNKNOWN",
+      stockState: "UNKNOWN"
+    }),
+    productKey: productKeySchema,
     summary: z
       .string()
       .trim()
@@ -315,8 +486,14 @@ export const offeringContentSchema = z
     businessId: z.string().uuid(),
     categoryId: z.string().uuid(),
     id: z.string().uuid(),
+    pricing: offeringPriceSchema,
+    productKey: z.string().nullable(),
     publishedAt: z.string().datetime().nullable(),
     slug: z.string(),
+    /// Read, never written from here. §5.11.2: it confers nothing, and a
+    /// surface that hid it would be hiding provenance from the person who owns
+    /// the record.
+    source: z.enum(OFFERING_SOURCES),
     status: z.enum(["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"]),
     summary: z.string().nullable(),
     title: z.string(),
@@ -332,6 +509,11 @@ export type OfferingAttributeValueInput = z.infer<
   typeof offeringAttributeValueSchema
 >;
 export type OfferingContent = z.infer<typeof offeringContentSchema>;
+export type OfferingPrice = z.infer<typeof offeringPriceSchema>;
+export type OfferingPriceInput = z.infer<typeof offeringPriceInputSchema>;
+export type OfferingSource = (typeof OFFERING_SOURCES)[number];
+export type PricingKind = (typeof PRICING_KINDS)[number];
+export type StockState = (typeof STOCK_STATES)[number];
 
 /**
  * `US-OFR-F06-001`. The body carries a reference and nothing else: AC-8 denies

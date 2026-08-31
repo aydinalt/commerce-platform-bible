@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+/*
+ * Poppins, self-hosted.
+ *
+ * ReDeal sets its whole interface in Poppins 400/700 at 15px, and that is the
+ * single largest reason it reads as a current deal site rather than as a 2016
+ * admin panel — a geometric sans at a modest size, not a bigger system font.
+ *
+ * **Self-hosted rather than fetched from Google**, for the reason the main
+ * application records in `layout.tsx`: a build-time or run-time fetch makes
+ * every page depend on a third party for a reason unrelated to the code. The
+ * files come from `@fontsource/poppins` and are served from `public/fonts`.
+ *
+ * `latin-ext` is not optional here. `ğ ş İ ı ö ü ç` live in that subset, so a
+ * build that ships only `latin` renders Turkish with fallback glyphs in the
+ * middle of words — the kind of defect that looks like bad kerning rather than
+ * like a missing font.
+ *
+ * `font-display: swap` so text is readable before the face arrives; the
+ * fallback stack below is metric-close enough that the swap does not jump.
+ */
+@font-face {
+  font-display: swap;
+  font-family: Poppins;
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/poppins-latin-400.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F,
+    U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+}
+@font-face {
+  font-display: swap;
+  font-family: Poppins;
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/poppins-latin-ext-400.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02FF, U+0304, U+0308, U+0329, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-display: swap;
+  font-family: Poppins;
+  font-style: normal;
+  font-weight: 600;
+  src: url("/fonts/poppins-latin-600.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F,
+    U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+}
+@font-face {
+  font-display: swap;
+  font-family: Poppins;
+  font-style: normal;
+  font-weight: 600;
+  src: url("/fonts/poppins-latin-ext-600.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02FF, U+0304, U+0308, U+0329, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-display: swap;
+  font-family: Poppins;
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/poppins-latin-700.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F,
+    U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215;
+}
+@font-face {
+  font-display: swap;
+  font-family: Poppins;
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/poppins-latin-ext-700.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02FF, U+0304, U+0308, U+0329, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/**
+ * Tailwind v4: the theme is CSS, and there is no `tailwind.config.js`.
+ *
+ * Only what this prototype reaches for is declared. A theme listing forty
+ * tokens nobody uses is the same problem as a stylesheet with forty unused
+ * classes.
+ */
+@theme {
+  --font-sans:
+    Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+/*
+ * 15px body, which is ReDeal's own measure.
+ *
+ * Tailwind's default is 16px and the reference sets 15px; on a listing page the
+ * difference is roughly one extra row per screen, which is the whole argument
+ * for a dense direction. Form controls are exempt below, because 16px is the
+ * floor under which a phone zooms a focused input.
+ */
+html {
+  font-size: 15px;
+  scroll-behavior: smooth;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+/*
+ * The budget and term slider.
+ *
+ * `::-webkit-slider-thumb` and `::-moz-range-thumb` cannot be expressed as
+ * utilities, so the track lives here — and both vendor forms are written out,
+ * because a thumb styled only for WebKit is invisible in Firefox and the
+ * control then looks broken rather than unstyled.
+ *
+ * `--filled` comes from the component as a percentage, so the part of the
+ * track behind the thumb is coloured and the drag has a readable extent.
+ *
+ * The thumb is 20px with a 2px ring: large enough for a thumb on a phone
+ * without becoming a dot that covers the value it is setting.
+ */
+.range-track {
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    #c2410c 0%,
+    #c2410c var(--filled, 0%),
+    #e2e8f0 var(--filled, 0%),
+    #e2e8f0 100%
+  );
+  border-radius: 999px;
+  cursor: pointer;
+  height: 6px;
+  outline-offset: 6px;
+}
+
+.range-track::-webkit-slider-thumb {
+  appearance: none;
+  background: #ffffff;
+  border: 2px solid #c2410c;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  height: 20px;
+  width: 20px;
+}
+
+.range-track::-moz-range-thumb {
+  background: #ffffff;
+  border: 2px solid #c2410c;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+  height: 16px;
+  width: 16px;
+}
+
+.range-track:active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 6px rgb(194 65 12 / 0.15);
+}
+
+/*
+ * The focus ring, declared once and never removed.
+ *
+ * Tailwind leaves focus to each utility, which is how a keyboard user ends up
+ * with a visible ring on the buttons somebody remembered and nothing on the
+ * rest. This is the floor; a component may make it prettier and cannot take it
+ * away.
+ */
+:focus-visible {
+  outline: 2px solid #0369a1;
+  outline-offset: 2px;
+}
+
+/*
+ * The motion story, written rather than owed.
+ *
+ * Every transition here is a hover or focus affordance and none carries
+ * information, so removing them costs a person who asked for less motion
+ * nothing at all.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

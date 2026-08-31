@@ -112,6 +112,8 @@ export class OfferingContentService {
         categoryId: input.categoryId,
         correlationId: principal.correlationId,
         offeringId,
+        pricing: input.pricing,
+        productKey: input.productKey,
         summary: input.summary,
         title: input.title,
         userId: principal.userId,

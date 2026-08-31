@@ -102,6 +102,45 @@ enum AttributeValueKind {
   MULTI_SELECT
 }
 
+/// PRD-0001 v4.0 §5.10.1. Three answers, and they are three because two of
+/// them are already confused everywhere else.
+///
+/// `ON_REQUEST` is a property of the **Offering**: a consultancy, a repair, a
+/// bespoke installation genuinely has no amount until the work is specified,
+/// and the amount is settled after the Handoff. `UNKNOWN` is a property of the
+/// **platform's knowledge**: a feed carried no amount, or none has been read
+/// yet.
+///
+/// Showing a service Offering as "price unknown" tells a person the platform
+/// has failed when nothing has failed. This is the same distinction PRD-0002
+/// §14 draws between zero results and results unavailable.
+enum PricingKind {
+  FIXED
+  ON_REQUEST
+  UNKNOWN
+}
+
+/// PRD-0001 v4.0 §5.10.3. Stock is a third state rather than a boolean,
+/// because "we do not know" is an answer a feed gives constantly and a
+/// two-valued column would have to lie about it.
+enum StockState {
+  IN_STOCK
+  OUT_OF_STOCK
+  UNKNOWN
+}
+
+/// PRD-0001 v4.0 §5.11. How the record came to exist, and nothing more.
+///
+/// §5.11.2 is explicit that this confers no authority: a `FEED` Offering is
+/// moderated exactly as a `BUSINESS` one is. What it does govern is §5.11.1 —
+/// an automated intake may modify only what it created, because an intake that
+/// overwrites a typed correction destroys a decision and leaves no trace.
+enum OfferingSource {
+  MANUAL
+  FEED
+  BUSINESS
+}
+
 /// PRD-0001 §9.3. `Enabled` and `Disabled` are reached only through the
 /// Platform administration actions PRD-0006 owns; a Business owner's authoring
 /// always lands on `DRAFT`.
@@ -685,6 +724,39 @@ model Offering {
   summary      String?                   @db.VarChar(1000)
   status       OfferingStatus            @default(DRAFT)
   version      Int                       @default(1)
+
+  /// PRD-0001 v4.0 §5.10. The Kind is the fact; the amount is a detail of one
+  /// of the three Kinds. `UNKNOWN` is the default because that is what is true
+  /// of an Offering nobody has priced yet.
+  pricingKind  PricingKind               @default(UNKNOWN) @map("pricing_kind")
+  /// Minor-unit precision without float arithmetic. `NUMERIC(12,2)` holds a
+  /// price to ten billion lira; money in a `double` is a rounding error waiting
+  /// for a large enough catalogue.
+  amount       Decimal?                  @db.Decimal(12, 2)
+  /// ISO 4217. Fixed width so a three-letter code cannot be stored as four.
+  currency     String?                   @db.Char(3)
+  /// §5.10.3: **a price without an instant is not a price.** A surface showing
+  /// an amount must be able to say when it was true.
+  amountSetAt  DateTime?                 @map("amount_set_at") @db.Timestamptz(6)
+  /// The prior amount, so a reduction can be shown. §5.10.4 forbids storing the
+  /// percentage: a stored percentage is a second copy of a fact that can
+  /// disagree with the two amounts it came from.
+  priorAmount  Decimal?                  @map("prior_amount") @db.Decimal(12, 2)
+  /// Separable delivery charge. `0` is free delivery and `null` is "not
+  /// stated"; §5.10.5 orders on amount **plus** this, because ordering on the
+  /// sticker price while delivery differs makes the ordering wrong.
+  deliveryCost Decimal?                  @map("delivery_cost") @db.Decimal(12, 2)
+  stockState   StockState                @default(UNKNOWN) @map("stock_state")
+
+  /// PRD-0001 v4.0 §5.11. Provenance, and §5.11.2 is explicit that it confers
+  /// no authority.
+  source       OfferingSource            @default(BUSINESS)
+
+  /// PRD-0001 v4.0 §5.12. A matching hint, not an identity: Offerings sharing
+  /// one may be presented together, and §5.12.3 forbids grouping on anything
+  /// else. Most Offerings in most Domains will never carry one.
+  productKey   String?                   @map("product_key") @db.VarChar(64)
+
   publishedAt  DateTime?                 @map("published_at") @db.Timestamptz(6)
   archivedAt   DateTime?                 @map("archived_at") @db.Timestamptz(6)
   createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)

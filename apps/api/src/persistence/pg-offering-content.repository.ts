@@ -7,7 +7,14 @@ import {
   CorrectionAreaNotTargetedError,
   type OfferingContentArea
 } from "@commerce/business";
-import type { OfferingAttributeValueInput } from "@commerce/contracts";
+import type {
+  OfferingAttributeValueInput,
+  OfferingPrice,
+  OfferingPriceInput,
+  OfferingSource,
+  PricingKind,
+  StockState
+} from "@commerce/contracts";
 import {
   AttributeValueMismatchError,
   BusinessRestrictedError,
@@ -47,13 +54,64 @@ export interface OfferingContentRecord {
   businessId: string;
   categoryId: string;
   id: string;
+  pricing: OfferingPrice;
+  productKey: string | null;
   publishedAt: string | null;
   slug: string;
+  source: OfferingSource;
   status: OfferingLifecycle;
   summary: string | null;
   title: string;
   version: number;
   visuals: string[];
+}
+
+/**
+ * The price columns as the driver hands them back.
+ *
+ * `NUMERIC` arrives as a string and stays one all the way to the response,
+ * which is the point: the exact decimal the column holds is never parsed into
+ * a float that could round it. PRD-0001 v4.0 §5.10.5 makes the ordering of
+ * these amounts the product, and an ordering computed from approximations is
+ * an ordering that is sometimes wrong.
+ */
+interface OfferingPriceColumns {
+  amount: string | null;
+  amountSetAt: Date | null;
+  currency: string | null;
+  deliveryCost: string | null;
+  pricingKind: PricingKind;
+  priorAmount: string | null;
+  stockState: StockState;
+}
+
+/**
+ * Seven columns become the one shape §5.10.1 names.
+ *
+ * The union is built here rather than in SQL because it is a fact about the
+ * contract, and a `case` expression assembling JSON would be that fact written
+ * a second time in a second language.
+ *
+ * The throw is unreachable — `offering_fixed_price_is_complete` refuses such a
+ * row — and it is a throw rather than a fallback to `UNKNOWN` deliberately. A
+ * fallback would tell a person the platform does not know a price at the exact
+ * moment the platform's own invariant has broken, which is the worst time to
+ * say something reassuring.
+ */
+function composePrice(row: OfferingPriceColumns): OfferingPrice {
+  if (row.pricingKind !== "FIXED")
+    return { kind: row.pricingKind, stockState: row.stockState };
+  if (row.amount === null || row.currency === null || row.amountSetAt === null)
+    throw new Error("OFFERING_FIXED_PRICE_INCOMPLETE");
+  return {
+    amount: row.amount,
+    amountSetAt: row.amountSetAt.toISOString(),
+    currency: row.currency,
+    deliveryCost: row.deliveryCost,
+    kind: "FIXED",
+    priorAmount: row.priorAmount,
+    stockState: row.stockState
+  };
 }
 
 interface DefinitionShape {
@@ -223,9 +281,10 @@ export class PgOfferingContentRepository {
    * the *result* (AC-5). Checking before the write would answer a question
    * about the old content.
    *
-   * The update names `title`, `summary` and `category_id`. It cannot name
-   * `status`, `published_at` or `archived_at`, which is what makes AC-6 and
-   * AC-10 true rather than remembered.
+   * The update names `title`, `summary`, `category_id`, the price columns and
+   * `product_key`. It cannot name `status`, `published_at`, `archived_at` or
+   * `source`, which is what makes AC-6, AC-10 and PRD-0001 v4.0 §5.11 true
+   * rather than remembered.
    */
   async edit(input: {
     attributes: OfferingAttributeValueInput[];
@@ -233,6 +292,8 @@ export class PgOfferingContentRepository {
     categoryId: string;
     correlationId: string;
     offeringId: string;
+    pricing: OfferingPriceInput;
+    productKey: string | null;
     summary: string | null;
     title: string;
     userId: string;
@@ -255,15 +316,50 @@ export class PgOfferingContentRepository {
       if (current.status === "ARCHIVED")
         throw new OfferingNotEditableError("ARCHIVED");
 
+      const price = input.pricing;
+      const fixed = price.kind === "FIXED" ? price : null;
       await client.query(
-        `update offering set title = $3, summary = $4, category_id = $5
+        /*
+         * `amount_set_at` is stamped here rather than accepted from the body.
+         *
+         * PRD-0001 v4.0 §5.10.3: the instant is part of the price, and a
+         * caller able to name it could present a year-old amount as
+         * established a minute ago.
+         *
+         * **Every submission that states a Fixed amount re-stamps it**, even
+         * when the amount did not change. The alternative — stamping only on
+         * change — was rejected because §5.10.3's reason is freshness, not
+         * history: a source that re-reads the same price *has* re-established
+         * it, and a surface saying "confirmed six months ago" about a price
+         * confirmed this morning is the untrue answer.
+         */
+        /*
+         * `$6` is cast at both of its uses. Postgres deduces a parameter's
+         * type from where it appears, and an uncast `$6` is the enum in the
+         * assignment and `text` in the comparison — "inconsistent types
+         * deduced for parameter $6", which is a runtime failure rather than
+         * anything a type-checker could have said.
+         */
+        `update offering set title = $3, summary = $4, category_id = $5,
+           pricing_kind = $6::"PricingKind", amount = $7, currency = $8,
+           prior_amount = $9, delivery_cost = $10, stock_state = $11,
+           product_key = $12,
+           amount_set_at = case
+             when $6::"PricingKind" = 'FIXED' then now() else null end
          where id = $1 and business_id = $2`,
         [
           input.offeringId,
           input.businessId,
           input.title,
           input.summary,
-          input.categoryId
+          input.categoryId,
+          price.kind,
+          fixed?.amount ?? null,
+          fixed?.currency ?? null,
+          fixed?.priorAmount ?? null,
+          fixed?.deliveryCost ?? null,
+          price.stockState,
+          input.productKey
         ]
       );
 
@@ -980,11 +1076,17 @@ export class PgOfferingContentRepository {
     offeringId: string
   ): Promise<OfferingContentRecord | null> {
     const result = await client.query<
-      Omit<OfferingContentRecord, "publishedAt"> & { publishedAt: Date | null }
+      Omit<OfferingContentRecord, "pricing" | "publishedAt"> &
+        OfferingPriceColumns & { publishedAt: Date | null }
     >(
       `select o.id, o.business_id as "businessId", o.category_id as "categoryId",
          o.slug, o.title, o.summary, o.status::text as status, o.version,
          o.published_at as "publishedAt",
+         o.pricing_kind::text as "pricingKind", o.amount, o.currency,
+         o.amount_set_at as "amountSetAt",
+         o.prior_amount as "priorAmount", o.delivery_cost as "deliveryCost",
+         o.stock_state::text as "stockState",
+         o.source::text as source, o.product_key as "productKey",
          coalesce(
            (select json_agg(a order by a."attributeId")
             from (
@@ -1015,8 +1117,26 @@ export class PgOfferingContentRepository {
     );
     const row = result.rows[0];
     if (!row) return null;
+    /*
+     * The price columns are named out of the spread rather than left to ride
+     * along on it. `offeringContentSchema` is `.strict()`, so a stray
+     * `pricingKind` beside the composed `pricing` is a refusal rather than a
+     * harmless extra — which is the whole reason every read shape in this
+     * repository is strict, and it caught this on the first request.
+     */
+    const {
+      amount: _amount,
+      amountSetAt: _amountSetAt,
+      currency: _currency,
+      deliveryCost: _deliveryCost,
+      pricingKind: _pricingKind,
+      priorAmount: _priorAmount,
+      stockState: _stockState,
+      ...content
+    } = row;
     return {
-      ...row,
+      ...content,
+      pricing: composePrice(row),
       publishedAt: row.publishedAt?.toISOString() ?? null
     };
   }

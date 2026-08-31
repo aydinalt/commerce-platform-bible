@@ -4,18 +4,26 @@
 - **Title:** Offering
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Frozen
-- **Version:** 3.1
-- **Last Updated:** 2026-07-21
+- **Version:** 4.0
+- **Last Updated:** 2026-08-31
 - **Scope level:** Product behaviour (non-technical)
-- **Supersedes:** Approved v2.1
-- **Approved candidate:** In Review v3.1
-- **Approval Date:** 2026-07-21
+- **Supersedes:** Frozen v3.1
+- **Approved candidate:** In Review v4.0
+- **Approval Date:** 2026-08-30
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
-- **Freeze Date:** 2026-07-21
+- **Freeze Date:** 2026-08-30
 - **Frozen By:** Product Owner / Architecture Owner
 
 > This document is the Single Information Owner of the universal Offering product model, Offering lifecycle, final Offering Public Eligibility, complete Offering Presentation behaviour, and the PRD-0001-owned portion of Handoff Enablement. It defines product behaviour only. It does not define APIs, database tables, frameworks, storage, security implementation, frontend components, backend architecture, validation algorithms, affiliate-network integration, analytics instrumentation, or infrastructure.
+
+**Freeze Note (4.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-08-30. Frozen v4.0 is the locked PRD baseline for PRD-0001 — Offering and supersedes Frozen v3.1, which remains preserved in the historical notes below. This exact version must not be edited in place. Any future change requires a controlled superseding revision under `DOCUMENT_LIFECYCLE.md` §7 and §8, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise UX, User Stories, traceability, repository indexes, or GitHub content.
+
+**Approval Note (4.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-30. The revision was raised because the Owner's decisions of that date — affiliate first, price belonging to the Offering, a product-matching key, and an open Domain set — change what an Offering **is**, which is this document's subject. The datamodel waited for this document rather than the reverse.
+
+**Revision Note (4.0):** Controlled superseding revision of Frozen v3.1. Adds §5.10 Offering Price, §5.11 Offering Source, and §5.12 Product Key. Lifts the V1 restriction of the Domain set to three. Restates §6.1.1 unchanged in substance, recording explicitly that the Universal Publication Minimum is **not** extended by Price, Source or Product Key. Extends §8.2's optional Presentation content and §10's Business Rules. No lifecycle state, eligibility composition, moderation rule, Capability, Feature, or ownership boundary changes. The revision introduces no Product entity, no Merchant entity, no payment or checkout, no price history or alerts, and no rating or seller score; the mechanism by which an amount is obtained remains an engineering concern governed by its own documents.
+
+> **On the two absences of price.** The three Pricing Kinds in §5.10.1 exist because *On Request* and *Unknown* are different answers. The Owner named the case this document was about to lose: an Offering may genuinely have no price because the amount is settled after the Handoff, according to the service asked for. A single missing value would have reported a platform failure where none occurred. This is the distinction PRD-0002 §14 already draws between zero results and results unavailable, and PRD-0006 §14 between absent and unavailable.
 
 **Freeze Note (3.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-21. Frozen v3.1 is the locked V1 PRD baseline for PRD-0001 — Offering. This exact version must not be edited in place. Any future change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise UX, User Stories, traceability, repository indexes, or GitHub content.
 
@@ -117,6 +125,15 @@ The following are outside PRD-0001:
 - technical validation, URL safety implementation, API, storage, database, security, caching, routing, event, frontend, backend, and infrastructure design;
 - V2 or explicitly excluded behaviour in `V1_SCOPE.md`.
 
+Restated for v4.0, which introduces price without introducing any of these:
+
+- a Product entity, Product ownership, or a Product lifecycle — §5.12 defines a matching hint and nothing more;
+- a Merchant or seller entity distinct from Business;
+- basket, checkout, or order;
+- price history, price alerts, or price trend presentation;
+- rating, review, or seller score;
+- the mechanism by which an amount is obtained — feeds, merchant APIs and any other intake are engineering concerns governed by their own documents.
+
 ---
 
 ## 5. Core Concepts and Ownership
@@ -156,8 +173,8 @@ Product rules:
 - an Offering is assigned to exactly one active leaf Category;
 - a Category may have zero or one parent;
 - a Category with no parent is a root Category;
-- every root Category is assigned to exactly one V1 Domain at creation;
-- V1 Domain values are `Mobility`, `Real Estate`, and `Technology`;
+- every root Category is assigned to exactly one Domain at creation;
+- a Domain is a governed record and **the set is open**, extended by Platform administration. `Mobility`, `Real Estate` and `Technology` were the first three, not the whole set;
 - every child Category inherits the Domain of its root Category;
 - an Offering derives its Domain from its active leaf Category;
 - Category reparenting is permitted only within the same Domain in V1;
@@ -260,6 +277,92 @@ PRD-0001 is its sole behaviour owner.
 
 PRD-0005 and PRD-0006 participate only through supporting relationships.
 
+### 5.10 Offering Price
+
+#### 5.10.1 Pricing Kind is the fact; the amount is a detail
+
+An Offering states a **Pricing Kind**, and it is one of exactly three:
+
+| Kind | Meaning |
+|---|---|
+| **Fixed** | The Offering has a stated amount. |
+| **On Request** | The Offering has no fixed amount **by its nature**. What it costs is determined after the Handoff, according to what is asked for. |
+| **Unknown** | The platform does not currently know what it costs. |
+
+**These are three different answers and the product must never show one as another.**
+
+*On Request* is a property of **the Offering**: a consultancy, a repair service, a bespoke installation genuinely has no price until the work is specified. Showing such an Offering as "price unknown" tells a person the platform has failed, when nothing has failed.
+
+*Unknown* is a property of **the platform's knowledge**: a source did not carry a price, a reading has not happened yet, a source went quiet. It is a temporary state and it is honest to say so.
+
+#### 5.10.2 Price is never required
+
+Pricing Kind is required; **an amount is not**. No Pricing Kind blocks publication, and §6.1.1 is not extended by this section. An Offering priced *On Request* is as publishable as one priced at a stated amount.
+
+#### 5.10.3 What a price carries
+
+When Pricing Kind is *Fixed*, the Offering carries:
+
+- an **amount**, in minor-unit precision;
+- a **currency**;
+- the **instant the amount was last established**.
+
+**A price without an instant is not a price.** It is a claim about the present that the platform cannot keep, and the surface that shows it must be able to say when it was true. This is the same rule §9.4 applies to a Destination's validation result.
+
+The Offering may additionally carry:
+
+- a **prior amount**, so a reduction can be shown;
+- a **delivery cost**, where delivery is a separable charge;
+- a **stock state**: *In Stock*, *Out of Stock*, or *Unknown*.
+
+#### 5.10.4 A reduction is derived, never stored
+
+Where a prior amount is present and exceeds the current amount, the difference may be presented as a reduction. **The percentage is computed at presentation and never stored**: a stored percentage is a second copy of a fact that can disagree with the two amounts it came from.
+
+Where no prior amount is present, **no reduction is claimed**. The platform does not invent a "was" price.
+
+#### 5.10.5 Ordering by price
+
+Where a surface orders Offerings by price, it orders on **the amount a person would pay**, including delivery cost where one is stated. Ordering on the amount alone while delivery differs makes the ordering wrong, and the ordering is the only thing a comparison offers.
+
+Offerings that are not *Fixed* have no position in a price ordering and are not silently placed at either end.
+
+### 5.11 Offering Source
+
+Every Offering records **how its record came to exist**:
+
+| Source | Meaning |
+|---|---|
+| **Manual** | Created by an Admin acting for the platform. |
+| **Feed** | Created by an automated intake from an external source. |
+| **Business** | Created by a Business owner in their own context. |
+
+#### 5.11.1 An intake may only update what it created
+
+An automated intake **may create and update Offerings whose Source is Feed, and may not modify any other.** An Admin's typed correction and a Business owner's authoring are decisions; an intake that overwrites them destroys a decision and leaves no trace that it did.
+
+#### 5.11.2 Source is not authority
+
+Source records provenance. It does not grant or withhold any capability, does not affect final Offering Public Eligibility, and does not change moderation: a Feed Offering is moderated exactly as a Business one is.
+
+### 5.12 Product Key
+
+An Offering may carry a **Product Key** — a value identifying the product the Offering is an instance of, where such a value exists and is known.
+
+#### 5.12.1 It is a matching hint, not an identity
+
+Offerings that share a Product Key **may be presented together**, so a person comparing the same product across Offerings sees one product with several Offerings rather than several unrelated results.
+
+**A Product Key does not create an entity.** There is no Product record, no Product lifecycle and no Product ownership. Every rule in this document continues to be about the Offering.
+
+#### 5.12.2 Absence is not a defect
+
+An Offering with no Product Key stands alone, and that is a complete and correct presentation. Most Offerings in most Domains will never have one — a property listing and a repair service have no product identifier and are not missing anything.
+
+#### 5.12.3 The platform does not guess
+
+Two Offerings are presented as the same product **only when they carry the same Product Key**. Similar titles, similar attributes and similar prices are not evidence, and grouping on them would put a person in front of a comparison the platform invented.
+
 ---
 
 ## 6. Offering Lifecycle
@@ -293,6 +396,10 @@ The `Universal Publication Minimum` is satisfied when the Offering has:
 Business authorization and Business Moderation Status are separate transition/edit availability gates.
 
 They are not part of the Universal Publication Minimum.
+
+**Price, Source and Product Key are not part of it either.** An Offering may be published with Pricing Kind *Unknown* and no amount, with no Product Key, and with any Source.
+
+> Recorded explicitly in v4.0 because "we have price now, so a published Offering should have one" is the obvious next step and it is wrong. It would make every service Offering unpublishable and every Offering awaiting its first price reading disappear.
 
 ### 6.2 Published
 
@@ -527,6 +634,15 @@ The product minimum includes:
 - the available action-entry set supplied by the applicable owning PRDs.
 
 Protected telephone, email, and external website or contact URL information is not part of the public Business identity set and is not included merely because Offering Presentation is public.
+
+Offering Presentation **may** additionally carry:
+
+- the Pricing Kind, and where *Fixed*, the amount, currency and the instant it was established;
+- the prior amount and the derived reduction, where a prior amount exists;
+- the delivery cost and stock state, where stated;
+- where a Product Key is present, the other Offerings sharing it, ordered by the amount a person would pay.
+
+**Each is present only when the underlying fact is.** The rule above stands: the Presentation does not invent what was not supplied.
 
 The exact information architecture, visual hierarchy, component choice, responsive treatment, and interaction presentation are owned by `UX-0003-offering-detail.md`.
 
@@ -806,6 +922,17 @@ Offering retirement does not permanently delete the Affiliate Destination. The d
 26. PRD-0005 supplies only the authorized Business-management entry.
 27. PRD-0004 owns the person-facing Affiliate Handoff and Completion.
 28. No consumer PRD recalculates final Offering Public Eligibility or Affiliate Destination Handoff Eligibility.
+29. Every Offering has exactly one Pricing Kind.
+30. No Pricing Kind prevents publication.
+31. An amount is accompanied by the instant it was established.
+32. A reduction is derived from two amounts and is never stored.
+33. Price ordering uses the amount a person would pay, including stated delivery.
+34. Every Offering records exactly one Source.
+35. An automated intake may modify only Offerings whose Source is Feed.
+36. Source confers no authority and does not affect eligibility or moderation.
+37. A Product Key groups Offerings for presentation and creates no entity.
+38. Offerings are presented as the same product only when their Product Keys are equal.
+39. The Domain set is open and is extended by Platform administration.
 
 ## 11. Role and Access Boundaries
 

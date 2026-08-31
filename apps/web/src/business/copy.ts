@@ -99,6 +99,57 @@ export const CONTENT = {
   submit: "Kaydet"
 } as const;
 
+/**
+ * Price, stock and product key (PRD-0001 v4.0 §5.10, §5.12).
+ *
+ * The three Kinds are named as three answers rather than as one answer and two
+ * failures. **"Sorulduğunda belirlenir" is not a missing price** — it is what a
+ * service costs before anyone has said what they want — and putting it beside
+ * "Bilinmiyor" in the same list is how a person is told they are different.
+ *
+ * §5.10.2: no Kind blocks publication, so none of these fields is marked
+ * required and the form says nothing about a price being needed.
+ */
+export const PRICING = {
+  amountLabel: "Tutar",
+  currencyLabel: "Para birimi",
+  /**
+   * What the currency box starts at when the Offering has no price yet.
+   *
+   * **A convenience of this form, not a rule of the platform.** PRD-0001 v4.0
+   * §5.10.3 names a currency and deliberately names no set of them, so the
+   * contract checks the shape and nothing anywhere decides that this site is
+   * a one-currency site. A person may type over it.
+   *
+   * Named here rather than written inline because a three-letter code sitting
+   * in a JSX expression reads as untranslated English to `i27`'s detector —
+   * and the detector is right to be suspicious. Widening it a seventh time to
+   * admit an exception would cost more than naming the value.
+   */
+  defaultCurrency: "TRY",
+  deliveryCostHint:
+    "Boş bırakılırsa belirtilmemiş sayılır; 0 ücretsiz demektir.",
+  deliveryCostLabel: "Teslimat ücreti",
+  heading: "Fiyat",
+  kindLabel: "Fiyat türü",
+  kinds: {
+    FIXED: "Belirli bir tutar",
+    ON_REQUEST: "Sorulduğunda belirlenir",
+    UNKNOWN: "Bilinmiyor"
+  },
+  priorAmountHint:
+    "Yalnızca güncel tutardan yüksekse indirim olarak gösterilir.",
+  priorAmountLabel: "Önceki tutar",
+  productKeyHint: `Aynı anahtarı taşıyan ${TERMS.offering.toLocaleLowerCase("tr")}lar tek ürün olarak birlikte gösterilir.`,
+  productKeyLabel: "Ürün anahtarı",
+  stockLabel: "Stok durumu",
+  stocks: {
+    IN_STOCK: "Stokta var",
+    OUT_OF_STOCK: "Stokta yok",
+    UNKNOWN: "Bilinmiyor"
+  }
+} as const;
+
 /** The Affiliate Destination screen (UX-0005 §10). */
 export const DESTINATION = {
   address: "Adres",

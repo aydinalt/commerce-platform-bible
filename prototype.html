@@ -1,0 +1,2073 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>İlanlar — prototip</title>
+<style>
+/*
+ * The visual design foundation.
+ *
+ * Proposed and approved in `docs/design/DESIGN_FOUNDATION_CANDIDATE.md`. This
+ * file is the single owner of every colour, size and spacing value in the
+ * application — a number that appears here appears nowhere else, so changing a
+ * decision is one edit rather than an archaeology exercise.
+ *
+ * ~~The direction is **calm, content-first**.~~ **The Owner replaced it on
+ * 2026-08-24 with a dense listings direction**, which is the sentence below
+ * being taken up rather than ignored:
+ *
+ * > Where density would serve better than calm, this is the wrong foundation
+ * > and should be replaced rather than eroded.
+ *
+ * A Turkish listings site is read by people comparing many things quickly, and
+ * generous whitespace makes that slower — four Offerings on a screen instead of
+ * twelve is three times the scrolling for the same comparison. So the scale is
+ * tighter, the grid is denser and a Listing Card carries more.
+ *
+ * **What did not change is what was never about calm.** Lines rather than
+ * shadows, one accent, no animation, the focus ring, the measured contrast: all
+ * of those are accessibility or restraint rather than spaciousness, and density
+ * is not a reason to give any of them up. The tests that enforce them are
+ * unchanged.
+ *
+ * Every colour pairing below is **measured**, not estimated, and the
+ * measurements are enforced by `tests/i26-design-foundation.test.ts` so they
+ * cannot drift back. The first version of the proposal claimed 3.1:1 for a
+ * control border that measured 1.63:1 — the test exists because a document
+ * cannot fail.
+ *
+ * One thing the proposal asked for is deliberately absent: a webfont. See the
+ * note in `layout.tsx`.
+ */
+
+:root {
+  /* Neutrals. `--border` is decorative; `--border-strong` bounds a control and
+     is therefore held to WCAG 1.4.11's 3:1 rather than to taste. */
+  --surface: #fafafa;
+  --surface-raised: #ffffff;
+  --border: #e3e5e9;
+  --border-strong: #818894;
+  --text: #16202e;
+  --text-muted: #5a6577;
+
+  /* One accent. Colour marks what is interactive or what demands attention; a
+     screen where four things are coloured has said nothing. */
+  --accent: #2c5f8a;
+  --accent-strong: #1f4767;
+  --accent-surface: #eef3f8;
+
+  /* Two states, and only two. There is no success green and no warning amber:
+     this application has three things to say about a state — it worked, it was
+     refused, it needs your attention — and a fourth colour invites a fifth. */
+  --critical: #9b2c2c;
+  --critical-surface: #fbeeee;
+  --notice: #7a5a1e;
+  --notice-surface: #fcf6e9;
+
+  /* Type. 16px body rather than 15px: the browser default, and the size at
+     which a phone will not zoom a focused input. */
+  /* The platform UI face. Not a webfont: see the note in `layout.tsx` — a
+     build-time fetch from Google would make every deployment depend on a third
+     party. This stack costs nothing, cannot shift the layout, and carries the
+     full Turkish set including the dotted and dotless *i*. */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  /*
+   * Tightened for the dense direction. `--text-body` stays at 1rem: it is the
+   * browser default and the size below which a phone zooms a focused input,
+   * which is a usability floor rather than a stylistic choice. Everything above
+   * it comes down, because a 30px page heading on a results list is a heading
+   * competing with the results.
+   */
+  --text-display: 1.5rem;
+  --text-heading: 1.1875rem;
+  --text-subheading: 1.0625rem;
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+
+  /* Space, 4px base. Nothing between steps — the scale exists to stop 13px and
+     27px appearing. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius: 4px;
+  --radius-sm: 2px;
+  /*
+   * Wider, because the page is now a grid of Offerings rather than a column of
+   * prose. `--measure` keeps its old job on the surfaces that *are* prose — a
+   * form, a correction notice, an error — where 46rem is still the width a line
+   * stays readable at.
+   */
+  --measure: 46rem;
+  --measure-wide: 76rem;
+
+  /* The header's own height, so the skip link and the sticky offset agree
+     without either of them guessing. */
+  --header-height: 3.25rem;
+
+  color-scheme: light;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+/*
+ * Layout.
+ *
+ * Mobile-first. **`--measure` is for prose and `--measure-wide` is for lists**:
+ * a form, a correction notice and an error page stay at the width a line is
+ * readable at, and a page whose content is a grid of Offerings or a table takes
+ * the room it needs. Before the dense direction only tables got the wider one.
+ *
+ * `min-height` is gone. It belonged to a `main` that was the whole document; it
+ * now sits between a header and a footer, and forcing it to a full viewport
+ * pushed the footer off every short page.
+ */
+main {
+  display: grid;
+  justify-items: center;
+  padding: var(--space-4);
+}
+
+main > * {
+  max-width: var(--measure);
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  main {
+    padding: var(--space-6);
+  }
+}
+
+@media (min-width: 1120px) {
+  main:has(table) > *,
+  main:has(.listing-cards) > *,
+  main:has(.category-choices) > * {
+    max-width: var(--measure-wide);
+  }
+}
+
+/* Content pages start at the top; a single form is centred. */
+main:has(.listing-cards),
+main:has(.category-choices),
+main:has(table) {
+  align-content: start;
+}
+
+/* Typography */
+h1 {
+  font-size: var(--text-display);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 var(--space-4);
+}
+
+h2 {
+  font-size: var(--text-heading);
+  font-weight: 600;
+  line-height: 1.3;
+  margin: var(--space-8) 0 var(--space-3);
+}
+
+h3 {
+  font-size: var(--text-subheading);
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 var(--space-2);
+}
+
+p {
+  margin: 0 0 var(--space-4);
+}
+
+a {
+  color: var(--accent);
+}
+
+a:hover {
+  color: var(--accent-strong);
+}
+
+/*
+ * Focus, on everything, never removed.
+ *
+ * I9 established focus visibility across 22 routes and this must not quietly
+ * undo it. The ring is the accent rather than the text colour so it reads as
+ * "this is interactive" rather than as a border that happens to be there.
+ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Button — primary, secondary, destructive */
+button {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--surface-raised);
+  cursor: pointer;
+  font: inherit;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* Secondary: the same shape, carrying no colour of its own. Category choices,
+   filters and in-table actions are all of these. */
+nav button,
+.comparison thead button,
+.preparation-notice button,
+.category-choices button {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+nav button:hover:not(:disabled),
+.comparison thead button:hover:not(:disabled),
+.preparation-notice button:hover:not(:disabled),
+.category-choices button:hover:not(:disabled) {
+  background: var(--accent-surface);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+/* Field — label, control, hint, error */
+label {
+  display: block;
+  font-size: var(--text-small);
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+input,
+select,
+textarea {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  width: 100%;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--critical);
+  border-width: 2px;
+}
+
+[role="alert"] {
+  color: var(--critical);
+  margin: var(--space-2) 0 0;
+}
+
+[role="status"] {
+  margin: var(--space-2) 0 0;
+}
+
+/* Badge — lifecycle and moderation status, always with its own word beside it */
+.badge {
+  background: var(--accent-surface);
+  border-radius: var(--radius-sm);
+  color: var(--accent-strong);
+  display: inline-block;
+  font-size: var(--text-small);
+  padding: var(--space-1) var(--space-2);
+}
+
+.badge-notice {
+  background: var(--notice-surface);
+  color: var(--notice);
+}
+
+.badge-critical {
+  background: var(--critical-surface);
+  color: var(--critical);
+}
+
+/* Search entry */
+.search-entry-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.search-entry-row input {
+  flex: 1;
+}
+
+.search-entry-row button {
+  flex: none;
+}
+
+/* Listing cards */
+.listing-cards,
+.category-choices,
+.decision-entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.listing-cards {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/*
+ * The grid is told a minimum rather than a column count, and needs no
+ * breakpoint at all.
+ *
+ * **The first version wrapped this in `@media (min-width: 480px)` and
+ * `i26-design-foundation` failed on "three breakpoints and no others".** The
+ * query was not just forbidden, it was pointless: `minmax(15rem, 1fr)` already
+ * collapses to one column below about 15rem plus the gap, which is every phone.
+ * `auto-fill` follows the room available, so the number of columns is a
+ * consequence of the width rather than a fourth layout to maintain.
+ *
+ * 15rem is the width at which a Listing Card still holds a 4:3 visual, a
+ * two-line title and two facts without any of them wrapping badly. On a wide
+ * screen that is five across, which is the density the Owner asked for on
+ * 2026-08-24.
+ */
+.listing-cards {
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+
+.listing-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /*
+   * The visual runs to the card's edge and only the text is inset. A picture
+   * with a margin around it reads as an illustration; one that fills the top of
+   * the card reads as the thing being listed, which is what it is.
+   */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.listing-card > :not(.listing-card-visual) {
+  padding-inline: var(--space-3);
+}
+
+.listing-card > :last-child {
+  padding-bottom: var(--space-3);
+}
+
+.listing-card h2,
+.listing-card h3 {
+  /*
+   * A card title is not a page heading and should not be set like one. The
+   * element stays `h2` because I9 fixed the heading order and a card sits
+   * directly under the page's `h1`; only its size comes down.
+   */
+  font-size: var(--text-body);
+  line-height: 1.35;
+  margin: var(--space-3) 0 var(--space-1);
+}
+
+.listing-card a {
+  color: var(--text);
+}
+
+.listing-card a:hover {
+  color: var(--accent-strong);
+}
+
+.listing-card-facts {
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--text-small);
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.category-choices,
+.decision-entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.category-path {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin-top: 0;
+}
+
+.zero-results {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+}
+
+/* Attribute list */
+.attributes {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.attributes div {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding-bottom: var(--space-2);
+}
+
+.attributes dt {
+  color: var(--text-muted);
+}
+
+.attributes dd {
+  margin: 0;
+  text-align: right;
+}
+
+.attribute-absent dd {
+  color: var(--text-muted);
+}
+
+/*
+ * Tables, and what they become on a phone.
+ *
+ * Below `--bp-md` every table becomes a stack of labelled rows rather than
+ * scrolling sideways. A moderation queue a person cannot read on a phone is a
+ * queue that does not get worked — and horizontal scroll inside a page is the
+ * one gesture people reliably fail to discover.
+ */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-3) var(--space-2);
+  text-align: left;
+  vertical-align: top;
+}
+
+thead th {
+  border-bottom: 2px solid var(--border-strong);
+  font-size: var(--text-small);
+}
+
+tbody th {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.comparison thead a {
+  color: var(--text);
+  display: block;
+  font-weight: 600;
+}
+
+.comparison-business {
+  color: var(--text-muted);
+  display: block;
+  font-weight: 400;
+  margin-bottom: var(--space-1);
+}
+
+@media (max-width: 767px) {
+  .comparison thead,
+  .stacking thead {
+    border: 0;
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+  }
+
+  .comparison tr,
+  .stacking tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: block;
+    margin-bottom: var(--space-3);
+    padding: var(--space-2);
+  }
+
+  .comparison td,
+  .stacking td {
+    border: 0;
+    display: block;
+    padding: var(--space-1) 0;
+  }
+}
+
+/* Notices */
+.preparation-notice {
+  background: var(--accent-surface);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+}
+
+.preparation-notice p {
+  margin: 0 0 var(--space-2);
+}
+
+article {
+  max-width: var(--measure);
+}
+
+/*
+ * Visuals (I30).
+ *
+ * Every address is somebody else's, so nothing here may depend on the image
+ * arriving: `aspect-ratio` reserves the box before the bytes do, which keeps a
+ * slow or dead image from moving the text underneath it. That is the whole
+ * reason these rules exist rather than being left to the browser.
+ */
+.listing-card-visual,
+.offering-visuals img,
+.business-logo {
+  /* A broken image is a broken image, not a stretched one. */
+  object-fit: cover;
+  /* Borders rather than shadows, like everything else in this file. */
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: block;
+}
+
+.listing-card-visual {
+  aspect-ratio: 4 / 3;
+  /* Edge to edge: the card owns the inset, and the border here would draw a
+     second line on top of the card's own. */
+  border: 0;
+  border-radius: 0;
+  margin-bottom: var(--space-3);
+  width: 100%;
+}
+
+.offering-visuals {
+  margin: 0 0 var(--space-6);
+}
+
+.offering-visuals ul {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.offering-visuals img {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+}
+
+/* The set becomes a row once there is room for one. Below this it stays a
+   single column, because two images side by side on a phone are two images
+   nobody can see. */
+@media (min-width: 768px) {
+  .offering-visuals ul {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* A logo is an identifier rather than content, so it is bounded rather than
+   filling its column — and `contain`, because a logo cropped to a square is a
+   different logo. */
+.business-logo {
+  height: auto;
+  margin-bottom: var(--space-2);
+  max-height: 3rem;
+  max-width: 10rem;
+  object-fit: contain;
+  width: auto;
+}
+
+.field-hint {
+  color: var(--text-muted);
+  display: block;
+  font-size: var(--text-small);
+  margin-top: var(--space-1);
+}
+
+/*
+ * Resolving (I32).
+ *
+ * The shapes stand where content will be, so the page does not jump when it
+ * arrives. They are `aria-hidden` in the markup: grey rectangles say nothing a
+ * screen reader can use, and the sentence above them is what carries the state.
+ */
+.skeleton-stack {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--measure);
+}
+
+.skeleton {
+  background: var(--border);
+  border-radius: var(--radius);
+  height: 1.25rem;
+}
+
+.skeleton:nth-child(2) {
+  width: 85%;
+}
+
+.skeleton:nth-child(3) {
+  width: 60%;
+}
+
+/*
+ * **Still, because the approved design foundation says so.**
+ *
+ * The first version of this pulsed, and `i26-design-foundation` failed on
+ * "declares no animation" — a constraint the Owner approved on 2026-08-21 for a
+ * stated reason: *"motion needs a `prefers-reduced-motion` story that would
+ * otherwise be discovered by someone it harms."*
+ *
+ * The reasoning survives contact with this case. A skeleton that pulses says
+ * nothing a still one does not; the sentence above it carries the state and
+ * these shapes carry where the content will be. Adding motion would have been
+ * the direction eroding rather than being replaced, which is what §3 of that
+ * document asks to be caught — and it was, by a test rather than by memory.
+ */
+
+/*
+ * The site shell (I33).
+ *
+ * **Twenty-two routes existed and there was no site**: no header, no
+ * navigation, no footer, no brand. Every page was a bare `main`, correct in
+ * every rule it enforced and belonging to nothing.
+ */
+.skip-link {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  left: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  position: absolute;
+  top: var(--space-2);
+  z-index: 2;
+  /*
+   * Off-screen rather than `display: none`, because a hidden element is not
+   * focusable and the whole point is that it can be reached by keyboard. It
+   * comes back the moment it has focus (WCAG 2.4.1).
+   */
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.site-header {
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header-inner {
+  align-items: center;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: var(--measure-wide);
+  min-height: var(--header-height);
+  padding: 0 var(--space-4);
+}
+
+/* A wordmark, not a logo. There is no mark to place, and inventing one would
+   be design work on an asset that has to be right. */
+.brand {
+  color: var(--text);
+  font-size: var(--text-heading);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-header nav {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.site-header nav a {
+  font-size: var(--text-small);
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin-top: var(--space-12);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* ─── The management surfaces (I48) ────────────────────────────────────────
+ *
+ * Twenty of twenty-two routes carried no `className` at all. That was not an
+ * oversight: the public surfaces got component classes as they were built, and
+ * the seventeen an owner or an Admin actually works in — the Business
+ * Dashboard, every Admin screen, sign-in, registration and recovery — were left
+ * as headings, paragraphs, forms and tables on a bare page.
+ *
+ * **Nothing below is a new direction.** The Owner replaced "calm" with "dense
+ * listings" on 2026-08-24 and listed what survives regardless: lines rather
+ * than shadows, one accent and two states, no animation, the focus ring, the
+ * measured contrast, `min-height: 2.75rem` on every control. Every rule here
+ * is built from tokens that already existed, and `i26-design-foundation`
+ * reads this whole file, so a shadow, an animation or a fourth breakpoint
+ * added here fails that suite rather than this one.
+ *
+ * **No page file is touched.** The markup is already semantic — `main`,
+ * `section`, `h1`, `form`, `table`, `ul` — so the scope arrives through six
+ * one-element segment layouts and everything else is a selector. Seventeen page
+ * edits would have been seventeen chances to style one of them differently.
+ */
+
+/*
+ * A workspace is wide because its content is a queue, a table or an inventory,
+ * and `--measure` exists for prose. `--measure-wide` is I33's, unchanged.
+ */
+.workspace main > * {
+  max-width: var(--measure-wide);
+}
+
+/*
+ * The page header: a title, whatever sits beside it, and a rule. The rule is
+ * the density direction doing the work a margin would otherwise do — it
+ * separates without spending vertical space.
+ */
+.workspace h1 {
+  border-bottom: 2px solid var(--border-strong);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+}
+
+/*
+ * A panel. `section` already means "a part of this page with its own heading"
+ * in every one of these files, so it needs no class to become one — and a class
+ * would have to be added seventeen times and forgotten once.
+ */
+.workspace section {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+}
+
+.workspace section > :first-child {
+  margin-top: 0;
+}
+
+.workspace section > :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * A section's own heading, marked by a rule the width of the panel rather than
+ * by size — the type scale came down for density and cannot be spent here.
+ */
+.workspace section > h2 {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+}
+
+/*
+ * Forms are two-column where there is room and one where there is not, at the
+ * breakpoint that already exists. A field that must not be halved says so with
+ * `.field-wide`; nothing else has to know.
+ */
+.workspace form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .workspace form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .workspace form > button,
+  .workspace form > fieldset,
+  .workspace form > table,
+  .workspace form > .field-wide,
+  .workspace form > [role="alert"],
+  .workspace form > [role="status"] {
+    grid-column: 1 / -1;
+  }
+}
+
+/*
+ * A button in a form sits at the start rather than stretching, because a
+ * full-width submit inside a grid column is a button pretending to be a banner.
+ */
+.workspace form > button {
+  justify-self: start;
+}
+
+/*
+ * An unclassed list in a workspace is a list of records — cases, destinations,
+ * categories — so it is drawn as rows. `:not([class])` keeps it away from every
+ * list that already knows what it is, `.listing-cards` above all.
+ */
+.workspace ul:not([class]) {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workspace ul:not([class]) > li {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+}
+
+.workspace ul:not([class]) > li:last-child {
+  border-bottom: 0;
+}
+
+.workspace ul:not([class]) > li > :first-child {
+  margin-top: 0;
+}
+
+.workspace ul:not([class]) > li > :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * A table inside a panel loses the panel's padding on its own edges, so the
+ * header rule runs the full width and the rows line up with the heading above
+ * them.
+ */
+.workspace section > table {
+  margin-left: calc(var(--space-4) * -1);
+  width: calc(100% + var(--space-4) * 2);
+}
+
+.workspace section > table th:first-child,
+.workspace section > table td:first-child {
+  padding-left: var(--space-4);
+}
+
+.workspace section > table th:last-child,
+.workspace section > table td:last-child {
+  padding-right: var(--space-4);
+}
+
+/*
+ * The identity routes are the opposite shape: one short form, read once, by
+ * somebody who is not working. They keep the prose measure and sit in a panel
+ * of their own so the page is not a form floating on a background.
+ */
+.auth main > * {
+  max-width: var(--measure);
+}
+
+.auth main form {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.auth main form > button {
+  justify-self: start;
+}
+
+/* ─── The public page architecture (I49) ───────────────────────────────────
+ *
+ * I48 gave the seventeen management surfaces a visual system and left the
+ * public side as the Owner's next choice. The components there were never the
+ * problem: `.listing-card` has thirteen rules, `.comparison` four,
+ * `.category-choices` its own button treatment. What the public routes lacked
+ * was the layer *above* the components — the block a heading and a list of
+ * buttons sit in, and the rule that separates a results heading from the
+ * results.
+ *
+ * **A public block is not a workspace panel.** A panel is a container for work;
+ * these are entrances, and a results grid boxed inside a card reads as a widget
+ * rather than as the page. So the treatment is a rule and a tint rather than a
+ * border on four sides — lines doing the work, which is the direction's own
+ * instruction.
+ */
+
+/*
+ * Home's entrance. Narrower than the grid on purpose: the search field is one
+ * decision and a 76rem-wide input invites nothing.
+ */
+.entry {
+  margin: 0 auto;
+  max-width: var(--measure);
+}
+
+/*
+ * The "or start from a category" block, and Discovery's narrowing and widening
+ * blocks. One pattern, three places — they are the same act.
+ */
+.entry-nav {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+}
+
+/*
+ * The heading reads as a label rather than as a section title, because what
+ * follows it is a row of choices rather than prose. Size stays on the scale;
+ * only weight and colour change.
+ */
+.entry-nav > h2 {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: 0 0 var(--space-3);
+}
+
+/*
+ * A results heading carries the same rule the workspace gives `h1`, so the two
+ * halves of the product read as one thing. It is the only structural idea
+ * borrowed across the boundary, and it is borrowed deliberately: a person who
+ * signs in should not feel they have arrived somewhere else.
+ */
+.results-heading {
+  border-bottom: 2px solid var(--border-strong);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+}
+
+/* ─── The Decision flow's stages (I50) ─────────────────────────────────────
+ *
+ * I49 closed the public entrances and wrote down what it had not touched: the
+ * Decision flow, *the densest screen in the product*, whose sections were
+ * separated by margin alone.
+ *
+ * There are five, and they are **stages rather than panels** — a person moves
+ * through them in one sitting and needs to see where they are, not to work
+ * inside each one. So the treatment is a rule between them, which is the same
+ * answer I49 gave the public entrances and for the same reason: a card around a
+ * step makes the step look optional.
+ */
+.flow section {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+}
+
+/*
+ * The first stage has nothing above it to be separated from, and a rule under
+ * the page heading would be the second horizontal line in eighty pixels.
+ */
+.flow section:first-of-type {
+  border-top: 0;
+  margin-top: var(--space-4);
+  padding-top: 0;
+}
+
+.flow section > h2 {
+  margin-top: 0;
+}
+
+/* ─── Colour marks the message, not the container it arrived in (I50) ──────
+ *
+ * `[role="alert"]` sets `color: var(--critical)`, which is right for the
+ * forty-three places it lands on a `<p>` and wrong for the **four** where it
+ * lands on a container: three `div`s wrapping a list of shortfalls, and the
+ * Decision flow's "Devam edilemiyor" `section`, whose heading, explanation and
+ * list of recoveries were **all** painted red.
+ *
+ * The direction's own words: *colour marks what is interactive or what demands
+ * attention; a screen where four things are coloured has said nothing.* A block
+ * where everything is coloured has said it four times.
+ *
+ * So a container announces itself with a tinted surface and a rule, and keeps
+ * the critical ink for the sentence that is actually the refusal. The pairing
+ * `--text` on `--critical-surface` is added to `i26-design-foundation`'s
+ * contrast list rather than assumed — it is a new pairing, and every other one
+ * in this palette is measured.
+ */
+div[role="alert"],
+section[role="alert"] {
+  background: var(--critical-surface);
+  border-left: 2px solid var(--critical);
+  color: var(--text);
+  padding: var(--space-3) var(--space-4);
+}
+
+div[role="alert"] > :first-child,
+section[role="alert"] > h2 {
+  color: var(--critical);
+  margin-top: 0;
+}
+
+div[role="alert"] > :last-child,
+section[role="alert"] > :last-child {
+  margin-bottom: 0;
+}
+
+
+/* ===== The refreshed direction (candidate). Scoped under .refresh, so
+   removing one class returns the page to what the application ships. ===== */
+/*
+ * The refreshed direction — a candidate, not the shipped stylesheet.
+ *
+ * The Owner asked on 2026-08-30 for a more modern and more user-friendly
+ * design, and chose **"yönü tazele"**: a measured modernisation rather than a
+ * new direction from scratch. This is that proposal, written as a layer that
+ * sits *on top of* `apps/web/src/app/globals.css` rather than replacing it, so
+ * the two can be compared side by side in `prototype.html` before anything is
+ * decided.
+ *
+ * Every rule is scoped under `.refresh`. Removing that one class returns the
+ * page to exactly what the application ships today — which is the point: the
+ * proposal is legible as a diff rather than as a rewrite.
+ *
+ * ## What this asks the Owner to give up
+ *
+ * Three constraints in `tests/i26-design-foundation.test.ts` are relaxed, and
+ * each was there for a reason that has to be answered rather than waved past:
+ *
+ * 1. **`box-shadow` was forbidden** — "lines rather than shadows", because
+ *    elevation signals depth and a list of listings has no depth. The answer:
+ *    the shadows here are not depth, they are *separation* — two layered
+ *    shadows at 4% and 6% alpha, closer to a hairline that fades than to a
+ *    raised panel. A card still reads as flat; it reads as flat and detached
+ *    from the page instead of flat and drawn on it.
+ * 2. **Animation was forbidden** because motion needs a
+ *    `prefers-reduced-motion` story and the alternative to writing one is not
+ *    writing motion. The answer: the story is written, at the bottom of this
+ *    file, and it removes every transition rather than shortening it.
+ * 3. **One accent and two states** — a fourth colour invites a fifth. The
+ *    answer: `--cta` is not a fourth *state*, it is the one action colour, used
+ *    on exactly one control per screen. The state vocabulary is still two.
+ *
+ * ## What is not given up
+ *
+ * The focus ring, the 2.75rem control floor, the three breakpoints, `lang="tr"`
+ * and the measured contrast. **Every colour below was measured, not chosen by
+ * eye** — the figures are in the comments and none is an estimate.
+ */
+
+/* ------------------------------------------------------------------ tokens */
+
+.refresh {
+  /*
+   * Neutrals, cooler and one step deeper. `--text` at #111827 measures
+   * 16.69:1 on the page and 17.74:1 on a card; the old #16202e measured 13.4.
+   * Deeper ink is most of what reads as "modern" before a single shape changes.
+   */
+  --surface: #f7f8fa;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef0f4;
+  --border: #e6e8ec;
+  --border-strong: #7e8593; /* 3.49:1 — above 1.4.11's 3:1 for a control edge */
+  --text: #111827; /* 16.69:1 */
+  --text-muted: #5b6472; /* 5.63:1 */
+
+  /* The accent keeps its family. A brand does not become modern by changing
+     hue; #1f5f9e is the same blue, more saturated. 6.20:1. */
+  --accent: #1f5f9e;
+  --accent-strong: #16456f; /* 9.34:1 */
+  --accent-surface: #eef4fb;
+
+  /*
+   * The one action colour, and the argument for it.
+   *
+   * It is not a fourth state. States still number two. This is the colour of
+   * the single thing the screen wants pressed — *Ara*, *Karara başla*,
+   * *Kaydet* — and it is warm because the accent is cool, so the primary
+   * action is the only warm thing in view and cannot be missed.
+   *
+   * #a8480a measures 5.50:1 as ink and 5.84:1 behind white text. #b4530f was
+   * the first choice and measured 5.02 behind white, which passes and leaves
+   * no margin; this one leaves some.
+   */
+  --cta: #a8480a;
+  --cta-strong: #8c3c08;
+
+  --critical: #a12b2b; /* 6.82:1, and 6.41:1 on its own surface */
+  --critical-surface: #fdf2f2;
+  --notice: #8a6212; /* 5.15:1 */
+  --notice-surface: #fdf8ec;
+
+  /* Rounding. 12px on a card and 8px on a control is the current idiom; the
+     old 4px reads as a 2016 admin panel more than any other single value. */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-pill: 999px;
+
+  /*
+   * Elevation, deliberately small.
+   *
+   * Two layers: a 1px contact shadow that does the job the border used to do,
+   * and a wide soft one at 6% that lifts the card off the page. Nothing here
+   * is above 8% alpha, and nothing is offset more than 2px vertically at rest.
+   */
+  --lift-1: 0 1px 2px rgba(17, 24, 39, 0.04), 0 1px 3px rgba(17, 24, 39, 0.06);
+  --lift-2: 0 2px 4px rgba(17, 24, 39, 0.04), 0 8px 20px rgba(17, 24, 39, 0.08);
+
+  --motion: 140ms cubic-bezier(0.2, 0, 0.2, 1);
+
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------------- shell */
+
+.refresh .site-header {
+  backdrop-filter: saturate(1.4) blur(8px);
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.refresh .brand {
+  color: var(--text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.refresh .site-header nav a {
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  padding: var(--space-2) var(--space-3);
+  transition: background var(--motion), color var(--motion);
+}
+
+.refresh .site-header nav a:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.refresh .site-footer {
+  background: transparent;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------- typography */
+
+.refresh h1,
+.refresh h2,
+.refresh h3 {
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+/* The page heading gets its size back. I33 brought the scale down for density,
+   and density is about the *list*, not about the one line naming the page. */
+.refresh main > h1,
+.refresh .results-heading,
+.refresh article > h1 {
+  font-size: 1.75rem;
+}
+
+/* --------------------------------------------------------------- controls */
+
+.refresh button,
+.refresh input,
+.refresh select,
+.refresh textarea {
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--motion),
+    border-color var(--motion),
+    box-shadow var(--motion);
+}
+
+/*
+ * The primary action, and there is one per screen.
+ *
+ * A filled warm button among cool links is the clearest hierarchy available
+ * without adding a shape nobody has seen before.
+ */
+.refresh .search-entry-row button,
+.refresh form > button[type="submit"],
+.refresh .workspace form > button,
+.refresh .auth main form > button,
+.refresh .decision-entries > li:first-child button {
+  background: var(--cta);
+  border-color: var(--cta);
+  box-shadow: var(--lift-1);
+  color: #ffffff; /* 5.84:1 */
+  font-weight: 600;
+}
+
+.refresh .search-entry-row button:hover:not(:disabled),
+.refresh form > button[type="submit"]:hover:not(:disabled),
+.refresh .workspace form > button:hover:not(:disabled),
+.refresh .auth main form > button:hover:not(:disabled),
+.refresh .decision-entries > li:first-child button:hover:not(:disabled) {
+  background: var(--cta-strong);
+  border-color: var(--cta-strong);
+}
+
+/* Secondary controls read as quiet chips rather than as boxes. */
+.refresh .category-choices button,
+.refresh .entry-nav button,
+.refresh .preparation-notice button,
+.refresh .comparison thead button {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--lift-1);
+  color: var(--text);
+}
+
+.refresh .category-choices button:hover:not(:disabled),
+.refresh .entry-nav button:hover:not(:disabled) {
+  background: var(--accent-surface);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.refresh input,
+.refresh select,
+.refresh textarea {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+}
+
+.refresh input:focus-visible,
+.refresh textarea:focus-visible,
+.refresh select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-surface);
+}
+
+/* ---------------------------------------------------------------- entrance */
+
+.refresh .entry {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1);
+  padding: var(--space-8);
+}
+
+.refresh .search-entry h1 label {
+  font-size: 1.75rem;
+}
+
+.refresh .search-entry-row input {
+  font-size: 1.0625rem;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ------------------------------------------------------------ listing card */
+
+.refresh .listing-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1);
+  overflow: hidden;
+  padding: 0 0 var(--space-4);
+  transition:
+    box-shadow var(--motion),
+    transform var(--motion),
+    border-color var(--motion);
+}
+
+.refresh .listing-card:hover {
+  border-color: #d6dae1;
+  box-shadow: var(--lift-2);
+  transform: translateY(-2px);
+}
+
+/*
+ * Image-forward, which is the single largest usability change here.
+ *
+ * A listings site where the visual is optional and unstyled makes every card
+ * look the same at a glance, and glancing is what the page is for. The ratio
+ * box means a card with no visual and a card with one are the same height, so
+ * the grid does not become a staircase.
+ */
+.refresh .listing-card-visual,
+.refresh .listing-card .visual-placeholder {
+  aspect-ratio: 4 / 3;
+  background: var(--surface-sunken);
+  border-radius: 0;
+  display: block;
+  height: auto;
+  margin: 0;
+  object-fit: cover;
+  width: 100%;
+}
+
+.refresh .listing-card > :not(.listing-card-visual):not(.visual-placeholder) {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.refresh .listing-card h2,
+.refresh .listing-card h3 {
+  font-size: 1rem;
+  line-height: 1.35;
+  margin-top: var(--space-3);
+}
+
+.refresh .listing-card a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.refresh .listing-card a:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+.refresh .listing-card-facts {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+/* A denser grid, because the cards now carry a visual and can be narrower. */
+.refresh .listing-cards {
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+
+/* ---------------------------------------------------------------- toolbar */
+
+/*
+ * The filters follow the person down the page.
+ *
+ * On a results list the narrowing controls are needed *after* scrolling, which
+ * is exactly when the old layout had scrolled them away.
+ */
+.refresh .results-heading {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.refresh .entry-nav {
+  background: rgba(247, 248, 250, 0.9);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  border-top: 0;
+  margin-bottom: var(--space-6);
+  padding: var(--space-3) 0;
+  position: sticky;
+  top: var(--header-height);
+  z-index: 4;
+}
+
+.refresh .entry-nav > h2 {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin-bottom: var(--space-2);
+}
+
+.refresh .entry-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ------------------------------------------------------------------ panels */
+
+.refresh .workspace section,
+.refresh .auth main form,
+.refresh .zero-results,
+.refresh .preparation-notice {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1);
+  padding: var(--space-6);
+}
+
+.refresh .workspace section > h2 {
+  border-bottom: 1px solid var(--border);
+  font-size: 1.0625rem;
+}
+
+.refresh .workspace h1 {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.refresh .workspace ul:not([class]) {
+  border: 0;
+}
+
+.refresh .workspace ul:not([class]) > li {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-4) 0;
+}
+
+/* ------------------------------------------------------------------ badges */
+
+.refresh .badge {
+  align-items: center;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  font-weight: 600;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+}
+
+.refresh .badge::before {
+  background: currentColor;
+  border-radius: 50%;
+  content: "";
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+/* ------------------------------------------------------------------ alerts */
+
+.refresh div[role="alert"],
+.refresh section[role="alert"] {
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-6);
+}
+
+/* ------------------------------------------------------------- the flow */
+
+.refresh .flow section {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--lift-1);
+  margin-top: var(--space-4);
+  padding: var(--space-6);
+}
+
+.refresh .flow section:first-of-type {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-6);
+}
+
+/* ------------------------------------------------------------------ tables */
+
+.refresh table {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border-spacing: 0;
+  box-shadow: var(--lift-1);
+  overflow: hidden;
+}
+
+.refresh thead th {
+  background: var(--surface-sunken);
+}
+
+/* ------------------------------------------------------------------ motion */
+
+/*
+ * The story the original direction said had to be written before any motion
+ * was added. It is written, and it removes rather than shortens: a person who
+ * has asked their system for less motion gets none, not a faster version.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .refresh *,
+  .refresh *::before,
+  .refresh *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .refresh .listing-card:hover {
+    transform: none;
+  }
+}
+
+
+/* --- Prototype chrome. Not part of the application. --- */
+.proto-bar {
+  background: #16202e;
+  color: #fafafa;
+  padding: var(--space-3) var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.proto-bar h1 { border: 0; color: #fafafa; font-size: 1rem; margin: 0 0 var(--space-2); }
+.proto-bar p { color: #b8c0cc; font-size: var(--text-small); margin: 0 0 var(--space-3); }
+.proto-tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.proto-tabs button {
+  background: transparent;
+  border: 1px solid #3c4759;
+  color: #e3e5e9;
+  font-size: var(--text-small);
+  min-height: 2rem;
+  padding: var(--space-1) var(--space-3);
+}
+.proto-tabs button[aria-current="true"] { background: #fafafa; border-color: #fafafa; color: #16202e; }
+.proto-tabs button:hover:not([aria-current="true"]) { background: #22303f; color: #fff; }
+.proto-widths { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.proto-sep { background: #3c4759; height: 1.25rem; width: 1px; }
+.screen { display: none; }
+.screen.is-active { display: block; }
+.frame { margin: 0 auto; }
+body.w-mobile .frame { max-width: 375px; }
+body.w-tablet .frame { max-width: 768px; }
+.frame { border-left: 1px solid var(--border); border-right: 1px solid var(--border); min-height: 60vh; }
+.proto-note {
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: var(--space-8) auto 0;
+  max-width: var(--measure);
+  padding: var(--space-4);
+}
+</style>
+</head>
+<body>
+<div class="proto-bar">
+  <h1>İlanlar — prototip</h1>
+  <p>Sağdaki iki düğme onaylı yön ile tazelenmiş yön arasında geçiş yapar. Her ikisi de uygulamanın kendi CSS dosyasından üretildi; içerik temsilî.</p>
+  <div class="proto-tabs" role="tablist">
+    <button data-screen="home" aria-current="true" type="button">Ana sayfa</button>
+    <button data-screen="results" type="button">Sonuçlar</button>
+    <button data-screen="offering" type="button">İlan</button>
+    <button data-screen="compare" type="button">Karşılaştırma</button>
+    <button data-screen="decision" type="button">Karar</button>
+    <button data-screen="dashboard" type="button">İşletme panosu</button>
+    <button data-screen="information" type="button">İşletme bilgileri</button>
+    <button data-screen="login" type="button">Giriş</button>
+    <button data-screen="admin" type="button">Yönetici</button>
+  </div>
+  <div class="proto-widths proto-tabs">
+    <button data-width="" aria-current="true" type="button">Masaüstü</button>
+    <button data-width="w-tablet" type="button">Tablet 768</button>
+    <button data-width="w-mobile" type="button">Telefon 375</button>
+    <span class="proto-sep"></span>
+    <button data-dir="refresh" aria-current="true" type="button">Tazelenmiş yön</button>
+    <button data-dir="" type="button">Mevcut yön</button>
+  </div>
+</div>
+
+
+<section class="screen" id="home" data-title="Ana sayfa">
+  <div class="frame ">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main>
+  <section class="entry">
+    <form class="search-entry">
+      <h1><label for="q">Bugün ne yapmak istiyorsunuz?</label></h1>
+      <div class="search-entry-row">
+        <input id="q" type="text" value="ikinci el elektrikli bisiklet" />
+        <button type="button">Ara</button>
+      </div>
+    </form>
+    <nav aria-labelledby="be" class="entry-nav">
+      <h2 id="be">Ya da bir kategoriden başlayın</h2>
+      <form><ul>
+        <li><button type="button">Ulaşım</button></li>
+        <li><button type="button">Emlak</button></li>
+        <li><button type="button">Teknoloji</button></li>
+      </ul></form>
+    </nav>
+  </section>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<section class="screen" id="results" data-title="Sonuçlar">
+  <div class="frame ">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main>
+  <section>
+    <h1 class="results-heading">“ikinci el elektrikli bisiklet” için sonuçlar</h1>
+    <p class="category-path">Ulaşım › Bisiklet › Elektrikli bisiklet</p>
+    <nav aria-labelledby="nb" class="entry-nav">
+      <h2 id="nb">Aramayı bir kategoriye daraltın</h2>
+      <form><ul>
+        <li><button type="button">Elektrikli bisiklet</button></li>
+        <li><button type="button">Katlanır bisiklet</button></li>
+        <li><button type="button">Yol bisikleti</button></li>
+      </ul></form>
+    </nav>
+    <ul class="listing-cards">
+      
+<li class="listing-card">
+  <img alt="" class="listing-card-visual" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%238fa6bd%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%235d7f9e%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22url(%2523g)%22%2F%3E%3Ccircle%20cx%3D%22300%22%20cy%3D%2290%22%20r%3D%22120%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.10%22%2F%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%22240%22%20r%3D%2290%22%20fill%3D%22%23000000%22%20opacity%3D%220.06%22%2F%3E%3C%2Fsvg%3E" />
+  <h2><a href="#offering">Kentsel elektrikli bisiklet, 2023 model</a></h2>
+  <p class="listing-card-facts">
+    <span>Elektrikli bisiklet</span><span aria-hidden="true">·</span><span>Pedal Atölyesi</span>
+  </p>
+</li>
+      
+<li class="listing-card">
+  <img alt="" class="listing-card-visual" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23a9b6a2%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%237d9179%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22url(%2523g)%22%2F%3E%3Ccircle%20cx%3D%22300%22%20cy%3D%2290%22%20r%3D%22120%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.10%22%2F%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%22240%22%20r%3D%2290%22%20fill%3D%22%23000000%22%20opacity%3D%220.06%22%2F%3E%3C%2Fsvg%3E" />
+  <h2><a href="#offering">Katlanır elektrikli bisiklet, 40 km menzil</a></h2>
+  <p class="listing-card-facts">
+    <span>Elektrikli bisiklet</span><span aria-hidden="true">·</span><span>Şehir Bisiklet</span>
+  </p>
+</li>
+      
+<li class="listing-card">
+  <img alt="" class="listing-card-visual" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23bdaa9a%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%239c8570%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22url(%2523g)%22%2F%3E%3Ccircle%20cx%3D%22300%22%20cy%3D%2290%22%20r%3D%22120%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.10%22%2F%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%22240%22%20r%3D%2290%22%20fill%3D%22%23000000%22%20opacity%3D%220.06%22%2F%3E%3C%2Fsvg%3E" />
+  <h2><a href="#offering">Kargo elektrikli bisiklet, çift sepetli</a></h2>
+  <p class="listing-card-facts">
+    <span>Elektrikli bisiklet</span><span aria-hidden="true">·</span><span>Pedal Atölyesi</span>
+  </p>
+</li>
+      
+<li class="listing-card">
+  <img alt="" class="listing-card-visual" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%239fa8bd%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2377839e%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22url(%2523g)%22%2F%3E%3Ccircle%20cx%3D%22300%22%20cy%3D%2290%22%20r%3D%22120%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.10%22%2F%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%22240%22%20r%3D%2290%22%20fill%3D%22%23000000%22%20opacity%3D%220.06%22%2F%3E%3C%2Fsvg%3E" />
+  <h2><a href="#offering">Hafif elektrikli bisiklet, 17 kg</a></h2>
+  <p class="listing-card-facts">
+    <span>Elektrikli bisiklet</span><span aria-hidden="true">·</span><span>Vira Bisiklet</span>
+  </p>
+</li>
+      
+<li class="listing-card">
+  <img alt="" class="listing-card-visual" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23b6a7ae%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238f7d86%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22url(%2523g)%22%2F%3E%3Ccircle%20cx%3D%22300%22%20cy%3D%2290%22%20r%3D%22120%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.10%22%2F%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%22240%22%20r%3D%2290%22%20fill%3D%22%23000000%22%20opacity%3D%220.06%22%2F%3E%3C%2Fsvg%3E" />
+  <h2><a href="#offering">Dağ tipi elektrikli bisiklet</a></h2>
+  <p class="listing-card-facts">
+    <span>Elektrikli bisiklet</span><span aria-hidden="true">·</span><span>Zirve Spor</span>
+  </p>
+</li>
+      
+<li class="listing-card">
+  <img alt="" class="listing-card-visual" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23a2b3b6%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2378959a%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22url(%2523g)%22%2F%3E%3Ccircle%20cx%3D%22300%22%20cy%3D%2290%22%20r%3D%22120%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.10%22%2F%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%22240%22%20r%3D%2290%22%20fill%3D%22%23000000%22%20opacity%3D%220.06%22%2F%3E%3C%2Fsvg%3E" />
+  <h2><a href="#offering">Elektrikli bisiklet, az kullanılmış</a></h2>
+  <p class="listing-card-facts">
+    <span>Elektrikli bisiklet</span><span aria-hidden="true">·</span><span>Şehir Bisiklet</span>
+  </p>
+</li>
+    </ul>
+  </section>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<section class="screen" id="offering" data-title="İlan">
+  <div class="frame ">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main>
+  <article>
+    <h1>Kentsel elektrikli bisiklet, 2023 model</h1>
+    <p class="category-path">Ulaşım › Bisiklet › Elektrikli bisiklet</p>
+    <p>Şehir içi kullanım için hazırlanmış, bakımı yapılmış bir elektrikli
+       bisiklet. Bataryası değiştirildi, fatura ve servis kaydı mevcut.</p>
+    <dl class="attributes">
+      <div><dt>Menzil</dt><dd>65 km</dd></div>
+      <div><dt>Motor gücü</dt><dd>250 W</dd></div>
+      <div><dt>Ağırlık</dt><dd>22 kg</dd></div>
+      <div><dt>Vites</dt><dd>Var</dd></div>
+      <div class="attribute-absent"><dt>Garanti</dt><dd>Belirtilmedi</dd></div>
+    </dl>
+    <h2>Pedal Atölyesi</h2>
+    <p>2016'dan beri şehir içi bisiklet satışı ve servisi.</p>
+    <h2>Nasıl devam etmek istersiniz?</h2>
+    <ul class="decision-entries">
+      <li><button type="button">Karara başla</button></li>
+      <li><button type="button">Karşılaştırmaya ekle</button></li>
+    </ul>
+  </article>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<section class="screen" id="compare" data-title="Karşılaştırma">
+  <div class="frame ">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main>
+  <h1>Karşılaştırma</h1>
+  <table class="comparison stacking">
+    <thead><tr>
+      <th></th>
+      <th><a href="#offering">Kentsel elektrikli bisiklet</a>
+        <div class="comparison-business">Pedal Atölyesi</div>
+        <button type="button">Çıkar</button></th>
+      <th><a href="#offering">Katlanır elektrikli bisiklet</a>
+        <div class="comparison-business">Şehir Bisiklet</div>
+        <button type="button">Çıkar</button></th>
+    </tr></thead>
+    <tbody>
+      <tr><th>Menzil</th><td>65 km</td><td>40 km</td></tr>
+      <tr><th>Motor gücü</th><td>250 W</td><td>250 W</td></tr>
+      <tr><th>Ağırlık</th><td>22 kg</td><td>17 kg</td></tr>
+      <tr><th>Vites</th><td>Var</td><td>Yok</td></tr>
+      <tr><th>Garanti</th><td>Belirtilmedi</td><td>6 ay</td></tr>
+    </tbody>
+  </table>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<section class="screen" id="decision" data-title="Karar">
+  <div class="frame ">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main class="flow">
+  <h1>Karar</h1>
+  <section>
+    <h2>Karşılaştırdıklarınız</h2>
+    <ul class="listing-cards">
+      
+<li class="listing-card">
+  <img alt="" class="listing-card-visual" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%238fa6bd%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%235d7f9e%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22url(%2523g)%22%2F%3E%3Ccircle%20cx%3D%22300%22%20cy%3D%2290%22%20r%3D%22120%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.10%22%2F%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%22240%22%20r%3D%2290%22%20fill%3D%22%23000000%22%20opacity%3D%220.06%22%2F%3E%3C%2Fsvg%3E" />
+  <h2><a href="#offering">Kentsel elektrikli bisiklet, 2023 model</a></h2>
+  <p class="listing-card-facts">
+    <span>Elektrikli bisiklet</span><span aria-hidden="true">·</span><span>Pedal Atölyesi</span>
+  </p>
+</li>
+      
+<li class="listing-card">
+  <img alt="" class="listing-card-visual" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23a9b6a2%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%237d9179%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22url(%2523g)%22%2F%3E%3Ccircle%20cx%3D%22300%22%20cy%3D%2290%22%20r%3D%22120%22%20fill%3D%22%23ffffff%22%20opacity%3D%220.10%22%2F%3E%3Ccircle%20cx%3D%2290%22%20cy%3D%22240%22%20r%3D%2290%22%20fill%3D%22%23000000%22%20opacity%3D%220.06%22%2F%3E%3C%2Fsvg%3E" />
+  <h2><a href="#offering">Katlanır elektrikli bisiklet, 40 km menzil</a></h2>
+  <p class="listing-card-facts">
+    <span>Elektrikli bisiklet</span><span aria-hidden="true">·</span><span>Şehir Bisiklet</span>
+  </p>
+</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Karar Sohbeti</h2>
+    <p>Günde kaç kilometre yol yapmayı düşünüyorsunuz? Menzil ile ağırlık
+       arasındaki tercih büyük ölçüde buna bağlı.</p>
+    <form>
+      <p><label for="msg">Mesajınız</label>
+      <textarea id="msg" rows="2">Günde yaklaşık 15 km, ama merdiven çıkarmam gerekiyor.</textarea></p>
+      <button type="button">Gönder</button>
+    </form>
+  </section>
+  <section>
+    <h2>Seçiminiz</h2>
+    <p>Devam etmeden önce bir ilan seçin.</p>
+    <ul class="decision-entries">
+      <li><button type="button">Bu ilanı seçin</button></li>
+      <li><button type="button">Bu ilanı seçin</button></li>
+    </ul>
+  </section>
+  <section>
+    <h2>Nasıl devam etmek istersiniz?</h2>
+    <ul class="decision-entries">
+      <li><button type="button">İşletmenin sitesine gidin</button></li>
+      <li><button type="button">İşletmeyle doğrudan iletişime geçin</button></li>
+    </ul>
+  </section>
+  <section role="alert">
+    <h2>Devam edilemiyor</h2>
+    <p>Bu ilan artık herkese açık değil, bu yüzden karar buradan sürdürülemez.
+       Kaydettikleriniz bundan etkilenmedi.</p>
+    <ul>
+      <li><a href="#results">Sonuçlara dön</a></li>
+      <li><a href="#home">Yeni bir arama yapın</a></li>
+    </ul>
+  </section>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<section class="screen" id="dashboard" data-title="İşletme panosu">
+  <div class="frame workspace">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main>
+  <header>
+    <h1>Pedal Atölyesi</h1>
+    <p><span class="badge badge-notice">Kısıtlı</span></p>
+    <p>Bazı yönetim eylemleri şu anda kullanılamıyor. İlanlarınız ve
+       işletme bilgileriniz sizde kalmaya devam ediyor.</p>
+  </header>
+  <p><a href="#information">İşletme bilgilerini yönetin</a></p>
+  <section>
+    <h2>Taslak</h2>
+    <ul>
+      <li><h4>Şehir bisikleti, 2021</h4>
+        <p class="listing-card-facts">Görünürlüğü henüz belirlenmedi</p>
+        <p><a href="#">Düzenle</a></p></li>
+    </ul>
+  </section>
+  <section>
+    <h2>Yayında</h2>
+    <ul>
+      <li><h4>Kentsel elektrikli bisiklet, 2023 model</h4>
+        <p class="listing-card-facts">Herkese açık</p>
+        <p><a href="#">Düzenle</a> · <a href="#">Yönlendirme adresi</a></p></li>
+      <li><h4>Kargo elektrikli bisiklet, çift sepetli</h4>
+        <p class="listing-card-facts">Herkese kapalı</p>
+        <p><a href="#">Düzenle</a></p></li>
+    </ul>
+  </section>
+  <section>
+    <h2>Arşivlenmiş</h2>
+    <ul>
+      <li><h4>Katlanır bisiklet, 2019</h4>
+        <p class="listing-card-facts">Görünümden çıkarıldı</p>
+        <p><a href="#">Görüntüle</a></p></li>
+    </ul>
+  </section>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<section class="screen" id="information" data-title="İşletme bilgileri">
+  <div class="frame workspace">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main>
+  <h1>İşletme bilgileri</h1>
+  <form>
+    <fieldset>
+      <legend>Herkese açık kimlik</legend>
+      <p>İlanlarınızın göründüğü her yerde herkese açık olarak gösterilir.</p>
+      <p><label for="n">Görünen ad (zorunlu)</label>
+        <input id="n" type="text" value="Pedal Atölyesi" /></p>
+      <p><label for="d">Kısa açıklama</label>
+        <input id="d" type="text" value="Şehir içi bisiklet satışı ve servisi." /></p>
+      <p><label for="l">Logo adresi</label><input id="l" type="text" value="" /></p>
+    </fieldset>
+    <fieldset>
+      <legend>Doğrudan iletişim</legend>
+      <p>Yalnızca giriş yapmış ve sizinle iletişime geçmek isteyen kişiye
+         gösterilir; herkese açık sayfalarda asla görünmez.</p>
+      <p><label for="e">E-posta adresi</label>
+        <input aria-invalid="true" id="e" type="text" value="pedal@" />
+        <span role="alert">Geçerli bir e-posta adresi girin.</span></p>
+      <p><label for="t">Telefon</label><input id="t" type="text" value="" /></p>
+    </fieldset>
+    <button type="button">Kaydet</button>
+  </form>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<section class="screen" id="login" data-title="Giriş">
+  <div class="frame auth">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main>
+  <h1>Giriş yapın</h1>
+  <form>
+    <p><label for="le">E-posta adresi</label><input id="le" type="text" value="" /></p>
+    <p><label for="lp">Parola</label><input id="lp" type="password" value="" /></p>
+    <button type="button">Giriş yap</button>
+    <p role="alert">E-posta adresi ya da parola doğru değil.</p>
+  </form>
+  <p><a href="#">Parolanızı mı unuttunuz?</a></p>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<section class="screen" id="admin" data-title="Yönetici paneli">
+  <div class="frame workspace">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="#home">İlanlar</a>
+        <nav aria-label="Ana gezinme">
+          <a href="#login">Giriş yap</a>
+          <a href="#login">Kayıt ol</a>
+        </nav>
+      </div>
+    </header>
+    <div><main>
+  <h1>Yönetici paneli</h1>
+  <section>
+    <h2>Sizi bekleyenler</h2>
+    <table class="stacking">
+      <thead><tr><th>İş</th><th>Adet</th></tr></thead>
+      <tbody>
+        <tr><td>Açık moderasyon vakası</td><td>7</td></tr>
+        <tr><td>Denetim bekleyen yönlendirme adresi</td><td>3</td></tr>
+        <tr><td>Yeniden inceleme bekleyen vaka</td><td>2</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Moderasyon vakaları</h2>
+    <ul>
+      <li><h3><a href="#">İlan</a></h3>
+        <p>Açıldı: 2026-08-27</p>
+        <p role="status">Sahibi yanıt verdi, yeniden inceleme bekliyor.</p>
+        <p>2 karar kaydedildi</p></li>
+      <li><h3><a href="#">İşletme</a></h3>
+        <p>Açıldı: 2026-08-25</p>
+        <p>Henüz bir şey kaydedilmedi</p></li>
+    </ul>
+  </section>
+</main></div>
+    <footer class="site-footer">
+      <p>İlanlar — bir ilan ve karar platformu</p>
+    </footer>
+  </div>
+</section>
+
+<p class="proto-note">
+  Bu bir prototiptir. Renk, tipografi, aralık ve her bileşen kuralı uygulamanın
+  yayınladığı stil dosyasından geliyor; ilanlar, işletmeler ve kategoriler
+  temsilîdir çünkü platformda henüz veri yok. Türkçe metinler copy modüllerinden
+  alındı.
+</p>
+
+<script>
+const show = (id) => {
+  for (const s of document.querySelectorAll(".screen"))
+    s.classList.toggle("is-active", s.id === id);
+  for (const b of document.querySelectorAll("[data-screen]"))
+    b.setAttribute("aria-current", String(b.dataset.screen === id));
+  window.scrollTo(0, 0);
+};
+for (const b of document.querySelectorAll("[data-screen]"))
+  b.addEventListener("click", () => show(b.dataset.screen));
+for (const a of document.querySelectorAll('a[href^="#"]'))
+  a.addEventListener("click", (e) => {
+    const id = a.getAttribute("href").slice(1);
+    if (document.getElementById(id)) { e.preventDefault(); show(id); }
+  });
+let width = "";
+let direction = "refresh";
+const apply = () => {
+  document.body.className = [width, direction].filter(Boolean).join(" ");
+};
+for (const b of document.querySelectorAll("[data-width]"))
+  b.addEventListener("click", () => {
+    width = b.dataset.width;
+    apply();
+    for (const o of document.querySelectorAll("[data-width]"))
+      o.setAttribute("aria-current", String(o === b));
+  });
+for (const b of document.querySelectorAll("[data-dir]"))
+  b.addEventListener("click", () => {
+    direction = b.dataset.dir;
+    apply();
+    for (const o of document.querySelectorAll("[data-dir]"))
+      o.setAttribute("aria-current", String(o === b));
+  });
+apply();
+show("home");
+</script>
+</body>
+</html>

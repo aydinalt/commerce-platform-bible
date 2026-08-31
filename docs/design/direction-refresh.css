@@ -1,0 +1,470 @@
+/*
+ * The refreshed direction — a candidate, not the shipped stylesheet.
+ *
+ * The Owner asked on 2026-08-30 for a more modern and more user-friendly
+ * design, and chose **"yönü tazele"**: a measured modernisation rather than a
+ * new direction from scratch. This is that proposal, written as a layer that
+ * sits *on top of* `apps/web/src/app/globals.css` rather than replacing it, so
+ * the two can be compared side by side in `prototype.html` before anything is
+ * decided.
+ *
+ * Every rule is scoped under `.refresh`. Removing that one class returns the
+ * page to exactly what the application ships today — which is the point: the
+ * proposal is legible as a diff rather than as a rewrite.
+ *
+ * ## What this asks the Owner to give up
+ *
+ * Three constraints in `tests/i26-design-foundation.test.ts` are relaxed, and
+ * each was there for a reason that has to be answered rather than waved past:
+ *
+ * 1. **`box-shadow` was forbidden** — "lines rather than shadows", because
+ *    elevation signals depth and a list of listings has no depth. The answer:
+ *    the shadows here are not depth, they are *separation* — two layered
+ *    shadows at 4% and 6% alpha, closer to a hairline that fades than to a
+ *    raised panel. A card still reads as flat; it reads as flat and detached
+ *    from the page instead of flat and drawn on it.
+ * 2. **Animation was forbidden** because motion needs a
+ *    `prefers-reduced-motion` story and the alternative to writing one is not
+ *    writing motion. The answer: the story is written, at the bottom of this
+ *    file, and it removes every transition rather than shortening it.
+ * 3. **One accent and two states** — a fourth colour invites a fifth. The
+ *    answer: `--cta` is not a fourth *state*, it is the one action colour, used
+ *    on exactly one control per screen. The state vocabulary is still two.
+ *
+ * ## What is not given up
+ *
+ * The focus ring, the 2.75rem control floor, the three breakpoints, `lang="tr"`
+ * and the measured contrast. **Every colour below was measured, not chosen by
+ * eye** — the figures are in the comments and none is an estimate.
+ */
+
+/* ------------------------------------------------------------------ tokens */
+
+.refresh {
+  /*
+   * Neutrals, cooler and one step deeper. `--text` at #111827 measures
+   * 16.69:1 on the page and 17.74:1 on a card; the old #16202e measured 13.4.
+   * Deeper ink is most of what reads as "modern" before a single shape changes.
+   */
+  --surface: #f7f8fa;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef0f4;
+  --border: #e6e8ec;
+  --border-strong: #7e8593; /* 3.49:1 — above 1.4.11's 3:1 for a control edge */
+  --text: #111827; /* 16.69:1 */
+  --text-muted: #5b6472; /* 5.63:1 */
+
+  /* The accent keeps its family. A brand does not become modern by changing
+     hue; #1f5f9e is the same blue, more saturated. 6.20:1. */
+  --accent: #1f5f9e;
+  --accent-strong: #16456f; /* 9.34:1 */
+  --accent-surface: #eef4fb;
+
+  /*
+   * The one action colour, and the argument for it.
+   *
+   * It is not a fourth state. States still number two. This is the colour of
+   * the single thing the screen wants pressed — *Ara*, *Karara başla*,
+   * *Kaydet* — and it is warm because the accent is cool, so the primary
+   * action is the only warm thing in view and cannot be missed.
+   *
+   * #a8480a measures 5.50:1 as ink and 5.84:1 behind white text. #b4530f was
+   * the first choice and measured 5.02 behind white, which passes and leaves
+   * no margin; this one leaves some.
+   */
+  --cta: #a8480a;
+  --cta-strong: #8c3c08;
+
+  --critical: #a12b2b; /* 6.82:1, and 6.41:1 on its own surface */
+  --critical-surface: #fdf2f2;
+  --notice: #8a6212; /* 5.15:1 */
+  --notice-surface: #fdf8ec;
+
+  /* Rounding. 12px on a card and 8px on a control is the current idiom; the
+     old 4px reads as a 2016 admin panel more than any other single value. */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-pill: 999px;
+
+  /*
+   * Elevation, deliberately small.
+   *
+   * Two layers: a 1px contact shadow that does the job the border used to do,
+   * and a wide soft one at 6% that lifts the card off the page. Nothing here
+   * is above 8% alpha, and nothing is offset more than 2px vertically at rest.
+   */
+  --lift-1: 0 1px 2px rgba(17, 24, 39, 0.04), 0 1px 3px rgba(17, 24, 39, 0.06);
+  --lift-2: 0 2px 4px rgba(17, 24, 39, 0.04), 0 8px 20px rgba(17, 24, 39, 0.08);
+
+  --motion: 140ms cubic-bezier(0.2, 0, 0.2, 1);
+
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------------- shell */
+
+.refresh .site-header {
+  backdrop-filter: saturate(1.4) blur(8px);
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.refresh .brand {
+  color: var(--text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.refresh .site-header nav a {
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  padding: var(--space-2) var(--space-3);
+  transition: background var(--motion), color var(--motion);
+}
+
+.refresh .site-header nav a:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.refresh .site-footer {
+  background: transparent;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------- typography */
+
+.refresh h1,
+.refresh h2,
+.refresh h3 {
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+/* The page heading gets its size back. I33 brought the scale down for density,
+   and density is about the *list*, not about the one line naming the page. */
+.refresh main > h1,
+.refresh .results-heading,
+.refresh article > h1 {
+  font-size: 1.75rem;
+}
+
+/* --------------------------------------------------------------- controls */
+
+.refresh button,
+.refresh input,
+.refresh select,
+.refresh textarea {
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--motion),
+    border-color var(--motion),
+    box-shadow var(--motion);
+}
+
+/*
+ * The primary action, and there is one per screen.
+ *
+ * A filled warm button among cool links is the clearest hierarchy available
+ * without adding a shape nobody has seen before.
+ */
+.refresh .search-entry-row button,
+.refresh form > button[type="submit"],
+.refresh .workspace form > button,
+.refresh .auth main form > button,
+.refresh .decision-entries > li:first-child button {
+  background: var(--cta);
+  border-color: var(--cta);
+  box-shadow: var(--lift-1);
+  color: #ffffff; /* 5.84:1 */
+  font-weight: 600;
+}
+
+.refresh .search-entry-row button:hover:not(:disabled),
+.refresh form > button[type="submit"]:hover:not(:disabled),
+.refresh .workspace form > button:hover:not(:disabled),
+.refresh .auth main form > button:hover:not(:disabled),
+.refresh .decision-entries > li:first-child button:hover:not(:disabled) {
+  background: var(--cta-strong);
+  border-color: var(--cta-strong);
+}
+
+/* Secondary controls read as quiet chips rather than as boxes. */
+.refresh .category-choices button,
+.refresh .entry-nav button,
+.refresh .preparation-notice button,
+.refresh .comparison thead button {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--lift-1);
+  color: var(--text);
+}
+
+.refresh .category-choices button:hover:not(:disabled),
+.refresh .entry-nav button:hover:not(:disabled) {
+  background: var(--accent-surface);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.refresh input,
+.refresh select,
+.refresh textarea {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+}
+
+.refresh input:focus-visible,
+.refresh textarea:focus-visible,
+.refresh select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-surface);
+}
+
+/* ---------------------------------------------------------------- entrance */
+
+.refresh .entry {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1);
+  padding: var(--space-8);
+}
+
+.refresh .search-entry h1 label {
+  font-size: 1.75rem;
+}
+
+.refresh .search-entry-row input {
+  font-size: 1.0625rem;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ------------------------------------------------------------ listing card */
+
+.refresh .listing-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1);
+  overflow: hidden;
+  padding: 0 0 var(--space-4);
+  transition:
+    box-shadow var(--motion),
+    transform var(--motion),
+    border-color var(--motion);
+}
+
+.refresh .listing-card:hover {
+  border-color: #d6dae1;
+  box-shadow: var(--lift-2);
+  transform: translateY(-2px);
+}
+
+/*
+ * Image-forward, which is the single largest usability change here.
+ *
+ * A listings site where the visual is optional and unstyled makes every card
+ * look the same at a glance, and glancing is what the page is for. The ratio
+ * box means a card with no visual and a card with one are the same height, so
+ * the grid does not become a staircase.
+ */
+.refresh .listing-card-visual,
+.refresh .listing-card .visual-placeholder {
+  aspect-ratio: 4 / 3;
+  background: var(--surface-sunken);
+  border-radius: 0;
+  display: block;
+  height: auto;
+  margin: 0;
+  object-fit: cover;
+  width: 100%;
+}
+
+.refresh .listing-card > :not(.listing-card-visual):not(.visual-placeholder) {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.refresh .listing-card h2,
+.refresh .listing-card h3 {
+  font-size: 1rem;
+  line-height: 1.35;
+  margin-top: var(--space-3);
+}
+
+.refresh .listing-card a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.refresh .listing-card a:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+.refresh .listing-card-facts {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+/* A denser grid, because the cards now carry a visual and can be narrower. */
+.refresh .listing-cards {
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+
+/* ---------------------------------------------------------------- toolbar */
+
+/*
+ * The filters follow the person down the page.
+ *
+ * On a results list the narrowing controls are needed *after* scrolling, which
+ * is exactly when the old layout had scrolled them away.
+ */
+.refresh .results-heading {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.refresh .entry-nav {
+  background: rgba(247, 248, 250, 0.9);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  border-top: 0;
+  margin-bottom: var(--space-6);
+  padding: var(--space-3) 0;
+  position: sticky;
+  top: var(--header-height);
+  z-index: 4;
+}
+
+.refresh .entry-nav > h2 {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin-bottom: var(--space-2);
+}
+
+.refresh .entry-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ------------------------------------------------------------------ panels */
+
+.refresh .workspace section,
+.refresh .auth main form,
+.refresh .zero-results,
+.refresh .preparation-notice {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--lift-1);
+  padding: var(--space-6);
+}
+
+.refresh .workspace section > h2 {
+  border-bottom: 1px solid var(--border);
+  font-size: 1.0625rem;
+}
+
+.refresh .workspace h1 {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.refresh .workspace ul:not([class]) {
+  border: 0;
+}
+
+.refresh .workspace ul:not([class]) > li {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-4) 0;
+}
+
+/* ------------------------------------------------------------------ badges */
+
+.refresh .badge {
+  align-items: center;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  font-weight: 600;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+}
+
+.refresh .badge::before {
+  background: currentColor;
+  border-radius: 50%;
+  content: "";
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+/* ------------------------------------------------------------------ alerts */
+
+.refresh div[role="alert"],
+.refresh section[role="alert"] {
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-6);
+}
+
+/* ------------------------------------------------------------- the flow */
+
+.refresh .flow section {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--lift-1);
+  margin-top: var(--space-4);
+  padding: var(--space-6);
+}
+
+.refresh .flow section:first-of-type {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-6);
+}
+
+/* ------------------------------------------------------------------ tables */
+
+.refresh table {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border-spacing: 0;
+  box-shadow: var(--lift-1);
+  overflow: hidden;
+}
+
+.refresh thead th {
+  background: var(--surface-sunken);
+}
+
+/* ------------------------------------------------------------------ motion */
+
+/*
+ * The story the original direction said had to be written before any motion
+ * was added. It is written, and it removes rather than shortens: a person who
+ * has asked their system for less motion gets none, not a faster version.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .refresh *,
+  .refresh *::before,
+  .refresh *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .refresh .listing-card:hover {
+    transform: none;
+  }
+}
