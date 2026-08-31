@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.82
+Version:      2.83
 Last Updated: 2026-08-31
 -->
 
@@ -179,6 +179,43 @@ withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
 
+## The records had drifted from the code, and so had my reading of them
+
+`IMPLEMENTATION_BACKLOG.md` still said the next engineering change was to *"add
+CI, Prisma migration baseline, OpenAPI generation and boundary checks"* — all
+four of which have existed for weeks — and stopped at I7, with no sign that
+forty-three further increments had closed since. It is refreshed at v0.2, under
+its own convention: the superseded sentences are preserved and dated rather than
+rewritten.
+
+**The more useful finding was about how I read a repository.** Seven backlog
+items were carried as open. All seven were done:
+
+| Carried as open | Actually |
+|---|---|
+| Offering visuals, Listing Card image, Business logo, owner editing | Closed in **I30**; `listing-card.sql.ts`, `listingCardSchema.primaryVisualUrl`, `listing-card.tsx`, `offering-presentation.tsx:156` |
+| Uncaught error and `notFound()` surfaces | Closed in **I31** |
+| Loading behaviour | Closed in **I32** |
+| Site shell | Closed in **I33** |
+| Environment contract, hostable services, migration timing | Closed in **I34**, decision in `DEPLOYING_TO_VERCEL.md` |
+| Throttling key behind a proxy | Closed in **I39** |
+| Admin routes into Turkish | Closed in **I29**; i27's own note reads *"They have met."* |
+
+**Every one of the seven was called open for the same reason: I looked at the
+head of a list and reported it as the set.** `grep logo` returned thirteen lines;
+the first four were `logout`, and I concluded the logo was stored and never
+shown — it is rendered at `offering-presentation.tsx:156`. The Listing Card was
+called imageless because the grep ran against `discovery-view.tsx` rather than
+`listing-card.tsx`, which is the file that draws it.
+
+This is the same shape as the fifteen recorded cases of a check that verifies
+something other than what it means, and it is now the fourth in one session. The
+pattern that has not failed is **asserting the exact set** — and the failures
+keep happening in the place where nothing forces that discipline: reading, not
+testing. Every figure in the refreshed record is therefore counted from the
+repository, and the groupings were checked against the actual filenames after a
+first draft written from memory got several of them wrong.
+
 ## Schema drift, and the verification chain that could not see it
 
 |                                                                |                                                  |
@@ -187,7 +224,7 @@ each was something the platform already knew and had not published.
 | Cause                                                          | `offering_source_idx` created in I52's migration, never declared in `schema.prisma` |
 | Commands CI ran, before / after                                | **3 / 1** (`verify:ci` owns the contract)         |
 | Commands `npm run verify` reached, before                      | **1 of 3** — the failing check was not among them |
-| Tables audited for the same class of divergence                | **39** — one instance, now closed                 |
+| Tables swept for the same class of divergence                  | **39**, but the sweep had a hole — see below      |
 | Indexes correctly left undeclared                              | **8** — partial, expression or non-btree; Prisma cannot express them |
 | `db:drift` run locally                                         | **no** — Prisma fetches its engine from a host that answers 403 here |
 | Outcome                                                        | **CI #152 green.** The index name resolved as declared — the one claim local proof could not reach |
@@ -203,6 +240,17 @@ now defines the whole contract in one place, and `db:drift` moved inside
 The evidence for what the drift check can and cannot see is the repository's own
 history rather than an assumption: `offering_published_active_idx` has been
 partial and undeclared since the initial migration and has never drifted.
+
+**And the sweep across the other 38 tables was narrower than it was first
+reported to be.** It skipped anything that was not a btree over bare columns.
+That is right for the four `to_tsvector` expression indexes on
+`offering_search_projection` — and wrong for the fifth, because Prisma *can*
+express a Gin index with a raw operator class, and
+`offering_search_projection_title_trgm_idx` is declared in `schema.prisma`
+precisely because it caused this same failure once before. The sweep had a hole
+where a drift had already happened, and read clean only because that one had
+been closed by hand. **CI #152 and #153 are the evidence that nothing else was
+outstanding; the local sweep is corroboration with a known gap.**
 
 ## Prototype SEO — the interface as a document, not only as a screen
 

@@ -11,6 +11,60 @@ This project follows the principles of:
 
 ---
 
+## [3.38.2] - 2026-08-31
+
+### Changed
+
+- **`IMPLEMENTATION_BACKLOG.md` refreshed to v0.2.** It still directed the reader
+  to *"add CI, Prisma migration baseline, OpenAPI generation and boundary
+  checks"* as the next engineering change — all four have existed for weeks —
+  and it stopped at I7, with nothing to indicate that forty-three further
+  increments had closed since. Both superseded passages are preserved and dated
+  rather than rewritten, which is the convention the document already used for
+  its own Story-status claim.
+
+- **Two new sections.** *After I7* accounts for the records numbered I8 to I52
+  (I9 and I14 have no file of their own; I9's outcome is in
+  `DELIVERY_STATUS_ADVANCEMENT.md`), grouped by subject. *Measured position*
+  carries the figures — 32 migrations, 39 tables, 87 operations across 73 paths,
+  22 web routes, 10 domain modules, 120 test files and 1113 tests, 66
+  implementation records, 8 Frozen UX documents and 6 Frozen PRDs.
+
+  **Every figure was counted from the repository**, and the full suite was run
+  to produce the test numbers rather than carrying forward the ones in the
+  previous record. A number copied into a document is a number that goes stale
+  without anything failing.
+
+- **`Next Ready Work` now names the one verified contradiction:**
+  `V1_DOMAINS` is a closed enum of three in `packages/contracts`, used in four
+  schemas, while Frozen PRD-0001 v4.0 §E and Business Rule 39 both say the
+  Domain set is open. A fourth Domain can be created by Platform administration
+  today and every Discovery request naming it would fail contract validation.
+  The Owner-side blockers — no Vercel project, no Supabase instance, an empty
+  catalogue, no KVKK or legal pages, no backups or alerting — are listed
+  separately, because none of them is work the repository can do to itself.
+
+### Notes
+
+- **Seven backlog items were carried as open and all seven were done** — in
+  I29, I30, I31, I32, I33, I34 and I39. That is worth recording for the reason
+  they were all wrong in the same way: **I looked at the head of a list and
+  reported it as the set.** `grep logo` returned thirteen lines, the first four
+  were `logout`, and the conclusion drawn was that the Business logo is stored
+  and never displayed; it is rendered at `offering-presentation.tsx:156`. The
+  Listing Card was called imageless after grepping `discovery-view.tsx` instead
+  of `listing-card.tsx`, which is the file that draws it.
+
+  Same shape as the fifteen recorded cases of a check that verifies something
+  other than what it means, and the fourth in a single session. The discipline
+  that has not failed is asserting the exact set; the failures now cluster where
+  nothing enforces it — reading a repository rather than testing one. The first
+  draft of the *After I7* section, written from memory, put metrics in the wrong
+  band and omitted two increments entirely; it was rewritten against the actual
+  filenames.
+
+---
+
 ## [3.38.1] - 2026-08-31
 
 ### Fixed
@@ -51,9 +105,23 @@ This project follows the principles of:
   green build. Adding a plain `@@index([productKey])` to "match" the migration
   would create the drift it appears to fix.
 
-- **Every other table was checked, not just the one CI named.** All 39 tables
-  were examined for the same class of divergence; `offering_source_idx` was the
-  only instance.
+- **Every other table was checked, not just the one CI named** — but the sweep
+  was narrower than that sentence first claimed, and the correction belongs
+  here rather than in a later archaeology. The proxy skipped every index that
+  was not a btree over bare columns, on the reasoning that Prisma cannot model
+  them. That is true of the four `to_tsvector` expression indexes on
+  `offering_search_projection`; it is **not** true of the fifth. Prisma can
+  express a Gin index with a raw operator class, and
+  `offering_search_projection_title_trgm_idx` is in fact declared in
+  `schema.prisma` — with a comment saying so, written when it caused this same
+  failure once before. So the sweep had a hole exactly where an earlier drift
+  had already occurred, and it stayed green only because someone had closed
+  that one by hand.
+
+  `offering_source_idx` was still the only outstanding instance — **CI #152 and
+  #153 are the evidence for that, not the proxy.** The proxy reproduced the
+  failure and demonstrated the fix; it is corroboration with a known gap, and
+  claiming it as a complete audit of 39 tables was more than it earned.
 
 - **`db:drift` itself could not be run here.** Prisma 7 fetches its schema
   engine at first use from `binaries.prisma.sh`, which answers 403 in the

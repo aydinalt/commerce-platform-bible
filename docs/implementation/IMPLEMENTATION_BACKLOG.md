@@ -3,8 +3,8 @@
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Draft
 - **Maintenance Mode:** Living
-- **Version:** 0.1
-- **Last Updated:** 2026-07-25
+- **Version:** 0.2
+- **Last Updated:** 2026-08-31
 - **Source:** 50 Frozen Generated Stories
 
 ## Backlog Policy
@@ -30,6 +30,12 @@ Engineering work with no product Story claim:
 - configuration validation, redacted structured logging and health endpoints;
 - reproducible local PostgreSQL;
 - CI, migration, OpenAPI and security-scan expansion in the next foundation change.
+
+> **Superseded (2026-08-31):** the last line describes work that was done long
+> ago. CI runs on every push, 32 migrations are applied by `db:deploy`,
+> `openapi:generate` writes `generated/openapi.json` and CI fails on a diff, and
+> `security:audit` runs inside `verify`. The line is left as written, because
+> what a record claimed at the time is part of what it records.
 
 ## I1 — Identity and Access Baseline
 
@@ -114,8 +120,91 @@ Engineering work with no product Story claim:
 | Decision | 7 |
 | **Total** | **50** |
 
+## After I7 — what the Story backlog does not cover
+
+**I1–I7 above are the fifty Stories. They closed, and the work did not stop.**
+**Forty-three further closure records** sit in `docs/implementation/`, numbered
+I8 to I52 — I9 and I14 have no file of their own; I9's outcome is in
+`DELIVERY_STATUS_ADVANCEMENT.md`.
+
+None of them appears in the sequencing above, because none claims a Story. They
+are engineering changes against Frozen behaviour that was already specified,
+defects found by running the thing, and one prototype built to let the Owner see
+a direction before committing to it. This section exists so that a reader of
+*this* document does not conclude that I7 is where the repository stands.
+
+Grouped by what they were about, with the record names as they exist:
+
+- **I8, I10** — the experience surfaces; accessibility.
+- **I11–I13** — the vendor boundary: email transport, chat transport, and
+  selecting a provider from configuration rather than from code.
+- **I15–I19** — Attribute Filters, removal of the test principal, the retention
+  sweep, one connection pool, one definition of a database timeout.
+- **I20–I25** — metrics, correlation, and then the long one: **an unreachable
+  database being reported as "no results".** Told apart from emptiness in the
+  API layer, then in thirteen routes, then in Identity and Decision, with a
+  request budget so a hung read is cut rather than waited on.
+- **I26–I33** — the design foundation, the whole application into Turkish
+  (public, Business, Admin), Offering visuals, and the failure, loading and
+  site-shell surfaces.
+- **I34–I40** — deployment: three hostable services, connection mode, the
+  serverless entry, the scheduled worker, the throttling key behind a proxy,
+  and the first run against an empty database.
+- **I41–I44** — what the API actually answers, checked operation by operation
+  against what it publishes.
+- **I45–I52** — the remaining outage gaps, a transport failure, the visual
+  layer for management and public surfaces, page titles, and Offering Price,
+  Source and Product Key against PRD-0001 v4.0.
+- **The prototype** — `prototype/`, a single self-contained HTML file the Owner
+  can open, plus the SEO work in `PROTOTYPE_SEO.md`. It is committed but it is
+  **not** the platform: not a workspace, not in the root `tsconfig`, not covered
+  by `format:check`. Its purpose is to make a direction visible before it is
+  built.
+
+## Measured position
+
+Counted from the repository on 2026-08-31 rather than carried forward, because
+a number copied into a document is a number that goes stale silently.
+
+| | |
+|---|---:|
+| Frozen Stories | 50 |
+| Migrations applied | 32 |
+| Tables in the datamodel | 39 |
+| Published API operations | 87 across 73 paths |
+| Web routes | 22 |
+| Domain modules | 10 |
+| Test files / tests | 120 / 1113 |
+| Implementation records | 66 |
+| Frozen UX documents / PRDs | 8 / 6 |
+
 ## Next Ready Work
 
-The next engineering change is I0 completion: add CI, Prisma migration baseline,
-OpenAPI generation and boundary checks. No product Story should be marked
-started until that foundation gate passes.
+> **Superseded (2026-08-31):** this section read *"The next engineering change
+> is I0 completion: add CI, Prisma migration baseline, OpenAPI generation and
+> boundary checks. No product Story should be marked started until that
+> foundation gate passes."* All four exist and all fifty Stories are `Done`.
+> The sentence is preserved because what a record claimed at the time is part
+> of what it records.
+
+**One verified contradiction between the code and a Frozen document**, and it is
+the next engineering change:
+
+`packages/contracts/src/index.ts:1109` declares
+`V1_DOMAINS = ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"]` as a closed enum and
+uses it in four schemas. Frozen **PRD-0001 v4.0 §E** says the opposite — *"a
+Domain is a governed record and **the set is open**… Mobility, Real Estate and
+Technology were the first three, not the whole set"* — and Business Rule 39
+repeats it.
+
+The cost is concrete rather than theoretical: a fourth Domain can be created by
+Platform administration today, and every Discovery request naming it would fail
+contract validation. The prototype's eleven categories span exactly the ground
+the enum cannot express, so this also stands between the demonstrated direction
+and the built one.
+
+**The remaining blockers are the Owner's, not the code's.** No Vercel project
+and no Supabase instance; the catalogue is empty; there are no KVKK or legal
+pages at all; backups, a restore rehearsal and alerting are unarranged; the
+Postmark and Anthropic credentials are not issued. None of these is engineering
+work that can be done from inside the repository.
