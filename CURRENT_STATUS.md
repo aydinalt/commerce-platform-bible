@@ -190,6 +190,7 @@ each was something the platform already knew and had not published.
 | Tables audited for the same class of divergence                | **39** — one instance, now closed                 |
 | Indexes correctly left undeclared                              | **8** — partial, expression or non-btree; Prisma cannot express them |
 | `db:drift` run locally                                         | **no** — Prisma fetches its engine from a host that answers 403 here |
+| Outcome                                                        | **CI #152 green.** The index name resolved as declared — the one claim local proof could not reach |
 
 **The failure was procedural before it was technical.** `db:drift` and the
 OpenAPI diff lived only in the workflow file, so `npm run verify` — the command

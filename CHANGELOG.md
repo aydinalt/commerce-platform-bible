@@ -64,6 +64,13 @@ This project follows the principles of:
   reproduction named `offering_source_idx` and nothing else, exactly as CI did;
   after it, nothing. Removing the declaration again brings it back.
 
+  **CI #152 is green, which closes the one gap that reproduction left open.**
+  The proxy could show that the database and the schema now agree on which
+  indexes exist; it could not show that Prisma resolves `@@index([source])` to
+  the name `offering_source_idx` rather than treating it as a rename. Writing
+  the name out was a defence against a guess, and the green build is what turned
+  the guess into a measurement.
+
 - The diagnostic that did this is **not** in the repository, on purpose. A
   hand-written near-copy of `prisma migrate diff` would be a second owner of the
   question "has the schema drifted", and it would be the weaker of the two.
