@@ -11,6 +11,64 @@ This project follows the principles of:
 
 ---
 
+## [3.38.3] - 2026-08-31
+
+### Added
+
+- **`DOMAIN_SET_OPEN_DECISION.md`** — an Owner decision resolving a conflict
+  between two Frozen documents. `US-PLT-F08-001` v1.0 **AC-1** requires a root
+  Category to name *"exactly one Domain from Mobility, Real Estate, or
+  Technology"*; `PRD-0001-offering.md` v4.0 §E and Business Rule 39, Frozen five
+  weeks later, say the set is open and the Revision Note states in terms that it
+  *"Lifts the V1 restriction of the Domain set to three."*
+
+  `REPOSITORY_GOVERNANCE.md` makes each document authoritative for its own
+  concern and gives neither precedence — and draws the line this stopped at:
+  **recording an Owner decision is expressly distinguished from making one.** So
+  the code was left alone and the conflict brought back rather than resolved in
+  passing.
+
+  The decision rests on a reading of AC-1 as two statements: *"exactly one
+  Domain"* is the rule and stands untouched, while the enumeration of three was
+  the set's membership at the time and is superseded. `AC3_ATTRIBUTE_GROUPING_
+  DECISION.md` is the precedent for the form — an Owner decision as its own
+  document, leaving the Frozen text alone.
+
+### Changed
+
+- **`IMPLEMENTATION_BACKLOG.md` Next Ready Work** now carries the measured
+  surface of the code change rather than a sentence about it: six
+  `z.enum(V1_DOMAINS)` sites, three independent declarations of the list, one
+  Turkish label map, six `enum` arrays in the OpenAPI generator, and **81 tests
+  that fail once responses carry the Domain's name**.
+
+### Notes
+
+- **The code was attempted, measured properly only once underway, and reverted.**
+  The estimate — "contracts, API, tests" — missed three things the work turned
+  up: the display name has to come from the record, because Categories take
+  their names from theirs and Domains took theirs from a three-entry map that
+  would have printed a raw key on a Turkish page; the admin catalogue read has
+  to carry the Domain records, because deriving the create form's options from
+  existing Categories fails for exactly the Domain somebody is opening the first
+  Category in; and analytics is correctly excluded, since its tallies group
+  history by `stable_key` so that a renamed Domain does not split its own past.
+
+  Typecheck was green and 81 tests were not. Rather than push a large change
+  through in one sitting, the decision record — which is complete, correct and
+  self-contained — is committed on its own, which is what Documentation First
+  Development asks for anyway. The code becomes its own increment with the test
+  surface known before it starts.
+
+- **No path exists to create a Domain.** No endpoint, service, contract or Admin
+  surface; the three that exist were inserted by a migration. Business Rule 39's
+  *"extended by Platform administration"* is unimplemented, and this decision
+  neither implements it nor claims otherwise. What opening the contract buys is
+  narrower and exact: a Domain added by migration would work end to end instead
+  of failing contract validation on the way out of every read that mentions it.
+
+---
+
 ## [3.38.2] - 2026-08-31
 
 ### Changed

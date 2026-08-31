@@ -187,21 +187,44 @@ a number copied into a document is a number that goes stale silently.
 > The sentence is preserved because what a record claimed at the time is part
 > of what it records.
 
-**One verified contradiction between the code and a Frozen document**, and it is
-the next engineering change:
+**Open the Domain set in the code.** The governance question is settled —
+`DOMAIN_SET_OPEN_DECISION.md` records the Owner's decision of 2026-08-31 that
+PRD-0001 v4.0 governs the membership of the set and that `US-PLT-F08-001` AC-1's
+enumeration of three is superseded as a statement of it. AC-1's actual rule,
+*one* Domain per root Category, is untouched.
 
-`packages/contracts/src/index.ts:1109` declares
-`V1_DOMAINS = ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"]` as a closed enum and
-uses it in four schemas. Frozen **PRD-0001 v4.0 §E** says the opposite — *"a
-Domain is a governed record and **the set is open**… Mobility, Real Estate and
-Technology were the first three, not the whole set"* — and Business Rule 39
-repeats it.
+What remains is the code, and **the surface was measured before it was planned,
+because a first attempt underestimated it.** The closed set is stated in five
+places and published in six:
 
-The cost is concrete rather than theoretical: a fourth Domain can be created by
-Platform administration today, and every Discovery request naming it would fail
-contract validation. The prototype's eleven categories span exactly the ground
-the enum cannot express, so this also stands between the demonstrated direction
-and the built one.
+| | |
+|---|---:|
+| `z.enum(V1_DOMAINS)` sites in `packages/contracts` | 6 — one request, five responses |
+| Independent declarations of the list | 3 — contracts, `modules/catalog`, `apps/web/src/platform/catalog.ts` |
+| Turkish label maps holding Domain names in code | 1 — `apps/web/src/vocabulary.ts` |
+| `enum` arrays in the OpenAPI generator | 6 |
+| **Tests that fail once responses carry the Domain's name** | **81** |
+
+Three things the measurement turned up that a smaller plan would have missed:
+
+- **The name has to come from the record.** Categories take their names from
+  their records; Domains took theirs from a three-entry map. Opening the set
+  without moving the name would print a raw `GARDEN` on a Turkish page.
+- **The admin catalogue read must carry the Domain records.** A root Category
+  names a Domain, so the create form needs the list — and deriving it from
+  existing Categories fails for exactly the Domain somebody is opening the
+  first Category in.
+- **Analytics is correctly excluded.** `byDomain.domain` is already
+  `z.string()`, and it should stay a key: those tallies group history by
+  `stable_key` so a renamed Domain does not split its own past.
+
+**Still not decided by any of this: there is no path to create a Domain.** No
+endpoint, no service, no contract, no Admin surface — the three that exist were
+inserted by `20260810000200_category_management/migration.sql`. Business Rule 39
+says the set is *"extended by Platform administration"*, and that half is
+unimplemented. Opening the contract makes a Domain added by migration work end
+to end; giving an Admin a way to add one is a separate increment against
+`US-PLT-F08-001`.
 
 **The remaining blockers are the Owner's, not the code's.** No Vercel project
 and no Supabase instance; the catalogue is empty; there are no KVKK or legal
