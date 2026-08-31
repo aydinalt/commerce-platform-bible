@@ -11,6 +11,62 @@ This project follows the principles of:
 
 ---
 
+## [3.38.4] - 2026-08-31
+
+### Changed
+
+- **`traceability-v1.1-candidate.md` advances Draft → Approved v1.1.** The
+  revision was written on 2026-08-17 and had been waiting since then on the
+  independent review its own §9 named as the required action. That review was
+  performed and passed; the Owner approved the same day.
+
+  **Every figure was counted from the repository rather than read back from the
+  document.** All 50 Generated Story files carry `Delivery Status | Done` in
+  their own metadata — 50 of 50. The per-domain table matches exactly: Offering
+  7/64, Discovery 10/81, Identity 9/81, Decision 7/72, Business 7/95, Platform
+  10/133, totalling 50 Stories and 526 Acceptance Criteria.
+  `UX-0007-messaging.md` is `Status: Draft`, so §8's claim that it sits outside
+  the Frozen V1 UX baseline holds. The structural claim of "two corrections and
+  one addition" is what the diff shows.
+
+  **The freeze is a separate Owner decision and has not been taken.** Frozen
+  v1.0 at `docs/traceability.md` remains the baseline until it is, which is what
+  `DOCUMENT_LIFECYCLE.md` requires and what the candidate itself said.
+
+- **`PROTOTYPE_INTEGRATION_PLAN.md` records two Owner decisions of 2026-08-31**
+  and names the one they do not close.
+
+  **Path A** — bind the prototype's presentation layer to the API that exists.
+  The Owner's reasoning: PRD-0001 v4.0 was Frozen on 2026-08-30 and its Revision
+  Note explicitly declines a `Product` entity and a `Merchant` entity, so Path B
+  would mean growing the contracts and the datamodel against a decision taken
+  three days ago.
+
+  **Tailwind enters `apps/web`** — the first of §5's three options, and its
+  measured cost is recorded as accepted rather than left to be discovered:
+  `i26`, `i32`, `i33`, `i48`, `i49` and `i50` each read `globals.css` whole, and
+  all six will be rewritten.
+
+### Notes
+
+- **One decision inside Path A is still open, and it is a Frozen-rule question.**
+  The prototype filters as you type; the built application treats selecting a
+  Category as a form submission, because Frozen `US-DSC-F06-001` makes a
+  Discovery Start a deliberate event and forbids it being triggered by prefetch
+  or bookmark. The two cannot coexist. Either the prototype's interaction
+  becomes submission-based — no Frozen document touched, the whole cost in the
+  interface — or `US-DSC-F06-001` takes a controlled superseding revision, which
+  is a decision about what the analytics count rather than a matter of feel.
+
+- **A reading that would have made this correction look like an error, recorded
+  so it is not made later.** Each Story's Freeze Note says *"Delivery Status
+  remains Not Started"*, and that is not the current status: it is what was true
+  on the day the Story was frozen. The metadata table three lines further down
+  is what states the status now, and it says `Done`. Reading the prose instead
+  of the table is how a record that is genuinely stale can look correct.
+
+---
+
 ## [3.38.3] - 2026-08-31
 
 ### Added

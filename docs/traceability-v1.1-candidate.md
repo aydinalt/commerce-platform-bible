@@ -2,15 +2,19 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Document:** Cross-Tier Traceability
-- **Status:** Draft
+- **Status:** Approved
 - **Maintenance Mode:** Living
 - **Version:** 1.1
-- **Last Updated:** 2026-08-17
+- **Last Updated:** 2026-08-31
 - **Supersedes:** Frozen v1.0 (2026-07-25), which remains preserved at
   `docs/traceability.md` until this candidate is independently reviewed,
   Approved and, if the Owner decides, Frozen
 
-**Revision Note (1.1):** Superseding revision of Frozen v1.0, begun independently at Draft under a new version per `DOCUMENT_LIFECYCLE.md` §7. **It carries no Approval Note and no Freeze Note, because neither decision has been taken.** Two corrections and one addition:
+> **Approval Note (1.1):** Approved by explicit decision of the Product Owner / Architecture Owner on 2026-08-31, after the independent review this candidate had been waiting on since 2026-08-17. The Owner's decision was recorded in these terms: fifty Stories that are in fact complete appearing as `Not Started` is an unacceptable documentation debt. This approval advances the exact reviewed candidate from Draft v1.1 to Approved v1.1. **It does not freeze the document**, which `DOCUMENT_LIFECYCLE.md` keeps as a separate Owner decision, and Frozen v1.0 at `docs/traceability.md` remains the baseline until that decision is taken. The approval changes no Story, PRD, UX, Capability or Feature behaviour, advances no Delivery Status, and updates no GitHub state.
+
+> **Review Note (1.1):** Independent review completed 2026-08-31 with verdict **PASS**. Every figure was counted from the repository rather than read back from the document. All 50 Generated Story files carry `Delivery Status | Done` in their own metadata — 50 of 50 — which is what makes v1.0's §5 and §7 wrong rather than merely stale: `REPOSITORY_GOVERNANCE.md` §3 gives the source document precedence, so the record is the thing that must be corrected. The per-domain counts in §6 match the files exactly: Offering 7/64, Discovery 10/81, Identity 9/81, Decision 7/72, Business 7/95, Platform 10/133, totalling 50 Stories and 526 Acceptance Criteria. `UX-0007-messaging.md` carries `Status: Draft`, so §8's statement that it is outside the Frozen V1 UX baseline holds. The structural claim of "two corrections and one addition" is what the document does: §6 Implementation Coverage is new and the sections after it are renumbered, with no other section altered. **The Freeze Notes preserved in this document's own history are not evidence of current status** — a Story's Freeze Note reads "Delivery Status remains Not Started" because that was true on the day it was frozen, while the metadata table is what states the status now. Reading the prose instead of the table is how this correction could have been mistaken for an error.
+
+**Revision Note (1.1):** Superseding revision of Frozen v1.0, begun independently at Draft under a new version per `DOCUMENT_LIFECYCLE.md` §7. **It carried no Approval Note and no Freeze Note when written, because neither decision had been taken; the Approval Note above records the first of the two, taken on 2026-08-31.** Two corrections and one addition:
 
 1. **§5 and §7 no longer assert that all 50 Generated Stories carry Delivery Status `Not Started`.** That was true when v1.0 was Frozen on 2026-07-25 and stopped being true on 2026-08-15, when increment I9 advanced 49 Stories to `Done` against per-criterion evidence and `US-OFR-F05-001` to `In Progress`. The Owner's AC-3 decision of 2026-08-17 advanced the last one. All 50 now carry `Done`. Nothing else in either statement changed: the Stories are still Frozen, still 50, and still one per Feature.
 2. **§6 records the implementation tier**, which v1.0 had no row for because no implementation existed. `M11_STORY_LINK_PROPOSAL.md` recorded three partial links and said in as many words that folding them into this baseline required this revision; they are now subsumed by complete per-criterion coverage of all six domains.
@@ -167,7 +171,7 @@ Repository treatment:
 | Item | State | Required action |
 |---|---|---|
 | Full Feature-level validation across all six domains | Complete — PASS | Preserve evidence and rerun after any controlled upstream revision |
-| This superseding revision | Draft v1.1 | Independent review, then a separate Owner approval and, if decided, a separate freeze. Frozen v1.0 remains the baseline until then |
+| This superseding revision | **Approved v1.1** | Independent review completed 2026-08-31 with verdict PASS; Owner approval taken the same day. **A separate Owner freeze decision remains outstanding**, and Frozen v1.0 at `docs/traceability.md` remains the baseline until it is taken |
 | Implementation coverage of all 526 Acceptance Criteria | Complete — recorded in §6 | Rerun the per-criterion evidence extraction after any controlled Story or PRD revision |
 | Outbound email vendor and Decision Chat assistant vendor | Not selected | Owner selection. Both transports are written and tested with no vendor in them; neither affects any chain this document traces |
 | `UX-0007 Messaging` relationship to V1 | Resolved for V1 | Retain as historical Draft outside the Frozen V1 baseline |

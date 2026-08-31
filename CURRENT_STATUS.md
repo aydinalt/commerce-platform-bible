@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.83
+Version:      2.84
 Last Updated: 2026-08-31
 -->
 
@@ -178,6 +178,27 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## Three Owner decisions, and what each leaves open
+
+| Decision | Taken | What is still outstanding |
+|---|---|---|
+| Traceability v1.1 | Approved 2026-08-31 after an independent review that passed on all four claims | **The freeze.** A separate Owner decision under `DOCUMENT_LIFECYCLE.md`; Frozen v1.0 remains the baseline until it is taken |
+| Prototype integration — **Path A**, and Tailwind into `apps/web` | 2026-08-31 | **How a Category is selected.** Frozen `US-DSC-F06-001` makes a Discovery Start a deliberate event; the prototype filters as you type. One of the two has to move |
+| The Domain set is open | Recorded in `DOMAIN_SET_OPEN_DECISION.md`, Draft awaiting acceptance | The code — measured at six `z.enum` sites, three declarations, one label map, six OpenAPI enums and **81 tests** |
+
+The traceability correction turned out not to need writing: `traceability-v1.1-candidate.md`
+was written on 2026-08-17 and had been waiting since then on exactly the review
+its own §9 asked for. Counting the repository confirmed all four of its claims —
+50 of 50 Stories carry `Delivery Status | Done`, and the per-domain table
+(50 Stories, 526 criteria) matches file by file.
+
+**Why v1.0 is wrong rather than merely old.** `REPOSITORY_GOVERNANCE.md` §3 gives
+the source document precedence over any record of it, so where the Story files
+say `Done` and the traceability record says `Not Started`, the record is what
+must change. The trap is that each Story's *Freeze Note* still reads "Delivery
+Status remains Not Started" — true on the day of the freeze, and not the current
+status, which the metadata table three lines below states as `Done`.
 
 ## The records had drifted from the code, and so had my reading of them
 

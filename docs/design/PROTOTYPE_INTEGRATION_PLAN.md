@@ -1,10 +1,43 @@
 <!--
 Owner:        Architecture Owner
-Status:       Draft — awaiting Owner decision
+Status:       Draft — two decisions taken, one still open
 Maintenance Mode: Living
-Version:      0.1
-Last Updated: 2026-08-30
+Version:      0.2
+Last Updated: 2026-08-31
 -->
+
+## Owner kararı — 2026-08-31
+
+**Yol A seçildi.** Owner'ın gerekçesi: PRD-0001 v4.0 daha üç gün önce, 30
+Ağustos'ta donduruldu ve `Product` ile `Merchant` varlıklarını Revision
+Note'unda açıkça reddetti. Yol B, sözleşmeleri ve veri modelini o karara karşı
+büyütmek demek — arka uçta geniş bir yeniden yazım. Prototipin görsel katmanını
+bugünkü sağlam API'ye bağlamak en güvenli ilerleyiş.
+
+**Tailwind `apps/web` içine alınacak.** §5'in üç seçeneğinden birincisi.
+
+> **Bu kararın ölçülmüş bedeli, kabul edilmiş sayılır:** `i26`, `i32`, `i33`,
+> `i48`, `i49` ve `i50` `globals.css`'i baştan sona okuyor. Altısı da yeniden
+> yazılacak. Bu, seçeneğin bir yan etkisi değil, ta kendisidir — plan onu
+> "en hızlı yol, en çok test değişimi" diye adlandırmıştı.
+
+### Hâlâ açık olan ve Yol A'nın içinden çıkan karar
+
+§5'in ikinci teknik engeli bir Owner kararı gerektiriyor ve bu kararla
+kapanmadı: **prototip yazdıkça filtreliyor, kurulu ürün Kategori seçimini form
+gönderimi sayıyor.** Frozen `US-DSC-F06-001` bir Discovery Start'ı kasıtlı bir
+olay olarak tanımlıyor ve prefetch ya da yer imiyle tetiklenmesini yasaklıyor;
+prototipin anlık filtrelemesi hiçbir olay kaydetmiyor.
+
+İkisi bir arada duramaz, ve seçenekler eşit ağırlıkta değil:
+
+- **Prototipin etkileşimini gönderime çevir.** Frozen kurala dokunmaz, işin
+  tamamı arayüzde kalır. Prototipin en akıcı yanını kaybeder.
+- **Frozen kuralı değiştir.** `US-DSC-F06-001` için kontrollü bir üstün gelen
+  revizyon gerekir — ve Discovery Start'ın kasıtlı olması, analitiğin ne saydığı
+  hakkında bir karardı, üslup tercihi değil.
+
+Bu belge kararı kaydeder, vermez.
 
 # Prototipi altyapıya bağlamak — ölçülmüş plan
 
