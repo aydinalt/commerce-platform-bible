@@ -32,6 +32,9 @@ export function FilterBar({
   tabCounts,
   categoryCounts,
   maxAmount,
+  minAmount,
+  maxYear,
+  minYear,
   onChange
 }: {
   state: FilterState;
@@ -39,10 +42,27 @@ export function FilterBar({
   tabCounts: Record<TabId, number>;
   categoryCounts: Record<string, number>;
   maxAmount: number;
+  /** The cheapest listing in the catalogue, so the slider can reach it. */
+  minAmount: number;
+  /** The release-year range in the catalogue. */
+  maxYear: number;
+  minYear: number;
   onChange: (patch: Partial<FilterState>) => void;
 }) {
-  const MIN_AMOUNT = 1000;
-  const MAX_MONTHS = 36;
+  /**
+   * The floor and the step come from the catalogue rather than from a literal.
+   *
+   * **They used to be `1000` and `500`, and widening the catalogue broke
+   * them.** Once the cheapest listing was 149 ₺, a slider that stopped at
+   * 1.000 ₺ could not reach a third of the products at all — dragging it to
+   * the far left still showed four results and looked, reasonably, like a
+   * broken filter. A hard-coded bound is right exactly until the data moves.
+   *
+   * The step is derived too: 500 ₺ increments across a range that starts at
+   * 100 ₺ would jump straight past every digital licence on the second press.
+   */
+  const MIN_AMOUNT = Math.max(50, Math.floor(minAmount / 50) * 50);
+  const AMOUNT_STEP = Math.max(50, Math.round((maxAmount - MIN_AMOUNT) / 200 / 50) * 50);
 
   return (
     <div className="sticky top-[68px] z-20 border-b border-slate-200 bg-slate-50/95 backdrop-blur-md">
@@ -73,22 +93,31 @@ export function FilterBar({
               const digits = raw.replace(/\D/gu, "");
               return digits === "" ? null : Number(digits);
             }}
-            step={500}
+            step={AMOUNT_STEP}
             value={state.amount}
           />
+          {/*
+            The Owner replaced the instalment term with the release year.
+            The two controls answer different halves of the same question —
+            *what can I afford* and *is it current* — and on a comparison site
+            the second matters more than it looks, because the cheapest row in
+            almost any list is the oldest model in it.
+          */}
           <Stepper
-            format={(value) => `${value} ay`}
-            hint={["1 ay", `${MAX_MONTHS} ay`]}
-            label="Taksit süresi"
-            max={MAX_MONTHS}
-            min={1}
-            onChange={(months) => onChange({ months })}
+            format={(value) =>
+              value <= minYear ? "Tüm yıllar" : `${value} ve sonrası`
+            }
+            hint={["Tüm yıllar", `${maxYear} modeller`]}
+            label="Çıkış yılı"
+            max={maxYear}
+            min={minYear}
+            onChange={(year) => onChange({ minYear: year })}
             parse={(raw) => {
               const digits = raw.replace(/\D/gu, "");
               return digits === "" ? null : Number(digits);
             }}
             step={1}
-            value={state.months}
+            value={state.minYear}
           />
         </div>
       </div>

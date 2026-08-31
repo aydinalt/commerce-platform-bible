@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { ProductDetail } from "@/components/product/ProductDetail";
+import { Header } from "@/components/site/Header";
 import { PRODUCTS, productBySlug } from "@/lib/products";
 
 /**
@@ -27,12 +28,6 @@ export async function generateMetadata({
   return { title: productBySlug(slug)?.name ?? "Ürün bulunamadı" };
 }
 
-/**
- * Fixed at twelve, and it is a known gap: a person who sets a term on the
- * results page loses it on arrival here. It belongs in the URL.
- */
-const MONTHS = 12;
-
 export default async function ProductPage({
   params
 }: {
@@ -42,5 +37,10 @@ export default async function ProductPage({
   const product = productBySlug(slug);
   if (product === undefined) notFound();
 
-  return <ProductDetail months={MONTHS} product={product} products={PRODUCTS} />;
+  return (
+    <>
+      <Header />
+      <ProductDetail product={product} products={PRODUCTS} />
+    </>
+  );
 }

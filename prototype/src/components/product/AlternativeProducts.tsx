@@ -17,15 +17,20 @@ import { ProductCard } from "./ProductCard";
  */
 export function AlternativeProducts({
   anchor,
-  products,
-  months
+  products
 }: {
   anchor: Product;
   products: Product[];
-  months: number;
 }) {
   const { items, band } = alternativesFor(anchor, products);
   const widened = band !== TIGHT_BAND;
+
+  /*
+   * "Within ±15% of an amount" needs an amount. An Offering priced On Request
+   * has none, so this block has no question to ask and says nothing rather
+   * than answering a different one.
+   */
+  if (anchor.pricingKind === "ON_REQUEST") return null;
 
   return (
     <section aria-labelledby="alternatives" className="mt-10">
@@ -50,7 +55,6 @@ export function AlternativeProducts({
             <ProductCard
               anchorPrice={anchor.lowestPrice}
               key={product.id}
-              months={months}
               product={product}
             />
           ))}

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { AuthDialog } from "@/components/site/AuthDialog";
+import { SessionProvider } from "@/lib/session";
+
 import "./globals.css";
 
 /**
@@ -30,7 +33,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           İçeriğe geç
         </a>
-        <div id="icerik">{children}</div>
+        {/*
+          The session wraps everything, because the header's account actions
+          and the heart on a results row are the same state and there is only
+          one of it. `AuthDialog` sits inside it and renders nothing until
+          something asks for it.
+        */}
+        <SessionProvider>
+          <div id="icerik">{children}</div>
+          <AuthDialog />
+        </SessionProvider>
       </body>
     </html>
   );

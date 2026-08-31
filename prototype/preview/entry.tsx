@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 
 import { ProductDetail } from "@/components/product/ProductDetail";
 import { SearchExperience } from "@/components/SearchExperience";
+import { AuthDialog } from "@/components/site/AuthDialog";
+import { Header } from "@/components/site/Header";
 import { PRODUCTS, productBySlug } from "@/lib/products";
+import { SessionProvider } from "@/lib/session";
 
 /**
  * The preview harness.
@@ -34,8 +37,6 @@ function useHashRoute(): string {
   return route;
 }
 
-/** Fixed at twelve, exactly as the route does, and it is the same known gap. */
-const MONTHS = 12;
 
 function Preview() {
   const route = useHashRoute();
@@ -46,20 +47,26 @@ function Preview() {
   const product = productBySlug(slug);
   if (product === undefined)
     return (
-      <div className="mx-auto max-w-2xl px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold text-slate-900">Ürün bulunamadı</h1>
-        <p className="mt-2 text-slate-600">
-          Aradığınız ürün burada değil.{" "}
-          <a className="font-medium text-sky-800 underline" href="#/">
-            Tüm ürünlere dönün
-          </a>
-          .
-        </p>
-      </div>
+      <>
+        <Header />
+        <div className="mx-auto max-w-2xl px-4 py-24 text-center">
+          <h1 className="text-2xl font-bold text-slate-900">Ürün bulunamadı</h1>
+          <p className="mt-2 text-slate-600">
+            Aradığınız ürün burada değil.{" "}
+            <a className="font-medium text-sky-800 underline" href="#/">
+              Tüm ürünlere dönün
+            </a>
+            .
+          </p>
+        </div>
+      </>
     );
 
   return (
-    <ProductDetail months={MONTHS} product={product} products={PRODUCTS} />
+    <>
+      <Header />
+      <ProductDetail product={product} products={PRODUCTS} />
+    </>
   );
 }
 
@@ -67,6 +74,11 @@ const host = document.getElementById("root");
 if (host !== null)
   createRoot(host).render(
     <StrictMode>
-      <Preview />
+      {/* The same wrapper `layout.tsx` puts around the routes, so the preview
+          and the application share one session rather than two. */}
+      <SessionProvider>
+        <Preview />
+        <AuthDialog />
+      </SessionProvider>
     </StrictMode>
   );

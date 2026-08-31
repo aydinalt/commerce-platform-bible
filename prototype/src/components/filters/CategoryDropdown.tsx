@@ -101,13 +101,27 @@ export function CategoryDropdown({
        * and `inert` keep the closed rows away from the keyboard and from a
        * screen reader, which a `max-height` trick on its own does not.
        */}
+      {/*
+       * **The cap was `max-h-96` — 384 px — and it broke when the catalogue
+       * grew.** Twelve rows at roughly 49 px need about 590 px, so the last
+       * four categories were rendered, present in the accessibility tree, and
+       * simply clipped: `overflow-hidden` with no scroll shows nothing and
+       * offers no way to reach it. The same shape of defect as the budget
+       * slider's hard-coded floor — a fixed bound that is right exactly until
+       * the data moves.
+       *
+       * Open, the panel is `70vh` and scrolls; closed, it is `max-h-0` and
+       * hidden, which is what the collapse animation needs. The two states
+       * need different overflow, so they set it separately rather than
+       * sharing one `overflow-hidden` that neither wants.
+       */}
       <ul
         aria-hidden={!open}
         aria-label="Kategoriler"
-        className={`absolute right-0 z-30 w-full overflow-hidden bg-white transition-all duration-300 ${
+        className={`absolute right-0 z-30 w-full bg-white transition-all duration-300 ${
           open
-            ? "max-h-96 border border-t-0 border-slate-300 shadow-[0_3px_20px_rgba(0,0,0,0.16)]"
-            : "max-h-0"
+            ? "max-h-[70vh] overflow-y-auto overscroll-contain border border-t-0 border-slate-300 shadow-[0_3px_20px_rgba(0,0,0,0.16)]"
+            : "max-h-0 overflow-hidden"
         }`}
         role="listbox"
         // @ts-expect-error `inert` is valid HTML and React types lag behind it.
@@ -127,8 +141,17 @@ export function CategoryDropdown({
                 setOpen(false);
               }}
               role="option"
-              /* The stagger: 50 ms per row, exactly as the reference times it. */
-              style={{ transitionDelay: open ? `${index * 50}ms` : "0ms" }}
+              /*
+               * The stagger: 50 ms per row, as the reference times it — but
+               * **capped at eight rows**. The reference has five categories;
+               * at twelve an uncapped stagger makes the last row arrive 550 ms
+               * after the first, and a menu that takes over half a second to
+               * finish appearing reads as a slow site rather than a considered
+               * one.
+               */
+              style={{
+                transitionDelay: open ? `${Math.min(index, 8) * 50}ms` : "0ms"
+              }}
               type="button"
             >
               <span className="truncate">{category.name}</span>

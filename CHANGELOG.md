@@ -3,10 +3,48 @@
 All notable changes to the **Commerce Platform Bible** repository are documented in this file.
 
 This project follows the principles of:
+
 - Documentation First Development
 - Semantic Versioning
 - Single Information Owner
 - Reference Never Redefine
+
+---
+
+## [3.37.1] - 2026-08-31
+
+### Fixed
+
+- **CI went red on I52 and the code was not the problem — my verification was.**
+  `eslint .` walks the whole tree, so it reached into `prototype/`, and typed
+  linting needs every file to belong to a TypeScript project. The prototype's
+  `next.config.mjs`, `postcss.config.mjs` and each `preview/*.mjs` driver
+  belong to none, so each failed to parse. Three errors when CI ran it; **nine
+  by the time I reproduced it**, because I had added three more harness scripts
+  in between. A defect that grows with every file added is not one to patch
+  entry by entry.
+- **The prototype is now ignored by the root lint and typechecked on its own.**
+  It is committed but it is not the platform: not a workspace, not referenced
+  by the root `tsconfig.json`, not covered by `format:check`. This file was the
+  only root check that reached it. Adding it to the root project graph would
+  have dragged its own Next, React and Tailwind into the platform's build to
+  lint a directory that never ships — so `npm run prototype:typecheck` runs
+  `tsc` against `prototype/tsconfig.json` instead, and it is part of `verify`.
+  The root's TypeScript resolves the prototype's types without
+  `prototype/node_modules`, so CI needs no second install.
+
+### Changed
+
+- **The verification sandbox no longer excludes anything CI includes.** The
+  rsync that builds the clean tree carried `--exclude prototype`, so the chain
+  I ran green was not the chain CI runs — I verified a tree with the broken
+  directory removed from it. **This is the fifteenth recorded case of a check
+  that verifies something other than what it means, and the fourth in a row
+  that was mine rather than the repository's.** The others were a `textContent`
+  that included the bundled script, a selector that matched an option's
+  ancestor, and two `perl` substitutions that silently matched nothing. The
+  shape is the same every time: the measurement was easier to arrange than the
+  thing being measured, so it drifted away from it.
 
 ---
 
@@ -16,9 +54,9 @@ This project follows the principles of:
 
 - **An Offering can say what it costs — and can say it has no price without
   claiming the platform failed.** The Owner named the case the obvious design
-  would have lost: *"ilan fiyatı olmayan ürünlerde olabilir örnek hizmet
+  would have lost: _"ilan fiyatı olmayan ürünlerde olabilir örnek hizmet
   veriliyordur ama bir fiyatı yok — yönlendirme sonrası istenen hizmete göre
-  belirlenen fiyat olabilir."* A consultancy has no amount **by its nature**; a
+  belirlenen fiyat olabilir."_ A consultancy has no amount **by its nature**; a
   feed that carried nothing has one the platform has not read. A single nullable
   `price` makes those the same row and forces every surface to guess. So price
   is a **Kind first and an amount second**: `FIXED`, `ON_REQUEST`, `UNKNOWN` —
@@ -68,7 +106,7 @@ This project follows the principles of:
   leaving a client to wonder which of `amount` and `pricing.amount` to trust.
 - **The thirteenth wrong match, and the first that was mine.** Two `perl`
   substitutions in my own mutation harness matched nothing and reported the
-  tests as *surviving* — which would have led me to weaken two correct tests.
+  tests as _surviving_ — which would have led me to weaken two correct tests.
   The harness now asserts the substitution applied before running anything.
 
 ---
@@ -84,7 +122,7 @@ This project follows the principles of:
   its header says `İlanlar` on every page, its description was
   `Decision-completion marketplace`, and two route titles were English —
   `Your account` and `Offering`. `/account` renders `<h1>{TITLES.account}</h1>`
-  — *Hesabınız* — sixty lines below a title that said `Your account`: the same
+  — _Hesabınız_ — sixty lines below a title that said `Your account`: the same
   fact, in two languages, in one file.
 - **`" (required)"` was on the Business Information form**, beside
   `Görünen ad`, since I28. `i27`'s expression scan exists to catch exactly this
@@ -109,8 +147,8 @@ This project follows the principles of:
 
 ### Added
 
-- **The Decision flow has stages.** I49 named it as untouched: *the densest
-  screen in the product, sections separated by margin alone*. Measured, it was
+- **The Decision flow has stages.** I49 named it as untouched: _the densest
+  screen in the product, sections separated by margin alone_. Measured, it was
   **five files, 557 lines, not one `className`**. Five stages now read as steps,
   separated by a rule — not by a card, because a card around a step makes the
   step look optional. The first stage is spared its rule, which would have been
@@ -247,7 +285,7 @@ This project follows the principles of:
   who took the offer lost a Decision in progress on the strength of a claim the
   platform had no way to make.
 - **An outage told a person their Comparison had ended.** `/compare` reasoned
-  about exactly two states, *not openable* and *gone*, told apart by whether
+  about exactly two states, _not openable_ and _gone_, told apart by whether
   anything was left to describe. A third state broke that: during an outage
   there is nothing left to describe either, so the page offered to start a set
   the person still had.
@@ -543,8 +581,8 @@ This project follows the principles of:
 
 - **The drain stops before a batch it could not finish**, rather than when the
   time is gone. A function is killed mid-statement when it exceeds its duration;
-  `processBatch` marks what it delivered before returning, so a kill *between*
-  batches loses nothing — but a kill *inside* one is a delivery whose outcome
+  `processBatch` marks what it delivered before returning, so a kill _between_
+  batches loses nothing — but a kill _inside_ one is a delivery whose outcome
   nobody recorded, and the outbox then sends it again.
 - `drained: false` is returned rather than treated as a failure. **An outbox
   that never reports `true` is one the schedule cannot keep up with**, and that
@@ -643,7 +681,7 @@ This project follows the principles of:
 
 - **One mutation survived the first attempt.** Deleting
   `verifyDatabaseTimeouts` from the worker left the suite green, because the
-  case asserted the entrypoint source contained the *name* and the import line
+  case asserted the entrypoint source contained the _name_ and the import line
   still did. A check on a name is satisfied by importing it and never calling
   it. It now matches the call, with imports stripped before the search.
 
@@ -764,9 +802,9 @@ This project follows the principles of:
 ### Changed — an Owner decision reversing an Owner decision
 
 - **I26's approved "calm, content-first" direction is replaced by "dense
-  listings"**, which is that document's own escape clause being used: *"Where
+  listings"**, which is that document's own escape clause being used: _"Where
   density would serve better than calm, this is the wrong foundation and should
-  be replaced rather than eroded."* Four Offerings on a screen instead of twelve
+  be replaced rather than eroded."_ Four Offerings on a screen instead of twelve
   is three times the scrolling for the same comparison.
 - Type scale down, `--measure-wide` to 76rem and lists get it, results grid to
   `auto-fill minmax(15rem, 1fr)` — five across on a wide screen, one on a phone,
@@ -934,7 +972,7 @@ This project follows the principles of:
 ### Fixed
 
 - **Three Frozen acceptance criteria could only ever half-pass.** Each says to
-  present the supplied visual *and* to invent no media when it is absent;
+  present the supplied visual _and_ to invent no media when it is absent;
   `listingCardSchema` had no field for a visual at all, and the Presentation
   repository filled `visuals` from a literal `[]`. Only the "absent" half was
   reachable.
@@ -1020,7 +1058,7 @@ This project follows the principles of:
   useful.** `tallyLabel` was proven by a unit case, and putting the raw Domain
   key back on screen passed anyway — a function being right says nothing about
   whether the surface calls it. The assertion is now against rendered markup and
-  matches the *shape* of a contract identifier, so a value added upstream and
+  matches the _shape_ of a contract identifier, so a value added upstream and
   rendered raw fails without anybody remembering to add it.
 - **The production build caught what nothing else did.** The new imports used
   `.js` extensions — correct for the tests, unresolvable by the web bundler —
@@ -1047,7 +1085,7 @@ This project follows the principles of:
   Admin's seven remain.
 - **Three of four eligibility labels contained the fourth as a substring.**
   `Herkese açık değil` contains `Herkese açık`, so an assertion that a withheld
-  Offering is *not* shown as public would have passed while the screen said the
+  Offering is _not_ shown as public would have passed while the screen said the
   opposite. `INELIGIBLE`, `PENDING` and `WITHDRAWN` are reworded so no label is
   a substring of another.
 - **`Arşivle` was a prefix of `Arşivlenmiş`**, the heading an Archived Offering
@@ -1093,7 +1131,7 @@ This project follows the principles of:
 - **The application was bilingual and nobody chose it.** The root declared
   `<html lang="tr">` and the public journey was Turkish, while eighteen surfaces
   declared `lang="en"` and were written in English. A person searched for a
-  listing in Turkish, pressed *Giriş*, and arrived at **Sign in**.
+  listing in Turkish, pressed _Giriş_, and arrived at **Sign in**.
 - UX-0008's six surfaces — sign in, register, confirm, recovery, reset, account
   — are Turkish, and their `lang="en"` markers are gone.
 
@@ -1125,7 +1163,7 @@ This project follows the principles of:
   seven. Next two increments.
 - The Turkish has not been read by a Turkish speaker other than its author.
 - `toLocaleUpperCase("tr")` is used nowhere yet; a plain `toUpperCase()` would
-  turn *ilan* into *ILAN* rather than *İLAN*.
+  turn _ilan_ into _ILAN_ rather than _İLAN_.
 - §9.1 unanswered — interface-only, content too, or locale-scoped catalogue.
 
 ---
@@ -1149,7 +1187,7 @@ This project follows the principles of:
 ### Fixed
 
 - **A control border failed WCAG 1.4.11 at roughly 1.6:1** — in the existing
-  code *and* in the approved proposal, which published an estimated 3.1:1 for a
+  code _and_ in the approved proposal, which published an estimated 3.1:1 for a
   colour that measures 1.63:1. Measuring before writing caught it;
   `--border-strong` is now `#818894` at 3.42:1.
 - **The typeface was never loaded.** `Inter` was asked for and nothing fetched
@@ -1284,7 +1322,7 @@ This project follows the principles of:
 - One bounded surface serving UX-0001 §13 and UX-0002 §14 together, because
   "the route did not begin" and "the results did not arrive" are one moment for
   the person. It fetches nothing, so no Discovery Start and no `Offering
-  Presentation Open` can arise from a failure.
+Presentation Open` can arise from a failure.
 - A bounded surface for a Listing Card that could not be opened, keeping the
   Discovery context and offering no Decision or Compare action over a
   Presentation the application could not read.
@@ -1359,7 +1397,7 @@ This project follows the principles of:
   checking, no OpenAPI drift, dependency audit and a production build. Six
   mutations run, each caught. One was missed by the first version of its test:
   the content-type bug leaves the status and the code unchanged at `500
-  INTERNAL_ERROR`, and only the envelope's message differs — which is how I20
+INTERNAL_ERROR`, and only the envelope's message differs — which is how I20
   believed it was finished.
 
 ### Known
@@ -1605,7 +1643,7 @@ This project follows the principles of:
   register, process the outbox, follow the emailed confirmation link, keep the
   cookie. Its malformed-principal case presents a malformed session token.
 - `Principal.businessId` is required (`string | null`). It was optional, and
-  every caller read absence as *skip the Business context check* — a bypass
+  every caller read absence as _skip the Business context check_ — a bypass
   living in the type as a legitimate state. `null` is the authenticated User
   baseline and is refused like any other Business.
 
@@ -1870,11 +1908,13 @@ pointer to where the detail actually lives.
 ### Added or recorded
 
 #### ADR and Governance
+
 - ADR-0004 — Capability Architecture Layer Recognition — **Accepted v1.0** on 2026-07-19.
 - `REPOSITORY_GOVERNANCE.md` completed Formal Architecture Review, Final Review, explicit Owner Approval, and separate Owner Freeze — **Frozen v1.0**.
 - Repository management-document reconciliation recorded as the immediate follow-up required by Frozen `REPOSITORY_GOVERNANCE.md` §12.
 
 #### Canonical Source-State Inventory
+
 - Governance process documents: `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, `ADR_PROCESS.md` — **Draft v0.1**.
 - `USER_STORY_HANDBOOK.md` — **Draft v0.9**.
 - PRDs: PRD-0001 **Approved v1.1**; PRD-0003 **Approved v1.0**; PRD-0002 **Draft v0.1**; PRD-0004 **Draft v0.4**; PRD-0005 and PRD-0006 **Draft v0.1**.
@@ -1915,6 +1955,7 @@ pointer to where the detail actually lives.
 ### Added or recorded
 
 #### ADR-0003 — Offering Authoring & Publication Feature → Capability Associations (F01–F04) — Accepted v1.0
+
 - F01 → Creation
 - F03 → Lifecycle
 - F04 → Lifecycle
@@ -1951,6 +1992,7 @@ pointer to where the detail actually lives.
 ### Added
 
 #### Golden Baseline Story
+
 - US-OFR-F05-001 — Full Offering Detail Presentation — Version 1.0, Status: Golden Baseline
 
 ### Story Generation Progress
@@ -1970,6 +2012,7 @@ pointer to where the detail actually lives.
 ### Added
 
 #### Golden Baseline Story
+
 - US-OFR-F04-001 — Offering Publication — Version 0.1, Status: Frozen Golden Baseline
 
 ### Story Generation Progress
@@ -1989,6 +2032,7 @@ pointer to where the detail actually lives.
 ### Added
 
 #### Golden Baseline Story
+
 - US-OFR-F03-001 — Offering Retirement — Version 0.1, Status: Frozen Golden Baseline
 
 ### Story Generation Progress
@@ -2010,6 +2054,7 @@ pointer to where the detail actually lives.
 ### Added
 
 #### Golden Baseline Story
+
 - US-OFR-F02-001 — Offering Editing — Version 1.0, Status: Golden Baseline
 
 ### Story Generation Progress
@@ -2032,6 +2077,7 @@ pointer to where the detail actually lives.
 ### Added
 
 #### Story Governance Baseline
+
 - USER_STORY_HANDBOOK.md — Version 1.0, Status: Baseline
 - REPOSITORY_GOVERNANCE.md — Version 1.0, Status: Baseline
 - Story Domain Code Registry (owned by REPOSITORY_GOVERNANCE.md)
@@ -2039,6 +2085,7 @@ pointer to where the detail actually lives.
 ### Changed
 
 #### USER_STORY_HANDBOOK.md → Baseline (v1.0)
+
 - Story Governance completed
 - Story ID architecture finalized (Generated Story ID: `US-[DOMAIN]-[FEATURE_ID]-[ID]`)
 - Story Domain ownership finalized (Domain codes consumed by reference from REPOSITORY_GOVERNANCE.md)
@@ -2046,6 +2093,7 @@ pointer to where the detail actually lives.
 - Story Generation Standards finalized
 
 #### REPOSITORY_GOVERNANCE.md → Baseline (v1.0)
+
 - Repository Governance finalized
 - Story Domain Registry introduced
 - Domain Code ownership finalized
@@ -2065,6 +2113,7 @@ pointer to where the detail actually lives.
 ### Added
 
 #### Capability Architecture Layer (Baseline)
+
 - OFFERING_CAPABILITY_ARCHITECTURE.md
 - CAPABILITY_COVERAGE_MATRIX.md
 - TRACEABILITY_GUIDELINES.md
@@ -2089,12 +2138,14 @@ pointer to where the detail actually lives.
 ### Added
 
 #### Repository
+
 - Initial repository structure
 - Documentation architecture
 - Templates
 - Repository governance
 
 #### Governance
+
 - REPOSITORY_GOVERNANCE.md
 - DOCUMENT_LIFECYCLE.md
 - REVIEW_PROCESS.md
@@ -2102,6 +2153,7 @@ pointer to where the detail actually lives.
 - ADR README
 
 #### Foundation (Frozen)
+
 - VISION.md
 - MISSION.md
 - PRODUCT_MANIFESTO.md
@@ -2109,9 +2161,11 @@ pointer to where the detail actually lives.
 - V1_SCOPE.md
 
 #### Architecture Decisions
+
 - ADR-0001 — Decision Chat Ownership (Accepted)
 
 #### PRD Layer (Frozen)
+
 - PRD-0001 Offering
 - PRD-0002 Discovery
 - PRD-0003 Identity
@@ -2120,6 +2174,7 @@ pointer to where the detail actually lives.
 - PRD-0006 Platform
 
 #### UX Layer (Frozen)
+
 - UX-0001 Home
 - UX-0002 Discovery
 - UX-0003 Offering Detail
@@ -2130,6 +2185,7 @@ pointer to where the detail actually lives.
 - UX-0008 Authentication
 
 #### Repository Management
+
 - CURRENT_STATUS.md
 - PROJECT_ROADMAP.md
 

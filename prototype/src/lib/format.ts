@@ -60,3 +60,25 @@ export function stockLabel(stock: number | null): string {
   if (stock === null) return "Stokta yok";
   return stock >= 25 ? "Stokta 25+ adet" : `Stokta ${stock} adet`;
 }
+
+const FULL_DATE = new Intl.DateTimeFormat("tr-TR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric"
+});
+
+/** `24 Ağustos 2026` — the form a publication date takes. */
+export const fullDate = (iso: string): string => FULL_DATE.format(new Date(iso));
+
+/**
+ * A star row as text: `★★★★☆`.
+ *
+ * Rounded to the nearest half and then to the nearest whole, because a half
+ * star drawn as a whole one overstates by a tenth on a five-point scale and
+ * this is the number people scan rather than read. The numeric average is
+ * always printed beside it, so the shape never has to carry the precision.
+ */
+export function stars(rating: number): string {
+  const filled = Math.round(rating);
+  return "★".repeat(filled) + "☆".repeat(Math.max(0, 5 - filled));
+}

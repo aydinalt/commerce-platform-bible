@@ -10,7 +10,29 @@ export default tseslint.config(
       "**/coverage/**",
       "**/dist/**",
       "eslint.config.mjs",
-      "node_modules/**"
+      "node_modules/**",
+      /*
+       * The design prototype is a separate application and is linted by its
+       * own tooling, not by this configuration.
+       *
+       * It is committed, but it is **not** part of the platform: not a
+       * workspace, not referenced by the root `tsconfig.json`, not covered by
+       * `format:check`. This file was the only root check that reached into it
+       * — and typed linting needs every file to belong to a TypeScript
+       * project, so `prototype/next.config.mjs`, `postcss.config.mjs` and each
+       * `preview/*.mjs` driver failed to parse. That count grows with every
+       * harness script added, which is why the answer is not another entry in
+       * `allowDefaultProject`.
+       *
+       * Adding the prototype to the root project graph would be worse: it
+       * would drag its own Next, React and Tailwind versions into the
+       * platform's build to lint a directory that never ships.
+       *
+       * **It is not therefore unchecked.** `npm run prototype:typecheck` runs
+       * `tsc` against `prototype/tsconfig.json` and is part of `verify`, so a
+       * type error here still fails CI.
+       */
+      "prototype/**"
     ]
   },
   eslint.configs.recommended,

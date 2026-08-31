@@ -26,14 +26,30 @@ export function matchesQuery(product: Product, query: string): boolean {
 }
 
 /**
- * The monthly instalment a person would pay.
+ * How old the model is, in years, against a fixed "now".
  *
- * **Deliberately not compounded.** A prototype that shows an interest-bearing
- * figure is making a financial claim, and this one has no rate to make it from.
- * It is the price divided by the term, and the label on screen says so.
+ * **This replaced `monthlyInstalment`, which the Owner removed.** That figure
+ * divided the price by the term with no rate, so it was neither the cash price
+ * nor any instalment plan that exists — and PRD-0001 §4 puts payment and
+ * credit out of scope in the first place. A number shaped like a monthly
+ * payment that is not one is worse than no number at all.
+ *
+ * The year is against `CATALOGUE_YEAR` rather than the clock, for the same
+ * reason `seen()` is: the data is invented, and a page that silently ages
+ * every January would be lying about a fact it hard-coded.
  */
-export function monthlyInstalment(price: number, months: number): number {
-  return Math.round(price / Math.max(months, 1));
+export const CATALOGUE_YEAR = 2026;
+
+export function modelAge(releaseYear: number): number {
+  return Math.max(0, CATALOGUE_YEAR - releaseYear);
+}
+
+/** `Bu yıl`, `Geçen yıl`, `3 yıllık model`. */
+export function ageLabel(releaseYear: number): string {
+  const age = modelAge(releaseYear);
+  if (age === 0) return "Bu yılın modeli";
+  if (age === 1) return "Geçen yılın modeli";
+  return `${age} yıllık model`;
 }
 
 /** The comparator behind each of the four tabs. */
@@ -46,13 +62,28 @@ const ORDER: Record<FilterState["tab"], (a: Product, b: Product) => number> = {
 
 export function applyFilters(
   products: Product[],
-  state: FilterState
+  state: FilterState,
+  /** The budget ceiling, so "not narrowed" can be told from "narrowed". */
+  maxAmount = Number.MAX_SAFE_INTEGER
 ): Product[] {
   return products
     .filter((product) => {
       if (state.categoryId !== "all" && product.categoryId !== state.categoryId)
         return false;
-      if (product.lowestPrice > state.amount) return false;
+      /*
+       * An Offering with no amount can neither satisfy a budget nor fail it,
+       * so a narrowed budget sets it aside rather than judging it — and the
+       * results header says how many were set aside, because a criterion that
+       * silently removes things is a criterion nobody can correct.
+       *
+       * At the ceiling the budget is not narrowed at all, so nothing is set
+       * aside and the unpriced Offerings are in the list where they belong.
+       */
+      if (product.pricingKind === "ON_REQUEST") {
+        if (state.amount < maxAmount) return false;
+      } else if (product.lowestPrice > state.amount) return false;
+      // A floor, not a window: "2024 ve sonrası" is the question people ask.
+      if (product.releaseYear < state.minYear) return false;
       return matchesQuery(product, state.query);
     })
     .sort(ORDER[state.tab]);
@@ -85,6 +116,9 @@ export function alternativesFor(
       .filter(
         (product) =>
           product.id !== anchor.id &&
+          // An Offering with no amount cannot be inside or outside a price
+          // band, so it is not a candidate for one.
+          product.pricingKind === "FIXED" &&
           Math.abs(product.lowestPrice - anchor.lowestPrice) <=
             anchor.lowestPrice * band
       )

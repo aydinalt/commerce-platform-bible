@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-import { monthlyInstalment } from "@/lib/filter";
-import { discount, lira, priceGap } from "@/lib/format";
+import { FavouriteButton } from "@/components/product/FavouriteButton";
+import { ageLabel } from "@/lib/filter";
+import { discount, lira, priceGap, stars } from "@/lib/format";
 import type { Product } from "@/lib/types";
 
 import { Thumb } from "./Thumb";
@@ -15,10 +16,12 @@ import { Thumb } from "./Thumb";
  * scannable, and the excerpt is the one most often left out — a row with no
  * prose is a row a person has to click to understand.
  *
- * **Finview's half:** the three-cell stat strip. Finview leads with
- * `From $42.58/Month` because the monthly figure is what its readers are
- * actually choosing on; here the same is true once a term is set, so the strip
- * carries the instalment beside the price and the seller count.
+ * **Finview's half:** the three-cell stat strip. Finview leads with a monthly
+ * figure because that is what its readers choose on; the equivalent here is
+ * **how current the model is**, so the strip carries the release year, the age
+ * in words, and the seller count. It used to carry an instalment, which the
+ * Owner removed — that figure was a flat division with no rate behind it, so
+ * it named a payment that does not exist.
  *
  * **Two actions, and they are not the same act.** *Detayları incele* opens the
  * product and is the quiet one; *Güncel Fiyatı İncele* jumps straight to the
@@ -28,17 +31,17 @@ import { Thumb } from "./Thumb";
  */
 export function ProductCard({
   product,
-  months,
   anchorPrice
 }: {
   product: Product;
-  months: number;
   /** When present, the row says how it compares with the searched product. */
   anchorPrice?: number;
 }) {
   const off = discount(product.lowestPrice, product.listPrice);
+  // No amount, no comparison. `%100 daha ucuz` against a zero is arithmetic,
+  // not information.
   const gap =
-    anchorPrice === undefined
+    anchorPrice === undefined || product.pricingKind === "ON_REQUEST"
       ? null
       : priceGap(product.lowestPrice, anchorPrice);
   const cheaper = gap?.includes("ucuz") ?? false;
@@ -73,20 +76,46 @@ export function ProductCard({
             </span>
           </div>
 
-          <h3 className="text-[15px] font-semibold leading-snug text-slate-900">
-            <Link
-              className="transition-colors hover:text-sky-800"
-              href={`/urun/${product.slug}`}
-            >
-              {product.name}
-            </Link>
-          </h3>
+          <div className="flex items-start gap-3">
+            <h3 className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-slate-900">
+              <Link
+                className="transition-colors hover:text-sky-800"
+                href={`/urun/${product.slug}`}
+              >
+                {product.name}
+              </Link>
+            </h3>
+            {/* The heart is on the row, not only on the page. A person
+                comparing eight results keeps two of them; making them open
+                each one to do it is how a shortlist never gets made. */}
+            <FavouriteButton productId={product.id} size="sm" />
+          </div>
+
+          <p className="mt-1 flex items-center gap-1.5 text-[12px] text-slate-500">
+            <span aria-hidden="true" className="text-amber-500">
+              {stars(product.rating)}
+            </span>
+            <span className="tabular-nums">{product.rating.toFixed(1)}</span>
+            <span aria-hidden="true" className="text-slate-300">·</span>
+            <span className="tabular-nums">{product.reviewCount} yorum</span>
+          </p>
 
           <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
-            <span className="text-lg font-bold tabular-nums text-slate-900">
-              {lira(product.lowestPrice)}
-            </span>
-            {product.listPrice === null ? null : (
+            {/*
+              "Sorulduğunda belirlenir" is a price, not a blank. Rendering it
+              as an empty amount or as `0 ₺` would say the site failed to read
+              something, which is the one thing it did not do.
+            */}
+            {product.pricingKind === "ON_REQUEST" ? (
+              <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[13px] font-semibold text-slate-700">
+                Fiyat sorulduğunda belirlenir
+              </span>
+            ) : (
+              <span className="text-lg font-bold tabular-nums text-slate-900">
+                {lira(product.lowestPrice)}
+              </span>
+            )}
+            {product.listPrice === null || product.pricingKind === "ON_REQUEST" ? null : (
               <del className="text-sm tabular-nums text-slate-400">
                 {lira(product.listPrice)}
               </del>
@@ -115,18 +144,18 @@ export function ProductCard({
           <dl className="mt-3 grid max-w-md grid-cols-3 divide-x divide-slate-200 rounded-lg border border-slate-200 bg-slate-50/70 text-center">
             <div className="px-2 py-1.5">
               <dt className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                Aylık taksit
+                Çıkış yılı
               </dt>
               <dd className="text-[13px] font-semibold tabular-nums text-slate-900">
-                {lira(monthlyInstalment(product.lowestPrice, months))}
+                {product.releaseYear}
               </dd>
             </div>
             <div className="px-2 py-1.5">
               <dt className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                Vade
+                Model yaşı
               </dt>
-              <dd className="text-[13px] font-semibold tabular-nums text-slate-900">
-                {months} ay
+              <dd className="text-[13px] font-semibold text-slate-900">
+                {ageLabel(product.releaseYear)}
               </dd>
             </div>
             <div className="px-2 py-1.5">
@@ -134,7 +163,7 @@ export function ProductCard({
                 Satıcı
               </dt>
               <dd className="text-[13px] font-semibold tabular-nums text-slate-900">
-                {product.offerCount}
+                {product.pricingKind === "ON_REQUEST" ? "Teklif" : product.offerCount}
               </dd>
             </div>
           </dl>
@@ -145,7 +174,9 @@ export function ProductCard({
             className="rounded-lg bg-orange-700 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition-colors hover:bg-orange-800"
             href={`/urun/${product.slug}#fiyatlar`}
           >
-            Güncel Fiyatı İncele
+            {product.pricingKind === "ON_REQUEST"
+              ? "Teklif İste"
+              : "Güncel Fiyatı İncele"}
           </a>
           <Link
             className="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-medium text-slate-800 transition-colors hover:border-slate-400 hover:bg-slate-50"
