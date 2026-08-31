@@ -200,15 +200,13 @@ main > * {
 
 @media (min-width: 1120px) {
   main:has(table) > *,
-  main:has(.listing-cards) > *,
-  main:has(.category-choices) > * {
+  main:has(.listing-cards) > * {
     max-width: var(--measure-wide);
   }
 }
 
 /* Content pages start at the top; a single form is centred. */
 main:has(.listing-cards),
-main:has(.category-choices),
 main:has(table) {
   align-content: start;
 }
@@ -285,22 +283,8 @@ button:disabled {
    filters and in-table actions are all of these. */
 nav button,
 .comparison thead button,
-.preparation-notice button,
-.category-choices button {
-  background: var(--surface-raised);
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
 nav button:hover:not(:disabled),
 .comparison thead button:hover:not(:disabled),
-.preparation-notice button:hover:not(:disabled),
-.category-choices button:hover:not(:disabled) {
-  background: var(--accent-surface);
-  border-color: var(--accent);
-  color: var(--accent-strong);
-}
-
 /* Field — label, control, hint, error */
 label {
   display: block;
@@ -367,12 +351,14 @@ textarea[aria-invalid="true"] {
  *
  * This is the migration rule the Owner chose on 2026-08-31: a rule leaves when
  * the last route using it leaves, and not before. `.entry` and `.entry-nav`
- * stay for exactly that reason — Discovery still applies both.
+ * ~~stay for exactly that reason — Discovery still applies both~~ **left with
+ * Discovery in I55**, along with `.category-choices`, `.results-heading`,
+ * `.zero-results` and `.preparation-notice`. Nine blocks in total; the rule held
+ * for one increment and then did what it said it would.
  */
 
 /* Listing cards */
 .listing-cards,
-.category-choices,
 .decision-entries {
   list-style: none;
   margin: 0;
@@ -456,7 +442,6 @@ textarea[aria-invalid="true"] {
   margin: 0;
 }
 
-.category-choices,
 .decision-entries {
   display: flex;
   flex-wrap: wrap;
@@ -467,12 +452,6 @@ textarea[aria-invalid="true"] {
   color: var(--text-muted);
   font-size: var(--text-small);
   margin-top: 0;
-}
-
-.zero-results {
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius);
-  padding: var(--space-4);
 }
 
 /* Attribute list */
@@ -573,18 +552,6 @@ tbody th {
     display: block;
     padding: var(--space-1) 0;
   }
-}
-
-/* Notices */
-.preparation-notice {
-  background: var(--accent-surface);
-  border-radius: var(--radius);
-  margin-bottom: var(--space-6);
-  padding: var(--space-4);
-}
-
-.preparation-notice p {
-  margin: 0 0 var(--space-2);
 }
 
 article {
@@ -970,54 +937,19 @@ article {
  * buttons sit in, and the rule that separates a results heading from the
  * results.
  *
+ * **I55 moved that layer to Tailwind and this paragraph is history.** The
+ * architecture it describes is now written in utilities beside the markup it
+ * shapes; `.listing-card` and `.comparison` remain here because Compare still
+ * applies them. The reasoning is preserved rather than deleted: it is why the
+ * public side looks the way it does, and a Tailwind rewrite inherits the
+ * decision even though it no longer inherits the selector.
+ *
  * **A public block is not a workspace panel.** A panel is a container for work;
  * these are entrances, and a results grid boxed inside a card reads as a widget
  * rather than as the page. So the treatment is a rule and a tint rather than a
  * border on four sides — lines doing the work, which is the direction's own
  * instruction.
  */
-
-/*
- * Home's entrance. Narrower than the grid on purpose: the search field is one
- * decision and a 76rem-wide input invites nothing.
- */
-.entry {
-  margin: 0 auto;
-  max-width: var(--measure);
-}
-
-/*
- * The "or start from a category" block, and Discovery's narrowing and widening
- * blocks. One pattern, three places — they are the same act.
- */
-.entry-nav {
-  border-top: 1px solid var(--border);
-  margin-top: var(--space-6);
-  padding-top: var(--space-4);
-}
-
-/*
- * The heading reads as a label rather than as a section title, because what
- * follows it is a row of choices rather than prose. Size stays on the scale;
- * only weight and colour change.
- */
-.entry-nav > h2 {
-  color: var(--text-muted);
-  font-size: var(--text-small);
-  margin: 0 0 var(--space-3);
-}
-
-/*
- * A results heading carries the same rule the workspace gives `h1`, so the two
- * halves of the product read as one thing. It is the only structural idea
- * borrowed across the boundary, and it is borrowed deliberately: a person who
- * signs in should not feel they have arrived somewhere else.
- */
-.results-heading {
-  border-bottom: 2px solid var(--border-strong);
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-2);
-}
 
 /* ─── The Decision flow's stages (I50) ─────────────────────────────────────
  *

@@ -41,15 +41,28 @@ function CategoryChoices({
     // Named, because a page may hold two of these — children and ancestors —
     // and a landmark list of two unlabelled "navigation" entries tells
     // somebody moving by landmark nothing about which is which.
-    <nav aria-labelledby={`category-nav-${heading}`} className="entry-nav">
-      <h2 id={`category-nav-${heading}`}>{heading}</h2>
+    <nav
+      aria-labelledby={`category-nav-${heading}`}
+      className="mt-8 border-t border-border pt-6"
+    >
+      <h2
+        className="mb-3 text-sm font-medium text-text-muted"
+        id={`category-nav-${heading}`}
+      >
+        {heading}
+      </h2>
       {/* Selecting stays a submission, exactly as it is on Home: a Category
           chosen by being linked to could be chosen by a prefetch. */}
       <form action={selectCategory}>
-        <ul className="category-choices">
+        <ul className="flex list-none flex-wrap gap-2 p-0">
           {categories.map((category) => (
             <li key={category.id}>
-              <button name="categoryId" type="submit" value={category.id}>
+              <button
+                className="rounded-full border border-border-strong bg-surface-raised px-4 py-1.5 text-sm text-text hover:border-accent hover:bg-accent-surface hover:text-accent-strong"
+                name="categoryId"
+                type="submit"
+                value={category.id}
+              >
                 {category.name}
               </button>
             </li>
@@ -62,7 +75,7 @@ function CategoryChoices({
 
 function NothingMatched({ query }: { query: string | null }) {
   return (
-    <section className="zero-results">
+    <section className="rounded-md border border-dashed border-border-strong p-6">
       {/* `US-DSC-F08-001` AC-2 in the flesh: the statement is that nothing
           matched, and the criteria stay visible rather than being quietly
           dropped. AC-8 forbids filling the space with anything else, so the
@@ -99,13 +112,26 @@ function SearchNarrowing({
 }) {
   if (categories.length === 0 && !narrowed) return null;
   return (
-    <nav aria-labelledby="search-narrowing" className="entry-nav">
-      <h2 id="search-narrowing">Kategoriye göre daralt</h2>
+    <nav
+      aria-labelledby="search-narrowing"
+      className="mt-8 border-t border-border pt-6"
+    >
+      <h2
+        className="mb-3 text-sm font-medium text-text-muted"
+        id="search-narrowing"
+      >
+        Kategoriye göre daralt
+      </h2>
       <form action={narrowSearch}>
-        <ul className="category-choices">
+        <ul className="flex list-none flex-wrap gap-2 p-0">
           {categories.map((category) => (
             <li key={category.id}>
-              <button name="categoryId" type="submit" value={category.id}>
+              <button
+                className="rounded-full border border-border-strong bg-surface-raised px-4 py-1.5 text-sm text-text hover:border-accent hover:bg-accent-surface hover:text-accent-strong"
+                name="categoryId"
+                type="submit"
+                value={category.id}
+              >
                 {category.name}
               </button>
             </li>
@@ -113,8 +139,13 @@ function SearchNarrowing({
         </ul>
       </form>
       {narrowed ? (
-        <form action={widenSearch}>
-          <button type="submit">Kategori daraltmasını kaldır</button>
+        <form action={widenSearch} className="mt-3">
+          <button
+            className="text-sm text-accent underline hover:text-accent-strong"
+            type="submit"
+          >
+            Kategori daraltmasını kaldır
+          </button>
         </form>
       ) : null}
     </nav>
@@ -129,9 +160,20 @@ export function SearchResultsView({
   view: SearchViewResponse;
 }) {
   return (
-    <main>
-      <section>
-        <h1 className="results-heading">“{view.query}” için sonuçlar</h1>
+    /*
+     * **The width comes from here now, not from `main:has(.category-choices)`.**
+     * `globals.css` widened and top-aligned any `main` containing that class,
+     * and Discovery was the only route that carried it. Deleting the class
+     * without saying this would have narrowed and re-centred a Browse *branch*
+     * page — the one case with Category choices and no Results, so the
+     * `.listing-cards` hook would not have covered for it. That is precisely the
+     * invisible regression this migration is being run slowly to avoid.
+     */
+    <main className="block">
+      <section className="mx-auto w-full max-w-6xl px-4 py-8">
+        <h1 className="mb-6 border-b-2 border-border-strong pb-2 text-2xl font-semibold text-text">
+          “{view.query}” için sonuçlar
+        </h1>
 
         <SearchNarrowing
           categories={view.narrowing}
@@ -171,13 +213,18 @@ function PreparationNotice({
   preparation: PreparationContext;
 }) {
   return (
-    <section className="preparation-notice">
+    <section className="mb-6 rounded-md border border-accent bg-accent-surface p-4">
       <p role="status">
         Karşılaştırma için bu kategoriden ikinci bir ilan seçiyorsunuz.
       </p>
       <form action={leavePreparation}>
         <input name="categoryId" type="hidden" value={preparation.categoryId} />
-        <button type="submit">Karşılaştırma hazırlığından çık</button>
+        <button
+          className="mt-2 text-sm text-accent-strong underline"
+          type="submit"
+        >
+          Karşılaştırma hazırlığından çık
+        </button>
       </form>
     </section>
   );
@@ -193,9 +240,20 @@ export function BrowseResultsView({
   view: BrowseViewResponse;
 }) {
   return (
-    <main>
-      <section>
-        <h1 className="results-heading">{view.category.name}</h1>
+    /*
+     * **The width comes from here now, not from `main:has(.category-choices)`.**
+     * `globals.css` widened and top-aligned any `main` containing that class,
+     * and Discovery was the only route that carried it. Deleting the class
+     * without saying this would have narrowed and re-centred a Browse *branch*
+     * page — the one case with Category choices and no Results, so the
+     * `.listing-cards` hook would not have covered for it. That is precisely the
+     * invisible regression this migration is being run slowly to avoid.
+     */
+    <main className="block">
+      <section className="mx-auto w-full max-w-6xl px-4 py-8">
+        <h1 className="mb-6 border-b-2 border-border-strong pb-2 text-2xl font-semibold text-text">
+          {view.category.name}
+        </h1>
 
         {preparation === undefined ? null : (
           <PreparationNotice preparation={preparation} />

@@ -106,9 +106,14 @@ describe("Increment I54 Home's visual layer", () => {
     ])
       expect(css).not.toContain(signature);
 
-    // And what the 88 rules do style is still there, unmodified.
-    expect(css).toContain(".entry {");
+    /*
+     * And what the hand-written rules do style is still there, unmodified.
+     * `.entry` was the witness here until I55 deleted it with Discovery; the
+     * site shell is the better witness anyway, because it belongs to no route
+     * and will outlast every one of them.
+     */
     expect(css).toContain(".site-header {");
+    expect(css).toContain(".listing-card {");
   });
 
   it("resolves Home's utilities through the tokens rather than beside them", () => {
@@ -148,7 +153,7 @@ describe("Increment I54 Home's visual layer", () => {
       expect(home).not.toContain(absent);
   });
 
-  it("deletes the rules Home stopped using and keeps the ones it shares", () => {
+  it("deletes the rules Home stopped using", () => {
     const css = readFileSync(GLOBALS, "utf8");
     const discovery = readFileSync(
       "apps/web/src/app/discovery/discovery-view.tsx",
@@ -159,13 +164,15 @@ describe("Increment I54 Home's visual layer", () => {
     expect(css).not.toMatch(/^\.search-entry-row/mu);
 
     /*
-     * `.entry` and `.entry-nav` are still applied by Discovery, so they stay —
-     * and this asserts the reason rather than the fact. If Discovery stops using
-     * them and the rules remain, that is the next increment's cleanup; if it
-     * still uses them and they are deleted, this fails first.
+     * **This case used to end by asserting that `.entry` and `.entry-nav`
+     * survived, and said why: Discovery still applied them, and if it ever
+     * stopped, "that is the next increment's cleanup".** I55 was that increment.
+     * Both rules are gone with the route that used them, so the assertion is
+     * inverted rather than deleted — the promise was that a rule outlives its
+     * last user by exactly nothing, and this is the half of it that comes due.
      */
-    expect(discovery).toMatch(/className="[^"]*\bentry\b/u);
-    expect(css).toMatch(/^\.entry \{/mu);
-    expect(css).toMatch(/^\.entry-nav \{/mu);
+    expect(discovery).not.toMatch(/className="[^"]*\bentry\b/u);
+    expect(css).not.toMatch(/^\.entry \{/mu);
+    expect(css).not.toMatch(/^\.entry-nav \{/mu);
   });
 });

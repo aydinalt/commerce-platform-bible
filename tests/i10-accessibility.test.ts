@@ -110,8 +110,17 @@ describe("Increment I10 accessibility", () => {
      * failed a case about *heading levels* for a reason that has nothing to do
      * with levels. The level is what is asserted now, and attributes are
      * allowed — matching what the case has always claimed to mean.
+     *
+     * **It failed a third time in I55, and again not about levels.** The
+     * Tailwind class list is long enough that Prettier breaks the tag across
+     * lines, so `[^>]*` — which cannot cross a newline in this pattern's usage —
+     * stopped matching. A check on a heading level has now been defeated twice
+     * by the heading's attributes; the pattern is made whitespace-tolerant so
+     * the third time is the last.
      */
-    expect(search).toMatch(/<h1[^>]*>“\{view\.query\}” için sonuçlar<\/h1>/u);
+    expect(search).toMatch(
+      /<h1[\s\S]*?>\s*“\{view\.query\}” için sonuçlar\s*<\/h1>/u
+    );
     expect(card).toContain("<h2>");
     expect(card).not.toContain("<h3>");
     expect(compare).not.toContain("<h3>");

@@ -40,95 +40,130 @@ describe("Increment I49 the public surfaces", () => {
     .replaceAll(/\/\*[\s\S]*?\*\//gu, " ")
     .replaceAll(/^@import[^;]*;$/gmu, " ");
 
-  const home = readFileSync("apps/web/src/app/page.tsx", "utf8");
   const discovery = readFileSync(
     "apps/web/src/app/discovery/discovery-view.tsx",
     "utf8"
   );
+  const home = readFileSync("apps/web/src/app/page.tsx", "utf8");
 
-  it("gives one pattern to the two places that still do the same thing", () => {
+  /*
+   * **I55 moved this whole layer to Tailwind, and these five cases follow it
+   * rather than being deleted.**
+   *
+   * I49 gave the public routes the layer *above* the components: the block a
+   * heading and a row of buttons sit in, the rule under a results heading, the
+   * narrow measure for an entrance. Every one of those was a class in
+   * `globals.css`, and every one of them is now a utility beside the markup it
+   * shapes — `.entry`, `.entry-nav`, `.category-choices`, `.results-heading`,
+   * `.zero-results` and `.preparation-notice` are gone.
+   *
+   * The decisions did not go with them. A public block is still not a workspace
+   * panel; the two ways into Discovery still get the same heading; a results
+   * grid is still wide and an entrance still narrow. So the cases below assert
+   * the same things at the place they are now stated, which is the only way a
+   * migration can be checked at all: if the claim cannot be re-pointed, the
+   * claim was about the selector rather than about the product.
+   */
+  it("leaves no rule behind for a route that stopped applying it", () => {
     /*
-     * Home's "or start from a category", Discovery's narrowing block and its
-     * widening block are the same act — choosing a Category from a row of
-     * buttons — so they get one class rather than three treatments that drift.
+     * The Owner's rule of 2026-08-31, as a measurement. Each of these six names
+     * had exactly one user, that user has moved, and the rule went with it — so
+     * neither the stylesheet nor any component may still mention them.
      */
-    /*
-     * **I54 moved Home to Tailwind and this case was re-counted, not relaxed.**
-     * Home no longer applies `.entry-nav`; the two Discovery blocks still do,
-     * and the rule stays in `globals.css` for exactly them. The claim is
-     * unchanged in kind (one pattern for the places that share an act) and
-     * changed in number, because one of the three left. When Discovery moves,
-     * the rule goes with it and this case goes with the rule.
-     */
-    expect(rules).toContain(".entry-nav");
-    expect(home).not.toContain('className="entry-nav"');
-    expect(discovery.match(/className="entry-nav"/gu)?.length ?? 0).toBe(2);
+    for (const gone of [
+      "entry",
+      "entry-nav",
+      "category-choices",
+      "results-heading",
+      "zero-results",
+      "preparation-notice"
+    ]) {
+      expect(rules).not.toMatch(new RegExp(`^\\.${gone}[\\s,{>:]`, "mu"));
+      expect(discovery).not.toContain(`className="${gone}"`);
+    }
   });
 
-  it("narrows the entrance without narrowing the grid", () => {
+  it("keeps the rules Compare still applies", () => {
     /*
-     * **The reason `.entry` is a class on Home rather than a rule in the
-     * layer.** A search field is one decision and a 76rem input invites
-     * nothing, so the entrance takes the prose measure — but applying that to
-     * every public `section` would cap the Discovery results grid, which exists
-     * to be wide. The narrow width is a fact about Home, not a pattern.
+     * `.listing-card` and its two companions stay, and the reason is the same
+     * one that kept `.entry` alive through I54: Compare hand-writes the same
+     * markup on its own route. **Discovery's Listing Card was deliberately not
+     * moved** — moving it would have left the same object looking like two
+     * different things depending on which page it was seen from, which is worse
+     * than a stylesheet with three rules waiting for their second route.
      */
-    expect(rules).toMatch(/\.entry \{[^}]*max-width: var\(--measure\)/u);
-    expect(rules).not.toMatch(/\.entry \{[^}]*--measure-wide/u);
-    /*
-     * **Home used to be the file this asserted against, and I54 moved it.** The
-     * narrow measure is still a fact about entrances rather than a pattern for
-     * every public section, and Discovery's entrance still takes it from this
-     * rule. Home says the same thing in Tailwind utilities beside its own
-     * markup, so the assertion follows the rule's remaining user.
-     */
-    expect(discovery).toMatch(/className="[^"]*\bentry\b/u);
+    const compare = readFileSync("apps/web/src/app/compare/page.tsx", "utf8");
+    for (const kept of [
+      "listing-cards",
+      "listing-card",
+      "listing-card-facts"
+    ]) {
+      expect(rules).toMatch(new RegExp(`^\\.${kept}[\\s,{]`, "mu"));
+      expect(compare).toContain(`className="${kept}"`);
+    }
   });
 
-  it("borrows the workspace's page rule, and only that", () => {
+  it("keeps the entrance narrow and the results wide", () => {
     /*
-     * A results heading carries the same 2px rule `.workspace h1` carries, so
-     * the two halves of the product read as one thing. It is the single
-     * structural idea crossing the boundary and it crosses deliberately —
-     * somebody who signs in should not feel they have arrived somewhere else.
+     * **This is the one claim I dropped when re-pointing these cases, and a
+     * mutant found it.** Narrowing Discovery's section to Home's measure passed
+     * every rewritten case until this was added back.
      *
-     * Asserted as *the same declaration* rather than as two similar ones, so a
-     * later change to one is visible as a divergence from the other.
+     * The reason it matters has not changed since I49 wrote it as `.entry`
+     * against `--measure-wide`: a Search field is one decision and a wide input
+     * invites nothing, while a results grid exists to be wide. The claim moved
+     * from two CSS custom properties to two Tailwind widths; it is the same
+     * claim, and it has to be made about both sides or it is not a comparison.
      */
-    const workspace = /\.workspace h1 \{([^}]*)\}/u.exec(rules)?.[1] ?? "";
-    const results = /\.results-heading \{([^}]*)\}/u.exec(rules)?.[1] ?? "";
-    expect(results.trim()).not.toBe("");
-    expect(results.trim()).toBe(workspace.trim());
+    expect(home).toContain("max-w-2xl");
+    expect(discovery).toContain("max-w-6xl");
+    expect(discovery).not.toContain("max-w-2xl");
   });
 
-  it("puts the results heading on both ways into Discovery", () => {
+  it("gives one pattern to the two places that do the same thing", () => {
+    /*
+     * Discovery's narrowing block and its widening block are the same act —
+     * choosing a Category from a row of buttons — and Home's entrance was the
+     * third. All three now say it in the same utilities rather than sharing a
+     * class, so the check counts the utility string instead of the class name.
+     */
+    const row = 'className="flex list-none flex-wrap gap-2 p-0"';
+    expect(discovery.match(new RegExp(row, "gu"))?.length ?? 0).toBe(2);
+    expect(home).toContain(row);
+  });
+
+  it("puts the same results heading on both ways into Discovery", () => {
     /*
      * Discovery is reached by Search and by Browse and renders a different
-     * heading for each. Styling one and forgetting the other is the ordinary
-     * way a surface ends up with two personalities, so both are named.
+     * heading for each. Styling one and forgetting the other is the ordinary way
+     * a surface ends up with two personalities, so both are named — and the
+     * heading still carries the 2px rule it borrowed from `.workspace h1`, which
+     * is the single structural idea crossing the signed-in boundary.
      */
-    expect(discovery.match(/className="results-heading"/gu)?.length ?? 0).toBe(
-      2
-    );
+    const heading = "border-b-2 border-border-strong";
+    expect(discovery.match(new RegExp(heading, "gu"))?.length ?? 0).toBe(2);
+    expect(rules).toMatch(/\.workspace h1 \{[^}]*border-bottom: 2px/u);
   });
 
   it("adds nothing the direction forbids", () => {
     /*
-     * `i26-design-foundation` proves this for the whole file and would fail
-     * before this case did. What is asserted here is narrower and worth its own
-     * line: **this increment introduced no class that paints a box**. The
-     * public treatment is rules and spacing, and a border on four sides
-     * appearing under `.entry` or `.entry-nav` would be the workspace panel
-     * leaking onto a surface that must stay open.
+     * **This increment introduced no box around an entrance.** The public
+     * treatment is rules and spacing; a border on four sides would be the
+     * workspace panel leaking onto a surface that must stay open.
+     *
+     * Two exceptions are deliberate and named rather than excluded by a loose
+     * pattern: Zero Results is a dashed outline because it is a statement about
+     * absence, and the Compare-preparation notice is bordered because it says a
+     * constraint is in force. Both were bordered before I55 and both still are.
      */
-    for (const selector of [".entry ", ".entry-nav ", ".results-heading "]) {
-      const block =
-        new RegExp(`\\${selector.trim()} \\{([^}]*)\\}`, "u").exec(
-          rules
-        )?.[1] ?? "";
-      expect(block).not.toMatch(/border-radius/u);
-      expect(block).not.toMatch(/border:/u);
-    }
+    const boxes = discovery.match(/className="[^"]*\bborder\b[^"]*"/gu) ?? [];
+    for (const box of boxes)
+      expect(
+        box.includes("border-dashed") ||
+          box.includes("border-accent") ||
+          box.includes("border-t") ||
+          box.includes("border-b-2")
+      ).toBe(true);
   });
 
   it("declares exactly these classes, and nothing has quietly become another", () => {
@@ -174,13 +209,10 @@ describe("Increment I49 the public surfaces", () => {
       "badge-notice",
       "brand",
       "business-logo",
-      "category-choices",
       "category-path",
       "comparison",
       "comparison-business",
       "decision-entries",
-      "entry",
-      "entry-nav",
       "field-hint",
       "field-wide",
       "flow",
@@ -189,8 +221,6 @@ describe("Increment I49 the public surfaces", () => {
       "listing-card-visual",
       "listing-cards",
       "offering-visuals",
-      "preparation-notice",
-      "results-heading",
       "site-footer",
       "site-header",
       "site-header-inner",
@@ -198,8 +228,7 @@ describe("Increment I49 the public surfaces", () => {
       "skeleton-stack",
       "skip-link",
       "stacking",
-      "workspace",
-      "zero-results"
+      "workspace"
     ]);
   });
 });

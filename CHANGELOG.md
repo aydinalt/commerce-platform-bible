@@ -11,6 +11,49 @@ This project follows the principles of:
 
 ---
 
+## [3.41.0] - 2026-08-31
+
+### Changed
+
+- **Discovery takes the visual layer, and nine rule blocks leave with it (I55).**
+  The entrance blocks, Category rows, results headings, Zero Results and the
+  Compare-preparation notice are written in Tailwind utilities; `.entry`,
+  `.entry-nav`, `.category-choices`, `.results-heading`, `.zero-results` and
+  `.preparation-notice` are deleted, along with two `:has()` layout hooks.
+
+  **No behaviour changed.** UX-0002 v1.1 now permits filter-as-you-type and this
+  increment did not build it — a server-action flow rewritten as client state is
+  not a visual change, and it needs its own increment.
+
+  **Discovery's Listing Card was deliberately not moved.** Compare hand-writes
+  the same markup with the same three class names, so moving one would leave the
+  same object looking like two things depending on the page. The two go together
+  or not at all.
+
+### Fixed
+
+- A `:has()` hook keyed on `.category-choices` widened and top-aligned
+  Discovery. Deleting the class without noticing would have **silently narrowed
+  and re-centred a Browse branch page** — the one case with Category choices and
+  no Results. Found by reading the stylesheet before deleting from it, not by a
+  test; Discovery's `main` now sets its own width.
+- `tests/i10`'s heading-level case failed a third time for a reason that is not
+  about heading levels: the Tailwind class list is long enough that Prettier
+  breaks the tag across lines, and an `[^>]*` pattern stopped matching. Made
+  whitespace-tolerant.
+
+### Evidence
+
+- I49's public-architecture block was **re-pointed rather than deleted** — every
+  claim it made is still made, at the place it is now stated.
+- **3 of 3 mutants killed.** The first survived the first run, and the case that
+  should have caught it was one written in this increment: re-pointing I49, the
+  width comparison was dropped and the easier restatements kept. It is back, and
+  asserted about both sides.
+- `docs/implementation/I55_DISCOVERY_VISUAL_LAYER.md`. 1125 tests pass.
+
+---
+
 ## [3.40.0] - 2026-08-31
 
 ### Changed
