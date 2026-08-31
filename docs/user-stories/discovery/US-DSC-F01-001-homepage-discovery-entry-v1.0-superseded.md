@@ -1,11 +1,5 @@
 # US-DSC-F01-001 — Homepage Discovery Entry
 
-> **Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-08-31, simultaneously with the four other documents that state this rule, because a Freeze of any subset would reintroduce the drift these revisions remove. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen together: `PRD-0002-discovery.md` v2.3, `UX-0001-home.md` v1.1, `UX-0002-discovery.md` v1.1, `US-DSC-F01-001-homepage-discovery-entry.md` v1.1, `US-DSC-F02-001-search.md` v1.2. This Freeze does not change Delivery Status, traceability, repository indexes or GitHub content.
->
-> **Approval Note (1.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: *"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."* The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
->
-> **Revision Note (1.1):** Controlled superseding revision of Frozen v1.0 under `DOCUMENT_LIFECYCLE.md` §7–§8, drafted alongside `UX-0001-home-v1.1-candidate.md` and `UX-0002-discovery-v1.1-candidate.md`. This Story consumes the Home behaviour UX-0001 owns, and stated the submission mechanism in two places of its own: the user-story sentence and one Gherkin step. Frozen PRD-0002 v2.2 defines a Search Discovery Start as occurring when the query reaches the platform, so both are restated in the PRD's terms. **"Explicitly" is not weakened into "silently"** — the surrounding "So that" clause still refuses login, silent intent inference and recommendation-driven routing, and it is unchanged. Nothing else in this Story is touched, and Delivery Status is unaffected by this Draft.
-
 > **Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-24. Frozen v1.0 is the locked authoritative Story baseline. This exact Story must not be edited in place. Future behaviour, Acceptance Criteria, BDD, dependency, size, scope, Epic, Feature, or reference changes require a controlled revision. Delivery Status remains Not Started. This Freeze does not change the Frozen Discovery Feature Registry, does not claim completion of all ADR-0002 §10 follow-ups, and does not update GitHub automatically.
 
 > **Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-24. The exact In Review v0.2 candidate becomes the authoritative Approved v1.0 Story baseline. Delivery Status remains Not Started. This approval does not Freeze the Story, does not change Acceptance Criteria, BDD, dependencies, size, scope, architecture, Feature Registry, PRD/UX behaviour, or claim completion of all ADR-0002 §10 follow-ups, and does not update GitHub automatically.
@@ -34,8 +28,6 @@
 | Experience Owner | `UX-0001-home.md`; `UX-0002-discovery.md` |
 | Owner | Product Owner / Architecture Owner |
 | Status | Frozen |
-| Version | 1.1 |
-| Supersedes | Frozen v1.0 (preserved at `US-DSC-F01-001-homepage-discovery-entry-v1.0-superseded.md`) |
 | Delivery Status | Done |
 | Priority | Must |
 | Story Size | M |
@@ -75,7 +67,7 @@ Provide one public, role-neutral entry into Discovery through the exact approved
 ## 4. Business Value
 
 > **As a** person with an open need  
-> **I want** to begin Discovery by entering a query or choosing an active Category  
+> **I want** to begin Discovery by explicitly submitting a query or choosing an active Category  
 > **So that** I can choose how to find relevant Offerings without login, silent intent inference, or recommendation-driven routing
 
 ---
@@ -136,7 +128,7 @@ And authentication is not required
 
 ```gherkin
 Given a person entered a valid non-empty query
-When that query reaches the platform
+When the person explicitly submits it
 Then UX-0002 receives the exact current query
 And no Category or Filter is invented
 ```

@@ -3,13 +3,7 @@
 - **UX ID:** UX-0002
 - **Title:** Discovery
 - **Status:** Frozen
-- **Version:** 1.1
-- **Supersedes:** Frozen v1.0 (preserved at `UX-0002-discovery-v1.0-superseded.md`)
-- **Approval Date:** 2026-08-31
-- **Approved By:** Product Owner / Architecture Owner
-- **Freeze state:** Frozen
-- **Freeze Date:** 2026-08-31
-- **Frozen By:** Product Owner / Architecture Owner
+- **Version:** 1.0
 - **Supersedes:** Draft v0.1
 - **Approved candidate:** In Review v0.3
 - **Approval Date:** 2026-07-22
@@ -18,16 +12,6 @@
 - **Freeze Date:** 2026-07-22
 - **Frozen By:** Product Owner / Architecture Owner
 - **Scope level:** UX behaviour (non-visual, non-technical)
-
-**Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-08-31, simultaneously with the four documents listed below, because they carry one rule between them and a Freeze of any subset would reintroduce the drift this revision removes. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen together: `PRD-0002-discovery.md` v2.3, `UX-0001-home.md` v1.1, `UX-0002-discovery.md` v1.1, `US-DSC-F01-001-homepage-discovery-entry.md` v1.1, `US-DSC-F02-001-search.md` v1.2. This Freeze does not change Delivery Status, traceability, repository indexes or GitHub content.
-
-**Approval Note (1.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: *"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."* The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
-
-**Revision Note (1.1):** Controlled superseding revision of Frozen v1.0 under `DOCUMENT_LIFECYCLE.md` §7–§8, drafted alongside `UX-0001-home-v1.1-candidate.md` and for the same reason.
-
-§ Discovery Start said *"A **new** Search Discovery Start occurs **whenever** the person explicitly submits a valid Search query inside UX-0002."* Frozen PRD-0002 v2.2 says a Start occurs when the query *reaches the platform* and that **at most one occurs per Discovery path**. The sentence conflicted with the Frozen PRD twice: on how a Search begins, and on how many Starts a path may produce.
-
-Two changes. The mechanism wording is replaced with the PRD's, and the one-per-path bound is stated where UX-0002 states the rule. The Gherkin is restated to match, and a scenario is added for refinement within an open path — the case that "whenever ... submits" would have counted more than once. Nothing else in this document is touched.
 
 **Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-22. Frozen v1.0 is the locked V1 UX baseline for UX-0002 — Discovery. This exact version must not be edited in place. Any future change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise User Stories, traceability, repository indexes, or GitHub content.
 
@@ -137,9 +121,7 @@ Within the current Discovery session, the person may change query, Category, or 
 
 UX-0002 consumes the PRD-0002 Discovery Start definition.
 
-A Search Discovery Start occurs when a valid Search query reaches the platform inside UX-0002 — whether by an explicit submission or after the interface settles on what has been typed.
-
-**At most one Search Discovery Start occurs per Discovery path** (Frozen PRD-0002 v2.2 §5.10). Refining a query within an open path does not begin a second one.
+A new Search Discovery Start occurs whenever the person explicitly submits a valid Search query inside UX-0002.
 
 A Browse Discovery Start occurs when the person selects the first active Category that begins a new Browse path.
 
@@ -443,18 +425,12 @@ No role receives paid, promoted, or private results through UX-0002.
 ## 20. Acceptance Criteria
 
 ```gherkin
-Scenario: In-Discovery Search begins a Discovery path
-  Given UX-0002 is already open on no prior Search path
+Scenario: In-Discovery Search submission creates a new Discovery Start
+  Given UX-0002 is already open
   And the person enters a valid Search query
-  When that query reaches the platform
-  Then a Search Discovery Start occurs
+  When the person explicitly submits it
+  Then a new Search Discovery Start occurs
   And no hidden Category is invented
-
-Scenario: Refining a query inside one path adds no second Start
-  Given a Search Discovery path is already open
-  When the person changes the query and it reaches the platform again
-  Then no additional Search Discovery Start is recorded
-  And the Results reflect the current query
 
 Scenario: Browse Start occurs once for a new Browse path
   Given no Browse path is active

@@ -6,16 +6,6 @@
 
 > **Revision Note (1.1):** Superseding revision of Frozen v1.0, begun independently at Draft under a new version per `DOCUMENT_LIFECYCLE.md` §7. **It carries no Approval Note and no Freeze Note, because neither decision has been taken.** One Acceptance Criterion changes.
 >
-> **Freeze Note (1.2):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-08-31, simultaneously with the four other documents that state this rule, because a Freeze of any subset would reintroduce the drift these revisions remove. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen together: `PRD-0002-discovery.md` v2.3, `UX-0001-home.md` v1.1, `UX-0002-discovery.md` v1.1, `US-DSC-F01-001-homepage-discovery-entry.md` v1.1, `US-DSC-F02-001-search.md` v1.2. This Freeze does not change Delivery Status, traceability, repository indexes or GitHub content.
->
-> **Approval Note (1.2):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: *"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."* The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
->
-> **Revision Note (1.2):** Controlled superseding revision of Frozen v1.1, **correcting a contradiction the v1.1 revision left inside this same document.**
->
-> v1.1 rewrote AC-1 to say that at most one Search Discovery Start occurs per Discovery path, and Frozen PRD-0002 v2.2 §5.10 spells out that later narrowing — *"a changed query, a Category selection, an Attribute Filter"* — produces no further Start. The BDD section was not swept with it. The scenario titled *"New valid submission creates a new Search start"* still read *"When the person explicitly submits another valid Search query / Then **one new** Search Discovery Start occurs"* — which is the behaviour AC-1 had just stopped requiring, asserted two hundred lines below AC-1.
->
-> One change: that scenario is replaced by the case it should always have described — a query changed inside an open path adds no Start, and the Results still follow the current query. Nothing else in this Story is touched.
-
 > **AC-1 no longer requires an explicit submission.** It read *"whenever a person explicitly submits a valid non-empty Search query"*. The Owner's decision of 2026-08-31 adopts filter-as-you-type, and a debounced query reaching the platform is the same product occurrence as a submitted one. The criterion now names the occurrence rather than the mechanism, and carries the bound the mechanism used to supply implicitly: **at most one per Discovery path.** Without that bound, live filtering would create a Search Discovery Start on every keystroke that survived a debounce.
 >
 > **This Story consumes the definition rather than owning it.** `PRD-0002-discovery.md` §5.10 is the Single Information Owner of Discovery Start, and its own superseding revision — Draft v2.2 — is the change this criterion follows. Neither document may be approved without the other, because a Story that consumed a definition its PRD no longer held would be the drift both are written to prevent.
@@ -50,8 +40,6 @@
 | Experience Owner | `UX-0002-discovery.md` |
 | Owner | Product Owner / Architecture Owner |
 | Status | Frozen |
-| Version | 1.2 |
-| Supersedes | Frozen v1.1 (preserved at `US-DSC-F02-001-search-v1.1-superseded.md`) |
 | Delivery Status | Done |
 | Priority | Must |
 | Story Size | L |
@@ -163,13 +151,12 @@ When Search evaluates the query
 Then the Offering is excluded
 ```
 
-### Scenario: Changing the query inside one path adds no Search start
+### Scenario: New valid submission creates a new Search start
 
 ```gherkin
-Given UX-0002 is already open on a path whose Search Discovery Start has occurred
-When the person changes the query and it reaches the platform again
-Then no additional Search Discovery Start occurs
-And the Results reflect the current query
+Given UX-0002 is already open
+When the person explicitly submits another valid Search query
+Then one new Search Discovery Start occurs
 And no hidden Category is invented
 ```
 

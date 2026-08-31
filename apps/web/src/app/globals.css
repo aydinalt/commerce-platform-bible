@@ -1,4 +1,50 @@
 /*
+ * ─── Tailwind, deliberately without Preflight ─────────────────────────────
+ *
+ * Tailwind v4 arrives here for the Home route (Path A, Owner decision of
+ * 2026-08-31). The usual single line — `@import "tailwindcss"` — pulls in three
+ * things: the theme, the utilities, and **Preflight**, Tailwind's own CSS reset.
+ *
+ * Preflight is the part that could not come. This file already resets what it
+ * resets, and its 88 rules sit on that base; swapping the base underneath them
+ * would change the appearance of all twenty-two routes at once, in a way no test
+ * in this repository would notice, on the same commit that was supposed to touch
+ * one page. The Owner chose a route-at-a-time migration precisely so that no
+ * change is invisible.
+ *
+ * So the theme and the utilities are imported by name and Preflight is not. This
+ * is Tailwind's documented way to opt out, not a workaround. It is enforced by
+ * `tests/i54-home-visual-layer.test.ts`: a later `@import "tailwindcss"` fails
+ * that test rather than quietly resetting the product.
+ */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/*
+ * The tokens below are the ones Home uses, exposed to Tailwind under the names
+ * its utilities expect — `bg-surface-raised`, `text-muted`, `p-4` and so on.
+ *
+ * `@theme inline` rather than `@theme`, because these are **references** to the
+ * custom properties declared in `:root` below, not copies of their values. A
+ * copy would make this the second place a colour is written down, and the
+ * comment at the top of this file promises there is only one.
+ */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-surface: var(--accent-surface);
+  --color-critical: var(--critical);
+}
+
+/*
  * The visual design foundation.
  *
  * Proposed and approved in `docs/design/DESIGN_FOUNDATION_CANDIDATE.md`. This
@@ -313,18 +359,16 @@ textarea[aria-invalid="true"] {
 }
 
 /* Search entry */
-.search-entry-row {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.search-entry-row input {
-  flex: 1;
-}
-
-.search-entry-row button {
-  flex: none;
-}
+/*
+ * `.search-entry-row` and its two child rules were deleted by I54. Home was the
+ * only route that applied them, and the Tailwind utilities in
+ * `search-entry.tsx` now say the same three things — a flex row, a growing
+ * input, a fixed button — beside the markup they describe.
+ *
+ * This is the migration rule the Owner chose on 2026-08-31: a rule leaves when
+ * the last route using it leaves, and not before. `.entry` and `.entry-nav`
+ * stay for exactly that reason — Discovery still applies both.
+ */
 
 /* Listing cards */
 .listing-cards,

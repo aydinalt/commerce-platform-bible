@@ -25,7 +25,20 @@ import { describe, expect, it } from "vitest";
  */
 describe("Increment I49 the public surfaces", () => {
   const css = readFileSync("apps/web/src/app/globals.css", "utf8");
-  const rules = css.replaceAll(/\/\*[\s\S]*?\*\//gu, " ");
+  /*
+   * The stylesheet with its comments removed, and with `@import` lines removed
+   * too.
+   *
+   * **The second removal is I54's, and it is the tenth time something here has
+   * matched other than what it meant.** Tailwind arrives by
+   * `@import "tailwindcss/theme.css" layer(theme)`, and the class extractor
+   * below reads `.css` out of that filename and reports it as a declared class.
+   * A vocabulary check that counts filenames is counting the wrong thing, in the
+   * direction that quietly grows the set.
+   */
+  const rules = css
+    .replaceAll(/\/\*[\s\S]*?\*\//gu, " ")
+    .replaceAll(/^@import[^;]*;$/gmu, " ");
 
   const home = readFileSync("apps/web/src/app/page.tsx", "utf8");
   const discovery = readFileSync(
@@ -33,14 +46,22 @@ describe("Increment I49 the public surfaces", () => {
     "utf8"
   );
 
-  it("gives one pattern to the three places that do the same thing", () => {
+  it("gives one pattern to the two places that still do the same thing", () => {
     /*
      * Home's "or start from a category", Discovery's narrowing block and its
      * widening block are the same act — choosing a Category from a row of
      * buttons — so they get one class rather than three treatments that drift.
      */
+    /*
+     * **I54 moved Home to Tailwind and this case was re-counted, not relaxed.**
+     * Home no longer applies `.entry-nav`; the two Discovery blocks still do,
+     * and the rule stays in `globals.css` for exactly them. The claim is
+     * unchanged in kind (one pattern for the places that share an act) and
+     * changed in number, because one of the three left. When Discovery moves,
+     * the rule goes with it and this case goes with the rule.
+     */
     expect(rules).toContain(".entry-nav");
-    expect(home).toContain('className="entry-nav"');
+    expect(home).not.toContain('className="entry-nav"');
     expect(discovery.match(/className="entry-nav"/gu)?.length ?? 0).toBe(2);
   });
 
@@ -54,7 +75,14 @@ describe("Increment I49 the public surfaces", () => {
      */
     expect(rules).toMatch(/\.entry \{[^}]*max-width: var\(--measure\)/u);
     expect(rules).not.toMatch(/\.entry \{[^}]*--measure-wide/u);
-    expect(home).toContain('className="entry"');
+    /*
+     * **Home used to be the file this asserted against, and I54 moved it.** The
+     * narrow measure is still a fact about entrances rather than a pattern for
+     * every public section, and Discovery's entrance still takes it from this
+     * rule. Home says the same thing in Tailwind utilities beside its own
+     * markup, so the assertion follows the rule's remaining user.
+     */
+    expect(discovery).toMatch(/className="[^"]*\bentry\b/u);
   });
 
   it("borrows the workspace's page rule, and only that", () => {
@@ -119,6 +147,11 @@ describe("Increment I49 the public surfaces", () => {
      * selectors: asking whether a name is present cannot answer whether its
      * treatment survived.
      *
+     * **I54 removed one name from this list and that is the case working.**
+     * `.search-entry-row` was deleted when Home moved to Tailwind, and this
+     * assertion failed until the removal was written down here. A vocabulary
+     * that shrinks silently is the same defect as one that grows silently.
+     *
      * So it asserts the whole vocabulary instead. Any rename, addition or
      * removal fails here and has to be acknowledged — which is what the two
      * broken versions were reaching for and could not express. It is the same
@@ -158,7 +191,6 @@ describe("Increment I49 the public surfaces", () => {
       "offering-visuals",
       "preparation-notice",
       "results-heading",
-      "search-entry-row",
       "site-footer",
       "site-header",
       "site-header-inner",

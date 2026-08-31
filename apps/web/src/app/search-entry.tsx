@@ -39,14 +39,30 @@ export function SearchEntry({
   });
 
   return (
-    <form action={submit} className="search-entry">
+    /*
+     * **Tailwind utilities rather than `.search-entry` (I54).** The three rules
+     * that class carried — a flex row, a growing input, a fixed button — are
+     * deleted from `globals.css` rather than left behind, because Home is the
+     * only route that used them and a rule nobody applies is a rule nobody
+     * maintains.
+     *
+     * The colours and spacings are the same tokens as before: `text-muted`,
+     * `border-strong` and the rest resolve through `@theme inline` to the
+     * custom properties `globals.css` has always declared. Nothing here
+     * introduces a value.
+     */
+    <form action={submit} className="mx-auto w-full">
       {/* AC-1. The exact approved prompt, and the label of the field it
           belongs to — UX-0001 §15 asks for the association, not just the
-          words nearby. */}
-      <h1>
+          words nearby.
+
+          The prompt is a question a person answers, so it is set larger and
+          tighter than a page title would be, and it keeps its `h1`: the visual
+          layer changed, the document outline did not. */}
+      <h1 className="mb-4 text-2xl leading-snug font-semibold tracking-tight text-text sm:text-3xl">
         <label htmlFor="discovery-query">Bugün ne yapmak istiyorsunuz?</label>
       </h1>
-      <div className="search-entry-row">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           aria-describedby={state.refused ? "discovery-query-error" : undefined}
           aria-invalid={state.refused}
@@ -61,15 +77,24 @@ export function SearchEntry({
           // itself lives on the server, where a submission cannot avoid it.
           required
           type="text"
+          className="min-w-0 flex-1 rounded-md border border-border-strong bg-surface-raised px-3 py-2.5 text-base text-text placeholder:text-text-muted"
         />
-        <button disabled={pending} type="submit">
+        <button
+          disabled={pending}
+          type="submit"
+          className="shrink-0 rounded-md bg-accent px-6 py-2.5 text-base font-semibold text-white hover:bg-accent-strong disabled:opacity-60"
+        >
           Ara
         </button>
       </div>
       {state.refused ? (
         // AC-5 and AC-8. Stated in words rather than colour, and the field
         // still holds exactly what was typed.
-        <p id="discovery-query-error" role="alert">
+        <p
+          id="discovery-query-error"
+          role="alert"
+          className="mt-2 text-sm text-critical"
+        >
           Aramaya başlamak için en az bir karakter yazın.
         </p>
       ) : null}

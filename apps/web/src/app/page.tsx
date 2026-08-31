@@ -49,28 +49,59 @@ export default async function HomePage() {
   const categories = await activeRootCategories();
 
   return (
+    /*
+     * **The visual layer only (I54).** UX-0001 §6 lists what Home provides — the
+     * prompt, one Search entry, active Category Browse entries, an optional
+     * non-interactive value statement — and this increment changed none of that.
+     * The prototype's `/` is a search-and-results screen; bringing *that* here
+     * would have added results to a page whose Frozen screen overview does not
+     * list them, so it was not brought.
+     *
+     * `.entry` and `.entry-nav` are gone from this file but **remain in
+     * `globals.css`**: Discovery still applies them, and deleting a rule another
+     * route uses is not migration, it is breakage. They go when Discovery moves.
+     */
     <main>
-      <section className="entry">
+      <section className="mx-auto w-full max-w-2xl px-4 py-10 sm:py-16">
         <SearchEntry />
 
-        <nav aria-labelledby="browse-entry-heading" className="entry-nav">
-          <h2 id="browse-entry-heading">Ya da bir kategoriden başlayın</h2>
+        <nav
+          aria-labelledby="browse-entry-heading"
+          className="mt-8 border-t border-border pt-6"
+        >
+          <h2
+            className="mb-3 text-sm font-medium text-text-muted"
+            id="browse-entry-heading"
+          >
+            Ya da bir kategoriden başlayın
+          </h2>
           {categories === null ? (
             // Bounded, and honest about which of the two entries is affected.
-            <p role="status">
+            <p className="text-sm text-text-muted" role="status">
               Kategoriler şu anda getirilemedi. Arama kullanılabilir durumda.
             </p>
           ) : categories.length === 0 ? (
-            <p role="status">Şu anda açık bir kategori yok.</p>
+            <p className="text-sm text-text-muted" role="status">
+              Şu anda açık bir kategori yok.
+            </p>
           ) : (
             // AC-3. Selecting a Category is a submission, not a link: a route
             // that begins by being followed could begin from a bookmark or a
             // prefetch, which is not an explicit selection.
             <form action={beginBrowse}>
-              <ul>
+              {/* A wrapping row of choices rather than a stacked list: eleven
+                  Categories in a column push the fold down for no reason, and
+                  these are one decision taken once. The list semantics stay —
+                  it is still a `ul` of `li`, because it is still a list. */}
+              <ul className="flex list-none flex-wrap gap-2 p-0">
                 {categories.map((category) => (
                   <li key={category.id}>
-                    <button name="categoryId" type="submit" value={category.id}>
+                    <button
+                      className="rounded-full border border-border-strong bg-surface-raised px-4 py-1.5 text-sm text-text hover:border-accent hover:text-accent"
+                      name="categoryId"
+                      type="submit"
+                      value={category.id}
+                    >
                       {category.name}
                     </button>
                   </li>

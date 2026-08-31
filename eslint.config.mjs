@@ -60,6 +60,14 @@ export default tseslint.config(
             "scripts/*.mjs",
             "apps/web/next.config.ts",
             /*
+             * Tailwind's PostCSS entry (I54). It belongs to no TypeScript
+             * project - Next reads it directly - and typed linting refuses a
+             * file it cannot place, so it is named here rather than ignored: a
+             * configuration file that decides how every stylesheet in the
+             * application is processed is worth linting.
+             */
+            "apps/web/postcss.config.mjs",
+            /*
              * The file Vercel invokes (I37). It sits outside `apps/api`'s
              * `rootDir: "src"` on purpose — a TypeScript file there would
              * either be excluded from the build or force `dist/main.js` to

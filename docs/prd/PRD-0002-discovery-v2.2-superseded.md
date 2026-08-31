@@ -2,16 +2,6 @@
 
 > **Freeze Note (2.2):** Frozen by separate explicit decision of the Product Owner / Architecture Owner on 2026-08-31, taken after and distinctly from the approval below. **Frozen simultaneously with `US-DSC-F02-001` v1.1, and deliberately so:** that Story consumes the Discovery Start definition this document owns, and freezing one without the other would leave a Story asserting a criterion its PRD no longer held — the drift both revisions exist to prevent. Frozen v2.1 is preserved unchanged at `docs/prd/PRD-0002-discovery-v2.1-superseded.md`. This document must not be edited in place; any future change requires a controlled superseding revision under `DOCUMENT_LIFECYCLE.md` §7.
 
-> **Freeze Note (2.3):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-08-31, simultaneously with the four other documents that state this rule, because a Freeze of any subset would reintroduce the drift these revisions remove. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen together: `PRD-0002-discovery.md` v2.3, `UX-0001-home.md` v1.1, `UX-0002-discovery.md` v1.1, `US-DSC-F01-001-homepage-discovery-entry.md` v1.1, `US-DSC-F02-001-search.md` v1.2. This Freeze does not change Delivery Status, traceability, repository indexes or GitHub content.
->
-> **Approval Note (2.3):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: *"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."* The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
->
-> **Revision Note (2.3):** Controlled superseding revision of Frozen v2.2, **one sentence, for the reason v2.2 exists.**
->
-> §5.10 was rewritten in v2.2 so that a Search Discovery Start occurs when a query *reaches the platform*. §5.2 — the definition of Search itself — was left saying *"A Discovery path started by **submitting** a non-empty person-entered query."* The same document then defined the same thing two ways, with the older, narrower word sitting in the definition and the newer one in the rule. That is the shape of defect the four accompanying revisions exist to remove, kept alive inside the document that governs them.
->
-> §5.2 now defers to §5.10 rather than restating it, under Reference Never Redefine. §5.3 (Browse) is untouched: "choosing and navigating an active Category hierarchy" names no mechanism that changed.
-
 > **Approval Note (2.2):** Approved by explicit decision of the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: the interface's fluency is a priority, and the bound "at most one Discovery Start per Discovery path" is what keeps that fluency from changing what the analytics have counted since I3. The approval introduces no Search engine, ranking algorithm, Pagination, Sorting, Autocomplete, Recommendation, Capability or Feature; changes no Offering eligibility input, Filter semantic, ordering rule, Zero Results behaviour or Presentation boundary; and advances no Story Delivery Status.
 
 **Revision Note (2.2):** Superseding revision of Frozen v2.1, begun independently at Draft under a new version per `DOCUMENT_LIFECYCLE.md` §7. **It carries no Approval Note and no Freeze Note, because neither decision has been taken.** One change, in §5.10 and the four places that restate it:
@@ -26,13 +16,7 @@
 - **PRD ID:** PRD-0002
 - **Title:** Discovery
 - **Status:** Frozen
-- **Version:** 2.3
-- **Supersedes:** Frozen v2.2 (preserved at `PRD-0002-discovery-v2.2-superseded.md`)
-- **Approval Date:** 2026-08-31
-- **Approved By:** Product Owner / Architecture Owner
-- **Freeze state:** Frozen
-- **Freeze Date:** 2026-08-31
-- **Frozen By:** Product Owner / Architecture Owner
+- **Version:** 2.2
 - **Last Updated:** 2026-08-31
 - **Supersedes:** Frozen v2.1 (2026-07-21), preserved unchanged at
   `docs/prd/PRD-0002-discovery-v2.1-superseded.md`
@@ -187,7 +171,7 @@ The V1 entry behaviour owned by PRD-0002.
 
 ### 5.2 Search
 
-A Discovery path started by a non-empty person-entered query reaching the platform (§5.10).
+A Discovery path started by submitting a non-empty person-entered query.
 
 ### 5.3 Browse
 

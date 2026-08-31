@@ -11,6 +11,66 @@ This project follows the principles of:
 
 ---
 
+## [3.40.0] - 2026-08-31
+
+### Changed
+
+- **Five Frozen documents now state one rule instead of four versions of it.**
+  Approved and frozen together by Owner decision: `PRD-0002-discovery.md` v2.3,
+  `UX-0001-home.md` v1.1, `UX-0002-discovery.md` v1.1,
+  `US-DSC-F01-001-homepage-discovery-entry.md` v1.1 and
+  `US-DSC-F02-001-search.md` v1.2. Predecessors preserved as `-superseded`.
+
+  The 2026-08-31 PRD-0002 revision permitted filter-as-you-type; **three other
+  Frozen documents still forbade it**, and a fourth contradicted itself. UX-0001
+  §7.2 said the experience does not act "while the person is still entering
+  text"; UX-0002 said a new Start occurs "whenever the person explicitly
+  submits", which also broke the one-per-path bound; `US-DSC-F01-001` said it
+  twice; and `US-DSC-F02-001` — revised that same day — kept a BDD scenario
+  asserting that another submission creates another Start, two hundred lines
+  below the criterion that had stopped requiring it.
+
+  **The gap was mine.** That round swept the rule where two documents stated it
+  and did not ask which others did.
+
+- **Tailwind v4 is in `apps/web`, on the Home route, without Preflight (I54).**
+  Home and its Search entry are rewritten in utilities; `.search-entry-row` and
+  its two child rules are deleted. `.entry` and `.entry-nav` stay, because
+  Discovery still applies them — a rule leaves when its last route leaves.
+
+  Preflight is excluded deliberately. `@import "tailwindcss"` would have swapped
+  the base underneath 88 hand-written rules across twenty-two routes on a commit
+  scoped to one page, invisibly. Tokens are bridged with `@theme inline`, so
+  `bg-accent` compiles to `var(--accent)` rather than to a copied hex.
+
+  **Home's behaviour did not change.** UX-0001 §6 lists no Results, and the
+  prototype's `/` is a results screen; only its visual language was brought.
+
+### Fixed
+
+- `tests/i49-public-surfaces.test.ts` read `.css` out of
+  `@import "tailwindcss/theme.css"` and reported it as a declared class. Import
+  lines are stripped before extraction.
+
+### Evidence
+
+- `tests/i54-home-visual-layer.test.ts` — five cases, two compiling the
+  stylesheet with Tailwind's CLI and asserting against the output. **3 of 3
+  mutants killed.** The first mutation run reported a survivor and was wrong:
+  the substitution never applied, so the suite passed on unmodified code. The
+  second run asserts the mutation landed before running anything.
+- Three I49 cases were re-counted rather than relaxed, each with the reason
+  written down.
+- `docs/implementation/I54_HOME_VISUAL_LAYER.md`.
+
+### Not proven here
+
+- `next build` does not run in this sandbox, so the PostCSS pipeline is proven
+  by compiling `globals.css` with Tailwind's CLI. CI is the first place the Next
+  build sees Tailwind.
+
+---
+
 ## [3.39.0] - 2026-08-31
 
 ### Changed

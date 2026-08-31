@@ -3,35 +3,17 @@
 - **UX ID:** UX-0001
 - **Title:** Home
 - **Status:** Frozen
-- **Version:** 1.1
-- **Supersedes:** Frozen v1.0 (preserved at `UX-0001-home-v1.0-superseded.md`)
-- **Approval Date:** 2026-08-31
+- **Version:** 1.0
+- **Supersedes:** Draft v0.1
+- **Approved candidate:** In Review v0.2
+- **Approval Date:** 2026-07-22
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
-- **Freeze Date:** 2026-08-31
+- **Freeze Date:** 2026-07-22
 - **Frozen By:** Product Owner / Architecture Owner
 - **Scope level:** UX behaviour (non-visual, non-technical)
 
-**Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-08-31, simultaneously with the four documents listed below, because they carry one rule between them and a Freeze of any subset would reintroduce the drift this revision removes. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen together: `PRD-0002-discovery.md` v2.3, `UX-0001-home.md` v1.1, `UX-0002-discovery.md` v1.1, `US-DSC-F01-001-homepage-discovery-entry.md` v1.1, `US-DSC-F02-001-search.md` v1.2. This Freeze does not change Delivery Status, traceability, repository indexes or GitHub content.
-
-**Approval Note (1.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: *"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."* The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
-
-**Revision Note (1.1):** Controlled superseding revision of Frozen v1.0 under `DOCUMENT_LIFECYCLE.md` §7–§8, opened because **two Frozen documents contradicted each other.**
-
-Frozen PRD-0002 v2.2 (2026-08-31) defines a Search Discovery Start as occurring when a valid non-empty query reaches the platform — *"whether by an explicit submission or after the interface settles on what has been typed"* — bounded to at most one per Discovery path. Frozen UX-0001 v1.0 §7.2 says the Home experience does not *"submit while the person is still entering text"*, and §7.3 says a Search route *"begins only when the person explicitly submits"*.
-
-Both statements are Frozen and they cannot both govern. **The contradiction was created by the PRD-0002 revision and was not noticed at the time**: that round revised the rule where PRD-0002 and `US-DSC-F02-001` stated it, and did not check the third document stating the same rule from Home's side. This revision closes that gap; it introduces no new intent.
-
-Four changes, and nothing else in this document is touched:
-
-- **§7.2** — the prohibition on acting mid-typing is replaced by the bound PRD-0002 v2.2 actually carries: the interface may act on what has been typed once it settles, and a Discovery path still produces at most one Search Discovery Start. The other four prohibitions — inferring a goal, replacing the query with a recommendation, exposing Autocomplete, adding hidden criteria — are **unchanged**, because none was in conflict and each is a separate promise.
-- **§7.3** — "explicitly submits" becomes "reaches the platform", matching PRD-0002 §5.10 word for word rather than paraphrasing it.
-- **§10** — "submit Search" becomes "start Search". The action is the person's either way, and naming the mechanism in a behaviour document is what produced this conflict.
-- **§17** — the two scenarios saying "explicitly submit it" and "the person submits" are restated in the same terms, and a scenario is added for the one-Start-per-path bound. **The whitespace-only scenario keeps its refusal**: settling on whitespace is still not a valid query, and that was never the disputed part.
-
-**What this revision does not do.** It does not add results, ranking or recommendation to Home — §6's screen overview is untouched and still lists the prompt, one Search entry, Browse entries and a non-interactive value statement. It does not make filter-as-you-type mandatory; it permits it. §14's permission table is unchanged, including the two rows that refuse Autocomplete and featured Offerings to every role. And it does not revise `US-DSC-F01-001`, traceability, or any repository index; those do not change automatically.
-
-**Historical Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-22. Frozen v1.0 is the locked V1 UX baseline for UX-0001 — Home. This exact version must not be edited in place. Any future change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise User Stories, traceability, repository indexes, or GitHub content.
+**Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-22. Frozen v1.0 is the locked V1 UX baseline for UX-0001 — Home. This exact version must not be edited in place. Any future change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise User Stories, traceability, repository indexes, or GitHub content.
 
 **Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-22 after Architecture Review, Final Review, package-level reconciliation, independent Claude UX audit, and focused delta audit. The exact In Review v0.2 content becomes the authoritative UX baseline as Approved v1.0 under the first-approval versioning rule. This historical Approval Note records that approval and Freeze were separate decisions. The document was subsequently Frozen on 2026-07-22. User Stories, traceability, repository indexes, and GitHub content do not change automatically.
 
@@ -114,15 +96,14 @@ The person controls the query.
 The experience does not:
 
 - silently infer a goal;
+- submit while the person is still entering text;
 - replace the query with a recommendation;
 - expose Autocomplete;
 - add hidden Category or Filter criteria.
 
-The experience may act on what has been typed once the interface settles on it, under Frozen PRD-0002 v2.2 §5.10. **At most one Search Discovery Start occurs per Discovery path**, so acting before the person has finished typing does not multiply the occurrence.
-
 ### 7.3 Submission
 
-A Search route begins when a valid non-empty query reaches the platform — whether by an explicit submission or after the interface settles on what has been typed (Frozen PRD-0002 v2.2 §5.10).
+A Search route begins only when the person explicitly submits a valid non-empty query.
 
 Leading and trailing whitespace may be ignored for validation.
 
@@ -177,7 +158,7 @@ Home does not show role-specific Discovery results or require login.
 ## 10. User Actions
 
 - enter a Search query;
-- start Search;
+- submit Search;
 - clear or change the query;
 - select an active Category;
 - leave the page.
@@ -253,19 +234,14 @@ Scenario: Exact homepage prompt is shown
 
 Scenario: Valid Search begins Discovery
   Given a person enters a non-empty query
-  When that query reaches the platform
+  When they explicitly submit it
   Then UX-0002 receives the current query
   And Search Discovery Start occurs
   And authentication is not required
 
-Scenario: A Discovery path produces one Search Discovery Start
-  Given a person is refining a query within one Discovery path
-  When the query reaches the platform more than once
-  Then exactly one Search Discovery Start is recorded for that path
-
 Scenario: Whitespace-only Search does not begin
   Given the Search entry contains only whitespace
-  When that input reaches the platform
+  When the person submits
   Then Discovery does not start
   And the person can correct the input
 
