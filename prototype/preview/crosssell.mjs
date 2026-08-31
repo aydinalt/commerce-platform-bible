@@ -58,14 +58,28 @@ for (const [slug, target, title, cta] of CASES) {
   check("  ikon var", card.querySelector("svg path")?.getAttribute("d")?.length > 20);
   const href = card.querySelector("a")?.getAttribute("href") ?? "";
   hrefs.add(href);
-  check("  bağlantı kategori taşıyor", /kategori=[a-z]+$/u.test(href), href);
+  /*
+   * The leading `#` is the preview shim's, not the component's: `next/link`
+   * is aliased to an `<a>` that rewrites the route as a hash, because the
+   * single-file build has no router. The application renders `/kategori/x`.
+   */
+  check("  bağlantı gerçek kategori rotasına gidiyor", /^#?\/kategori\/[a-z]+$/u.test(href), href);
+  check("  sorgu dizesi değil, rota", !href.includes("?"), href);
   check("  dış siteye çıkmıyor", !/^https?:/u.test(href), href);
 }
 
 check("her kategori farklı bir hedefe gitmiyor değil (çeşitlilik var)", hrefs.size >= 4, [...hrefs].join(" "));
 
-/* The link must actually select the category, not merely land on the list. */
-const w = open("#/?kategori=insurance");
+/*
+ * The link must actually select the category, not merely land on the list.
+ *
+ * The address changed from `?kategori=insurance` to `/kategori/insurance`,
+ * and the change is the point rather than a rename: the query-string form was
+ * applied by an effect after mount, so the HTML a crawler received was the
+ * unfiltered catalogue at eleven different addresses. The route form is part
+ * of the first render.
+ */
+const w = open("#/kategori/insurance");
 await wait(900);
 const label = [...w.document.querySelectorAll("button")].find((b) => (b.textContent ?? "").includes("Kategori:"));
 check("bağlantı kategoriyi gerçekten seçiyor", (label?.textContent ?? "").includes("Sigorta Hizmetleri"),
@@ -75,7 +89,7 @@ const rows = [...w.document.querySelectorAll("li.group")].filter((li) => alt ===
 check("yalnızca o kategori listeleniyor", rows === 2, String(rows));
 
 /* An unknown category must be ignored rather than emptying the page. */
-const w2 = open("#/?kategori=uydurma");
+const w2 = open("#/kategori/uydurma");
 await wait(900);
 const label2 = [...w2.document.querySelectorAll("button")].find((b) => (b.textContent ?? "").includes("Kategori"));
 check("bilinmeyen kategori yok sayılıyor", !(label2?.textContent ?? "").includes("Kategori:"),

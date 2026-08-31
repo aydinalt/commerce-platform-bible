@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "preview": "node preview/build.mjs"
+    "preview": "node preview/build.mjs",
+    "preview:seo": "node preview/seo.mjs"
   },
   "dependencies": {
     "next": "^15.5.0",

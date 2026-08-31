@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.80
+Version:      2.81
 Last Updated: 2026-08-31
 -->
 
@@ -178,6 +178,32 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## Prototype SEO — the interface as a document, not only as a screen
+
+Findings are in `docs/implementation/PROTOTYPE_SEO.md`. Scope is `prototype/`
+only; no platform code, contract, migration or test changed.
+
+|                                                                  |                                                     |
+| ---------------------------------------------------------------- | --------------------------------------------------- |
+| Structured-data nodes on the prototype, before                   | **0**                                               |
+| Category pages that a crawler could tell apart, before           | **0 of 11** — one HTML served at eleven addresses   |
+| Routes added                                                     | **`/kategori/[slug]` (11 prerendered), robots, sitemap** |
+| JSON-LD node types now emitted                                   | **5** — Product, Review, BreadcrumbList, ItemList, WebSite |
+| Owners of the site's own address, before / after                 | **2 / 1**                                           |
+| Checks in `preview/seo.mjs`                                      | **657**, all against the catalogue rather than a fixture |
+| Mutants applied / killed                                         | **15 / 15** — one survived the first pass           |
+| Preview drivers, after                                           | **205 / 205** across six files                      |
+| `next build` in the sandbox                                      | **not run — SIGBUS**, an environment limit, stated rather than omitted |
+
+Two results are worth carrying forward. The surviving mutant showed that the
+`"all"` guard had become decorative — a second condition was excluding `all`
+anyway, so the check was measuring a coincidence rather than the guard; the fix
+was to make the guard testable against a catalogue in which it is the only
+thing doing the work, not to write a better assertion over the same data. And
+the existing drivers caught a defect review did not: `process.env` read bare in
+a module that two different bundlers load. It threw on module load and took the
+whole preview down, failing checks that had nothing to do with this change.
 
 ## I50 The Decision flow's stages, and colour applied to a message
 

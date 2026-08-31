@@ -42,6 +42,19 @@ function Preview() {
   const route = useHashRoute();
   const slug = route.startsWith("/urun/") ? route.slice("/urun/".length) : null;
 
+  /*
+   * `/kategori/{id}` is a real route in the application now rather than a
+   * query string on the home page, so the harness has to know it too — a
+   * preview that sent every category link to the unfiltered catalogue would
+   * pass a check the application fails.
+   */
+  if (route.startsWith("/kategori/"))
+    return (
+      <SearchExperience
+        initialCategoryId={route.slice("/kategori/".length).split("?")[0] ?? "all"}
+      />
+    );
+
   if (slug === null) return <SearchExperience />;
 
   const product = productBySlug(slug);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { DecisionChat } from "@/components/decision/DecisionChat";
 import { FilterBar } from "@/components/filters/FilterBar";
@@ -30,10 +30,32 @@ import { TABS, type FilterState, type TabId } from "@/lib/types";
  * state beside the list it counts is a second source of truth, and it goes
  * wrong on the day somebody adds a filter and updates one of them.
  */
-export function SearchExperience() {
+export function SearchExperience({
+  initialCategoryId = "all"
+}: {
+  /**
+   * The category selected on arrival.
+   *
+   * **This used to be `?kategori=…`, read from the URL in a `useEffect` after
+   * mount, and it was a real SEO defect rather than a stylistic one.** The
+   * server rendered the same unfiltered catalogue for every value of the
+   * parameter and the filter was applied afterwards in the browser, so a
+   * crawler — which does not wait for an effect — saw eleven identical pages
+   * at eleven addresses. Eleven duplicates of the home page is worse than not
+   * having category pages at all: it spends crawl budget to compete with
+   * yourself.
+   *
+   * As a prop, the value is part of the first render. `/kategori/sigorta` now
+   * serves HTML that already contains only insurance listings, which is the
+   * only version of this page a search engine can rank.
+   */
+  initialCategoryId?: string;
+}) {
   const [state, setState] = useState<FilterState>({
     amount: MAX_PRICE,
-    categoryId: "all",
+    categoryId: CATEGORIES.some((category) => category.id === initialCategoryId)
+      ? initialCategoryId
+      : "all",
     minYear: MIN_YEAR,
     query: "",
     tab: "all"
@@ -41,30 +63,6 @@ export function SearchExperience() {
 
   const patch = (next: Partial<FilterState>) =>
     setState((previous) => ({ ...previous, ...next }));
-
-  /**
-   * `?kategori=…` selects a category on arrival.
-   *
-   * The cross-sell card links here, and **a promotional button that lands on
-   * an unfiltered catalogue has not kept its promise** — the person pressed
-   * "Teklif İste" under an insurance heading and would arrive among monitors.
-   * Read once on mount rather than held in sync: the filter bar owns the state
-   * from that point on, and a URL that fought it would be a second source of
-   * truth for the same fact.
-   *
-   * Both `?` and the preview's `#/?…` are read, because the hash router is how
-   * the single-file build navigates and a check that only understood one of
-   * them would pass against a link that does nothing.
-   */
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const fromHash = window.location.hash.split("?")[1] ?? "";
-    const params = new URLSearchParams(window.location.search || fromHash);
-    const requested = params.get("kategori");
-    if (requested === null) return;
-    if (!CATEGORIES.some((category) => category.id === requested)) return;
-    setState((previous) => ({ ...previous, categoryId: requested }));
-  }, []);
 
   const results = useMemo(() => applyFilters(PRODUCTS, state, MAX_PRICE), [state]);
 
@@ -110,6 +108,11 @@ export function SearchExperience() {
     ).filter((product) => product.pricingKind === "ON_REQUEST").length;
   }, [state]);
 
+  /** The selected category, or nothing when the selection is "all". */
+  const heading = CATEGORIES.find(
+    (category) => category.id === state.categoryId && category.id !== "all"
+  );
+
   const anchor = useMemo(
     () =>
       [...results].sort((a, b) => a.lowestPrice - b.lowestPrice)[0] ?? null,
@@ -141,10 +144,19 @@ export function SearchExperience() {
 
       <main className="mx-auto max-w-7xl px-4 pb-20 pt-8">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          {/*
+            The heading names what is actually below it.
+
+            **A category page whose only heading said "Tüm ürünler" was telling
+            a search engine that eleven pages were about the same thing**, and
+            telling a person who arrived from a search for insurance that they
+            had landed somewhere general. The h1 is the strongest on-page
+            signal of a page's subject; it has to be the subject.
+          */}
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            {state.query === ""
-              ? "Tüm ürünler"
-              : `“${state.query}” için sonuçlar`}
+            {state.query !== ""
+              ? `“${state.query}” için sonuçlar`
+              : (heading?.name ?? "Tüm ürünler")}
           </h1>
           <p aria-live="polite" className="text-sm text-slate-500">
             {results.length} ürün

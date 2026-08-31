@@ -14,6 +14,7 @@ import { Thumb } from "@/components/product/Thumb";
 import { ageLabel, sortedOffers } from "@/lib/filter";
 import { discount, lira, stars } from "@/lib/format";
 import { categoryById, sameCategory } from "@/lib/products";
+import { absoluteUrl, categoryPath, productPath } from "@/lib/seo";
 import type { Product } from "@/lib/types";
 
 /**
@@ -72,7 +73,24 @@ export function ProductDetail({
           Tüm ürünler
         </Link>
         <span aria-hidden="true" className="mx-2">›</span>
-        <span>{category?.name ?? product.brand}</span>
+        {/*
+          The middle step is a link now rather than plain text. It was the one
+          place on the whole site that named a category next to a product and
+          then made a person go back to the header to reach it — and, for a
+          crawler, twenty-nine product pages that mentioned their category
+          without linking to it, so none of that weight reached the pages that
+          have to rank for a market's name.
+        */}
+        {category === undefined ? (
+          <span>{product.brand}</span>
+        ) : (
+          <Link
+            className="transition-colors hover:text-slate-900"
+            href={categoryPath(category)}
+          >
+            {category.name}
+          </Link>
+        )}
         <span aria-hidden="true" className="mx-2">›</span>
         <span className="text-slate-700">{product.name}</span>
       </nav>
@@ -205,7 +223,7 @@ export function ProductDetail({
             <FavouriteButton productId={product.id} />
             <ShareMenu
               title={product.name}
-              url={`https://ilanlar.example/urun/${product.slug}`}
+              url={absoluteUrl(productPath(product))}
             />
             <button
               className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"

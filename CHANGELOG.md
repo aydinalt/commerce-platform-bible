@@ -11,6 +11,98 @@ This project follows the principles of:
 
 ---
 
+## [3.38.0] - 2026-08-31
+
+### Added
+
+- **The prototype is now readable by a search engine, not only by a person.**
+  A price comparison site earns its traffic through product and category
+  searches; the prototype had been built and judged entirely as a screen. Five
+  gaps were found and closed. Scope is `prototype/` only — no platform code,
+  contract, migration or test changed. Full record:
+  `docs/implementation/PROTOTYPE_SEO.md`.
+
+- **`prototype/src/app/kategori/[slug]/page.tsx`** — eleven prerendered
+  category routes, each with its own title, description, canonical URL and
+  `ItemList` structured data. **This replaces `/?kategori=…`, which was a real
+  defect rather than an untidiness:** the parameter was read in a `useEffect`
+  after mount, so the server rendered the same unfiltered catalogue for every
+  value of it. Eleven addresses served one page — eleven duplicates of the home
+  page, competing with it. The category is now a prop consumed on the first
+  render, so `/kategori/insurance` serves HTML that already contains only
+  insurance listings. The static page and the interactive page remain the same
+  component; the filters stay live.
+
+- **`prototype/src/lib/seo.ts`** — one owner for the site's address and every
+  JSON-LD builder: `Product` with `AggregateOffer`, `AggregateRating` and
+  `Review`; a separate dated editorial `Review`; `BreadcrumbList`; `ItemList`;
+  and `WebSite` with a `SearchAction`. Two rules in it are load-bearing. An
+  Offering with no amount carries **no `offers` at all** — PRD-0001 v4.0
+  §5.10.5 restated for a machine reader, because a `"price": "0"` is a claim
+  that the thing is free and a search engine that believes it prints "₺0"
+  beside a commercial property. And `reviewCount` is the length of the review
+  list rather than the seed file's headline figure, because the markup must
+  describe reviews a person can actually see on the page.
+
+- **`prototype/src/app/robots.ts` and `sitemap.ts`**, both generated from the
+  catalogue. `robots` blocks the five filter parameters and leaves
+  `/kategori/…` open; `sitemap` takes `lastModified` from each product's
+  editorial revision date rather than from `now()`, because a sitemap where
+  every page changed today teaches a crawler to ignore the date on the pages
+  that really did change.
+
+- **`prototype/preview/seo.mjs`** — 657 checks (`npm run preview:seo`). It
+  bundles the real modules and compares every figure to the catalogue it claims
+  to describe. Its sixth section calls each route's `generateMetadata`
+  directly and renders `JsonLd` with `react-dom/server`, because a correct
+  builder that no page calls is worth nothing and that gap is invisible from
+  either side.
+
+### Fixed
+
+- **Open Graph, Twitter cards and `metadataBase` were absent while the share
+  menu shipped.** `ShareMenu` posts to WhatsApp, X, Facebook and mail; every
+  share produced a bare URL with no title or description. The feature worked
+  and delivered nothing.
+- **A second owner of the site's own address** was hard-coded in
+  `ProductDetail` (`https://ilanlar.example/urun/…`). It would have had to
+  agree with every canonical tag, the sitemap and every JSON-LD node.
+- The product route's `generateMetadata` set a title and nothing else; it now
+  carries a description written from the catalogue — leading with the lowest
+  price and the seller count, which is the only thing distinguishing this page
+  from the merchant's own.
+- `SearchExperience`'s `h1` said "Tüm ürünler" on every category; it names the
+  category. The product breadcrumb's middle step is a link, so twenty-nine
+  product pages now pass weight to the category pages they name.
+- **`process.env` in a module the browser bundles.** `seo.ts` read
+  `NEXT_PUBLIC_SITE_URL` bare — correct under Next, which inlines it, but
+  `process` does not exist in the esbuild single-file preview. It threw on
+  module load and took the whole preview down: all five existing drivers failed
+  at once, including checks this change never touched. Found by the drivers,
+  not by review. A module read by two bundlers cannot assume either one's
+  globals.
+
+### Notes
+
+- **Mutation testing: 15 mutants, 15 dead** — but only after the first pass
+  left one alive. Removing the `id !== "all"` guard from `INDEXABLE_CATEGORIES`
+  changed nothing, because no product carries `all` as its category and the
+  other condition excluded it anyway. The check was measuring a coincidence and
+  the guard had quietly become decorative. `indexableCategories` was extracted
+  as a function taking the catalogue as an argument, so the guard can be
+  exercised against a catalogue in which it is the only thing doing the work.
+- **`next build` was not run.** It exits with `SIGBUS` in the verification
+  sandbox — in `/tmp` as well as on the mounted volume, with memory and disk
+  free. An environment limit, not a code fault, and stated rather than omitted:
+  what is proved here is that the builders are correct and that the routes call
+  them.
+- **`image` is deliberately absent from the `Product` node.** Google requires
+  it for a product rich result, so this markup validates but will not earn the
+  rich card until the image pipeline lands (#307–#310). A placeholder URL would
+  buy a clean validator report and a broken card.
+
+---
+
 ## [3.37.1] - 2026-08-31
 
 ### Fixed

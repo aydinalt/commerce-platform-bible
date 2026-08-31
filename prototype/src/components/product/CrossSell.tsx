@@ -20,6 +20,11 @@ import type { Product } from "@/lib/types";
  *    — and the commission is earned at the Handoff either way, so the honest
  *    path costs nothing. Where a direct partner deal exists, `href` is the one
  *    line to change.
+ *
+ *    It links to `/kategori/{id}` rather than the old `/?kategori={id}`, and
+ *    the change is worth more than tidiness: eleven of these cards across the
+ *    catalogue are eleven internal links, and a link to a query string passes
+ *    its weight to a page a crawler treats as a duplicate of the home page.
  * 3. **It renders nothing when it has nothing to say.** No mapping for this
  *    category, or a paired category with no listings in it, and the card does
  *    not appear. An advert that leads to an empty page is worse than no advert
@@ -209,7 +214,7 @@ export function CrossSell({ product }: { product: Product }) {
 
           <Link
             className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-sky-700 px-3 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-sky-800"
-            href={`/?kategori=${target.id}`}
+            href={`/kategori/${target.id}`}
           >
             {pair.cta}
             <span aria-hidden="true">→</span>
