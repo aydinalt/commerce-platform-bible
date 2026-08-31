@@ -11,6 +11,75 @@ This project follows the principles of:
 
 ---
 
+## [3.38.1] - 2026-08-31
+
+### Fixed
+
+- **CI #149 and #150 both went red on schema drift, and the second failure is
+  the one that matters.** I52 created `offering_source_idx` in its migration and
+  did not declare it in `schema.prisma`, so the migrated database carried an
+  index the datamodel did not. `prisma migrate diff` reported
+  `[-] Removed index on columns (source)` and exited 2.
+
+  `@@index([source], map: "offering_source_idx")` closes it. The name is written
+  out rather than left to Prisma's default: the default would be that exact
+  string, but "would be" is a guess, and a guess about an index name is a guess
+  about whether the next drift check sees a match or a rename.
+
+- **The verification chain was a strict subset of what CI checks, and that is
+  why a green chain twice failed to predict a red build.** CI ran three
+  commands — `verify`, then the OpenAPI diff, then `db:drift`. Two of the three
+  existed only in the workflow file, so `npm run verify` could not reach the
+  check that failed. I reported a clean chain both times and both times it was
+  true and useless.
+
+  `db:drift` now runs inside `verify`, second, straight after `db:validate` —
+  the migrated database matching the datamodel is an invariant a developer
+  should learn about in ten seconds, not a release gate. A new `verify:ci`
+  wraps `verify` plus the OpenAPI diff and is the single command CI runs. What
+  CI checks is now defined once, in `package.json`, and is runnable locally.
+
+### Notes
+
+- **The three other indexes on `offering` are deliberately still undeclared and
+  must stay that way.** `offering_price_order_idx`,
+  `offering_product_key_idx` and `offering_published_active_idx` are partial;
+  Prisma has no `where` argument on `@@index` and cannot express them, so the
+  drift check neither reads them nor asks about them. This is evidence rather
+  than assumption: `offering_published_active_idx` has been partial and
+  undeclared since the initial migration, across all 32 migrations and every
+  green build. Adding a plain `@@index([productKey])` to "match" the migration
+  would create the drift it appears to fix.
+
+- **Every other table was checked, not just the one CI named.** All 39 tables
+  were examined for the same class of divergence; `offering_source_idx` was the
+  only instance.
+
+- **`db:drift` itself could not be run here.** Prisma 7 fetches its schema
+  engine at first use from `binaries.prisma.sh`, which answers 403 in the
+  verification sandbox — with a clean Linux `npm ci` as well as with the
+  checked-out tree. So the failure was reproduced and the fix proved a different
+  way: the 32 migrations were applied to a real PostgreSQL 17 and `pg_indexes`
+  read back, which is the same catalogue Prisma introspects. Before the fix the
+  reproduction named `offering_source_idx` and nothing else, exactly as CI did;
+  after it, nothing. Removing the declaration again brings it back.
+
+- The diagnostic that did this is **not** in the repository, on purpose. A
+  hand-written near-copy of `prisma migrate diff` would be a second owner of the
+  question "has the schema drifted", and it would be the weaker of the two.
+
+- **The diagnostic was wrong twice before it was right**, which is the honest
+  part of this entry. It first read the doc comment above `@@index([source])` as
+  a declaration, because that comment contains the literal text
+  `@@index([productKey])` while explaining why that index must not be declared —
+  a checker that reads prose can only over-report declarations, so it fails
+  silently in the direction of "no drift". It then flagged five GIN indexes as
+  drift because "expression index" had been defined as the string `((`. The rule
+  that survived is stated positively: only a btree over bare column names is
+  something Prisma models.
+
+---
+
 ## [3.38.0] - 2026-08-31
 
 ### Added

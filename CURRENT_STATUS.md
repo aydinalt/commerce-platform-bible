@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.81
+Version:      2.82
 Last Updated: 2026-08-31
 -->
 
@@ -178,6 +178,30 @@ Context says whether an Affiliate path exists and whether a selection was
 withdrawn, and the catalogue lists the Categories an Offering may be assigned
 to. Each is answered by the same predicate the corresponding write enforces, and
 each was something the platform already knew and had not published.
+
+## Schema drift, and the verification chain that could not see it
+
+|                                                                |                                                  |
+| -------------------------------------------------------------- | ------------------------------------------------ |
+| CI runs red on schema drift                                    | **#149, #150**                                    |
+| Cause                                                          | `offering_source_idx` created in I52's migration, never declared in `schema.prisma` |
+| Commands CI ran, before / after                                | **3 / 1** (`verify:ci` owns the contract)         |
+| Commands `npm run verify` reached, before                      | **1 of 3** — the failing check was not among them |
+| Tables audited for the same class of divergence                | **39** — one instance, now closed                 |
+| Indexes correctly left undeclared                              | **8** — partial, expression or non-btree; Prisma cannot express them |
+| `db:drift` run locally                                         | **no** — Prisma fetches its engine from a host that answers 403 here |
+
+**The failure was procedural before it was technical.** `db:drift` and the
+OpenAPI diff lived only in the workflow file, so `npm run verify` — the command
+this project treats as *the* chain — was a strict subset of what CI checks. Both
+red builds followed a verification run I had reported as clean, and the report
+was accurate: the run simply could not reach the step that failed. `verify:ci`
+now defines the whole contract in one place, and `db:drift` moved inside
+`verify` so the invariant is a ten-second check rather than a release gate.
+
+The evidence for what the drift check can and cannot see is the repository's own
+history rather than an assumption: `offering_published_active_idx` has been
+partial and undeclared since the initial migration and has never drifted.
 
 ## Prototype SEO — the interface as a document, not only as a screen
 

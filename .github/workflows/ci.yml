@@ -42,11 +42,21 @@ jobs:
 
       - run: npm ci
       - run: npm run db:deploy
-      - run: npm run verify
-      - run: git diff --exit-code -- generated/openapi.json
 
-      # Entry gate: the migrated database must match the datamodel exactly.
-      # Without this, a hand-written migration and schema.prisma can diverge
-      # silently and the divergence only surfaces on the next `migrate dev`.
-      - name: Verify no schema drift
-        run: npm run db:drift
+      # One command, and that is the point.
+      #
+      # This job used to run three: `verify`, then the OpenAPI diff, then
+      # `db:drift`. Two of the three lived only here, so `npm run verify` — the
+      # command everyone runs before handing work over — was a strict subset of
+      # what CI checks. A green local chain therefore could not predict CI, and
+      # twice it did not: #149 and #150 both went red on schema drift after a
+      # verification run that had reported clean, because the run could not
+      # reach the check that failed.
+      #
+      # `verify:ci` is now the whole contract, defined once in package.json.
+      # `db:drift` moved inside `verify` itself: the migrated database matching
+      # the datamodel is an invariant a developer wants to know about
+      # immediately, not a release gate. Without it a hand-written migration and
+      # schema.prisma diverge silently, and the divergence surfaces on somebody
+      # else's next `migrate dev`.
+      - run: npm run verify:ci

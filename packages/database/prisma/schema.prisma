@@ -782,6 +782,27 @@ model Offering {
   @@unique([businessId, slug])
   @@unique([id, businessId], map: "offering_id_business_id_key")
   @@index([categoryId, status])
+
+  /// PRD-0001 v4.0 §5.11.1. Declared here as well as created in the migration,
+  /// because `db:drift` compares the migrated database to this file and an
+  /// index present in one and not the other is drift — which is what took CI
+  /// red on #149 and #150.
+  ///
+  /// **The other three indexes on this table are deliberately absent, and must
+  /// stay absent.** `offering_price_order_idx`, `offering_product_key_idx` and
+  /// `offering_published_active_idx` are all partial — and the price one is an
+  /// expression index besides. Prisma has no `where` argument on `@@index` and
+  /// cannot express either, so it neither reads them from the database nor
+  /// asks about them; `offering_published_active_idx` has been undeclared
+  /// since it was written and has never drifted, which is the evidence rather
+  /// than the assumption. Adding a plain `@@index([productKey])` here to
+  /// "match" the migration would create the drift it appears to fix: the
+  /// database's index is partial and this one would not be.
+  /// The name is written out rather than left to Prisma's default. The default
+  /// would be `offering_source_idx` and would be correct — but "would be" is a
+  /// guess, and a guess about an index name is a guess about whether the next
+  /// drift check sees a match or a rename. Stating it costs one argument.
+  @@index([source], map: "offering_source_idx")
   @@map("offering")
 }
 
