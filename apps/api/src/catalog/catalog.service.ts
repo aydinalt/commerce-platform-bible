@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException
@@ -13,6 +14,7 @@ import type { Principal } from "@commerce/identity";
 import {
   CategoryCycleError,
   CategoryDomainMismatchError,
+  CategoryDomainUnknownError,
   CategoryKeyConflictError,
   CategoryParentRetiredError,
   CategoryRetirementBlockedError,
@@ -27,6 +29,12 @@ export class CatalogService {
 
   list(): Promise<CategoryRecord[]> {
     return this.repository.list();
+  }
+
+  /// The Domains a root Category may be created in, read from the records
+  /// rather than from a list in the code (PRD-0001 v4.0 §E).
+  domains(): Promise<{ key: string; name: string }[]> {
+    return this.repository.domains();
   }
 
   /**
@@ -152,6 +160,21 @@ export class CatalogService {
           error.blocker === "ACTIVE_CHILD"
             ? "An active child Category remains"
             : "A Draft, Published or Hidden Offering remains assigned"
+      });
+    /*
+     * A Domain that does not exist is a refusal, not a fault.
+     *
+     * **This branch is new because the contract stopped doing the work.**
+     * `z.enum(V1_DOMAINS)` used to refuse an unknown Domain with a 400 before
+     * any code ran; with the set open (PRD-0001 v4.0 §E) the schema validates
+     * the shape of a key and only the database knows which keys name a record.
+     * Without this the same request became a 500 — the platform reporting its
+     * own fault for an Admin's typo.
+     */
+    if (error instanceof CategoryDomainUnknownError)
+      return new BadRequestException({
+        code: "CATEGORY_DOMAIN_UNKNOWN",
+        message: "No Domain carries that key"
       });
     if (error instanceof CategoryKeyConflictError)
       return new ConflictException({

@@ -84,7 +84,11 @@ export class CatalogController {
   @Get()
   async list(@Req() request: FastifyRequest): Promise<Categories> {
     await this.principals.resolveAdmin(request);
-    return categoriesSchema.parse({ categories: await this.catalog.list() });
+    const [categories, domains] = await Promise.all([
+      this.catalog.list(),
+      this.catalog.domains()
+    ]);
+    return categoriesSchema.parse({ categories, domains });
   }
 
   @Post()

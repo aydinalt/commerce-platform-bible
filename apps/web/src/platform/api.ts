@@ -3,6 +3,7 @@ import {
   analyticsSchema,
   attributesSchema,
   categoriesSchema,
+  type Categories,
   destinationWorkloadSchema,
   moderationCaseSchema,
   moderationCasesSchema,
@@ -114,9 +115,18 @@ export async function fetchDestinationWorkload(
 
 /// The Category tree (§10). Every Category, active and retired: retirement is
 /// not deletion, and an Admin managing the catalogue has to see both.
+/**
+ * The catalogue an Admin manages: its Categories, and the Domains a root may be
+ * created in.
+ *
+ * **It used to return the Categories alone**, because the Domains were a
+ * constant in the web application. PRD-0001 v4.0 §E makes the set open, so they
+ * are records now and arrive with the same read — one request, and no way for
+ * the two halves to be read at different moments and disagree.
+ */
 export async function fetchCategories(
   session: string
-): Promise<CategoryResponse[] | null> {
+): Promise<Categories | null> {
   const response = await fetchWithBudget(
     `${apiBaseUrl()}/admin/categories`,
     {
@@ -127,7 +137,7 @@ export async function fetchCategories(
   );
   if (!response.ok)
     return absentUnlessUnavailable(response, "ADMIN_CATEGORIES");
-  return categoriesSchema.parse(await response.json()).categories;
+  return categoriesSchema.parse(await response.json());
 }
 
 /// Every Attribute definition (§11), with its applicable Categories and its

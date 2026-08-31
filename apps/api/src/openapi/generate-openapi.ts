@@ -46,6 +46,24 @@ const healthOperation = (operationId: string, unavailable?: string) => ({
   tags: ["Health"]
 });
 
+/**
+ * How a Domain key is published.
+ *
+ * **This was an `enum` of three, written out at six sites.** PRD-0001 v4.0 §E
+ * makes the Domain set open, so an enumerated list here would have told every
+ * client that a fourth Domain is invalid — and a generated client would have
+ * refused the response before anybody read it. Declared once, because six
+ * copies of one fact is how the closed set survived as long as it did.
+ */
+const DOMAIN_KEY = {
+  description: "The Domain's stable key. PRD-0001 v4.0 §E: the set is open.",
+  maxLength: 80,
+  pattern: "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
+  type: "string"
+} as const;
+
+const DOMAIN_NAME = { maxLength: 160, type: "string" } as const;
+
 const document = {
   components: {
     schemas: {
@@ -1082,9 +1100,14 @@ const document = {
           },
           discoveryPathId: { format: "uuid", type: "string" },
           domain: {
+            ...DOMAIN_KEY,
             description:
-              "Available once one active leaf Category is selected. A Search that spans Domains has none.",
-            enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY", null],
+              "The Domain's stable key, available once one active leaf Category is selected. A Search that spans Domains has none.",
+            type: ["string", "null"]
+          },
+          domainName: {
+            ...DOMAIN_NAME,
+            description: "The Domain's own name. Null exactly when the key is.",
             type: ["string", "null"]
           },
           filters: {
@@ -1125,6 +1148,7 @@ const document = {
           "categoryId",
           "discoveryPathId",
           "domain",
+          "domainName",
           "filters",
           "filtersAvailable",
           "narrowing",
@@ -1145,12 +1169,10 @@ const document = {
                   items: { $ref: "#/components/schemas/BrowseCategory" },
                   type: "array"
                 },
-                domain: {
-                  enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
-                  type: "string"
-                }
+                domain: DOMAIN_KEY,
+                domainName: DOMAIN_NAME
               },
-              required: ["categories", "domain"],
+              required: ["categories", "domain", "domainName"],
               type: "object"
             },
             type: "array"
@@ -1186,10 +1208,8 @@ const document = {
             type: "array"
           },
           discoveryPathId: { format: "uuid", type: "string" },
-          domain: {
-            enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
-            type: "string"
-          },
+          domain: DOMAIN_KEY,
+          domainName: DOMAIN_NAME,
           filters: {
             description:
               "Offered on a leaf; empty on a branch, where no active leaf Category is selected.",
@@ -1220,6 +1240,7 @@ const document = {
           "children",
           "discoveryPathId",
           "domain",
+          "domainName",
           "filters",
           "results",
           "siblings",
@@ -1231,10 +1252,8 @@ const document = {
         additionalProperties: false,
         properties: {
           active: { type: "boolean" },
-          domain: {
-            enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
-            type: "string"
-          },
+          domain: DOMAIN_KEY,
+          domainName: DOMAIN_NAME,
           id: { format: "uuid", type: "string" },
           name: { type: "string" },
           parentId: { format: "uuid", type: ["string", "null"] },
@@ -1244,6 +1263,7 @@ const document = {
         required: [
           "active",
           "domain",
+          "domainName",
           "id",
           "name",
           "parentId",
@@ -1272,10 +1292,8 @@ const document = {
             items: {
               additionalProperties: false,
               properties: {
-                domain: {
-                  enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
-                  type: "string"
-                },
+                domain: DOMAIN_KEY,
+                domainName: DOMAIN_NAME,
                 id: { format: "uuid", type: "string" },
                 name: { type: "string" },
                 path: {
@@ -1285,7 +1303,7 @@ const document = {
                   type: "array"
                 }
               },
-              required: ["domain", "id", "name", "path"],
+              required: ["domain", "domainName", "id", "name", "path"],
               type: "object"
             },
             type: "array"
@@ -1301,10 +1319,7 @@ const document = {
           {
             additionalProperties: false,
             properties: {
-              domain: {
-                enum: ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
-                type: "string"
-              },
+              domain: DOMAIN_KEY,
               name: { maxLength: 160, minLength: 1, type: "string" },
               slug: {
                 maxLength: 120,
@@ -1949,9 +1964,10 @@ const document = {
               additionalProperties: false,
               properties: {
                 count: { minimum: 0, type: "integer" },
-                domain: { type: "string" }
+                domain: DOMAIN_KEY,
+                domainName: DOMAIN_NAME
               },
-              required: ["count", "domain"],
+              required: ["count", "domain", "domainName"],
               type: "object"
             },
             type: "array"

@@ -11,6 +11,31 @@ This project follows the principles of:
 
 ---
 
+## [3.38.6] - 2026-08-31
+
+### Changed
+
+- **`PRD-0002-discovery.md` is Frozen v2.2 and `US-DSC-F02-001-search.md` is
+  Frozen v1.1**, approved and then frozen as separate Owner decisions on the
+  same day, and **frozen simultaneously on purpose.** The Story consumes the
+  Discovery Start definition the PRD owns; freezing one without the other would
+  have left a Story asserting a criterion its PRD no longer held, which is the
+  drift both revisions exist to prevent.
+
+  A Search Discovery Start now occurs when a valid non-empty query **reaches the
+  platform** — by submission or after the interface settles on what has been
+  typed — and **at most once per Discovery path.** Filter-as-you-type is
+  permitted; a Start per debounced keystroke is not.
+
+  Superseded baselines are preserved unchanged at
+  `docs/prd/PRD-0002-discovery-v2.1-superseded.md` and
+  `docs/user-stories/discovery/US-DSC-F02-001-search-v1.0-superseded.md`.
+
+- The prototype's **category dropdown needed none of this.** §5.10's Browse half
+  already read *"selects the first active Category"*, and it was left untouched.
+
+---
+
 ## [3.38.5] - 2026-08-31
 
 ### Changed

@@ -6,11 +6,7 @@ import { ServiceUnavailable } from "../../service-unavailable";
 import { isUnavailable, orUnavailable } from "../../unavailable";
 
 import { fetchAdminPanel, fetchCategories } from "../../../platform/api";
-import {
-  DOMAIN_LABELS,
-  NO_CATEGORIES,
-  asTree
-} from "../../../platform/catalog";
+import { NO_CATEGORIES, asTree } from "../../../platform/catalog";
 import { CATEGORIES, PANEL } from "../../../platform/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import {
@@ -63,7 +59,9 @@ export default async function CategoriesPage() {
   // honest: "the catalogue could not be loaded" is true of both and claims
   // nothing about what the catalogue contains.
   const read = await orUnavailable(fetchCategories(session));
-  const categories = isUnavailable(read) ? null : read;
+  const catalogue = isUnavailable(read) ? null : read;
+  const categories = catalogue?.categories ?? null;
+  const domains = catalogue?.domains ?? [];
 
   return (
     <main>
@@ -90,7 +88,7 @@ export default async function CategoriesPage() {
                     {category.active ? null : <span>(retired)</span>}
                   </h2>
                   <p>
-                    {DOMAIN_LABELS[category.domain]} · {category.stableKey}
+                    {category.domainName} · {category.stableKey}
                   </p>
 
                   {category.active ? (
@@ -115,7 +113,11 @@ export default async function CategoriesPage() {
             </ul>
           )}
 
-          <CreateCategory action={createCategory} categories={categories} />
+          <CreateCategory
+            action={createCategory}
+            categories={categories}
+            domains={domains}
+          />
         </>
       )}
     </main>

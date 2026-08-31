@@ -72,7 +72,14 @@ export default async function AttributesPage() {
   // Both land on the one message below, which says the catalogue could not be
   // loaded and nothing about what is in it.
   const attributes = isUnavailable(readAttributes) ? null : readAttributes;
-  const categories = isUnavailable(readCategories) ? null : readCategories;
+  /*
+   * The catalogue read now carries the Domains beside the Categories, because
+   * the create-root form needs them (PRD-0001 v4.0 §E). This screen wants only
+   * the Categories — an Attribute is made applicable to Categories, never to a
+   * Domain — so it takes that half and leaves the other alone.
+   */
+  const catalogue = isUnavailable(readCategories) ? null : readCategories;
+  const categories = catalogue?.categories ?? null;
 
   if (attributes === null || categories === null)
     return (

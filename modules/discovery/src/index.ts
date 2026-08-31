@@ -42,6 +42,8 @@ export interface BrowseView {
   children: BrowseCategory[];
   discoveryPathId: string;
   domain: string;
+  /// The Domain's own name, so no surface translates a key.
+  domainName: string;
   /// Offered on a leaf, where an active leaf Category is by definition
   /// selected. Empty on a branch, for the same reason Results are withheld.
   filters: AvailableFilter[];
@@ -82,6 +84,8 @@ export interface SearchView {
   /// Available once one active leaf Category is selected (AC-5). Until then a
   /// Search spans Domains and has none.
   domain: string | null;
+  /// The Domain's own name, absent exactly when the key is.
+  domainName: string | null;
   /**
    * Whether category-specific Attribute Filters may be offered.
    *

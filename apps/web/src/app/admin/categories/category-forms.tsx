@@ -4,12 +4,13 @@ import { SUBMIT, submitLabel } from "../../../form-copy";
 
 import { useActionState } from "react";
 
-import type { CategoryResponse } from "@commerce/contracts";
+import type {
+  CategoryResponse,
+  SelectableDomain
+} from "@commerce/contracts";
 
 import {
   ARCHIVED_DOES_NOT_BLOCK,
-  DOMAINS,
-  DOMAIN_LABELS,
   RETIREMENT_IS_NOT_DELETION
 } from "../../../platform/catalog";
 import { CATEGORIES } from "../../../platform/copy";
@@ -38,10 +39,13 @@ type Action = (
  */
 export function CreateCategory({
   action,
-  categories
+  categories,
+  domains
 }: {
   action: Action;
   categories: readonly CategoryResponse[];
+  /// The Domain records a root may be created in, from the catalogue read.
+  domains: readonly SelectableDomain[];
 }) {
   const [state, dispatch, pending] = useActionState(action, ADMIN_IDLE);
 
@@ -71,7 +75,7 @@ export function CreateCategory({
               .filter((category) => category.active)
               .map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.name} ({DOMAIN_LABELS[category.domain]})
+                  {category.name} ({category.domainName})
                 </option>
               ))}
           </select>
@@ -79,10 +83,16 @@ export function CreateCategory({
 
         <p>
           <label htmlFor="domain">{CATEGORIES.domain}</label>
+          {/*
+            The options are the Domain records, supplied by the same read that
+            supplied the Categories. They were a hard-coded three; PRD-0001 v4.0
+            §E makes the set open, and a form offering a list the platform does
+            not hold is a form that cannot reach a Domain added yesterday.
+          */}
           <select id="domain" name="domain">
-            {DOMAINS.map((domain) => (
-              <option key={domain} value={domain}>
-                {DOMAIN_LABELS[domain]}
+            {domains.map((domain) => (
+              <option key={domain.key} value={domain.key}>
+                {domain.name}
               </option>
             ))}
           </select>

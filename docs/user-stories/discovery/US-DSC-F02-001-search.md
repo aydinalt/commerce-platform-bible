@@ -1,5 +1,17 @@
 # US-DSC-F02-001 — Search
 
+> **Freeze Note (1.1):** Frozen by separate explicit decision of the Product Owner / Architecture Owner on 2026-08-31, taken after and distinctly from the approval below, and **simultaneously with `PRD-0002-discovery.md` v2.2** — the document that owns the Discovery Start definition this Story consumes. Frozen v1.0 is preserved unchanged at `US-DSC-F02-001-search-v1.0-superseded.md`. This exact Story must not be edited in place; future behaviour, Acceptance Criteria, BDD, dependency, size, scope, Epic, Feature, relationship classification, Capability reference or UX reference changes require a controlled revision. Delivery Status remains `Done`.
+
+> **Approval Note (1.1):** Approved by explicit decision of the Product Owner / Architecture Owner on 2026-08-31. AC-1 is the only criterion that changes; AC-2 through AC-8 are untouched, as are the Story's dependencies, size, scope, Feature association and Capability reference. The approval creates no Feature, changes no PRD or UX behaviour beyond the superseding PRD revision it follows, and does not update GitHub automatically.
+
+> **Revision Note (1.1):** Superseding revision of Frozen v1.0, begun independently at Draft under a new version per `DOCUMENT_LIFECYCLE.md` §7. **It carries no Approval Note and no Freeze Note, because neither decision has been taken.** One Acceptance Criterion changes.
+>
+> **AC-1 no longer requires an explicit submission.** It read *"whenever a person explicitly submits a valid non-empty Search query"*. The Owner's decision of 2026-08-31 adopts filter-as-you-type, and a debounced query reaching the platform is the same product occurrence as a submitted one. The criterion now names the occurrence rather than the mechanism, and carries the bound the mechanism used to supply implicitly: **at most one per Discovery path.** Without that bound, live filtering would create a Search Discovery Start on every keystroke that survived a debounce.
+>
+> **This Story consumes the definition rather than owning it.** `PRD-0002-discovery.md` §5.10 is the Single Information Owner of Discovery Start, and its own superseding revision — Draft v2.2 — is the change this criterion follows. Neither document may be approved without the other, because a Story that consumed a definition its PRD no longer held would be the drift both are written to prevent.
+>
+> **AC-2 through AC-8 are untouched.** No Search matching boundary, no excluded information, no ordering input, no role-neutrality rule and no dependency changes. The Story stays one per Feature and its Delivery Status does not move: `Done` describes the behaviour the platform has, which today is submission-based and which this revision permits to become continuous.
+
 > **Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-24. Frozen v1.0 is the locked authoritative Story baseline. This exact Story must not be edited in place. Future behaviour, Acceptance Criteria, BDD, dependency, size, scope, Epic, Feature, or reference changes require a controlled revision. Delivery Status remains Not Started. This Freeze does not change the Frozen Discovery Feature Registry, does not claim completion of all ADR-0002 §10 follow-ups, and does not update GitHub automatically.
 
 > **Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-24. The exact In Review v0.2 candidate becomes the authoritative Approved v1.0 Story baseline. Delivery Status remains Not Started. This approval does not Freeze the Story, does not change Acceptance Criteria, BDD, dependencies, size, scope, architecture, Feature Registry, PRD/UX behaviour, or claim completion of all ADR-0002 §10 follow-ups, and does not update GitHub automatically.
@@ -31,7 +43,7 @@
 | Delivery Status | Done |
 | Priority | Must |
 | Story Size | L |
-| Version | 1.0 |
+| Version | 1.1 |
 | Last Updated | 2026-07-24 |
 | Approval Date | 2026-07-24 |
 | Approved By | Product Owner / Architecture Owner |
@@ -102,7 +114,7 @@ This Story identifies meaningful match relationships and their product match lev
 
 ## 7. Acceptance Criteria
 
-- **AC-1** — The system shall create one Search Discovery Start whenever a person explicitly submits a valid non-empty Search query.
+- **AC-1** — The system shall create at most one Search Discovery Start per Discovery path, on the first valid non-empty Search query that reaches the platform in that path, whether by explicit submission or after the interface settles on what has been typed.
 - **AC-2** — The system shall allow Search to begin without an active leaf Category and to produce candidates from more than one active leaf Category.
 - **AC-3** — The system shall evaluate meaningful query relationships only against Offering title or name, description, active Category-path display names, public Business display name, and applicable public Offering Attribute display values.
 - **AC-4** — The system shall exclude telephone, email, external contact URL, Affiliate Destination, owner-only information, Admin-only information, historical records, and ineligible Offerings from Search matching.

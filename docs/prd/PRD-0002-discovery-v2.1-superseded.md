@@ -1,22 +1,11 @@
 # PRD-0002 — Discovery
 
-**Revision Note (2.2):** Superseding revision of Frozen v2.1, begun independently at Draft under a new version per `DOCUMENT_LIFECYCLE.md` §7. **It carries no Approval Note and no Freeze Note, because neither decision has been taken.** One change, in §5.10 and the four places that restate it:
-
-**A Search Discovery Start no longer requires a submission.** v2.1 defined the occurrence as "when a person **submits** a valid Search query", and the word was written when a query could only reach the platform one way. The Owner's decision of 2026-08-31 adopts filter-as-you-type as the interface's behaviour, and a debounced query reaching the platform is the same product occurrence as a submitted one: a person expressing what they are looking for. The revision replaces the mechanism with the occurrence, and adds the bound that mechanism used to supply implicitly.
-
-**What does not change, and this is most of it.** The Browse half of §5.10 is untouched — it already said "**selects** the first active Category that begins a Browse path", and a selection is a selection whether it posts a form or not, so the Category dropdown never conflicted with this document. Domain attribution is unchanged. The Listing Card minimum, Filter semantics, ordering, Zero Results and the Presentation boundary are unchanged. No Search engine, ranking algorithm, Pagination, Sorting, Autocomplete, Recommendation, Capability or Feature is introduced, and no Story Delivery Status moves.
-
-**The bound is the substance of the change.** Without it, live filtering would record a Discovery Start on every keystroke that survived a debounce, and the figure Basic Analytics reports would stop meaning what it has meant since I3. "At most one per Discovery path" is not new: it is what the Browse half has always required and what the implementation already does — `i3-browse` names a test *"creates no further Start for descendants of the same path"*. This revision applies the same bound to Search.
-
 - **Owner:** Product Owner / Architecture Owner
 - **PRD ID:** PRD-0002
 - **Title:** Discovery
-- **Status:** Draft
-- **Version:** 2.2
-- **Last Updated:** 2026-08-31
-- **Supersedes:** Frozen v2.1 (2026-07-21), which remains the authoritative
-  baseline at `docs/prd/PRD-0002-discovery.md` until this candidate is
-  independently reviewed, Approved and, if the Owner decides, Frozen
+- **Status:** Frozen
+- **Version:** 2.1
+- **Last Updated:** 2026-07-21
 - **Scope level:** Product behaviour (non-technical)
 - **Supersedes:** Approved v1.0
 - **Approved candidate:** In Review v2.1
@@ -207,21 +196,8 @@ The state in which no publicly eligible Offering matches the current criteria.
 
 The bounded product occurrence when a person:
 
-- expresses a valid non-empty Search query that reaches the platform, whether by
-  an explicit submission or after the interface settles on what has been typed;
-  or
+- submits a valid Search query; or
 - selects the first active Category that begins a Browse path.
-
-**At most one Discovery Start occurs per Discovery path.** A Search Discovery
-Start occurs on the first valid non-empty query in a path; later narrowing
-within the same path — a changed query, a Category selection, an Attribute
-Filter — produces no further Start. The same has always been true of Browse,
-where only the *first* active Category begins one.
-
-This bound is what the word "submits" used to supply. An interface that filters
-as a person types would otherwise record a Discovery Start for every keystroke
-that survived a debounce, and the count would stop describing how many people
-began looking for something.
 
 Domain attribution:
 
@@ -251,7 +227,7 @@ The exact layout, typography, placement, visual hierarchy, and control design ar
 
 ### 6.2 Search routing
 
-When a valid non-empty query reaches the platform:
+When a person submits a non-empty query:
 
 ```text
 Homepage
@@ -682,7 +658,7 @@ Login or role does not grant a Discovery-specific ordering, visibility, or match
 ```text
 Homepage
 → “Bugün ne yapmak istiyorsunuz?”
-→ a non-empty query reaches the platform
+→ person submits non-empty query
 → Discovery Start
 → Search evaluates eligible Offerings
 → Search Results or Zero Results
@@ -754,7 +730,7 @@ or
 3. Submitting a non-empty query shall route to Search.
 4. Choosing an active Category shall route to Browse.
 5. Homepage entry shall require no login.
-6. Discovery Start shall occur on the first valid non-empty Search query in a Discovery path, however that query reaches the platform, or on first active Category selection, and at most once per Discovery path.
+6. Discovery Start shall occur on valid Search submission or first active Category selection.
 
 ### Eligibility and inputs
 
@@ -824,18 +800,12 @@ Scenario: Homepage owns the V1 entry prompt
   Then the prompt “Bugün ne yapmak istiyorsunuz?” is available
   And login is not required
 
-Scenario: A query routes to Search
+Scenario: Query submission routes to Search
   Given a person is on the Homepage
-  When a non-empty query the person has expressed reaches the platform
+  When the person submits a non-empty query
   Then Discovery Start occurs
   And the Search path begins
   And Browse is not selected silently
-
-Scenario: Refining a query starts nothing further
-  Given a Discovery path has begun with a Search Discovery Start
-  When the person changes the query within that path
-  Then Search Results are re-evaluated
-  And no further Discovery Start occurs
 
 Scenario: Category choice routes to Browse
   Given a person is on the Homepage

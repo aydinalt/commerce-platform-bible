@@ -113,10 +113,11 @@ export class PgAnalyticsRepository {
       await Promise.all([
         this.withDomain(
           scoped(
-            `select d.stable_key as domain, count(*)::int as count
+            `select d.stable_key as domain, d.name as "domainName",
+             count(*)::int as count
            from discovery_start s
            left join domain d on d.id = s.domain_id{window}
-           group by d.stable_key`,
+           group by d.stable_key, d.name`,
             "s.started_at"
           ),
           scoped(
@@ -127,10 +128,11 @@ export class PgAnalyticsRepository {
         ),
         this.withDomain(
           scoped(
-            `select d.stable_key as domain, count(*)::int as count
+            `select d.stable_key as domain, d.name as "domainName",
+             count(*)::int as count
            from offering_presentation_open o
            join domain d on d.id = o.domain_id{window}
-           group by d.stable_key`,
+           group by d.stable_key, d.name`,
             "o.opened_at"
           ),
           scoped(
@@ -141,10 +143,11 @@ export class PgAnalyticsRepository {
         ),
         this.withDomain(
           scoped(
-            `select d.stable_key as domain, count(*)::int as count
+            `select d.stable_key as domain, d.name as "domainName",
+             count(*)::int as count
            from compare_start c
            join domain d on d.id = c.domain_id{window}
-           group by d.stable_key`,
+           group by d.stable_key, d.name`,
             "c.started_at"
           ),
           scoped(
@@ -194,20 +197,32 @@ export class PgAnalyticsRepository {
     values: unknown[]
   ): Promise<CoreFlowCount> {
     const [byDomain, overall] = await Promise.all([
-      this.pool.query<{ count: number; domain: string | null }>(
-        breakdown,
-        values
-      ),
+      this.pool.query<{
+        count: number;
+        domain: string | null;
+        domainName: string | null;
+      }>(breakdown, values),
       this.pool.query<{ count: number }>(total, values)
     ]);
     return {
       // A null Domain is dropped rather than shown as a group: it is the
       // absence of an association, not a Domain called "none".
       byDomain: byDomain.rows
-        .filter((row): row is { count: number; domain: string } =>
-          Boolean(row.domain)
+        .filter(
+          (row): row is { count: number; domain: string; domainName: string } =>
+            Boolean(row.domain)
         )
-        .map((row) => ({ count: Number(row.count), domain: row.domain }))
+        /*
+         * The key groups and the name is displayed. Grouping by the name would
+         * merge two Domains that shared one and would split a Domain's own
+         * history the moment it was renamed — which is what a `stable_key` is
+         * stable for. The name rides along so no screen has to translate a key.
+         */
+        .map((row) => ({
+          count: Number(row.count),
+          domain: row.domain,
+          domainName: row.domainName
+        }))
         .sort((a, b) => a.domain.localeCompare(b.domain)),
       overall: Number(overall.rows[0]?.count ?? 0)
     };

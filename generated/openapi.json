@@ -1025,9 +1025,15 @@
           },
           "discoveryPathId": { "format": "uuid", "type": "string" },
           "domain": {
-            "description": "Available once one active leaf Category is selected. A Search that spans Domains has none.",
-            "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY", null],
+            "description": "The Domain's stable key, available once one active leaf Category is selected. A Search that spans Domains has none.",
+            "maxLength": 80,
+            "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
             "type": ["string", "null"]
+          },
+          "domainName": {
+            "maxLength": 160,
+            "type": ["string", "null"],
+            "description": "The Domain's own name. Null exactly when the key is."
           },
           "filters": {
             "description": "The Filters that may be applied here. Empty until a leaf is selected.",
@@ -1063,6 +1069,7 @@
           "categoryId",
           "discoveryPathId",
           "domain",
+          "domainName",
           "filters",
           "filtersAvailable",
           "narrowing",
@@ -1084,11 +1091,14 @@
                   "type": "array"
                 },
                 "domain": {
-                  "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+                  "description": "The Domain's stable key. PRD-0001 v4.0 §E: the set is open.",
+                  "maxLength": 80,
+                  "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
                   "type": "string"
-                }
+                },
+                "domainName": { "maxLength": 160, "type": "string" }
               },
-              "required": ["categories", "domain"],
+              "required": ["categories", "domain", "domainName"],
               "type": "object"
             },
             "type": "array"
@@ -1124,9 +1134,12 @@
           },
           "discoveryPathId": { "format": "uuid", "type": "string" },
           "domain": {
-            "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+            "description": "The Domain's stable key. PRD-0001 v4.0 §E: the set is open.",
+            "maxLength": 80,
+            "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
             "type": "string"
           },
+          "domainName": { "maxLength": 160, "type": "string" },
           "filters": {
             "description": "Offered on a leaf; empty on a branch, where no active leaf Category is selected.",
             "items": { "$ref": "#/components/schemas/AvailableFilter" },
@@ -1155,6 +1168,7 @@
           "children",
           "discoveryPathId",
           "domain",
+          "domainName",
           "filters",
           "results",
           "siblings",
@@ -1167,9 +1181,12 @@
         "properties": {
           "active": { "type": "boolean" },
           "domain": {
-            "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+            "description": "The Domain's stable key. PRD-0001 v4.0 §E: the set is open.",
+            "maxLength": 80,
+            "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
             "type": "string"
           },
+          "domainName": { "maxLength": 160, "type": "string" },
           "id": { "format": "uuid", "type": "string" },
           "name": { "type": "string" },
           "parentId": { "format": "uuid", "type": ["string", "null"] },
@@ -1179,6 +1196,7 @@
         "required": [
           "active",
           "domain",
+          "domainName",
           "id",
           "name",
           "parentId",
@@ -1207,9 +1225,12 @@
               "additionalProperties": false,
               "properties": {
                 "domain": {
-                  "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+                  "description": "The Domain's stable key. PRD-0001 v4.0 §E: the set is open.",
+                  "maxLength": 80,
+                  "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
                   "type": "string"
                 },
+                "domainName": { "maxLength": 160, "type": "string" },
                 "id": { "format": "uuid", "type": "string" },
                 "name": { "type": "string" },
                 "path": {
@@ -1218,7 +1239,7 @@
                   "type": "array"
                 }
               },
-              "required": ["domain", "id", "name", "path"],
+              "required": ["domain", "domainName", "id", "name", "path"],
               "type": "object"
             },
             "type": "array"
@@ -1234,7 +1255,9 @@
             "additionalProperties": false,
             "properties": {
               "domain": {
-                "enum": ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"],
+                "description": "The Domain's stable key. PRD-0001 v4.0 §E: the set is open.",
+                "maxLength": 80,
+                "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
                 "type": "string"
               },
               "name": { "maxLength": 160, "minLength": 1, "type": "string" },
@@ -1865,9 +1888,15 @@
               "additionalProperties": false,
               "properties": {
                 "count": { "minimum": 0, "type": "integer" },
-                "domain": { "type": "string" }
+                "domain": {
+                  "description": "The Domain's stable key. PRD-0001 v4.0 §E: the set is open.",
+                  "maxLength": 80,
+                  "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
+                  "type": "string"
+                },
+                "domainName": { "maxLength": 160, "type": "string" }
               },
-              "required": ["count", "domain"],
+              "required": ["count", "domain", "domainName"],
               "type": "object"
             },
             "type": "array"

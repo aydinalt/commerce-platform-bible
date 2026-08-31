@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      2.85
+Version:      2.86
 Last Updated: 2026-08-31
 -->
 
@@ -185,7 +185,7 @@ each was something the platform already knew and had not published.
 |---|---|---|
 | Traceability v1.1 | **Frozen 2026-08-31.** Review passed on all four claims; approval and freeze taken as separate decisions | Nothing. v1.1 is at `docs/traceability.md`; v1.0 preserved at `docs/traceability-v1.0-superseded.md` |
 | Prototype integration — **Path A**, and Tailwind into `apps/web` | 2026-08-31 | Tailwind's cost is accepted and named: `i26`, `i32`, `i33`, `i48`, `i49`, `i50` all read `globals.css` whole and will be rewritten |
-| Discovery Start may occur without a submission | 2026-08-31 | **Two revision candidates at Draft**, neither approvable without the other: `PRD-0002` v2.2 owns the definition, `US-DSC-F02-001` v1.1 consumes it |
+| Discovery Start may occur without a submission | **Frozen 2026-08-31** — `PRD-0002` v2.2 and `US-DSC-F02-001` v1.1, frozen simultaneously because the Story consumes the definition the PRD owns | Nothing in governance. The interface change itself is Path A work |
 | The Domain set is open | Recorded in `DOMAIN_SET_OPEN_DECISION.md`, Draft awaiting acceptance | The code — measured at six `z.enum` sites, three declarations, one label map, six OpenAPI enums and **81 tests** |
 
 The traceability correction turned out not to need writing: `traceability-v1.1-candidate.md`

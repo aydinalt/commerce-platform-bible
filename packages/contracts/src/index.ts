@@ -913,6 +913,45 @@ export type DestinationWorkload = z.infer<typeof destinationWorkloadSchema>;
 const tally = z.record(z.string(), z.number().int().nonnegative());
 
 /**
+ * How a Domain is named on the wire.
+ *
+ * **This was `z.enum(["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"])`, and the change
+ * is the point.** Frozen PRD-0001 v4.0 §E and Business Rule 39 say a Domain is a
+ * governed record and *"the set is open… Mobility, Real Estate and Technology
+ * were the first three, not the whole set"*. A closed enum here made that false
+ * in the only way that matters: a fourth Domain could be created, and then every
+ * read that mentioned it failed contract validation on the way out.
+ * `DOMAIN_SET_OPEN_DECISION.md` records the Owner decision this rests on.
+ *
+ * **Open is not unvalidated.** A Domain key is the record's `stable_key` — the
+ * same upper-snake-case shape `categoryIdentitySchema` already requires of a
+ * Category, bounded here to that column's 80 characters. A malformed key is
+ * still refused; what is no longer refused is a key nobody thought of in July.
+ *
+ * Existence is not checked here and cannot be: whether a key names a Domain that
+ * exists is a fact about records, and a schema holds none. It is enforced where
+ * Category already enforces it — by the write path, against the database.
+ */
+export const domainKeySchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .min(1)
+  .max(80)
+  .regex(/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/u, "Use upper snake case");
+
+/**
+ * A Domain's display name, carried beside its key.
+ *
+ * **The name comes from the record, and it did not used to.** `MOBILITY →
+ * "Ulaşım"` lived in a three-entry map in the web application, so a fourth
+ * Domain would have rendered its raw key on a Turkish page. Categories have
+ * always taken their names from their records; Domains now do the same, and the
+ * map is gone.
+ */
+export const domainNameSchema = z.string().min(1).max(160);
+
+/**
  * One core-flow indicator (`US-PLT-F10-001` AC-3, AC-12).
  *
  * `byDomain` is empty where the owning source supplies no Domain association,
@@ -924,7 +963,13 @@ const tally = z.record(z.string(), z.number().int().nonnegative());
 const coreFlowCountSchema = z
   .object({
     byDomain: z.array(
-      z.object({ count: z.number().int().nonnegative(), domain: z.string() })
+      z.object({
+        count: z.number().int().nonnegative(),
+        domain: domainKeySchema,
+        /// The Domain's own name. The tally groups by the key — stable across a
+        /// rename — and shows this, so no surface translates an identifier.
+        domainName: domainNameSchema
+      })
     ),
     overall: z.number().int().nonnegative()
   })
@@ -1100,14 +1145,6 @@ export type CreateDraftOffering = z.infer<typeof createDraftOfferingSchema>;
 export type DraftOffering = z.infer<typeof draftOfferingSchema>;
 export type OfferingInventory = z.infer<typeof offeringInventorySchema>;
 
-/**
- * The wire spelling of the three V1 Domains. The Catalog module owns the
- * concept; shared packages may not import product modules, so the list is
- * restated here as the published contract and the two are kept in agreement by
- * a test rather than by an import.
- */
-export const V1_DOMAINS = ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"] as const;
-
 const categoryIdentitySchema = z.object({
   name: z.string().trim().min(1).max(160),
   slug: z
@@ -1137,7 +1174,7 @@ const categoryIdentitySchema = z.object({
  * contract rather than a rule discovered on the way to the database.
  */
 export const createRootCategorySchema = categoryIdentitySchema
-  .extend({ domain: z.enum(V1_DOMAINS) })
+  .extend({ domain: domainKeySchema })
   .strict();
 
 export const createChildCategorySchema = categoryIdentitySchema
@@ -1164,7 +1201,9 @@ export const reparentCategorySchema = z
 export const categorySchema = z
   .object({
     active: z.boolean(),
-    domain: z.enum(V1_DOMAINS),
+    domain: domainKeySchema,
+    /// The Domain's own name, so no surface has to translate its key.
+    domainName: domainNameSchema,
     id: z.string().uuid(),
     name: z.string(),
     parentId: z.string().uuid().nullable(),
@@ -1173,8 +1212,28 @@ export const categorySchema = z
   })
   .strict();
 
+/**
+ * A Domain as the catalogue offers it for selection.
+ *
+ * **This exists because opening the set removed the list from the code.** A root
+ * Category names one Domain, so the create form needs the Domains there are —
+ * and it used to hold a hard-coded three. Deriving them from the Categories
+ * already returned would have been smaller and wrong: a Domain with no Category
+ * yet would not appear, which is exactly the Domain somebody is trying to open
+ * the first Category in.
+ *
+ * Retired Domains are absent. `domain.active` exists, and offering an inactive
+ * Domain as a destination for new work is offering a place nothing should go.
+ */
+export const selectableDomainSchema = z
+  .object({ key: domainKeySchema, name: domainNameSchema })
+  .strict();
+
 export const categoriesSchema = z
-  .object({ categories: z.array(categorySchema) })
+  .object({
+    categories: z.array(categorySchema),
+    domains: z.array(selectableDomainSchema)
+  })
   .strict();
 
 /**
@@ -1192,7 +1251,8 @@ export const categoriesSchema = z
  */
 export const assignableCategorySchema = z
   .object({
-    domain: z.enum(V1_DOMAINS),
+    domain: domainKeySchema,
+    domainName: domainNameSchema,
     id: z.string().uuid(),
     name: z.string(),
     path: z.array(z.string())
@@ -1959,7 +2019,8 @@ export const browseRootsSchema = z
       z
         .object({
           categories: z.array(browseCategorySchema),
-          domain: z.enum(V1_DOMAINS)
+          domain: domainKeySchema,
+          domainName: domainNameSchema
         })
         .strict()
     )
@@ -1977,7 +2038,8 @@ export const browseViewSchema = z
     category: browseCategorySchema,
     children: z.array(browseCategorySchema),
     discoveryPathId: z.string().uuid(),
-    domain: z.enum(V1_DOMAINS),
+    domain: domainKeySchema,
+    domainName: domainNameSchema,
     /// Offered on a leaf; empty on a branch, where no active leaf Category is
     /// selected.
     filters: z.array(availableFilterSchema),
@@ -2037,8 +2099,10 @@ export const searchViewSchema = z
     categoryId: z.string().uuid().nullable(),
     discoveryPathId: z.string().uuid(),
     /// Available once one active leaf Category is selected. A Search that spans
-    /// Domains has none.
-    domain: z.enum(V1_DOMAINS).nullable(),
+    /// Domains has none — and where the key is absent so is the name, because
+    /// they are two halves of one missing fact rather than two fields.
+    domain: domainKeySchema.nullable(),
+    domainName: domainNameSchema.nullable(),
     /// The Filters that may be applied here. Empty until a leaf is selected.
     filters: z.array(availableFilterSchema),
     /// Whether category-specific Attribute Filters may be offered. The gate of
@@ -2068,3 +2132,4 @@ export type RenameCategory = z.infer<typeof renameCategorySchema>;
 export type ReparentCategory = z.infer<typeof reparentCategorySchema>;
 export type CategoryResponse = z.infer<typeof categorySchema>;
 export type Categories = z.infer<typeof categoriesSchema>;
+export type SelectableDomain = z.infer<typeof selectableDomainSchema>;

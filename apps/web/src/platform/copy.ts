@@ -1,4 +1,4 @@
-import { CONTEXTS, DOMAINS, LIFECYCLE, MODERATION, TERMS } from "../vocabulary";
+import { CONTEXTS, LIFECYCLE, MODERATION, TERMS } from "../vocabulary";
 
 /**
  * What the Admin surfaces say (UX-0006).
@@ -78,15 +78,15 @@ const TALLY_LABELS: Record<string, string> = {
   ...LIFECYCLE,
   ...MODERATION,
   /*
-   * The Domains are here rather than in a resolver of their own, because
-   * `coreFlowCountSchema` types `domain` as a plain `z.string()` — the contract
-   * does not narrow it to the three, so the call site cannot index a total
-   * `Record<Domain, string>` without a cast that would assert something the
-   * wire does not guarantee. One resolver with one fallback rule is the honest
-   * shape, and it is the same question in both places: what is this contract
-   * key called on screen.
+   * **The three Domain names used to be spread in here**, and they are gone with
+   * the closed set — PRD-0001 v4.0 §E, `DOMAIN_SET_OPEN_DECISION.md`.
+   *
+   * `tallyLabel` falls back to the key, and for analytics that is not a
+   * degradation but the right answer: these tallies group historical
+   * occurrences by `stable_key`, which is stable precisely so a Domain renamed
+   * last month does not split its own history. Everywhere a person reads a
+   * Domain as a thing rather than as a bucket, the name travels from the record.
    */
-  ...DOMAINS,
   BUSINESS: TERMS.business,
   CLOSED: "Kapalı",
   DISABLED: "Kapalı durumda",

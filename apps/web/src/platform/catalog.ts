@@ -1,25 +1,20 @@
 import type { AttributeResponse, CategoryResponse } from "@commerce/contracts";
 
-import { DOMAINS as DOMAIN_NAMES, LIFECYCLE, TERMS } from "../vocabulary";
+import { LIFECYCLE, TERMS } from "../vocabulary";
 
-type Domain = CategoryResponse["domain"];
 type ValueKind = AttributeResponse["valueKind"];
 
-/**
- * The three V1 Domains, in the order §10 writes them.
+/*
+ * **Three Domains and their Turkish names used to be declared here**, and both
+ * are gone. PRD-0001 v4.0 §E makes the Domain set open, so a list in the code
+ * was a copy of a table — and `DOMAIN_LABELS` was worse: a `Record` over a
+ * closed union, which after opening the set would have returned `undefined` for
+ * any Domain added after it was written, putting a blank where a name belongs.
  *
- * A closed list, and a root Category names exactly one. There is no way to
- * change it afterwards — `US-PLT-F08-001` AC-7 makes a child inherit its
- * Domain, and no route accepts a new one — so this appears on the create form
- * and nowhere else.
+ * The Domains a root Category may be created in now arrive with the catalogue
+ * read, and each Category carries its own `domainName`. See
+ * `DOMAIN_SET_OPEN_DECISION.md`.
  */
-export const DOMAINS: readonly Domain[] = [
-  "MOBILITY",
-  "REAL_ESTATE",
-  "TECHNOLOGY"
-];
-
-export const DOMAIN_LABELS: Record<Domain, string> = DOMAIN_NAMES;
 
 export const VALUE_KIND_LABELS: Record<ValueKind, string> = {
   BOOLEAN: "Evet ya da hayır",

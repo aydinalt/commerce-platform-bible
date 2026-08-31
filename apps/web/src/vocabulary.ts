@@ -69,21 +69,6 @@ export const TERMS = {
 } as const;
 
 /**
- * The three V1 Domains, as PRD-0001 fixes them.
- *
- * `Ulaşım` for Mobility rather than `Vasıta`. Turkish listing sites use
- * *vasıta* and it would read as familiar — but it names the vehicle, and
- * Mobility is the grouping, which will hold more than vehicles the moment
- * PRD-0001 says so. Translating the label narrower than the concept is how a
- * grouping quietly acquires a boundary nobody decided on.
- */
-export const DOMAINS = {
-  MOBILITY: "Ulaşım",
-  REAL_ESTATE: "Emlak",
-  TECHNOLOGY: "Teknoloji"
-} as const;
-
-/**
  * The two contexts a person can enter (UX-0008 §5).
  *
  * `Bağlam` rather than `mod` or `görünüm`, because entering one is a change of

@@ -1,16 +1,24 @@
 /**
- * The three V1 Domains, fixed by PRD-0001 and by `US-PLT-F08-001` AC-1. No
- * Story gives anyone authority to add a fourth, and AC-15 rules out moving a
- * Category between them, so this list is closed rather than configurable.
+ * A Domain, as this module refers to one.
+ *
+ * **This was a closed three-value union, and the string is not a loosening.**
+ * Frozen PRD-0001 v4.0 §E and Business Rule 39 make a Domain a governed record
+ * and the set open; a union of three literals said the opposite in the type
+ * system, and the second copy of that list in `packages/contracts` had to be
+ * kept in step by a test because shared packages may not import product
+ * modules. One fact, two owners, agreeing only because nobody had added a
+ * fourth. `DOMAIN_SET_OPEN_DECISION.md` records the Owner decision.
+ *
+ * The value is the Domain's `stable_key`. Which keys exist is a question about
+ * records, and this module holds none — the answer lives in the database, which
+ * is where it lived all along.
  */
-export const V1_DOMAINS = ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"] as const;
-
-export type V1Domain = (typeof V1_DOMAINS)[number];
+export type DomainKey = string;
 
 export interface CategoryRecord {
   /// Retired Categories keep their row and stay readable (AC-14).
   active: boolean;
-  domain: V1Domain;
+  domain: DomainKey;
   id: string;
   name: string;
   /// `null` for a root, which is the only kind of Category that names its own
@@ -80,6 +88,26 @@ export class CategoryParentRetiredError extends Error {
   constructor(readonly parentId: string) {
     super("CATEGORY_PARENT_RETIRED");
     this.name = "CategoryParentRetiredError";
+  }
+}
+
+/**
+ * Raised when a root Category names a Domain that does not exist.
+ *
+ * **This condition used to be unreachable, and opening the set is what created
+ * it.** `z.enum(V1_DOMAINS)` refused an unknown Domain at the contract, so the
+ * write path never saw one; with the set open the schema validates the *shape*
+ * of a key and existence becomes a question about records — which is a refusal
+ * the Admin should read, not a fault the platform should report.
+ *
+ * The check stays inside the insert rather than before it, for the reason every
+ * other check here does: a Domain retired between a lookup and a write would
+ * otherwise pass the lookup.
+ */
+export class CategoryDomainUnknownError extends Error {
+  constructor(readonly domain: string) {
+    super("CATEGORY_DOMAIN_UNKNOWN");
+    this.name = "CategoryDomainUnknownError";
   }
 }
 

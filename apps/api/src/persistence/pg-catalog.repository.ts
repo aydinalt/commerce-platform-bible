@@ -9,7 +9,8 @@ import {
   CategoryParentRetiredError,
   CategoryRetirementBlockedError,
   type CategoryRecord,
-  type V1Domain
+  CategoryDomainUnknownError,
+  type DomainKey
 } from "@commerce/catalog";
 
 const UNIQUE_VIOLATION = "23505";
@@ -31,7 +32,8 @@ const STABLE_KEY_CONSTRAINT = "category_stable_key_key";
 const BLOCKING_OFFERING_STATES = ACTIVE_LIFECYCLE_STATES;
 
 const CATEGORY_COLUMNS = `c.id, c.name, c.slug, c.stable_key as "stableKey",
-   c.parent_id as "parentId", c.active, d.stable_key as domain`;
+   c.parent_id as "parentId", c.active, d.stable_key as domain,
+   d.name as "domainName"`;
 
 function violates(error: unknown, code: string, constraint: string): boolean {
   if (typeof error !== "object" || error === null) return false;
@@ -81,11 +83,12 @@ export class PgCatalogRepository {
          from category parent join walk on walk.parent_id = parent.id
        )
        select leaf.id, leaf.name, d.stable_key as domain,
+         d.name as "domainName",
          array_agg(walk.name order by walk.depth desc) as path
        from category leaf
        join walk on walk.leaf_id = leaf.id
        join domain d on d.id = leaf.domain_id
-       group by leaf.id, leaf.name, d.stable_key
+       group by leaf.id, leaf.name, d.stable_key, d.name
        order by d.stable_key, path`
     );
     return result.rows;
@@ -98,7 +101,7 @@ export class PgCatalogRepository {
    */
   async createRoot(input: {
     correlationId: string;
-    domain: V1Domain;
+    domain: DomainKey;
     name: string;
     slug: string;
     stableKey: string;
@@ -108,15 +111,27 @@ export class PgCatalogRepository {
       const created = await client.query<CategoryRecord>(
         `with parent_domain as (
            select id from domain where stable_key = $1
+         ),
+         inserted as (
+           insert into category (domain_id, parent_id, stable_key, slug, name)
+           select parent_domain.id, null, $2, $3, $4 from parent_domain
+           returning id, name, slug, stable_key, parent_id, active, domain_id
          )
-         insert into category (domain_id, parent_id, stable_key, slug, name)
-         select parent_domain.id, null, $2, $3, $4 from parent_domain
-         returning id, name, slug, stable_key as "stableKey",
-           parent_id as "parentId", active, $1::text as domain`,
+         /*
+          * The Domain's name is read back from the joined record rather than
+          * echoed from the argument: the caller supplied a key and never a
+          * name, so echoing one would invent a second source for a fact the
+          * record already holds.
+          */
+         select inserted.id, inserted.name, inserted.slug,
+           inserted.stable_key as "stableKey",
+           inserted.parent_id as "parentId", inserted.active,
+           d.stable_key as domain, d.name as "domainName"
+         from inserted join domain d on d.id = inserted.domain_id`,
         [input.domain, input.stableKey, input.slug, input.name]
       );
       const category = created.rows[0];
-      if (!category) throw new Error("UNKNOWN_DOMAIN");
+      if (!category) throw new CategoryDomainUnknownError(input.domain);
       await this.audit(client, {
         action: "category.create",
         categoryId: category.id,
@@ -155,7 +170,8 @@ export class PgCatalogRepository {
          values ($1, $2, $3, $4, $5)
          returning id, name, slug, stable_key as "stableKey",
            parent_id as "parentId", active,
-           (select stable_key from domain where id = $1) as domain`,
+           (select stable_key from domain where id = $1) as domain,
+           (select name from domain where id = $1) as "domainName"`,
         [
           found.domainId,
           input.parentId,
@@ -274,6 +290,25 @@ export class PgCatalogRepository {
       });
       return this.readWithin(client, input.categoryId);
     });
+  }
+
+  /**
+   * The Domains a root Category may currently be created in.
+   *
+   * Read from the records rather than from a list in the code. PRD-0001 v4.0 §E
+   * makes the set open, so any list held here would be a copy of the table that
+   * is right until somebody adds a row — see `DOMAIN_SET_OPEN_DECISION.md`.
+   *
+   * Inactive Domains are excluded. Unlike a retired Category, which stays
+   * readable as history, this answers "where may something new go", and a
+   * retired Domain is not one of those places.
+   */
+  async domains(): Promise<{ key: string; name: string }[]> {
+    const result = await this.pool.query<{ key: string; name: string }>(
+      `select stable_key as key, name from domain
+       where active = true order by stable_key`
+    );
+    return result.rows;
   }
 
   /// Retired Categories are included: AC-14 keeps the historical definition

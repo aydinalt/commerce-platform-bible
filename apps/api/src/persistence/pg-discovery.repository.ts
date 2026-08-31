@@ -156,23 +156,36 @@ export class PgDiscoveryRepository {
    * records a Discovery Start: no Category has been selected yet.
    */
   async browseRoots(): Promise<
-    { categories: BrowseCategory[]; domain: string }[]
+    { categories: BrowseCategory[]; domain: string; domainName: string }[]
   > {
-    const result = await this.pool.query<BrowseCategory & { domain: string }>(
-      `select ${BROWSE_CATEGORY}, d.stable_key as domain
+    const result = await this.pool.query<
+      BrowseCategory & { domain: string; domainName: string }
+    >(
+      `select ${BROWSE_CATEGORY}, d.stable_key as domain, d.name as "domainName"
        from category c
        join domain d on d.id = c.domain_id
        where c.parent_id is null and c.active = true and d.active = true
        order by d.stable_key, c.name`
     );
-    const byDomain = new Map<string, BrowseCategory[]>();
+    /*
+     * Keyed by the stable key and carrying the name beside it. Grouping by the
+     * name instead would merge two Domains that happened to share one, which a
+     * unique `stable_key` and a non-unique `name` make possible.
+     */
+    const byDomain = new Map<
+      string,
+      { categories: BrowseCategory[]; name: string }
+    >();
     for (const row of result.rows) {
-      const { domain, ...category } = row;
-      byDomain.set(domain, [...(byDomain.get(domain) ?? []), category]);
+      const { domain, domainName, ...category } = row;
+      const held = byDomain.get(domain) ?? { categories: [], name: domainName };
+      held.categories.push(category);
+      byDomain.set(domain, held);
     }
-    return [...byDomain].map(([domain, categories]) => ({
-      categories,
-      domain
+    return [...byDomain].map(([domain, held]) => ({
+      categories: held.categories,
+      domain,
+      domainName: held.name
     }));
   }
 
@@ -196,11 +209,13 @@ export class PgDiscoveryRepository {
         BrowseCategory & {
           domain: string;
           domainId: string;
+          domainName: string;
           parentId: string | null;
         }
       >(
         `select ${BROWSE_CATEGORY}, c.parent_id as "parentId",
-           c.domain_id as "domainId", d.stable_key as domain
+           c.domain_id as "domainId", d.stable_key as domain,
+           d.name as "domainName"
          from category c
          join domain d on d.id = c.domain_id
          where c.id = $1 and c.active = true`,
@@ -223,7 +238,7 @@ export class PgDiscoveryRepository {
         [input.pathId, current.domainId]
       );
 
-      const { domain, domainId, parentId, ...category } = current;
+      const { domain, domainId, domainName, parentId, ...category } = current;
       void domainId;
 
       const children = await this.categories(
@@ -270,6 +285,7 @@ export class PgDiscoveryRepository {
         children,
         discoveryPathId: input.pathId,
         domain,
+        domainName,
         filters,
         results,
         siblings,
@@ -326,6 +342,7 @@ export class PgDiscoveryRepository {
         categoryName: string;
         domain: string;
         domainId: string;
+        domainName: string;
         hasParent: boolean;
       } | null = null;
       if (input.categoryId !== null) {
@@ -333,9 +350,11 @@ export class PgDiscoveryRepository {
           categoryName: string;
           domain: string;
           domainId: string;
+          domainName: string;
           hasParent: boolean;
         }>(
           `select d.stable_key as domain, c.domain_id as "domainId",
+             d.name as "domainName",
              c.name as "categoryName", c.parent_id is not null as "hasParent"
            from category c join domain d on d.id = c.domain_id
            where c.id = $1 and c.active = true and not exists (
@@ -445,6 +464,7 @@ export class PgDiscoveryRepository {
         categoryId: input.categoryId,
         discoveryPathId: input.pathId,
         domain: narrowedTo?.domain ?? null,
+        domainName: narrowedTo?.domainName ?? null,
         filters,
         // `US-DSC-F04-001` AC-6's gate, now with something behind it.
         filtersAvailable: narrowedTo !== null,
