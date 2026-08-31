@@ -6,7 +6,6 @@ import { Pool } from "pg";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { V1_DOMAINS } from "@commerce/contracts";
 import type { ContactChannelsResponse } from "@commerce/contracts";
 
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
@@ -224,8 +223,18 @@ suite("Increment I9 Identity delivery evidence", () => {
     expect(searching.statusCode).toBeLessThan(400);
   });
 
-  it("opens the same public baseline in all three Domains", async () => {
-    const roots = await Promise.all(V1_DOMAINS.map((d) => category(d)));
+  it("opens the same public baseline in every Domain there is", async () => {
+    /*
+     * **Read from the database rather than from a list in the code.** This used
+     * to map over a `V1_DOMAINS` constant and then assert its length was three;
+     * PRD-0001 v4.0 §E makes the set open, so a claim about "every Domain" has
+     * to be answered by the records or it is a claim about a copy of them.
+     */
+    const present = await pool.query<{ key: string }>(
+      "select stable_key as key from domain where active = true order by stable_key"
+    );
+    const keys = present.rows.map((row) => row.key);
+    const roots = await Promise.all(keys.map((d) => category(d)));
 
     const answers = await Promise.all(
       roots.map((id) =>
@@ -237,7 +246,7 @@ suite("Increment I9 Identity delivery evidence", () => {
     // the catalogue, never a different set of rules about who may look. Asserted
     // across every Domain the platform has rather than a sample, because the
     // claim is about all of them.
-    expect(V1_DOMAINS).toHaveLength(3);
+    expect(keys.length).toBeGreaterThan(0);
     for (const answer of answers) expect(answer.statusCode).toBe(200);
   });
 

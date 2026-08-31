@@ -11,6 +11,68 @@ This project follows the principles of:
 
 ---
 
+## [3.39.0] - 2026-08-31
+
+### Changed
+
+- **The Domain set is open in code, and a fourth Domain proves it.** Frozen
+  PRD-0001 v4.0 §E and Business Rule 39 say a Domain is a governed record and
+  that Mobility, Real Estate and Technology were _the first three, not the whole
+  set_. Five places in the code said otherwise — a union in `modules/catalog`, a
+  `V1_DOMAINS` enum in `packages/contracts`, name maps in `apps/web`'s
+  `vocabulary.ts` and `platform/catalog.ts`, and six inline enums in the OpenAPI
+  generator — and they agreed only because nobody had added a fourth.
+
+  Membership now lives where it always lived: in the `domain` table.
+  `domainKeySchema` still refuses a malformed key (upper snake case, bounded to
+  the column's 80 characters); it no longer decides which keys exist.
+
+- **`domainName` travels beside `domain` through every read that mentions a
+  Domain** — Category rows, the assignable list, Browse roots, the Browse and
+  Search views, and the three Analytics tallies. Deleting the label maps had left
+  screens showing a raw `MOBILITY`; the answer was a different source, not a
+  bigger map. **Grouping stays on the stable key**, so two Domains sharing a name
+  do not merge and a rename does not split a Domain's own history.
+
+### Fixed
+
+- **An unknown Domain returned 500.** `z.enum` had refused it at the contract, so
+  the write path had never seen one; with the set open, an Admin's typo reached
+  the insert and came back as a fault report. Now `CategoryDomainUnknownError` →
+  **400 `CATEGORY_DOMAIN_UNKNOWN`**, evaluated inside the insert.
+
+- **`domainKeySchema` carried `.toUpperCase()`, which made its own regex
+  decorative.** With the string already upper-cased, `lower` and `Mixed_Case`
+  passed a rule written to refuse them — and it was the only coercion of its
+  kind, applying to one side of a comparison and not the other. Removed.
+
+### Evidence
+
+- `tests/i53-open-domain-set.integration.test.ts` — six cases against a Domain
+  whose key, slug and name appear in no source file, contract or migration.
+  **6 of 6 mutants killed**, including reintroducing a Domain label map in
+  `apps/web` (killed by I27) and rendering the Analytics cell from the key
+  (killed by I8).
+- Seven assertions that were true only of a closed set were **replaced by the
+  claim they were trying to make**, not adjusted to keep passing.
+  `expect(DOMAINS).toHaveLength(3)` in I8 became a direct assertion of
+  inheritance; I27's vocabulary case was inverted to forbid any Domain name map
+  in `apps/web`. **An eighth survived the sweep and I53 found it by failing** —
+  I2's `seeds exactly the three V1 Domains` asserted the whole set with
+  `toEqual`, and creating a fourth Domain broke a file I53 never touched.
+- `docs/implementation/I53_OPEN_DOMAIN_SET.md`.
+
+### Still open
+
+- **No administrative path creates a Domain.** Domains arrive by migration.
+  `20260810000200_category_management`'s comment — _"no Story gives anyone
+  authority to invent a fourth V1 Domain"_ — is superseded by PRD-0001 v4.0 §E;
+  the migration is left as written because its checksum is applied history, and
+  the correction lives in the closure record. Creating a Domain from the Admin
+  panel needs its own Story.
+
+---
+
 ## [3.38.6] - 2026-08-31
 
 ### Changed
@@ -32,7 +94,7 @@ This project follows the principles of:
   `docs/user-stories/discovery/US-DSC-F02-001-search-v1.0-superseded.md`.
 
 - The prototype's **category dropdown needed none of this.** §5.10's Browse half
-  already read *"selects the first active Category"*, and it was left untouched.
+  already read _"selects the first active Category"_, and it was left untouched.
 
 ---
 
@@ -61,7 +123,7 @@ This project follows the principles of:
   Story consumes a definition the PRD owns.
 
   The change is one sentence and its consequence. §5.10 defined a Search
-  Discovery Start as occurring when a person *"submits"* a valid query; it now
+  Discovery Start as occurring when a person _"submits"_ a valid query; it now
   occurs when a valid non-empty query **reaches the platform**, by submission or
   after the interface settles on what has been typed — with the bound the word
   "submits" used to supply implicitly: **at most one per Discovery path.**
@@ -77,11 +139,11 @@ This project follows the principles of:
   makes a Discovery Start a deliberate event and forbids prefetch or a bookmark
   triggering it. Measured against the documents: `US-DSC-F06-001` is about
   Listing Cards and none of its eight criteria mentions Discovery Start, and the
-  words *prefetch* and *bookmark* appear in no Story, PRD or UX document at all.
+  words _prefetch_ and _bookmark_ appear in no Story, PRD or UX document at all.
   The rule lives in `PRD-0002` §5.10 and is consumed by `US-DSC-F02-001` AC-1.
 
   **The real conflict was half the size described.** §5.10's Browse half already
-  read *"**selects** the first active Category"*, and a selection is a selection
+  read _"**selects** the first active Category"_, and a selection is a selection
   whether or not it posts a form — so the prototype's category dropdown, its
   most visible fluency, never conflicted with anything and needed no revision.
   Only free-text search did, and only on one word. The Owner was given the
@@ -137,8 +199,8 @@ This project follows the principles of:
   is a decision about what the analytics count rather than a matter of feel.
 
 - **A reading that would have made this correction look like an error, recorded
-  so it is not made later.** Each Story's Freeze Note says *"Delivery Status
-  remains Not Started"*, and that is not the current status: it is what was true
+  so it is not made later.** Each Story's Freeze Note says _"Delivery Status
+  remains Not Started"_, and that is not the current status: it is what was true
   on the day the Story was frozen. The metadata table three lines further down
   is what states the status now, and it says `Done`. Reading the prose instead
   of the table is how a record that is genuinely stale can look correct.
@@ -151,10 +213,10 @@ This project follows the principles of:
 
 - **`DOMAIN_SET_OPEN_DECISION.md`** — an Owner decision resolving a conflict
   between two Frozen documents. `US-PLT-F08-001` v1.0 **AC-1** requires a root
-  Category to name *"exactly one Domain from Mobility, Real Estate, or
-  Technology"*; `PRD-0001-offering.md` v4.0 §E and Business Rule 39, Frozen five
+  Category to name _"exactly one Domain from Mobility, Real Estate, or
+  Technology"_; `PRD-0001-offering.md` v4.0 §E and Business Rule 39, Frozen five
   weeks later, say the set is open and the Revision Note states in terms that it
-  *"Lifts the V1 restriction of the Domain set to three."*
+  _"Lifts the V1 restriction of the Domain set to three."_
 
   `REPOSITORY_GOVERNANCE.md` makes each document authoritative for its own
   concern and gives neither precedence — and draws the line this stopped at:
@@ -162,10 +224,10 @@ This project follows the principles of:
   the code was left alone and the conflict brought back rather than resolved in
   passing.
 
-  The decision rests on a reading of AC-1 as two statements: *"exactly one
-  Domain"* is the rule and stands untouched, while the enumeration of three was
+  The decision rests on a reading of AC-1 as two statements: _"exactly one
+  Domain"_ is the rule and stands untouched, while the enumeration of three was
   the set's membership at the time and is superseded. `AC3_ATTRIBUTE_GROUPING_
-  DECISION.md` is the precedent for the form — an Owner decision as its own
+DECISION.md` is the precedent for the form — an Owner decision as its own
   document, leaving the Frozen text alone.
 
 ### Changed
@@ -196,7 +258,7 @@ This project follows the principles of:
 
 - **No path exists to create a Domain.** No endpoint, service, contract or Admin
   surface; the three that exist were inserted by a migration. Business Rule 39's
-  *"extended by Platform administration"* is unimplemented, and this decision
+  _"extended by Platform administration"_ is unimplemented, and this decision
   neither implements it nor claims otherwise. What opening the contract buys is
   narrower and exact: a Domain added by migration would work end to end instead
   of failing contract validation on the way out of every read that mentions it.
@@ -208,16 +270,16 @@ This project follows the principles of:
 ### Changed
 
 - **`IMPLEMENTATION_BACKLOG.md` refreshed to v0.2.** It still directed the reader
-  to *"add CI, Prisma migration baseline, OpenAPI generation and boundary
-  checks"* as the next engineering change — all four have existed for weeks —
+  to _"add CI, Prisma migration baseline, OpenAPI generation and boundary
+  checks"_ as the next engineering change — all four have existed for weeks —
   and it stopped at I7, with nothing to indicate that forty-three further
   increments had closed since. Both superseded passages are preserved and dated
   rather than rewritten, which is the convention the document already used for
   its own Story-status claim.
 
-- **Two new sections.** *After I7* accounts for the records numbered I8 to I52
+- **Two new sections.** _After I7_ accounts for the records numbered I8 to I52
   (I9 and I14 have no file of their own; I9's outcome is in
-  `DELIVERY_STATUS_ADVANCEMENT.md`), grouped by subject. *Measured position*
+  `DELIVERY_STATUS_ADVANCEMENT.md`), grouped by subject. _Measured position_
   carries the figures — 32 migrations, 39 tables, 87 operations across 73 paths,
   22 web routes, 10 domain modules, 120 test files and 1113 tests, 66
   implementation records, 8 Frozen UX documents and 6 Frozen PRDs.
@@ -251,7 +313,7 @@ This project follows the principles of:
   other than what it means, and the fourth in a single session. The discipline
   that has not failed is asserting the exact set; the failures now cluster where
   nothing enforces it — reading a repository rather than testing one. The first
-  draft of the *After I7* section, written from memory, put metrics in the wrong
+  draft of the _After I7_ section, written from memory, put metrics in the wrong
   band and omitted two increments entirely; it was rewritten against the actual
   filenames.
 

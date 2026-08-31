@@ -22,7 +22,6 @@ import {
   tallyLabel
 } from "../apps/web/src/platform/copy.js";
 import { ACTION_LABELS } from "../apps/web/src/platform/moderation.js";
-import { DOMAIN_LABELS } from "../apps/web/src/platform/catalog.js";
 import {
   FUNCTION_LABELS,
   PERIOD_LABELS
@@ -30,7 +29,6 @@ import {
 import {
   CONTEXTS,
   CREDENTIALS,
-  DOMAINS,
   LIFECYCLE,
   MODERATION,
   TERMS
@@ -402,7 +400,30 @@ describe("Increment I27 Turkish consolidation", () => {
      * concept is named on screen, which is exactly why it belongs in the shared
      * vocabulary rather than in this area's copy.
      */
-    expect(DOMAIN_LABELS.MOBILITY).toBe(DOMAINS.MOBILITY);
+    /*
+     * **This case used to assert that Admin's Domain labels came from the shared
+     * vocabulary, and the map it compared no longer exists.** Opening the Domain
+     * set (PRD-0001 v4.0 §E, `DOMAIN_SET_OPEN_DECISION.md`) made a fixed list of
+     * Domain names in the web application wrong in principle: the fourth Domain
+     * would have had no entry, and the screen would have fallen back to the
+     * contract key — which is the defect the "says the tally keys" case below
+     * was written to prevent, reappearing by a different route.
+     *
+     * So the assertion is inverted. The vocabulary still owns the *concept*, and
+     * nothing in the web application may own the *members*. A file that
+     * reintroduces the map fails here, whatever it calls it.
+     */
+    expect(TERMS.domain).toBe("Alan");
+    const naming = surfaces(CONSOLIDATED)
+      .concat([
+        "apps/web/src/platform/catalog.ts",
+        "apps/web/src/platform/copy.ts",
+        "apps/web/src/vocabulary.ts"
+      ])
+      .filter((file) =>
+        /\b(MOBILITY|REAL_ESTATE|TECHNOLOGY)\s*:/u.test(code(file))
+      );
+    expect(naming).toEqual([]);
   });
 
   it("says the tally keys rather than showing the contract's identifiers", () => {
@@ -451,7 +472,6 @@ describe("Increment I27 Turkish consolidation", () => {
       ...Object.values(MODERATION),
       ...Object.values(ENTRY_LABELS),
       ...Object.values(ACTION_LABELS),
-      ...Object.values(DOMAIN_LABELS),
       ...Object.values(PERIOD_LABELS)
     ];
 

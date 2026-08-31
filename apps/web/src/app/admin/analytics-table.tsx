@@ -124,9 +124,7 @@ export function AnalyticsTable({ analytics }: { analytics: Analytics }) {
                 {count.byDomain.length === 0
                   ? "—"
                   : count.byDomain
-                      .map(
-                        (entry) => `${tallyLabel(entry.domain)}: ${entry.count}`
-                      )
+                      .map((entry) => `${entry.domainName}: ${entry.count}`)
                       .join(", ")}
               </td>
             </tr>

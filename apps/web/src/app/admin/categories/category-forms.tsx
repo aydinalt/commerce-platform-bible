@@ -4,10 +4,7 @@ import { SUBMIT, submitLabel } from "../../../form-copy";
 
 import { useActionState } from "react";
 
-import type {
-  CategoryResponse,
-  SelectableDomain
-} from "@commerce/contracts";
+import type { CategoryResponse, SelectableDomain } from "@commerce/contracts";
 
 import {
   ARCHIVED_DOES_NOT_BLOCK,

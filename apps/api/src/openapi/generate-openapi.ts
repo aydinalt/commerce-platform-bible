@@ -1278,9 +1278,24 @@ const document = {
           categories: {
             items: { $ref: "#/components/schemas/Category" },
             type: "array"
+          },
+          /*
+           * The Domains travel with the Categories because the create-root form
+           * has to offer a choice, and the set is open (PRD-0001 v4.0 §E): a
+           * list held in the Admin interface would be a second owner of
+           * membership and would be wrong the moment a Domain is added.
+           */
+          domains: {
+            items: {
+              additionalProperties: false,
+              properties: { key: DOMAIN_KEY, name: DOMAIN_NAME },
+              required: ["key", "name"],
+              type: "object"
+            },
+            type: "array"
           }
         },
-        required: ["categories"],
+        required: ["categories", "domains"],
         type: "object"
       },
       AssignableCategories: {

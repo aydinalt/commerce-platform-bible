@@ -29,7 +29,8 @@ describe("Increment I4 Homepage Discovery entry", () => {
         categories: [
           { id: CATEGORY, leaf: false, name: "Araçlar", slug: "araclar" }
         ],
-        domain: "MOBILITY"
+        domain: "MOBILITY",
+        domainName: "Ulaşım"
       },
       {
         categories: [
@@ -40,7 +41,8 @@ describe("Increment I4 Homepage Discovery entry", () => {
             slug: "dizustu"
           }
         ],
-        domain: "TECHNOLOGY"
+        domain: "TECHNOLOGY",
+        domainName: "Teknoloji"
       }
     ]
   };

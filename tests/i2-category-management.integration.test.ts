@@ -158,17 +158,31 @@ suite("Increment I2 Category management", () => {
     await pool.end();
   });
 
-  it("seeds exactly the three V1 Domains", async () => {
+  it("seeds the three Domains the first migration named", async () => {
     const domains = await pool.query<{ stableKey: string }>(
       `select stable_key as "stableKey" from domain order by stable_key`
     );
+    const keys = domains.rows.map((d) => d.stableKey);
 
-    // AC-1: a root Category may name one of these and nothing else.
-    expect(domains.rows.map((d) => d.stableKey)).toEqual([
-      "MOBILITY",
-      "REAL_ESTATE",
-      "TECHNOLOGY"
-    ]);
+    /*
+     * **This case asserted the whole set and was the eighth closed-set claim
+     * this repository held.** It read `toEqual(["MOBILITY", "REAL_ESTATE",
+     * "TECHNOLOGY"])`, which says two things at once: that the migration seeded
+     * those three, and that nothing else may ever exist. The first is what it
+     * was written to check; the second was inherited from AC-1's enumeration and
+     * is superseded by Frozen PRD-0001 v4.0 §E (`DOMAIN_SET_OPEN_DECISION.md`).
+     *
+     * Keeping it would have made the suite refuse the very thing the platform
+     * now supports — and it did: I53 creates a fourth Domain and this assertion
+     * failed on it, in a file I53 never touched. That is the honest way to find
+     * out, and the reason the closure is `toContain` rather than `toEqual`.
+     *
+     * `20260810000200_category_management` is still what is being checked. It
+     * seeded three; the claim is that those three are present, not that they are
+     * alone.
+     */
+    for (const seeded of ["MOBILITY", "REAL_ESTATE", "TECHNOLOGY"])
+      expect(keys).toContain(seeded);
   });
 
   it("creates a root under one V1 Domain", async () => {

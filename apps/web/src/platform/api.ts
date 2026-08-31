@@ -10,7 +10,6 @@ import {
   type AdminPanel,
   type Analytics,
   type AttributeResponse,
-  type CategoryResponse,
   type DestinationWorkloadItem,
   type ModerationCase
 } from "@commerce/contracts";

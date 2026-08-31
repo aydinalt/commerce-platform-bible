@@ -1,32 +1,42 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  ATTRIBUTE_VALUE_KINDS as CATALOG_KINDS,
-  V1_DOMAINS as CATALOG_DOMAINS
-} from "../modules/catalog/src/index.js";
+import { ATTRIBUTE_VALUE_KINDS as CATALOG_KINDS } from "../modules/catalog/src/index.js";
 import {
   ATTRIBUTE_VALUE_KINDS as CONTRACT_KINDS,
-  V1_DOMAINS as CONTRACT_DOMAINS,
-  createCategorySchema
+  createCategorySchema,
+  domainKeySchema
 } from "../packages/contracts/src/index.js";
 
 /**
- * Shared packages may not import product modules, so the V1 Domain list is
- * stated twice: once by the Catalog module that owns the concept, once by the
- * published contract. Two spellings of a closed set will drift the moment
- * nobody is watching, so this is what watches.
+ * The Domain key, now that the set is open.
+ *
+ * **This block used to hold two tests and both are gone**, because what they
+ * watched no longer exists. One asserted that `packages/contracts` and
+ * `modules/catalog` spelled the same three-value list identically; the other
+ * asserted the list was exactly `MOBILITY`, `REAL_ESTATE`, `TECHNOLOGY`. Frozen
+ * PRD-0001 v4.0 §E makes a Domain a governed record and the set open —
+ * `DOMAIN_SET_OPEN_DECISION.md` records the Owner decision — so there is no
+ * second list to agree with and no third member to pin.
+ *
+ * What replaces them is the property that actually holds: the key is validated
+ * for *shape* and not for *membership*. A test that only checked a fourth key
+ * were accepted would pass against `z.string()`, which would accept a Domain
+ * called `oops!` — so the refusals are asserted with it.
  */
-describe("V1 Domain list", () => {
-  it("agrees between the Catalog module and the published contract", () => {
-    expect([...CONTRACT_DOMAINS]).toEqual([...CATALOG_DOMAINS]);
+describe("Domain key", () => {
+  it("accepts a Domain nobody has thought of yet", () => {
+    expect(domainKeySchema.parse("GARDEN")).toBe("GARDEN");
+    expect(domainKeySchema.parse("HOME_AND_LIVING")).toBe("HOME_AND_LIVING");
   });
 
-  it("is exactly the three Domains of PRD-0001", () => {
-    expect([...CATALOG_DOMAINS]).toEqual([
-      "MOBILITY",
-      "REAL_ESTATE",
-      "TECHNOLOGY"
-    ]);
+  it("still refuses a key that is not one", () => {
+    for (const bad of ["", "lower", "Mixed_Case", "HAS SPACE", "TRAILING_"])
+      expect(() => domainKeySchema.parse(bad)).toThrow();
+  });
+
+  it("bounds the key to the column that stores it", () => {
+    expect(() => domainKeySchema.parse("A".repeat(81))).toThrow();
+    expect(domainKeySchema.parse("A".repeat(80))).toHaveLength(80);
   });
 });
 

@@ -931,11 +931,23 @@ const tally = z.record(z.string(), z.number().int().nonnegative());
  * Existence is not checked here and cannot be: whether a key names a Domain that
  * exists is a fact about records, and a schema holds none. It is enforced where
  * Category already enforces it — by the write path, against the database.
+ *
+ * **`.toUpperCase()` was here and had to go.** It was written as a courtesy — an
+ * Admin typing `garden` would get `GARDEN` — and it silently made the regex
+ * beneath it decorative: with the string already upper-cased, `lower` and
+ * `Mixed_Case` both passed a rule whose whole purpose was to refuse them. The
+ * test asserting the refusal was getting a coercion instead, which is how it
+ * came to light.
+ *
+ * The coercion was also the only one of its kind. Nothing that *reads* a key —
+ * the `stable_key` column, the analytics grouping, the Category join — passes
+ * through this schema, so the courtesy applied on one side of a comparison and
+ * not the other. `.trim()` stays: whitespace around a form field is not a
+ * different key, and no reader disagrees about that.
  */
 export const domainKeySchema = z
   .string()
   .trim()
-  .toUpperCase()
   .min(1)
   .max(80)
   .regex(/^[A-Z0-9]+(?:_[A-Z0-9]+)*$/u, "Use upper snake case");

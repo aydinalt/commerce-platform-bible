@@ -1211,9 +1211,26 @@
           "categories": {
             "items": { "$ref": "#/components/schemas/Category" },
             "type": "array"
+          },
+          "domains": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "key": {
+                  "description": "The Domain's stable key. PRD-0001 v4.0 §E: the set is open.",
+                  "maxLength": 80,
+                  "pattern": "^[A-Z0-9]+(?:_[A-Z0-9]+)*$",
+                  "type": "string"
+                },
+                "name": { "maxLength": 160, "type": "string" }
+              },
+              "required": ["key", "name"],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
-        "required": ["categories"],
+        "required": ["categories", "domains"],
         "type": "object"
       },
       "AssignableCategories": {

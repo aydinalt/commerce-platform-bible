@@ -107,6 +107,9 @@ export class DiscoveryController {
         categoryId: null,
         discoveryPathId: pathId,
         domain: null,
+        // No Category was reached, so no Domain was either — and the name is
+        // absent for the same reason the key is, not for a different one.
+        domainName: null,
         filters: [],
         filtersAvailable: false,
         narrowing: [],

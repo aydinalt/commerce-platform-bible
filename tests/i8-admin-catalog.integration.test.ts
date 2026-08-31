@@ -18,7 +18,6 @@ import { ReparentCategory } from "../apps/web/src/app/admin/categories/category-
 import { ADMIN_IDLE } from "../apps/web/src/platform/admin-state";
 import {
   ARCHIVED_DOES_NOT_BLOCK,
-  DOMAINS,
   RETIREMENT_IS_NOT_DELETION,
   TEXT_IS_NOT_FILTERABLE,
   asTree,
@@ -108,9 +107,15 @@ suite("Increment I8 Admin catalog", () => {
       })
     ).json<CategoryResponse>();
 
+  /*
+   * The catalogue read carries the Domains beside the Categories now, because
+   * the create-root form needs the records rather than a list in the code
+   * (PRD-0001 v4.0 §E). This helper wants the Categories half.
+   */
   const categories = async () =>
     (await send("GET", "/admin/categories", { cookie: admin.cookie })).json<{
       categories: CategoryResponse[];
+      domains: { key: string; name: string }[];
     }>().categories;
 
   const attribute = async (body: unknown) =>
@@ -154,7 +159,20 @@ suite("Increment I8 Admin catalog", () => {
     // Domain is ever decided.
     expect(created.domain).toBe("REAL_ESTATE");
     expect(created.parentId).toBe(parent.id);
-    expect(DOMAINS).toHaveLength(3);
+
+    /*
+     * **This line asserted `DOMAINS` had exactly three members, and the point
+     * it was making was never about the number.** It was making sure a child
+     * could not name a Domain of its own, and it argued the case by fixing the
+     * whole set — which stopped being true when the set was opened
+     * (`DOMAIN_SET_OPEN_DECISION.md`).
+     *
+     * Inheritance is what the title claims, so inheritance is what is asserted:
+     * the child carries the parent's name as well as its key, and neither
+     * arrived from the request, which named no Domain at all.
+     */
+    expect(created.domainName).toBe(parent.domainName);
+    expect(created.domainName).not.toBe(created.domain);
   });
 
   it("refuses a cross-Domain move and leaves the hierarchy alone", async () => {
