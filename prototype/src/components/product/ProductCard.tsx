@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { FavouriteButton } from "@/components/product/FavouriteButton";
+import { ShareMenu } from "@/components/product/ShareMenu";
 import { ageLabel } from "@/lib/filter";
 import { discount, lira, priceGap, stars } from "@/lib/format";
 import type { Product } from "@/lib/types";
@@ -85,10 +86,6 @@ export function ProductCard({
                 {product.name}
               </Link>
             </h3>
-            {/* The heart is on the row, not only on the page. A person
-                comparing eight results keeps two of them; making them open
-                each one to do it is how a shortlist never gets made. */}
-            <FavouriteButton productId={product.id} size="sm" />
           </div>
 
           <p className="mt-1 flex items-center gap-1.5 text-[12px] text-slate-500">
@@ -96,7 +93,9 @@ export function ProductCard({
               {stars(product.rating)}
             </span>
             <span className="tabular-nums">{product.rating.toFixed(1)}</span>
-            <span aria-hidden="true" className="text-slate-300">·</span>
+            <span aria-hidden="true" className="text-slate-300">
+              ·
+            </span>
             <span className="tabular-nums">{product.reviewCount} yorum</span>
           </p>
 
@@ -115,7 +114,8 @@ export function ProductCard({
                 {lira(product.lowestPrice)}
               </span>
             )}
-            {product.listPrice === null || product.pricingKind === "ON_REQUEST" ? null : (
+            {product.listPrice === null ||
+            product.pricingKind === "ON_REQUEST" ? null : (
               <del className="text-sm tabular-nums text-slate-400">
                 {lira(product.listPrice)}
               </del>
@@ -163,7 +163,9 @@ export function ProductCard({
                 Satıcı
               </dt>
               <dd className="text-[13px] font-semibold tabular-nums text-slate-900">
-                {product.pricingKind === "ON_REQUEST" ? "Teklif" : product.offerCount}
+                {product.pricingKind === "ON_REQUEST"
+                  ? "Teklif"
+                  : product.offerCount}
               </dd>
             </div>
           </dl>
@@ -184,6 +186,46 @@ export function ProductCard({
           >
             Detayları incele
           </Link>
+
+          {/*
+           * **The action bar, in one order, in one place.**
+           *
+           * The heart used to sit beside the title and the other two actions did
+           * not exist on the card at all, so shortlisting meant three gestures
+           * in three positions. They are one group now, ordered by what each
+           * costs: the thing that costs money, then the thing that costs
+           * attention, then the three that cost neither.
+           *
+           * Those three are **icons without labels**. Five equally loud controls
+           * have no primary action between them; each keeps its accessible name,
+           * so the label leaves the screen and not the control.
+           */}
+          <div className="flex items-center justify-center gap-1 pt-0.5">
+            <FavouriteButton productId={product.id} size="sm" />
+            <ShareMenu
+              iconOnly
+              title={product.name}
+              url={`https://ilanlar.example/urun/${product.slug}`}
+            />
+            <button
+              aria-label="Ürünle karşılaştır"
+              className="rounded-lg border border-slate-300 p-2 text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+              title="Ürünle karşılaştır"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                viewBox="0 0 24 24"
+              >
+                <path d="M9 4v16M15 4v16" strokeLinecap="round" />
+                <path d="M4 9h5M15 9h5M4 15h5M15 15h5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </li>

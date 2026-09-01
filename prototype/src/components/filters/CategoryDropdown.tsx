@@ -77,7 +77,7 @@ export function CategoryDropdown({
         onClick={() => setOpen((previous) => !previous)}
         type="button"
       >
-        <span className="flex-1 truncate">
+        <span className="flex-1 truncate leading-normal">
           <span className={chosen ? "text-slate-400" : ""}>
             {chosen ? "Kategori:" : "Kategori seçin"}
           </span>

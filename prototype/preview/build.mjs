@@ -27,11 +27,19 @@ const work = resolve(here, ".build");
 rmSync(work, { force: true, recursive: true });
 mkdirSync(work, { recursive: true });
 
-/* 1 — Tailwind, scanning the real source. */
+/*
+ * 1 — Tailwind, scanning the real source.
+ *
+ * **Resolved by path rather than through `npx`.** Once Tailwind was also
+ * installed at the repository root for `apps/web` (I54), `npx @tailwindcss/cli`
+ * run from here found the root copy's shim and failed — the prototype is not a
+ * workspace, so the two installs do not share a `node_modules`. Naming the file
+ * removes the ambiguity: this script builds *this* directory with *its* Tailwind.
+ */
 execFileSync(
-  "npx",
+  process.execPath,
   [
-    "@tailwindcss/cli",
+    resolve(root, "node_modules/@tailwindcss/cli/dist/index.mjs"),
     "--input",
     resolve(root, "src/app/globals.css"),
     "--output",

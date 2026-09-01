@@ -18,7 +18,8 @@ import { useEffect, useRef, useState } from "react";
  */
 
 const ICONS: Record<string, string> = {
-  eposta: "M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11Zm1.8.5 7.2 5.2L19.2 7",
+  eposta:
+    "M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11Zm1.8.5 7.2 5.2L19.2 7",
   facebook:
     "M14 8.5V7c0-.8.2-1.2 1.3-1.2H17V3h-2.4C11.8 3 11 4.3 11 6.4v2.1H9V12h2v9h3v-9h2.3l.4-3.5H14Z",
   instagram:
@@ -29,9 +30,19 @@ const ICONS: Record<string, string> = {
 };
 
 export function ShareMenu({
+  iconOnly = false,
   title,
   url
 }: {
+  /**
+   * Drop the word "Paylaş" and keep the icon.
+   *
+   * On a Listing Card this control sits in a row of three under the two buttons
+   * that matter, and three labelled controls there would compete with the
+   * primary action. The `aria-label` carries the name for anyone who cannot see
+   * the icon, so the label leaves the screen and not the control.
+   */
+  iconOnly?: boolean;
   title: string;
   /** The address being shared. Absolute, because a WhatsApp message with a
    *  relative path in it is a message nobody can open. */
@@ -93,7 +104,11 @@ export function ShareMenu({
       <button
         aria-expanded={open}
         aria-haspopup="menu"
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50"
+        aria-label={iconOnly ? "Paylaş" : undefined}
+        className={`inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white font-medium text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 ${
+          iconOnly ? "p-2" : "px-3 py-2.5 text-sm"
+        }`}
+        title={iconOnly ? "Paylaş" : undefined}
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
@@ -111,7 +126,7 @@ export function ShareMenu({
             strokeLinejoin="round"
           />
         </svg>
-        Paylaş
+        {iconOnly ? null : "Paylaş"}
       </button>
 
       {!open ? null : (
