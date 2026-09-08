@@ -12,6 +12,16 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Both actions are pinned at v5 because that is the first major of each that
+# declares `using: node24`. GitHub is removing Node 20 from the runners on
+# **23 September 2026** — after that an action still targeting it stops working
+# rather than warning — and until then v4 runs under a compatibility force that
+# emits a deprecation warning on every job.
+#
+# v5 rather than the newest major: it is the smallest step that clears the
+# deadline, and a version bump taken for a runtime deadline should not also
+# carry whatever else changed two majors later.
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -33,9 +43,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://commerce:commerce@localhost:5432/commerce
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           cache: npm
           node-version-file: .nvmrc
@@ -96,9 +106,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           cache: npm
           node-version-file: .nvmrc
