@@ -1,62 +1,5 @@
 # PRD-0006 — Platform
 
-> **Freeze Note (2.7):** Explicitly Frozen by the Product Owner / Architecture
-> Owner on 2026-09-08, **first in a four-step order the Owner set out in the same
-> message** — this document, then `PRD-0009` v0.4, then the registry's authoring
-> Feature, then the Story. This exact version must not be edited in place; a
-> further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`
-> §7–§8. Frozen v2.6 is preserved unchanged at
-> `PRD-0006-platform-v2.6-superseded.md`.
->
-> **Approval Note (2.7):** Explicitly approved by the Product Owner /
-> Architecture Owner on 2026-09-08 — _"PRD-0009 v0.4-candidate ve PRD-0006 v2.7
-> taslaklarını resmi olarak onaylıyorum. Belgeleri derhal dondur (Freeze)."_
-> Approval and Freeze were taken in one decision, and the Owner restated the
-> order they run in.
->
-> **What the Owner approved, stated precisely, because no separate v2.7 candidate
-> file was ever put in front of him.** The amendment below was written verbatim
-> in `PRD-0009` **v0.4-candidate §14** and approved as part of that text - which
-> was deliberate and is recorded in §14's own words: the amendment was stated
-> there — _"so that the second candidate is mechanical rather than a fresh
-> design"_. This revision adds that row and changes nothing else. A reader who
-> wants to see what was approved should read §14 of `PRD-0009` v0.4; a reader who
-> wants to see what changed here should read the one row.
->
-> **Revision Note (2.7):** Superseding revision of Frozen v2.6, begun
-> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7.
->
-> **One row in §22.2, and the reason it could not be left out.** §22.2's opening
-> sentence is _"Every act by which an Admin changes something"_, and its closing
-> sentence is _"This list is exhaustive and adding to it is a revision of this
-> section."_ Writing, publishing, re-checking and withdrawing an editorial review
-> are acts by which an Admin changes something. Without this row the two
-> sentences of one Frozen document would disagree, and the platform would be
-> promising **not** to record acts it also promises to record. That is why
-> `PRD-0009` could not be frozen first.
->
-> **Nothing else changes, and each of those is a deliberate finding rather than
-> an omission:**
->
-> - **§22.3** (append-only at the database) already covers these entries, because
->   it constrains the trail rather than the acts that reach it.
-> - **§22.5** (the platform administrator alone reads it) is unchanged and
->   applies. An editor tier, if one is ever designed, would be an Admin whose
->   acts are recorded and who still may not read the trail.
-> - **§23** (no personal data on operational surfaces) applies unchanged: an
->   entry names the acting account as an identifier, never a person, and the
->   published byline is a different fact entirely — `PRD-0009` §13.2 draws that
->   line.
-> - **§22.8's Acceptance Criterion** reads _"an act listed in §22.2"_ rather than
->   naming acts, so it covers the new row without amendment. This was checked
->   rather than assumed.
-> - **§16** carries no Acceptance Criterion that enumerates recorded acts. Also
->   checked.
->
-> **Reading a review records nothing** — by an Admin or by anyone else. It is
-> published content, not an act on a target, and §22.5's own rule that reading
-> the trail is unrecorded is the same reasoning.
-
 > **Freeze Note (2.6):** Explicitly Frozen by the Product Owner / Architecture
 > Owner on 2026-09-07. This exact version must not be edited in place; a further
 > change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
@@ -86,12 +29,12 @@
 > koruması, feed yönetimi) sohbet geçmişine ve kod satırlarına emanet edilmesine
 > izin veremeyiz."_
 >
-> | New                                     | What it does                                                                                                                                                                                                        |
-> | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-> | **§22 Admin Audit Trail**               | Makes the trail a binding commitment rather than an implementation detail: what is recorded, that it is append-only **at the database**, that it is never swept, and that it is closed to any future Sub-Admin tier |
-> | **§23 Personal Data on Admin Surfaces** | States the Owner's rule of 2026-09-04 as a **Security Requirement**: no address on any operational surface, revealed only by a deliberate act on one case, and that act recorded in §22's trail                     |
-> | **§22.6 Reading the trail**             | Added after the Owner's approval of 2026-09-06, on his instruction in the same message: `F14` is allocated for the reading surface, and a Feature needs a section that describes what it is                         |
-> | **§24 Feed Management**                 | The behaviour owner for the Admin surface that registers a partner feed, holds its mapping, pauses it and reads its runs — Feature `F13`                                                                            |
+> | New | What it does |
+> | --- | --- |
+> | **§22 Admin Audit Trail** | Makes the trail a binding commitment rather than an implementation detail: what is recorded, that it is append-only **at the database**, that it is never swept, and that it is closed to any future Sub-Admin tier |
+> | **§23 Personal Data on Admin Surfaces** | States the Owner's rule of 2026-09-04 as a **Security Requirement**: no address on any operational surface, revealed only by a deliberate act on one case, and that act recorded in §22's trail |
+> | **§22.6 Reading the trail** | Added after the Owner's approval of 2026-09-06, on his instruction in the same message: `F14` is allocated for the reading surface, and a Feature needs a section that describes what it is |
+> | **§24 Feed Management** | The behaviour owner for the Admin surface that registers a partner feed, holds its mapping, pauses it and reads its runs — Feature `F13` |
 >
 > **What it does not change.** No lifecycle state, no moderation action, no
 > eligibility composition, no Capability, no ownership boundary, and no existing
@@ -165,14 +108,12 @@
 - **PRD ID:** PRD-0006
 - **Title:** Platform
 - **Status:** Frozen
-- **Version:** 2.7
-- **Approval Date:** 2026-09-08
+- **Version:** 2.6
+- **Approval Date:** 2026-09-06
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
-- **Freeze Date:** 2026-09-08
+- **Freeze Date:** 2026-09-07
 - **Frozen By:** Product Owner / Architecture Owner
-- **Supersedes:** Frozen v2.6, preserved at `PRD-0006-platform-v2.6-superseded.md`
-- **Raised by:** `PRD-0009` v0.4-candidate §14, approved by the Owner on 2026-09-08
 - **Supersedes:** Frozen v2.5, preserved at `PRD-0006-platform-v2.5-superseded.md`
 - **Raised by:** Owner commission of 2026-09-06, recorded in `traceability.md`
   Frozen v2.2 §5C.2
@@ -935,7 +876,7 @@ Affiliate Handoff Rate = Affiliate Handoff Completion ÷ Offering Presentation O
 ```
 
 **Per link means per Offering.** PRD-0001 §9.1 gives an Offering zero or one
-Affiliate Destination, so an Offering _is_ the link. There is no second level to
+Affiliate Destination, so an Offering *is* the link. There is no second level to
 report at, and inventing one would mean counting something the platform does not
 have.
 
@@ -971,7 +912,7 @@ provide.
 - be interpreted as purchase, sale, contract, response or external transaction
   success (§11.3);
 - be reported where the denominator is zero. An Offering nobody has opened has
-  **no rate**, and that is stated as _no rate_ rather than as `0%` — a zero
+  **no rate**, and that is stated as *no rate* rather than as `0%` — a zero
   would read as "nobody chose this" when the truth is "nobody has looked".
 
 #### 11.6.4 Acceptance Criteria
@@ -1257,10 +1198,10 @@ Admin opens operational overview
 31. Platform shall provide Today, Last 7 days, Last 30 days, and All time periods.
 32. Platform shall support overall and applicable domain grouping.
 33. Analytics shall not perform actions automatically.
-    33a. Platform shall present Affiliate Handoff Rate as Affiliate Handoff Completion divided by Offering Presentation Open, per Offering and overall.
-    33b. Affiliate Handoff Rate shall be derived from counted occurrences and shall create no additional event, counter or record.
-    33c. Platform shall present no Affiliate Handoff Rate where Offering Presentation Open is zero, and shall state the absence as no rate rather than as zero.
-    33d. Affiliate Handoff Rate shall not order, weight or mark anything in Discovery Results, and shall not appear on any public or Business-facing surface.
+33a. Platform shall present Affiliate Handoff Rate as Affiliate Handoff Completion divided by Offering Presentation Open, per Offering and overall.
+33b. Affiliate Handoff Rate shall be derived from counted occurrences and shall create no additional event, counter or record.
+33c. Platform shall present no Affiliate Handoff Rate where Offering Presentation Open is zero, and shall state the absence as no rate rather than as zero.
+33d. Affiliate Handoff Rate shall not order, weight or mark anything in Discovery Results, and shall not appear on any public or Business-facing surface.
 
 ### Configuration boundary
 
@@ -1768,12 +1709,12 @@ and before it existed the platform had no way to hear any of them.
 lifecycle other sections govern, and able to change a target's state through the
 seven actions of §7.2. A report is none of those things.
 
-|                      | General Moderation Case               | Listing Report            |
-| -------------------- | ------------------------------------- | ------------------------- |
-| Opened by            | an Admin                              | anybody, signed in or not |
-| Concerns             | a Business, an Offering or an account | one listing               |
-| Changes target state | yes, through §7.2                     | **never**                 |
-| Produces             | an action                             | a judgement               |
+| | General Moderation Case | Listing Report |
+| --- | --- | --- |
+| Opened by | an Admin | anybody, signed in or not |
+| Concerns | a Business, an Offering or an account | one listing |
+| Changes target state | yes, through §7.2 | **never** |
+| Produces | an action | a judgement |
 
 Folding the two together would make the queue an Admin reviews indistinguishable
 from a queue anybody can fill, and would give a member of the public a route into
@@ -1839,7 +1780,7 @@ onaylıyorum. Altı ay, yasal veya operasyonel bir itirazı geçmişe dönük
 incelemek için fazlasıyla yeterli ve makul bir veri tutma süresidir."_
 
 - an **Open** report is kept until it is reviewed, **whatever its age**. A queue
-  that deleted work nobody had done would lose the report _and_ the fact that it
+  that deleted work nobody had done would lose the report *and* the fact that it
   was never answered — and the second is the more damaging loss, because it is
   the one that hides a queue nobody is reading;
 - a **reviewed** report is deleted **180 days** after its review;
@@ -1959,15 +1900,14 @@ place nobody would think to look for it.
 ### 22.2 What is recorded
 
 Every act by which an Admin changes something, and one act by which an Admin
-merely _sees_ something:
+merely *sees* something:
 
-| Recorded                                                                               | Why                                                                                                                                                                                            |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The seven General Moderation actions (§7.2)                                            | They change a target's state                                                                                                                                                                   |
-| Opening a Moderation Case (§5.3)                                                       | It is the act that starts a governed process                                                                                                                                                   |
-| **Revealing a personal email address** (§23)                                           | It is a disclosure of personal data, and §23 makes the record a condition of the disclosure                                                                                                    |
-| Affiliate Destination review, validation result, enablement and disablement (§8)       | They decide whether a handoff earns. The Owner, 2026-09-05: _"platformun para kazandıran en kritik eylemleridir"_                                                                              |
-| Publishing, revising, re-checking and withdrawing an editorial review (`PRD-0009` §13) | They change what the platform says in its own voice about a product, on a page that earns a commission. `PRD-0009` §8 makes the judgement unpurchasable; the trail is what makes it answerable |
+| Recorded | Why |
+| --- | --- |
+| The seven General Moderation actions (§7.2) | They change a target's state |
+| Opening a Moderation Case (§5.3) | It is the act that starts a governed process |
+| **Revealing a personal email address** (§23) | It is a disclosure of personal data, and §23 makes the record a condition of the disclosure |
+| Affiliate Destination review, validation result, enablement and disablement (§8) | They decide whether a handoff earns. The Owner, 2026-09-05: *"platformun para kazandıran en kritik eylemleridir"* |
 
 A validation is recorded **by its result**, because "an address was judged" and
 "an address was judged invalid" are different facts and only the second explains
@@ -1996,7 +1936,7 @@ application code.** This is a technical commitment and not a convention:
 already happened by then — the address was read, the account was suspended — and
 refusing it would report a failure that did not occur. A lost entry is logged
 where operators look. The cost is named rather than hidden: a database fault can
-lose an entry while its act succeeds, and the alternative loses the act _and_
+lose an entry while its act succeeds, and the alternative loses the act *and*
 misreports it.
 
 ### 22.4 Retention: none
@@ -2019,7 +1959,7 @@ moderator, a partner-support role — **shall not reach this trail**, and admitt
 one is a revision of this section rather than a configuration change.
 
 The reason is structural. The trail exists to record what Admins do; a tier that
-can read it can see what is recorded about it, and a tier that can be _given_
+can read it can see what is recorded about it, and a tier that can be *given*
 access can be given it by somebody who is recorded in it.
 
 Reading the trail is **not itself recorded**. An audit of the audit answers no

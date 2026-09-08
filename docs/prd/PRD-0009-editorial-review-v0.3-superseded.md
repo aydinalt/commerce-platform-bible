@@ -3,45 +3,17 @@
 - **Owner:** Product Owner / Architecture Owner
 - **PRD ID:** PRD-0009
 - **Title:** Editorial Review
-- **Status:** Draft
-- **Version:** 0.4
-- **Supersedes:** Nothing yet. **Frozen v0.3 remains the baseline** and would be
-  preserved at `PRD-0009-editorial-review-v0.3-superseded.md` only if this
-  candidate is approved and, separately, frozen
-- **Approval Date:** Not approved
-- **Approved By:** —
-- **Freeze state:** Not frozen
-- **Freeze Date:** —
-- **Frozen By:** —
-- **Last Updated:** 2026-09-08
+- **Status:** Frozen
+- **Version:** 0.3
+- **Supersedes:** Draft v0.2 of the same day, whose §6.1 obligation is now discharged.
+- **Approval Date:** 2026-09-07
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-07
+- **Frozen By:** Product Owner / Architecture Owner
+- **Last Updated:** 2026-09-07
 - **Scope level:** Product behaviour (non-technical)
 - **Release:** **V1.1. Outside the Frozen V1 baseline.**
-
-> **Draft Note (0.4):** This is a **candidate** and carries no authority.
-> **Frozen v0.3 remains the baseline** until the Owner approves and, separately,
-> freezes this revision.
->
-> **Revision Note (0.4):** Superseding revision of Frozen v0.3, begun
-> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7. **It answers §9.3 —
-> who writes a review, and at what cadence — and adds §13, the authoring
-> surface.**
->
-> Raised by the Owner's decision of 2026-09-08 to build reading and writing as
-> one architecture rather than to enter reviews by hand while the read side was
-> built. His three reasons are recorded in §13's opening, because they are the
-> reasons the section is shaped the way it is.
->
-> **This document cannot be frozen alone, and the reason is not this document.**
-> `PRD-0006` **Frozen v2.6 §22.2** lists what the Admin audit trail records and
-> says in as many words: _"This list is exhaustive and adding to it is a
-> revision of this section."_ Its opening sentence is _"Every act by which an
-> Admin changes something"_. Writing a review is such an act. So either §22.2
-> gains a row or §22.2's own first sentence stops being true — and the second is
-> not available. **§14 states the exact amendment `PRD-0006` needs**, and the
-> two freeze in that order: `PRD-0006` v2.7 first, then this.
->
-> Nothing in §§1–8 changes. §9.3 keeps its question and carries its answer, in
-> the pattern §9.1 set.
 
 > **Freeze Note (0.3):** Explicitly Frozen by the Product Owner / Architecture
 > Owner on 2026-09-07. This exact version must not be edited in place; a further
@@ -311,16 +283,12 @@ of a good score would no longer be reputational.
 **This draft recommends no for the first version**, and recommends that the
 question be reopened only with §8 in front of whoever reopens it.
 
-### 9.3 Who writes them, and at what cadence? — **Decided: §13**
+### 9.3 Who writes them, and at what cadence?
 
-> **Owner decision, 2026-09-08:** reading and writing are built as one
-> architecture. Entering reviews by hand while the read side was built would
-> _"aylardır kurduğumuz veri bütünlüğü, denetim izi (audit trail) ve yazar
-> kimliği kurallarını baypas etmektir"_.
-
-The question is kept with its answer, in the pattern §9.1 set. **§13 defines the
-authoring surface**; the cadence half is answered there too, and answered by
-making staleness visible rather than by inventing an interval — §13.7.
+Staff, contractors, or a mix; and how often a review must be re-checked before
+its "last updated" date stops being a claim anybody should trust. §5.1 makes the
+date a requirement; it does not set the interval, and an interval nobody set is
+an interval nobody keeps.
 
 ### 9.4 The video
 
@@ -348,12 +316,6 @@ that is not there.
   Presentation may carry; and **§4.1**, the recorded defect this document is
   deliberately not waiting on (see §12).
 - `PRD-0002-discovery.md` — Discovery surfaces and ordering.
-- `PRD-0006-platform.md` **Frozen v2.6** — §22 the Admin audit trail and §22.2's
-  exhaustive list, which §14 amends; §22.5 the reading exclusion, which applies
-  to an editorial writer unchanged; §23 personal data, which §13.2 follows.
-- `PRD-0008-sub-admin-tier.md` Draft — §4 excludes a third tier, which is why
-  §13.1 reserves authoring to the platform administrator rather than inventing
-  an editor role here.
 - `PRD-0005-business.md` **Frozen v1.4**, `PRD-0006-platform.md` **Frozen
   v2.6** — advertising permitted in three named regions and nowhere else, which
   §8 relies on.
@@ -364,10 +326,8 @@ that is not there.
 
 - ~~A decision on §9.1 first.~~ **Taken 2026-09-07** (§6.1).
 - ~~A `PRD-0001` revision recording that the `productKey` carries an editorial
-  review.~~ **Done: `PRD-0001` Frozen v4.3 §5.12.4, 2026-09-07.**
-- **A `PRD-0006` revision adding the editorial acts to §22.2.** Opened by this
-  revision; the exact amendment is in §14. This document is blocked on it, and
-  the block is the point rather than an inconvenience.
+  review.~~ **Done: `PRD-0001` Frozen v4.3 §5.12.4, 2026-09-07.** This document
+  is no longer blocked by an upstream document.
 - `UX-0003-offering-detail.md` — a superseding revision, for the tab and its
   empty state.
 - A Feature allocation, which has not been made. The review is product-level
@@ -398,178 +358,3 @@ the reason belongs here rather than in the deferral:
 
 Stated now, while both are open, because it is the kind of boundary that is
 cheap to write and expensive to reconstruct once one side has shipped.
-
-## 13. Writing a review — the authoring surface
-
-The Owner's three reasons for building this before the read side, recorded
-because they shape every rule below:
-
-- **Operator intervention.** Reviews entered by hand — raw SQL, a script —
-  bypass the data-integrity, audit-trail and author-identity rules this
-  repository spent months building. A path that bypasses them is not a
-  temporary convenience; it is the path somebody uses again.
-- **Blind schema design.** A read model built without knowing what writing
-  constrains gets refactored the day writing arrives.
-- **Boundaries are tested by opposites.** A reading surface designed with no
-  writing surface beside it has boundaries nobody has pushed on.
-
-### 13.1 Who may write
-
-**The platform administrator.**
-
-Not an editor tier, and the omission is deliberate. An "Editor" is a third
-authorization tier, and `PRD-0008` §4 excludes exactly that from its own scope:
-one additional tier with a fixed act set, not a permission system. Inventing a
-second one here — in a document about content — would settle an authorization
-question in the wrong place, and settle it where no reviewer of authorization
-would look for it.
-
-**This is a real operational limit and it is stated rather than smoothed over.**
-One person writing every review does not scale, and the moment it stops being
-tolerable is the moment an editor tier is worth designing. That belongs in a
-`PRD-0008` successor, with the trail question answered alongside it — an editor
-who may write reviews is an Admin whose acts are recorded and who still may not
-read the trail (`PRD-0006` §22.5).
-
-### 13.2 The byline is not the account
-
-`§5` gives a review an **author**, and the prototype fills it with _"Editör
-ekibi"_ — a voice, not a person.
-
-**Two different facts, and they must not be collapsed:**
-
-|             | The byline                                            | The acting account                              |
-| ----------- | ----------------------------------------------------- | ----------------------------------------------- |
-| What it is  | Published content: whose judgement this is offered as | Accountability: which account performed the act |
-| Who sees it | Every reader                                          | The platform administrator, in the audit trail  |
-| Governed by | §8, like every other part of the review               | `PRD-0006` §22                                  |
-
-A byline may be a team, a pen name, or a person's name where that is a
-deliberate editorial choice. It is **not** derived from the account that typed
-it, and the account is **not** published. This is the same separation §23 draws
-for personal data: what is shown and what is recorded answer different
-questions, and deriving one from the other collapses both.
-
-### 13.3 A review is written before it is presented
-
-```text
-Draft      → written, revisable, presented nowhere
-Published  → presented wherever §8.2 of PRD-0001 carries it
-Withdrawn  → presented nowhere; the record that it existed remains
-```
-
-**Withdrawal exists so that removal is not a database operation.** A published
-judgement that turns out to be wrong has to be removable by the surface that
-published it. Without withdrawal the only remedy is an operator editing rows —
-the first of the three risks above, arriving through the back door of the very
-document written to close it.
-
-**Withdrawal is not deletion.** The review stops being presented; that it
-existed, and who withdrew it, stays in the trail. A judgement the platform
-published and then made vanish without trace is the one shape §8's integrity
-cannot survive.
-
-### 13.4 Saving is not re-checking
-
-**`updatedAt` changes only by a deliberate act, never as a side effect of
-saving.**
-
-This is the rule the whole of §5.1 depends on, and it is easy to lose. If every
-save moved the date, "last re-checked" would come to mean "last touched" — a
-typo fix would present as a fresh verification, and the date a reader is invited
-to trust would be the least trustworthy thing on the page.
-
-So:
-
-- **`publishedAt`** is set once, when a review is first published, and never
-  again.
-- **`updatedAt`** is set when a published review is republished **and the
-  writer states that it has been re-checked**. It is a separate act from saving
-  and the surface asks for it separately.
-- A **Draft** edit moves neither date. Nothing is being claimed to a reader yet.
-
-A writer who fixes a comma and does not claim a re-check leaves the date alone,
-and the page keeps telling the truth about its own age.
-
-### 13.5 What the surface accepts
-
-Bounded, because an unbounded field is a page nobody can lay out and a limit
-discovered in production is a limit somebody hit:
-
-| Part          | Rule                                                                                                   |
-| ------------- | ------------------------------------------------------------------------------------------------------ |
-| Verdict       | One line. Required to publish                                                                          |
-| Score         | `0`–`10`, one decimal. Required to publish                                                             |
-| Sections      | Each a heading and a body; at least one required to publish                                            |
-| Pros, Cons    | Lists; **at least one of each required to publish** (§5: a review with no cons is an advertisement)    |
-| Author byline | Required to publish (§5: an unattributed judgement is a claim nobody stands behind)                    |
-| Product Key   | Required, and existing. A review of a key the catalogue has never carried is a judgement about nothing |
-
-The exact numeric limits are an engineering concern and belong in the Story, not
-here. What this section fixes is **which parts a review may not be published
-without**, and every one of them is a rule §5 already gives a reason for.
-
-**One review per Product Key** (§3). A second is a revision of the first, not a
-second review.
-
-### 13.6 What the surface cannot express
-
-**There is no field, flag, note or state on this surface by which a commercial
-relationship can reach a review.** No sponsor, no partner association, no
-"promoted", no reason code that could carry one.
-
-§8 is a prohibition, and a prohibition is only as good as the shapes that can
-carry a violation. A surface with nowhere to put a sponsorship makes §8
-structural instead of aspirational — the request arrives and there is no field
-to satisfy it, which is a far better answer than a policy somebody has to
-remember.
-
-### 13.7 Cadence — made visible rather than enforced
-
-§5.1 makes the revision date a requirement and sets no interval. This revision
-does not set one either, and the reason is that an interval nobody keeps is
-worse than none: it turns a real claim into a missed target and teaches everyone
-to ignore both.
-
-**What the surface does instead is show the age.** The Admin list of reviews
-presents, for each, how long since it was last re-checked, so that a review
-ageing past usefulness is visible to the person who could re-check it rather
-than only to a reader who will not.
-
-If the Owner later sets an interval, it belongs here as a revision — and it will
-be a policy with a number, taken deliberately, rather than a default nobody
-chose.
-
-### 13.8 Every write is recorded
-
-Creating, publishing, revising, re-checking and withdrawing a review are each
-acts by which an Admin changes something, and `PRD-0006` §22.2's first sentence
-puts every such act in the trail. §14 is the amendment that makes that true
-rather than assumed.
-
-Reading a review — by an Admin or by anyone else — records nothing. It is
-published content.
-
-## 14. What this document needs from `PRD-0006`
-
-**`PRD-0006` §22.2 must gain a row before this document is frozen.** Its list is
-exhaustive by its own statement, so an editorial act that is not on it is an act
-the platform promises not to record — while §22.2's opening sentence promises
-the opposite. Two sentences of one Frozen document would disagree.
-
-The amendment is small and is stated here so that the second candidate is
-mechanical rather than a fresh design:
-
-> | Publishing, revising, re-checking and withdrawing an editorial review
-> (`PRD-0009` §13) | They change what the platform says in its own voice about a
-> product, on a page that earns a commission. `PRD-0009` §8 makes the judgement
-> unpurchasable; the trail is what makes it answerable |
-
-Nothing else in `PRD-0006` changes. §22.5's exclusion, §22.3's append-only
-enforcement and §23's personal-data rule all apply to these acts unchanged and
-need no amendment to do so.
-
-**Freeze order:** `PRD-0006` v2.7, then this document, then the registry's
-authoring Feature, then the Story. The reverse order would freeze a document
-whose own dependency is still a Draft — the defect the `PRD-0001` §5.12 round
-was spent avoiding.

@@ -95,7 +95,7 @@ exists so that drafting the tier does not quietly reopen them.
 
 ### 5.1 The Sub-Admin shall not reach the audit trail
 
-`PRD-0006` **Frozen v2.6 §22.5** is explicit, and it names this tier by name: a
+`PRD-0006` **Frozen v2.7 §22.5** is explicit, and it names this tier by name: a
 later tier — a Sub-Admin, a moderator, a partner-support role — **shall not
 reach this trail**, and admitting one is a revision of that section rather than
 a configuration change.
@@ -116,7 +116,7 @@ mistake is set out.
 
 ### 5.2 The personal-data rule binds the tier exactly as it binds the Owner
 
-`PRD-0006` **Frozen v2.6 §23** is a Security Requirement, not a Feature: no
+`PRD-0006` **Frozen v2.7 §23** is a Security Requirement, not a Feature: no
 email address appears on any operational surface, and an address is revealed
 only by a deliberate act, on one case, and that act is recorded.
 
@@ -275,7 +275,7 @@ role. The name reaches the interface, so it is a product decision.
 ## 10. Related documents
 
 - `PRD-0003-identity.md` — Admin authorization attaches to a User Account.
-- `PRD-0006-platform.md` **Frozen v2.6** — §7 the acts; §22 the audit trail;
+- `PRD-0006-platform.md` **Frozen v2.7** — §7 the acts; §22 the audit trail;
   §22.5 the exclusion this document must honour; §23 the personal-data rule.
 - `UX-0006-admin-dashboard.md` **Frozen v1.1** — §12B the reading surface, §16
   the permissions matrix this document would revise.
