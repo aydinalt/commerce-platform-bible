@@ -1,9 +1,39 @@
 # US-EDT-F02-001 — Editorial Review Authoring
 
-> **Draft Note (0.1):** This is a **candidate** and carries no authority. It is
-> the fourth step of the order the Owner set out on 2026-09-08 and the first of
-> the four he asked to see before deciding: _"Yazım Story'si taslağını hazırla ve
-> onayıma sun."_
+> **Freeze Note (0.1):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-08, **fourth and last in the order he set out**, and after
+> `EDITORIAL_FEATURE_REGISTRY.md` reached Frozen **v1.1** with `EDT F02`
+> authoritative — in that order, so that this Story cites nothing that was not
+> authoritative when it was frozen. This exact version must not be edited in
+> place; a further change requires a controlled superseding revision under
+> `DOCUMENT_LIFECYCLE.md` §7–§8.
+>
+> **Approval Note (0.1):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-08 — _"EDITORIAL_FEATURE_REGISTRY v1.1 ve
+> US-EDT-F02-001 taslaklarını resmi olarak onaylıyorum. İkisini de derhal
+> dondurabilirsin."_ Approval and Freeze were taken in one decision.
+>
+> **This Story is Frozen with one dependency still open, which departs from the
+> precedent `US-EDT-F01-001` set eight days earlier, and the departure is
+> recorded rather than smoothed over.** That Story was frozen only once its
+> §9 list was empty and it could say _"No dependency remains open. This Story is
+> deliverable."_ This one cannot say that: **no UX document describes the Admin
+> authoring screen.** Freezing it settles what the surface must and must not
+> **do** — which is what a Story is for, and what the implementation phase needs
+> — and settles nothing about what it looks like.
+>
+> **The condition that follows is binding on delivery, not on this Freeze.** The
+> Owner's standing rule is that everything visible comes from his prototype, and
+> that anything not in it must first be drawn in the prototype's language and
+> approved. The prototype draws the review as a reader meets it and draws no
+> authoring screen at all. **Therefore: no part of this Story that puts pixels on
+> a screen may be built until that screen is drawn and approved.** The behaviour
+> below — the states, the dates, the refusals, the audit entries, the closed
+> shape of §7's AC-16 — is not visual and is not waiting on it.
+>
+> **Delivery Status is `Not Started`, and this is the second Story in the
+> repository to carry it.** The other is `US-EDT-F01-001`. The Owner has
+> commissioned them to be built as one sealed architecture.
 >
 > **Its behaviour owner is already authoritative.** `PRD-0009` **Frozen v0.4**
 > §13, frozen earlier the same day, immediately after `PRD-0006` reached Frozen
@@ -11,25 +41,22 @@
 > or to that §22.2 row, and no criterion here decides anything either document
 > left open.
 >
-> **Two dependencies are open, and neither is hidden in the body.** They are
-> §9's first list, and one of them is a gap this Story cannot close by itself:
+> **Its Feature is authoritative.** `EDITORIAL_FEATURE_REGISTRY.md` **Frozen
+> v1.1** allocates `EDT F02`, frozen immediately before this Story. The Owner
+> settled the allocation against the words of his own earlier instruction, which
+> had named the Platform registry: the test is which document owns the behaviour,
+> and `PRD-0009` §13 owns this one.
 >
-> - `EDITORIAL_FEATURE_REGISTRY.md` is at **Draft v1.1**, where `EDT F02` is
->   allocated but not yet authoritative. A Story may not be frozen citing a
->   Feature that is not.
-> - **No UX document describes the Admin authoring screen.** `UX-0006` owns the
->   Admin dashboard and has no section for it. This Story defines behaviour; it
->   does not decide what the screen looks like, and `UX-0003` §8.9 governs only
->   the reader's side.
+> **What remains open is §9's second entry, and only that.** `UX-0006` owns the
+> Admin dashboard and has no section for this screen; `UX-0003` §8.9 governs only
+> the reader's side.
 >
 > **This Story is deliberately not written from the prototype**, and that is the
 > one place it departs from the standing rule that everything visible comes from
 > it. The prototype draws the review as a reader meets it and draws no authoring
 > screen at all — there is nothing to take from it. The rule is therefore
-> discharged the other way: **no visual decision is made here.** What this Story
-> fixes is what the surface must and must not do; what it looks like is the open
-> UX dependency above, to be drawn in the prototype's language and approved
-> before it is built.
+> discharged the other way: **no visual decision is made here**, and the binding
+> condition above keeps it that way until the screen is drawn and approved.
 
 ---
 
@@ -37,14 +64,14 @@
 
 - **Story ID:** US-EDT-F02-001
 - **Domain:** Editorial (`EDT`)
-- **Feature:** `EDT F02` — Editorial Review Authoring
-- **Status:** Draft
+- **Feature:** `EDT F02` — Editorial Review Authoring (`EDITORIAL_FEATURE_REGISTRY.md` **Frozen v1.1**)
+- **Status:** Frozen
 - **Version:** 0.1
-- **Approval Date:** Not approved
-- **Approved By:** —
-- **Freeze state:** Not frozen
-- **Freeze Date:** —
-- **Frozen By:** —
+- **Approval Date:** 2026-09-08
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-08
+- **Frozen By:** Product Owner / Architecture Owner
 - **Delivery Status:** Not Started
 - **Behaviour owner:** `PRD-0009-editorial-review.md` **Frozen v0.4** §13
 - **Also governed by:** `PRD-0006-platform.md` **Frozen v2.7** §22.2, §22.5, §23
@@ -105,7 +132,7 @@ published review is not: it is published content.
   failed entry does not fail the act), §22.5 (who may read the trail), §23
   (personal data on Admin surfaces).
 - `PRD-0008` **Draft v0.2** §4 — the reason no editor tier is invented here.
-- `EDITORIAL_FEATURE_REGISTRY.md` **Draft v1.1** — `EDT F02`.
+- `EDITORIAL_FEATURE_REGISTRY.md` **Frozen v1.1** — `EDT F02`.
 
 ## 7. Acceptance Criteria
 
@@ -282,13 +309,14 @@ Then an audit entry is written for that act
 
 ### Depends on
 
-- `EDITORIAL_FEATURE_REGISTRY.md` reaching **Frozen** with `EDT F02`
-  authoritative. It is at Draft v1.1 and awaits the Owner's approval and a
-  separate Freeze.
-- **A UX section owning the Admin authoring screen.** None exists. `UX-0006`
+- ~~`EDITORIAL_FEATURE_REGISTRY.md` reaching **Frozen** with `EDT F02`
+  authoritative.~~ **Done: Frozen v1.1, 2026-09-08**, frozen immediately before
+  this Story.
+- **A UX section owning the Admin authoring screen. STILL OPEN.** None exists. `UX-0006`
   owns the Admin dashboard and has no section for this surface. This Story
-  cannot be frozen against a screen nobody has drawn, and the screen must be
-  drawn in the prototype's language and approved before it is built.
+  makes no visual decision, and the screen must be drawn in the prototype's
+  language and approved before any of it is built. The Freeze Note makes that a
+  binding condition on delivery.
 
 ### Blocks
 
