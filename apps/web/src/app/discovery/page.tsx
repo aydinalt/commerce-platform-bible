@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import { isApiUnavailable } from "../../api-error";
 import { fetchBrowseView, fetchSearchView } from "../../discovery/api";
+import { readFavouriteMarks } from "../../discovery/favourites";
+import { SESSION_COOKIE } from "../../identity/session";
 import {
   DISCOVERY_ENTRY_COOKIE,
   readDiscoveryEntry
@@ -35,6 +37,12 @@ export const dynamic = "force-dynamic";
 export default async function DiscoveryPage() {
   const jar = await cookies();
   const entry = readDiscoveryEntry(jar.get(DISCOVERY_ENTRY_COOKIE)?.value);
+  /*
+   * I64. Which products this person kept, so the cards can draw their hearts.
+   * `null` for a Guest and `null` again if the read fails — a card with no
+   * heart is a smaller answer than a card claiming somebody kept nothing.
+   */
+  const favourites = await readFavouriteMarks(jar.get(SESSION_COOKIE)?.value);
 
   // No criteria means no Discovery: there is nothing to show and nothing to
   // invent, so the person goes back to where criteria are entered.
@@ -51,13 +59,19 @@ export default async function DiscoveryPage() {
       return (
         <SearchResultsView
           applied={entry.filters ?? []}
+          favourites={favourites}
+          inStockOnly={entry.inStockOnly === true}
+          price={entry.price ?? null}
           view={await fetchSearchView(entry)}
         />
       );
     return (
       <BrowseResultsView
         applied={entry.filters ?? []}
+        favourites={favourites}
+        inStockOnly={entry.inStockOnly === true}
         preparation={entry.preparation}
+        price={entry.price ?? null}
         view={await fetchBrowseView(entry)}
       />
     );

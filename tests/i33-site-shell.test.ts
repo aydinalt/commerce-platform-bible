@@ -168,15 +168,28 @@ describe("Increment I33 site shell", () => {
   });
 
   describe("the direction the Owner replaced", () => {
-    it("lets the results grid follow the room rather than a breakpoint", () => {
+    it("gives the results list one column of wide rows", () => {
       /*
-       * The density decision, expressed as `auto-fill` with a floor: the number
-       * of columns is a consequence of the width instead of a fourth layout to
-       * maintain. Five across on a wide screen, one on a phone, and no media
-       * query — the first version had one at 480px and `i26` rejected it.
+       * **This assertion used to require the opposite, and the change is the
+       * Owner's.** The August density decision — `auto-fill` with a 15rem
+       * floor, five products across a wide screen — was right for a card that
+       * held a title, a Category and a Business. I56 put a price on the card,
+       * I58 put the number of partners selling the thing beside it and I59 put
+       * a control that leaves for one of them: four more facts, none of which
+       * fit in a 15rem column. On 2026-09-02 the Owner chose the prototype's
+       * wide row instead.
+       *
+       * The single column is still declared without a media query. The row
+       * *inside* each card needs one — a picture beside text is not a phone
+       * layout — and it uses 768, which is on the existing scale rather than a
+       * fourth breakpoint.
        */
       expect(code).toMatch(
-        /\.listing-cards\s*\{[^}]*repeat\(auto-fill,\s*minmax\(/u
+        /\.listing-cards\s*\{[^}]*grid-template-columns:\s*1fr/u
+      );
+      expect(code).not.toMatch(/repeat\(auto-fill,\s*minmax\(/u);
+      expect(code).toMatch(
+        /@media \(min-width: 768px\) \{\s*\.listing-card \{[^}]*flex-direction:\s*row/u
       );
     });
 

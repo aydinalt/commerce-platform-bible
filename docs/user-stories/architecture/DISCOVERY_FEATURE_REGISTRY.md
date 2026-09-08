@@ -1,8 +1,57 @@
 # Discovery Story Domain Feature Registry
 
+> **Freeze Note (2.0):** Explicitly Frozen by the Product Owner /
+> Architecture Owner on 2026-09-03, together with the other documents of this
+> decision — freezing a subset would leave one of them asserting something its
+> own references do not support. This exact version must not be edited in
+> place; a further change requires a controlled revision under
+> `DOCUMENT_LIFECYCLE.md` §7–§8.
+>
+> **Approval Note (2.0):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-03 — _"onaylıyorum işleme alabilirsin"_.
+> **`F11` to `F16` are now allocated and consumable**: the registry being Frozen is what makes a Generated Story identifier authoritative, which is why this Freeze and the six Stories are one decision.
+
+> **Revision Note (2.0):** Controlled revision candidate **built on the v1.1
+> candidate**, not on Frozen v1.0. v1.1 allocates `F11` — Price Constraint — and
+> every word of it is kept; this revision allocates the five Features built
+> since. Frozen v1.0 remains authoritative until the Owner Freezes a successor,
+> and **no Generated Story may consume `F11` to `F16` until then** — the rule
+> this registry exists to enforce.
+>
+> **Why five more.** The platform now runs five Discovery Features with no
+> identity here: the product score floor, stated availability, the four Result
+> Arrangements, the listing number, and kept products. Each was built from an
+> Owner instruction and each is cited in code by a Story ID that cannot exist
+> until its Feature ID does. Allocation is the gate they are all behind.
+>
+> Behaviour Owner references point at `PRD-0002-discovery.md` v3.0, which was
+> Frozen in the same decision. The two moved together: a registry entry pointing
+> at a section no approved document contains would be exactly the drift this
+> registry prevents.
+>
+> This revision allocates Feature IDs. It defines no behaviour, no Acceptance
+> Criteria and no Story.
+
+> **Candidate Status (1.1):** **controlled revision candidate** under `DOCUMENT_LIFECYCLE.md` §7–§8 and `ADR-0009`. Frozen v1.0 remains authoritative and is untouched at `DISCOVERY_FEATURE_REGISTRY.md`. Nothing here is authoritative until the Owner Freezes it.
+>
+> **Revision Note (1.1):** One allocation: **`F11` — Price Constraint**. Requested by the Owner on 2026-09-02, alongside `PRD-0002-discovery.md` v2.5, which defines the criterion this Feature identifies.
+>
+> **Why an allocation rather than a widened `F05`.** The obvious cheaper move is to rename `F05` from _Attribute Filtering_ to _Result Filtering_ and let price in. It would be wrong: `F05`'s scope label, its behaviour owner reference (§10) and its Story `US-DSC-F05-001` all say _Attribute_, and a Price Constraint is defined in PRD-0002 v2.5 §5.5A as the one criterion that is **not** an Attribute. Widening the name would leave a Feature whose canonical title claims a model its content contradicts — the same drift `US-DSC-F01-001` v1.1 was written to remove. `F05` is therefore untouched, and so is every other entry.
+>
+> This revision allocates a Feature ID. It defines no behaviour, no Acceptance Criteria and no Story; `US-DSC-F11-001` is drafted separately and consumes this ID only once this registry is Frozen.
+
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Frozen
-- **Version:** 1.0
+- **Version:** 2.0
+- **Approval Date:** 2026-09-03
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-03
+- **Frozen By:** Product Owner / Architecture Owner
+- **Supersedes:** Approved v1.1 and Frozen v1.0, preserved at `DISCOVERY_FEATURE_REGISTRY-v1.1-superseded.md` and `DISCOVERY_FEATURE_REGISTRY-v1.0-superseded.md`
+- **Supersedes:** Frozen v1.0 on Freeze — until then v1.0 remains authoritative
+- **Revision Requested By:** Product Owner / Architecture Owner, 2026-09-02
+- **Version (1.0):** 1.0
 - **Date:** 2026-07-22
 - **Approval Date:** 2026-07-22
 - **Approved By:** Product Owner / Architecture Owner
@@ -81,18 +130,24 @@ Relationship classification is descriptive by reference and does not create a Fe
 
 ## 6. Authoritative Feature Registry
 
-| Feature ID | Canonical Feature Name | Entry Status | Short Scope Label | Behaviour Owner Reference | Applicable UX Reference | Relationship Type | Capability Reference | Notes |
-|---|---|---|---|---|---|---|---|---|
-| F01 | Homepage Discovery Entry | Active | Public Search and Browse entry into Discovery. | `PRD-0002-discovery.md` §§5.1, 6 | `UX-0001-home.md`; `UX-0002-discovery.md` | Direct Frozen assignment | Discovery | Includes the exact Home prompt and explicit Search/Browse routing; defines no visual layout. |
-| F02 | Search | Active | Person-submitted query Discovery across the approved searchable-information set. | `PRD-0002-discovery.md` §§5.2, 8, 12.2 | `UX-0002-discovery.md` §§5.1, 7 | Direct Frozen assignment | Discovery | Includes Search Discovery Start and product matching priority by reference. |
-| F03 | Browse | Active | Active Category-hierarchy Discovery ending in active-leaf Results. | `PRD-0002-discovery.md` §§5.3, 9, 12.3 | `UX-0002-discovery.md` §§5.2, 8 | Direct Frozen assignment | Discovery | Includes Browse Discovery Start and leaf-only result context. |
-| F04 | Search Category Narrowing | Active | Narrowing cross-Category Search through one active Category path. | `PRD-0002-discovery.md` §8.3 | `UX-0002-discovery.md` §§5.5, 7.2 | Direct Frozen assignment | Discovery | Keeps Search origin; Category selection does not become a new Browse Start. |
-| F05 | Attribute Filtering | Active | Leaf-Category filtering through authoritative filterable Attribute definitions. | `PRD-0002-discovery.md` §10 | `UX-0002-discovery.md` §9 | Direct Frozen assignment | Discovery | Includes value-kind semantics and OR-within / AND-across combination by reference. |
-| F06 | Discovery Results and Listing Cards | Active | Publicly eligible result presentation through the bounded Listing Card minimum. | `PRD-0002-discovery.md` §§5.7–5.8, 11 | `UX-0002-discovery.md` §10 | Direct Frozen assignment | Discovery | Owns no Offering Presentation or visual component design. |
-| F07 | Default Result Ordering | Active | Product-defined Search and Browse result ordering without a user Sort control. | `PRD-0002-discovery.md` §12 | `UX-0002-discovery.md` §§7.3, 8.3 | Direct Frozen assignment | Discovery | Includes stable tie behaviour and Initial Published At consumption by reference. |
-| F08 | Zero Results Recovery | Active | Bounded recovery from a valid Discovery criteria set with no matching Results. | `PRD-0002-discovery.md` §13 | `UX-0002-discovery.md` §12 | Direct Frozen assignment | Discovery | No silent broadening, recommendation, or sponsored replacement. |
-| F09 | Offering Presentation Handoff | Active | Opening one eligible Discovery Result and handing it to Offering Presentation. | `PRD-0002-discovery.md` §§5.11, 14 | `UX-0002-discovery.md` §11; `UX-0003-offering-detail.md` | Direct Frozen assignment | Discovery | Ends the current Discovery action; does not start Compare or Decision automatically. |
-| F10 | Compare Preparation Discovery Return | Active | Current-flow return to the same leaf Category to find a second Compare candidate. | `PRD-0002-discovery.md` §§14, 16.5 | `UX-0002-discovery.md` §5.3; `UX-0003-offering-detail.md` §9.2; `UX-0004-compare.md` §6 | Direct Frozen assignment | Discovery | Transient only; no saved Search, URL state, or persistent Comparison state. |
+| Feature ID | Canonical Feature Name               | Entry Status | Short Scope Label                                                                 | Behaviour Owner Reference                 | Applicable UX Reference                                                                 | Relationship Type        | Capability Reference | Notes                                                                                                               |
+| ---------- | ------------------------------------ | ------------ | --------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| F01        | Homepage Discovery Entry             | Active       | Public Search and Browse entry into Discovery.                                    | `PRD-0002-discovery.md` §§5.1, 6          | `UX-0001-home.md`; `UX-0002-discovery.md`                                               | Direct Frozen assignment | Discovery            | Includes the exact Home prompt and explicit Search/Browse routing; defines no visual layout.                        |
+| F02        | Search                               | Active       | Person-submitted query Discovery across the approved searchable-information set.  | `PRD-0002-discovery.md` §§5.2, 8, 12.2    | `UX-0002-discovery.md` §§5.1, 7                                                         | Direct Frozen assignment | Discovery            | Includes Search Discovery Start and product matching priority by reference.                                         |
+| F03        | Browse                               | Active       | Active Category-hierarchy Discovery ending in active-leaf Results.                | `PRD-0002-discovery.md` §§5.3, 9, 12.3    | `UX-0002-discovery.md` §§5.2, 8                                                         | Direct Frozen assignment | Discovery            | Includes Browse Discovery Start and leaf-only result context.                                                       |
+| F04        | Search Category Narrowing            | Active       | Narrowing cross-Category Search through one active Category path.                 | `PRD-0002-discovery.md` §8.3              | `UX-0002-discovery.md` §§5.5, 7.2                                                       | Direct Frozen assignment | Discovery            | Keeps Search origin; Category selection does not become a new Browse Start.                                         |
+| F05        | Attribute Filtering                  | Active       | Leaf-Category filtering through authoritative filterable Attribute definitions.   | `PRD-0002-discovery.md` §10               | `UX-0002-discovery.md` §9                                                               | Direct Frozen assignment | Discovery            | Includes value-kind semantics and OR-within / AND-across combination by reference.                                  |
+| F06        | Discovery Results and Listing Cards  | Active       | Publicly eligible result presentation through the bounded Listing Card minimum.   | `PRD-0002-discovery.md` §§5.7–5.8, 11     | `UX-0002-discovery.md` §10                                                              | Direct Frozen assignment | Discovery            | Owns no Offering Presentation or visual component design.                                                           |
+| F07        | Default Result Ordering              | Active       | Product-defined Search and Browse result ordering without a user Sort control.    | `PRD-0002-discovery.md` §12               | `UX-0002-discovery.md` §§7.3, 8.3                                                       | Direct Frozen assignment | Discovery            | Includes stable tie behaviour and Initial Published At consumption by reference.                                    |
+| F08        | Zero Results Recovery                | Active       | Bounded recovery from a valid Discovery criteria set with no matching Results.    | `PRD-0002-discovery.md` §13               | `UX-0002-discovery.md` §12                                                              | Direct Frozen assignment | Discovery            | No silent broadening, recommendation, or sponsored replacement.                                                     |
+| F09        | Offering Presentation Handoff        | Active       | Opening one eligible Discovery Result and handing it to Offering Presentation.    | `PRD-0002-discovery.md` §§5.11, 14        | `UX-0002-discovery.md` §11; `UX-0003-offering-detail.md`                                | Direct Frozen assignment | Discovery            | Ends the current Discovery action; does not start Compare or Decision automatically.                                |
+| F11        | Price Constraint                     | Active       | Narrowing Discovery Results by what a person would pay.                           | `PRD-0002-discovery.md` §§5.5A, 10.6      | `UX-0002-discovery.md` §9A                                                              | Direct Frozen assignment | Discovery            | A criterion, not an Attribute and not a Sort; ordering remains `F07`'s.                                             |
+| F12        | Product Score Floor                  | Active       | Narrowing Results by the lowest product score a person will consider.             | `PRD-0002-discovery.md` v3.0 §§5.5B, 10.7 | `UX-0002-discovery.md` §9A                                                              | Direct Frozen assignment | Discovery            | The score belongs to the product group, never to one seller; an unscored product fails a floor.                     |
+| F13        | Stated Availability                  | Active       | Narrowing Results to what a seller has stated is available.                       | `PRD-0002-discovery.md` v3.0 §§5.5C, 10.8 | `UX-0002-discovery.md` §9A                                                              | Direct Frozen assignment | Discovery            | Unstated stock fails the request; the arrangement does not demote silence, which §10.8.3 states.                    |
+| F14        | Result Arrangement                   | Active       | Choosing among the four platform-defined arrangements of a Result list.           | `PRD-0002-discovery.md` v3.0 §12.6        | `UX-0002-discovery.md` §§7.3, 8.3                                                       | Direct Frozen assignment | Discovery            | A closed set; no arrangement may be sold, requested by a Business, or granted to one. `F07` still owns the Default. |
+| F15        | Listing Number                       | Active       | The public, stable number a person reads, quotes and types to reach one listing.  | `PRD-0002-discovery.md` v3.0 §8.2         | `UX-0001-home.md`; `UX-0002-discovery.md` §10                                           | Direct Frozen assignment | Discovery            | Answered as an identity rather than a text match; assigned once and never reassigned.                               |
+| F16        | Kept Products                        | Active       | Keeping a product and reading back what was kept.                                 | `PRD-0007-member-area.md`                 | `UX-0002-discovery.md` §10                                                              | Direct Frozen assignment | Discovery            | Keyed on the product group rather than the listing; a seller withdrawing does not delete what a person kept.        |
+| F10        | Compare Preparation Discovery Return | Active       | Current-flow return to the same leaf Category to find a second Compare candidate. | `PRD-0002-discovery.md` §§14, 16.5        | `UX-0002-discovery.md` §5.3; `UX-0003-offering-detail.md` §9.2; `UX-0004-compare.md` §6 | Direct Frozen assignment | Discovery            | Transient only; no saved Search, URL state, or persistent Comparison state.                                         |
 
 ## 7. Feature Entry Records
 
@@ -216,6 +271,77 @@ This entry identifies a Feature only. It defines no behaviour, Acceptance Criter
 
 This entry identifies a Feature only. It defines no behaviour, Acceptance Criteria, Epic placement, Generated Story, or implementation.
 
+### F11 — Price Constraint
+
+- **Entry status:** Active
+- **Short scope label:** Narrowing Discovery Results by what a person would pay.
+- **Behaviour owner reference:** `PRD-0002-discovery.md` §§5.5A, 10.6
+- **Applicable UX reference:** `UX-0002-discovery.md` §9A
+- **Capability relationship type:** Direct Frozen assignment
+- **Capability reference:** Discovery
+- **Boundary note:** A criterion, not an Attribute (`F05` is unchanged) and not a Sort (`F07` §12.5 is unchanged). Owns no amount, currency or delivery-cost meaning; those are `PRD-0001-offering.md` §5.10's.
+
+This entry identifies a Feature only. It defines no behaviour, Acceptance Criteria, Epic placement, Generated Story, or implementation.
+
+### F12 — Product Score Floor
+
+- **Entry status:** Active
+- **Short scope label:** Narrowing Results by the lowest product score a person will consider.
+- **Behaviour owner reference:** `PRD-0002-discovery.md` v3.0 §§5.5B, 10.7
+- **Applicable UX reference:** `UX-0002-discovery.md` §9A
+- **Capability relationship type:** Direct Frozen assignment
+- **Capability reference:** Discovery
+- **Boundary note:** The score belongs to the product group and never to one seller's listing; an unscored product fails a floor.
+
+This entry identifies a Feature only. It defines no behaviour, Acceptance Criteria, Epic placement, Generated Story, or implementation.
+
+### F13 — Stated Availability
+
+- **Entry status:** Active
+- **Short scope label:** Narrowing Results to what a seller has stated is available.
+- **Behaviour owner reference:** `PRD-0002-discovery.md` v3.0 §§5.5C, 10.8
+- **Applicable UX reference:** `UX-0002-discovery.md` §9A
+- **Capability relationship type:** Direct Frozen assignment
+- **Capability reference:** Discovery
+- **Boundary note:** Unstated stock fails the request; the Default Arrangement does not demote silence.
+
+This entry identifies a Feature only. It defines no behaviour, Acceptance Criteria, Epic placement, Generated Story, or implementation.
+
+### F14 — Result Arrangement
+
+- **Entry status:** Active
+- **Short scope label:** Choosing among the four platform-defined arrangements of a Result list.
+- **Behaviour owner reference:** `PRD-0002-discovery.md` v3.0 §12.6
+- **Applicable UX reference:** `UX-0002-discovery.md` §§7.3, 8.3
+- **Capability relationship type:** Direct Frozen assignment
+- **Capability reference:** Discovery
+- **Boundary note:** A closed set the platform defines; no arrangement may be sold, requested by a Business, or granted to one.
+
+This entry identifies a Feature only. It defines no behaviour, Acceptance Criteria, Epic placement, Generated Story, or implementation.
+
+### F15 — Listing Number
+
+- **Entry status:** Active
+- **Short scope label:** The public, stable number a person reads, quotes and types to reach one listing.
+- **Behaviour owner reference:** `PRD-0002-discovery.md` v3.0 §8.2
+- **Applicable UX reference:** `UX-0001-home.md`; `UX-0002-discovery.md` §10
+- **Capability relationship type:** Direct Frozen assignment
+- **Capability reference:** Discovery
+- **Boundary note:** Answered as an identity rather than as a text match; assigned once and never reassigned.
+
+This entry identifies a Feature only. It defines no behaviour, Acceptance Criteria, Epic placement, Generated Story, or implementation.
+
+### F16 — Kept Products
+
+- **Entry status:** Active
+- **Short scope label:** Keeping a product and reading back what was kept.
+- **Behaviour owner reference:** `PRD-0007-member-area.md`
+- **Applicable UX reference:** `UX-0002-discovery.md` §10
+- **Capability relationship type:** Direct Frozen assignment
+- **Capability reference:** Discovery
+- **Boundary note:** Keyed on the product group rather than the listing; a seller withdrawing does not delete what a person kept.
+
+This entry identifies a Feature only. It defines no behaviour, Acceptance Criteria, Epic placement, Generated Story, or implementation.
 
 ## 8. Identifier Examples
 

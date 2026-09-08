@@ -79,6 +79,7 @@ export class IdentityController {
     const input = parse(beginRegistrationSchema, body);
     const outcome = await this.identity.beginRegistration({
       correlationId: correlationId(request),
+      displayName: input.name,
       email: input.email,
       password: input.password,
       subject: subjectOf(request)

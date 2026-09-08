@@ -30,6 +30,18 @@ export interface ListingCard {
 }
 
 /**
+ * Where a person is in a list of products, and how long the list is (I63).
+ *
+ * `total` counts **products**, the same grouping the cards are drawn from, so a
+ * pager never promises more pages than the list has things in it.
+ */
+export interface Paging {
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+/**
  * What a person sees at one point in a Browse path.
  *
  * `results` is `null` rather than empty for a branch. An empty list would say
@@ -38,6 +50,8 @@ export interface ListingCard {
  */
 export interface BrowseView {
   ancestors: BrowseCategory[];
+  /// I68. Which of the four arrangements this list is in.
+  arrangement: ResultArrangement;
   category: BrowseCategory;
   children: BrowseCategory[];
   discoveryPathId: string;
@@ -47,6 +61,9 @@ export interface BrowseView {
   /// Offered on a leaf, where an active leaf Category is by definition
   /// selected. Empty on a branch, for the same reason Results are withheld.
   filters: AvailableFilter[];
+  /// I63. `null` exactly where `results` is: a branch withheld the list, so
+  /// there is no position in one.
+  paging: Paging | null;
   results: ListingCard[] | null;
   /// The other active branches at this level, so a person can change their mind
   /// without walking back up first (AC-3).
@@ -72,11 +89,48 @@ export const SEARCH_MATCH_LEVELS = [
 
 export type SearchMatchLevel = (typeof SEARCH_MATCH_LEVELS)[number];
 
+/**
+ * The arrangements a person may choose between (I68).
+ *
+ * **The Owner's four tabs, and they are a closed set on purpose.** PRD-0002
+ * §12.5 excludes a user-controlled Sort from V1, and what is being admitted
+ * here is deliberately narrower than the thing that section refuses: four
+ * arrangements the platform defines, computed from facts it already records,
+ * applied identically to every listing. No partner can buy one, ask for one, or
+ * be given one — §12.5's other four exclusions (paid placement, sponsored
+ * priority, promoted cards, Business-controlled override) are untouched and
+ * stay untouched.
+ *
+ * - `DEFAULT` — *Tümü*. What every list has done since I63: out of stock last
+ *   however cheap, then cheapest delivered first. Named rather than implied, so
+ *   the other three read as departures from one arrangement rather than as four
+ *   unrelated orders.
+ * - `NEWEST` — *En yeni*. Later Initial Published At first, which is §12.3's
+ *   own ordering promoted from tie-break to first key.
+ * - `POPULAR` — *Popüler*. What the most people opened in the last thirty days.
+ * - `RISING` — *Yükselenler*. The Owner's own average of three signals over the
+ *   same window.
+ *
+ * Ordered as the Owner's prototype prints them, because the list is also the
+ * order of the tabs.
+ */
+export const RESULT_ARRANGEMENTS = [
+  "DEFAULT",
+  "NEWEST",
+  "RISING",
+  "POPULAR"
+] as const;
+
+export type ResultArrangement = (typeof RESULT_ARRANGEMENTS)[number];
+
 export interface SearchResult extends ListingCard {
   matchLevel: SearchMatchLevel;
 }
 
 export interface SearchView {
+  /// I68. Which of the four arrangements this list is in. Inside Search it
+  /// arranges within a match level; the levels themselves are §12.2's.
+  arrangement: ResultArrangement;
   /// The active leaf Category the Search is narrowed to, if any
   /// (`US-DSC-F04-001` AC-3).
   categoryId: string | null;
@@ -102,11 +156,66 @@ export interface SearchView {
    * so narrowing never hides the alternatives a person might switch to.
    */
   narrowing: BrowseCategory[];
+  /// I63. Never absent: a Search always answers with a list, even an empty one.
+  paging: Paging;
   /// The exact submitted query, kept as visible Discovery criteria (AC-2).
   query: string;
   results: SearchResult[];
   /// Present only when nothing matched (`US-DSC-F08-001` AC-1).
   zeroResults: ZeroResults | null;
+}
+
+/**
+ * The digits of a listing number, where the query is one (I67).
+ *
+ * **A lookup, not a match.** A person who types `482007` — or `İLN-482007`,
+ * which is what surfaces printed before the Owner's decision of 2026-09-03 —
+ * is not searching for words; they are naming one listing, and the honest
+ * answer is that listing or nothing.
+ *
+ * Sending the number through the text index instead would answer a different
+ * question — every row whose description happens to contain those digits — and
+ * would rank the listing they named among them.
+ *
+ * **The prefix is still recognised although nothing prints it any more.**
+ * People paste what they wrote down, from a page that has since changed and
+ * from screenshots that never will; refusing a form the platform itself taught
+ * them would be a lookup failing for a reason nobody can see.
+ *
+ * The recognition rule is written to be refusable: a run of five or more digits
+ * and, beside it, nothing but a prefix. `16 gb ram` has no such run, `iphone 15
+ * 128 gb` has none either, and `mavi 482007` is *not* treated as a listing
+ * number — the word beside it means the person is describing something, so the
+ * ordinary search answers them.
+ *
+ * The `̇` removal is a repair rather than a fold. `İ` lowercases in
+ * JavaScript to `i` plus a combining dot above, and dropping only that
+ * character makes `İLN`, `ILN` and `iln` the same prefix without touching
+ * `ş`, `ğ` or `ı`, which are letters in their own right.
+ */
+export function listingReference(query: string): string | null {
+  const digits = /\d{5,}/u.exec(query)?.[0];
+  if (digits === undefined) return null;
+
+  const beside = query
+    .replace(digits, " ")
+    .toLocaleLowerCase("tr")
+    .replace(/̇/gu, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+
+  // How the number is written beside the digits, in the forms a person types:
+  // the printed prefix, the word itself, and "no". Anything else is a
+  // description and belongs to Search.
+  /*
+   * Both spellings of each form, because Turkish casing folds the two `i`s
+   * apart rather than together: `İLN` lowercases to `iln` and the ASCII `ILN`
+   * a plain keyboard produces lowercases to `ıln`. A person copying the number
+   * off a card and a person typing it from memory are asking the same thing.
+   */
+  return beside === "" ||
+    ["iln", "ıln", "ilan", "ılan", "ilanno", "ılanno", "no"].includes(beside)
+    ? digits
+    : null;
 }
 
 /**

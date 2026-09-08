@@ -430,6 +430,42 @@ export const OUTBOX_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 export const THROTTLE_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * How long a reviewed Listing Report is kept (I77).
+ *
+ * **One hundred and eighty days, decided by the Owner on 2026-09-03** — _"Altı
+ * ay, yasal veya operasyonel bir itirazı geçmişe dönük incelemek için
+ * fazlasıyla yeterli ve makul bir veri tutma süresidir."_ The proposal and its
+ * reasoning are in `PRD-0006-platform.md` §21.5.
+ *
+ * A report holds a member of the public's own words about a third party's
+ * listing, and that is the whole reason a window exists: everything else on the
+ * row is a reason code and two timestamps. Long enough that an Admin can
+ * re-read a decision across two quarters and that a repeated claim about one
+ * listing is still visible as a repetition; short enough that free text written
+ * by the public is not held indefinitely for a purpose nobody can name.
+ *
+ * **An Open report is never swept, whatever its age.** A queue that deleted
+ * work nobody had done would lose the report *and* the fact that it was never
+ * answered — and the second is the more damaging loss, because it is the one
+ * that hides a queue nobody is reading.
+ */
+export const LISTING_REPORT_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
+
+/**
+ * How long a feed run is kept (I77).
+ *
+ * Operational log rather than anybody's data: a run holds counts, a message
+ * from a partner's server, and the identifiers a partner published. Thirty days
+ * answers "why did this stop working" — which is the only question anybody asks
+ * of it — and a year of hourly runs across forty partners is a third of a
+ * million rows that answer nothing.
+ *
+ * Deleting a run deletes its rejections, which is why nothing here names them:
+ * `offering_feed_rejection` cascades from `offering_feed_run`.
+ */
+export const FEED_RUN_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
  * Expired current-flow Decision state, expressed once.
  *
  * Both the API request path and the worker's retention sweep remove this state,
@@ -459,3 +495,5 @@ export const EXPIRED_DECISION_FLOWS_SQL =
  */
 export const EXPIRED_COMPARISON_SETS_SQL =
   "delete from comparison_set where expires_at <= now()";
+
+export { PROJECT_OFFERING } from "./projection.js";

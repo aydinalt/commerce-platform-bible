@@ -29,6 +29,7 @@ import {
   type OfferingInventory
 } from "@commerce/contracts";
 
+import { PgAuditRepository } from "../persistence/pg-audit.repository.js";
 import { PgModerationRepository } from "../persistence/pg-moderation.repository.js";
 import { OriginValidator } from "../security/origin.guard.js";
 import { PrincipalResolver } from "../security/principal-resolver.js";
@@ -336,6 +337,16 @@ export class AffiliateDestinationController {
 @Controller("admin/offerings")
 export class AdminOfferingController {
   constructor(
+    /**
+     * The central trail (I87).
+     *
+     * The Owner: _"Bir eylemin kendi yerel geçmişinde tutulması, merkezi
+     * kütüğün varoluş amacıyla çelişir."_ Every Admin act below writes its own
+     * record — a review row, a validation result, a case note — and until I87
+     * that was all it wrote, so "who enabled this handoff" could only be
+     * answered by knowing which local history to look in.
+     */
+    private readonly audit: PgAuditRepository,
     private readonly cases: PgModerationRepository,
     private readonly content: OfferingContentService,
     private readonly destinations: AffiliateService,
@@ -404,6 +415,17 @@ export class AdminOfferingController {
       recordedBy: principal.userId,
       targetId: offeringId
     });
+    /*
+     * And in the trail (I87). The enum has carried `HIDE_OFFERING` and
+     * `RESTORE_OFFERING` since I83 and nothing ever wrote them: the case note
+     * above was mistaken for the audit record, which is exactly the confusion
+     * the Owner named — a local history is not a central log.
+     */
+    await this.audit.record({
+      action,
+      actorId: principal.userId,
+      targetId: offeringId
+    });
     return offeringContentSchema.parse(moderated);
   }
 
@@ -446,14 +468,14 @@ export class AdminOfferingController {
     @Req() request: FastifyRequest
   ) {
     const principal = await this.adminGuard(request);
-    return affiliateDestinationSchema.parse(
-      await this.destinations.administer(
-        offeringId,
-        "review",
-        this.parse(reviewAffiliateDestinationSchema, body, "Invalid review"),
-        principal
-      )
+    const reviewed = await this.destinations.administer(
+      offeringId,
+      "review",
+      this.parse(reviewAffiliateDestinationSchema, body, "Invalid review"),
+      principal
     );
+    await this.trail("REVIEW_DESTINATION", offeringId, principal.userId);
+    return affiliateDestinationSchema.parse(reviewed);
   }
 
   /// Validate (AC-3, AC-4, AC-5). One current result; the status stays put.
@@ -465,18 +487,31 @@ export class AdminOfferingController {
     @Req() request: FastifyRequest
   ) {
     const principal = await this.adminGuard(request);
-    return affiliateDestinationSchema.parse(
-      await this.destinations.administer(
-        offeringId,
-        "validate",
-        this.parse(
-          validateAffiliateDestinationSchema,
-          body,
-          "Invalid validation result"
-        ),
-        principal
-      )
+    const result = this.parse(
+      validateAffiliateDestinationSchema,
+      body,
+      "Invalid validation result"
     );
+    const validated = await this.destinations.administer(
+      offeringId,
+      "validate",
+      result,
+      principal
+    );
+    /*
+     * Recorded **by its result**, because the trail carries no free text and
+     * the result is the whole content of the act: "this address was judged" and
+     * "this address was judged wrong" are different facts, and only the second
+     * explains why a handoff never went live.
+     */
+    await this.trail(
+      result.result === "VALID"
+        ? "VALIDATE_DESTINATION_VALID"
+        : "VALIDATE_DESTINATION_INVALID",
+      offeringId,
+      principal.userId
+    );
+    return affiliateDestinationSchema.parse(validated);
   }
 
   /// Enable (AC-6, AC-7).
@@ -487,9 +522,14 @@ export class AdminOfferingController {
     @Req() request: FastifyRequest
   ) {
     const principal = await this.adminGuard(request);
-    return affiliateDestinationSchema.parse(
-      await this.destinations.administer(offeringId, "enable", null, principal)
+    const enabled = await this.destinations.administer(
+      offeringId,
+      "enable",
+      null,
+      principal
     );
+    await this.trail("ENABLE_DESTINATION", offeringId, principal.userId);
+    return affiliateDestinationSchema.parse(enabled);
   }
 
   /// Disable (AC-8, AC-9).
@@ -500,9 +540,40 @@ export class AdminOfferingController {
     @Req() request: FastifyRequest
   ) {
     const principal = await this.adminGuard(request);
-    return affiliateDestinationSchema.parse(
-      await this.destinations.administer(offeringId, "disable", null, principal)
+    const disabled = await this.destinations.administer(
+      offeringId,
+      "disable",
+      null,
+      principal
     );
+    await this.trail("DISABLE_DESTINATION", offeringId, principal.userId);
+    return affiliateDestinationSchema.parse(disabled);
+  }
+
+  /**
+   * One line, written after the act (I87).
+   *
+   * **After**, without exception: `administer` throws on a refused act, so a
+   * trail entry can never describe something that did not happen. The order is
+   * the same one the PII reveal uses, and it is the only order that keeps the
+   * record trustworthy in the direction that matters — a missing row is a known
+   * failure mode of a fail-open writer, an invented one would be a lie.
+   *
+   * The target is the Offering rather than the destination: a destination is
+   * replaced when its address is re-authored, so recording its id would spread
+   * one listing's history across several targets.
+   */
+  private async trail(
+    action:
+      | "DISABLE_DESTINATION"
+      | "ENABLE_DESTINATION"
+      | "REVIEW_DESTINATION"
+      | "VALIDATE_DESTINATION_INVALID"
+      | "VALIDATE_DESTINATION_VALID",
+    offeringId: string,
+    actorId: string
+  ): Promise<void> {
+    await this.audit.record({ action, actorId, targetId: offeringId });
   }
 
   private async adminGuard(request: FastifyRequest) {

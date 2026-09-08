@@ -182,6 +182,12 @@ enum PublicationStatus {
 model UserAccount {
   id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email           String          @unique @db.VarChar(320)
+  /// The name the registration form has always asked for and the platform used
+  /// to discard (I62). Nullable because every account predating the column has
+  /// none, and inventing one would be worse than admitting it. Presented as
+  /// "Aylin K." rather than in full — masking is a presentation rule, so what
+  /// is stored is what the person typed.
+  displayName     String?         @map("display_name") @db.VarChar(80)
   emailVerifiedAt DateTime        @map("email_verified_at") @db.Timestamptz(6)
   status          AccountStatus   @default(ENABLED)
   version         Int             @default(1)
@@ -196,12 +202,24 @@ model UserAccount {
   affiliateValidations AffiliateDestination[]     @relation("AffiliateValidator")
   directContactReveals DirectContactReveal[]
   openedCases          ModerationCase[]           @relation("CaseOpener")
+  auditEvents          AdminAuditEvent[]
   closedCases          ModerationCase[]           @relation("CaseCloser")
   moderationCases      ModerationCase[]           @relation("CaseSubject")
   moderationResolutions ModerationResolution[]    @relation("ResolutionRecorder")
   correctionReviews     CorrectionReview[]        @relation("CorrectionReviewer")
   correctionRequests   CorrectionRequest[]        @relation("CorrectionRequester")
   correctionEdits      CorrectionEdit[]           @relation("CorrectionEditor")
+  productReviews       ProductReview[]
+  favourites           Favourite[]
+  /// I69. Reports this person made, and reports they reviewed as an Admin.
+  listingReports       ListingReport[]            @relation("ListingReportReporter")
+  listingReportReviews ListingReport[]            @relation("ListingReportReviewer")
+  /// I75. Who last changed the advertising settings, and who marked a Category
+  /// ad-free.
+  advertisingSettings  AdvertisingSetting[]       @relation("AdvertisingSettingEditor")
+  advertisingExclusions AdvertisingCategoryExclusion[] @relation("AdvertisingExclusionEditor")
+  /// I76. Feeds this Admin configured.
+  offeringFeeds        OfferingFeed[]             @relation("OfferingFeedAuthor")
 
   @@map("user_account")
 }
@@ -252,6 +270,9 @@ model PendingRegistration {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String    @unique @db.VarChar(320)
   passwordHash String    @map("password_hash")
+  /// Carried from the form to the account the confirmation creates, so the name
+  /// survives the round trip through the email link (I62).
+  displayName  String?   @map("display_name") @db.VarChar(80)
   /// Absent until the message is dispatched. The token is minted at delivery so
   /// that no replayable secret is ever written to the database.
   tokenHash    String?   @unique @map("token_hash") @db.Char(64)
@@ -325,6 +346,8 @@ model Business {
   moderationState BusinessModerationState?
   selectedInSessions UserSession[]
   moderationCases ModerationCase[]
+  /// I76. The partner catalogues whose Offerings this Business owns.
+  offeringFeeds   OfferingFeed[]
 
   @@map("business")
 }
@@ -662,6 +685,12 @@ model Category {
   attributes CategoryAttribute[]
   offerings  Offering[]
   comparisonSets ComparisonSet[]
+  /// I70. The complementary products listings under this heading suggest.
+  complementaryPlacements ComplementaryPlacement[]
+  /// I75. Marked ad-free, where somebody has marked it.
+  advertisingExclusion    AdvertisingCategoryExclusion?
+  /// I76. Feeds whose Offerings are filed under this Category.
+  offeringFeeds           OfferingFeed[]
 
   @@unique([id, domainId])
   @@unique([domainId, slug])
@@ -720,6 +749,17 @@ model Offering {
   businessId   String                    @map("business_id") @db.Uuid
   categoryId   String                    @map("category_id") @db.Uuid
   slug         String                    @db.VarChar(160)
+
+  /// I67. The number a person reads, says and types — `İLN-482007` on the
+  /// surface, `482007` here. Assigned once by the sequence and never
+  /// reassigned: the promise it makes is that a number written down yesterday
+  /// finds the same listing today.
+  ///
+  /// `BigInt` rather than `Int` because the sequence is never reset and a
+  /// catalogue outliving two billion listings should not have to migrate its
+  /// own identifiers.
+  listingNumber BigInt                   @unique @default(autoincrement()) @map("listing_number")
+
   title        String                    @db.VarChar(240)
   summary      String?                   @db.VarChar(1000)
   status       OfferingStatus            @default(DRAFT)
@@ -752,6 +792,13 @@ model Offering {
   /// no authority.
   source       OfferingSource            @default(BUSINESS)
 
+  /// PRD-0001 v4.1 §7.2, third final-eligibility input (I78). False when an
+  /// automated intake has recorded that its source no longer offers this
+  /// Offering — the Owner's 72-hour rule. Reversible by that same intake and
+  /// **not** a lifecycle change: `Archived` has no way back and `Hidden` is an
+  /// Admin's moderation outcome, so neither could carry it.
+  intakeAvailable Boolean                 @default(true) @map("intake_available")
+
   /// PRD-0001 v4.0 §5.12. A matching hint, not an identity: Offerings sharing
   /// one may be presented together, and §5.12.3 forbids grouping on anything
   /// else. Most Offerings in most Domains will never carry one.
@@ -778,6 +825,17 @@ model Offering {
   correctionRequests    CorrectionRequest[]
   correctionEdits       CorrectionEdit[]
   moderationCases       ModerationCase[]
+  /// I62 and I64. Both are keyed on the product group rather than on this row;
+  /// these back-references exist because the rows name an Offering as
+  /// provenance, not because a review or a favourite belongs to one listing.
+  reviews               ProductReview[]
+  favourites            Favourite[]
+  /// I69. Reports readers made about this listing.
+  listingReports        ListingReport[]
+  /// I76. Present only on an Offering an intake created, which is what makes
+  /// PRD-0001 §5.11.1 true by construction: an intake reaches an Offering
+  /// through this row, so it can never reach one it did not create.
+  feedItem              OfferingFeedItem?
 
   @@unique([businessId, slug])
   @@unique([id, businessId], map: "offering_id_business_id_key")
@@ -973,4 +1031,419 @@ model OutboxEvent {
   @@index([aggregateType, aggregateId])
   @@index([correlationId])
   @@map("outbox_event")
+}
+
+/// A person's rating of a **product**, and the sentence they wrote with it
+/// (I62).
+///
+/// **It hangs off the product group, not off one seller's Offering.** The
+/// Owner's rule is one line and it decides the whole shape: *"puanlama ürüne
+/// ait olacak satıcıya değil"* — the rating belongs to the product, not to the
+/// seller. §5.12 already says what a product is on this platform: the set of
+/// Offerings sharing a `productKey`, and `coalesce(product_key, id::text)` for
+/// one nobody has matched yet. That expression is `product_group_key` here, so
+/// five sellers of the same phone answer with one score rather than five, and
+/// a person who reads a review under the cheapest seller is reading a review
+/// of the thing, not of the shop.
+///
+/// **`offeringId` is provenance, not identity.** It records which listing the
+/// person was looking at when they wrote, which is worth keeping and is never
+/// what the rating is read back by. A seller who withdraws a listing does not
+/// take the product's score with them — hence `onDelete: Cascade` on the
+/// account (a deleted person's words go) and on the Offering only because the
+/// row would otherwise reference nothing; the aggregate survives in the other
+/// members of the group.
+///
+/// One review per person per product: `@@unique([productGroupKey, userId])`. A
+/// second opinion replaces the first rather than adding a vote, which is what
+/// keeps an average an average of people rather than of submissions.
+model ProductReview {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// `coalesce(offering.product_key, offering.id::text)` at the moment of
+  /// writing. Wide enough for either shape a group key takes.
+  productGroupKey String   @map("product_group_key") @db.VarChar(64)
+  offeringId      String   @map("offering_id") @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  /// One to five whole stars. Half stars are an *average*, never a submission:
+  /// nobody presses two and a half.
+  rating          Int      @db.SmallInt
+  /// The sentence, where the person wrote one. A rating without words is a
+  /// complete review; words are the optional half.
+  body            String?  @db.VarChar(2000)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  offering Offering    @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  user     UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productGroupKey, userId])
+  @@index([productGroupKey])
+  @@map("product_review")
+}
+
+/// Something a person kept (I64).
+///
+/// **The product, not the listing.** `productGroupKey` is
+/// `coalesce(offering.product_key, offering.id::text)` — §5.12's definition —
+/// so keeping a phone from the cheapest seller and returning through a dearer
+/// one shows it already kept, and a seller withdrawing their listing does not
+/// quietly delete somebody's favourite. `offeringId` records which listing they
+/// were looking at and is never what the favourite is read back by.
+///
+/// The composite primary key is the rule: one person, one product, one heart.
+model Favourite {
+  productGroupKey String   @map("product_group_key") @db.VarChar(64)
+  userId          String   @map("user_id") @db.Uuid
+  offeringId      String   @map("offering_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user     UserAccount @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offering Offering    @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productGroupKey])
+  @@index([userId, createdAt])
+  @@map("favourite")
+}
+
+/// A report about one listing, from the person reading it (I69).
+///
+/// **Not a Moderation Case, and the separation is the design.** A case is
+/// opened by an Admin under `US-PLT-F06-001` and carries a governed lifecycle;
+/// a report is an unverified claim by anybody, about one listing, whose whole
+/// content is "somebody says this". Writing reports into `moderation_case`
+/// would have made the queue an Admin reviews indistinguishable from a queue
+/// anybody can fill.
+model ListingReport {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  offeringId     String              @map("offering_id") @db.Uuid
+  reason         ListingReportReason
+  /// The person's own words, where they added any. Bounded because a report is
+  /// a sentence, not a document.
+  note           String?             @db.VarChar(600)
+  /// Null for a Guest, which is the ordinary case: requiring an account first
+  /// would collect fewer reports from exactly the people who noticed.
+  reporterUserId String?             @map("reporter_user_id") @db.Uuid
+  status         ListingReportStatus @default(OPEN)
+  submittedAt    DateTime            @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  reviewedBy     String?             @map("reviewed_by") @db.Uuid
+  reviewedAt     DateTime?           @map("reviewed_at") @db.Timestamptz(6)
+
+  offering Offering     @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+  reporter UserAccount? @relation("ListingReportReporter", fields: [reporterUserId], references: [id], onDelete: Restrict)
+  reviewer UserAccount? @relation("ListingReportReviewer", fields: [reviewedBy], references: [id], onDelete: Restrict)
+
+  @@index([status, submittedAt])
+  @@index([offeringId])
+  @@map("listing_report")
+}
+
+/// What the reader says is wrong. The five the Owner's prototype offers, and
+/// they are a closed list on purpose: a free-text-only report is a report
+/// nobody can count.
+enum ListingReportReason {
+  PRICE_WRONG
+  STOCK_WRONG
+  WRONG_CATEGORY
+  MISLEADING_INFORMATION
+  LINK_BROKEN
+}
+
+/// Open until somebody has looked, then acted on or not. A dismissed report is
+/// kept because it is evidence too: five dismissed reports about one listing is
+/// a different fact from one.
+enum ListingReportStatus {
+  OPEN
+  ACCEPTED
+  DISMISSED
+}
+
+/// A complementary product a listing suggests (I70).
+///
+/// **Curated, not derived.** The platform could compute "what goes with this"
+/// from the catalogue and it would be guessing: a heading's neighbours are not
+/// its complements. A row here is somebody's judgement written down, and the
+/// surface carries exactly what was written.
+///
+/// Keyed on the Category, because the Owner's rule is about sections — every
+/// listing under Otomotiv suggests tyres — and a per-listing table would ask
+/// somebody to repeat that decision for every car on the site.
+model ComplementaryPlacement {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId     String   @map("category_id") @db.Uuid
+  label          String   @db.VarChar(120)
+  /// Whose site the person will be on, named on the control itself.
+  partnerName    String   @map("partner_name") @db.VarChar(160)
+  note           String?  @db.VarChar(240)
+  destinationUrl String   @map("destination_url") @db.VarChar(2048)
+  position       Int      @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([categoryId, label])
+  @@map("complementary_placement")
+}
+
+/// The advertising placement settings PRD-0006 §20.4 names (I75).
+///
+/// **One row with named columns, not a settings store.** §12 refuses a generic
+/// Platform Configuration capability; a key-value table with an Admin form in
+/// front of it is exactly the shape in which one arrives unnoticed. Adding a
+/// setting here means a migration and a decision.
+model AdvertisingSetting {
+  /// Fixed rather than generated: a second row cannot exist to disagree with
+  /// the first.
+  id               Boolean   @id @default(true)
+  /// The external network's publisher identifier. Empty means no network
+  /// advertising anywhere, whatever the unit identifiers hold.
+  publisherId      String?   @map("publisher_id") @db.VarChar(64)
+  unitResults      String?   @map("unit_results") @db.VarChar(64)
+  unitPresentation String?   @map("unit_presentation") @db.VarChar(64)
+  unitCategory     String?   @map("unit_category") @db.VarChar(64)
+  /// The master switch. `false` suppresses everything, including the
+  /// platform's own complementary region.
+  enabled          Boolean   @default(false)
+  updatedBy        String?   @map("updated_by") @db.Uuid
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  updatedByAccount UserAccount? @relation("AdvertisingSettingEditor", fields: [updatedBy], references: [id], onDelete: Restrict)
+
+  @@map("advertising_setting")
+}
+
+/// A Category marked ad-free (§20.4), and every Category beneath it.
+model AdvertisingCategoryExclusion {
+  categoryId String   @id @map("category_id") @db.Uuid
+  excludedBy String?  @map("excluded_by") @db.Uuid
+  excludedAt DateTime @default(now()) @map("excluded_at") @db.Timestamptz(6)
+
+  category        Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  excludedByAccount UserAccount? @relation("AdvertisingExclusionEditor", fields: [excludedBy], references: [id], onDelete: Restrict)
+
+  @@map("advertising_category_exclusion")
+}
+
+/// How a partner's catalogue is written (I76).
+enum OfferingFeedFormat {
+  XML
+  JSON
+}
+
+/// Two outcomes and no third. A run either read the whole document or it did
+/// not; a partial import loses half a partner's catalogue and the missing half
+/// is indistinguishable from products that were withdrawn.
+enum OfferingFeedRunOutcome {
+  SUCCEEDED
+  FAILED
+}
+
+/// I91. Why a run failed, as a value rather than as a sentence
+/// (`US-PLT-F13-001` AC-9, `PRD-0006` v2.6 §24.2).
+enum OfferingFeedFailureKind {
+  /// The partner's server refused, timed out, or answered something too large.
+  SOURCE_UNREACHABLE
+  /// The document arrived and could not be parsed.
+  DOCUMENT_UNREADABLE
+  /// The document parsed and yielded nothing usable: the mapping names fields
+  /// this document does not carry.
+  MAPPING_INCOMPLETE
+  /// Something else. Present so that an unexpected failure is not filed under
+  /// one of the three above, which would be a category that lies.
+  UNCLASSIFIED
+
+  @@map("OfferingFeedFailureKind")
+}
+
+
+/// A partner catalogue the platform reads on a schedule (I76).
+///
+/// `PRD-0001-offering.md` §5.11 governs what the intake may do with what it
+/// finds; §135 leaves the mechanism to its own documents, which is this one and
+/// the `@commerce/feed` package.
+///
+/// The mapping is twelve named columns rather than a document. A `Json` blob
+/// with a form in front of it would take a field nobody decided to support, and
+/// the twelfth time somebody needed one they would add it to the form instead
+/// of to a migration.
+model OfferingFeed {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  businessId      String             @map("business_id") @db.Uuid
+  /// One Category for the whole feed. A per-product Category would mean
+  /// trusting a partner's taxonomy to choose a heading in this platform's, and
+  /// a wrong heading is worse than a coarse one.
+  categoryId      String             @map("category_id") @db.Uuid
+  name            String             @db.VarChar(160)
+  documentUrl     String             @map("document_url") @db.VarChar(2048)
+  format          OfferingFeedFormat
+  /// Where the products are inside the document, when the guess is wrong.
+  itemPath        String?            @map("item_path") @db.VarChar(240)
+
+  mapExternalId   String             @map("map_external_id") @db.VarChar(240)
+  mapTitle        String             @map("map_title") @db.VarChar(240)
+  mapSummary      String?            @map("map_summary") @db.VarChar(240)
+  mapPrice        String?            @map("map_price") @db.VarChar(240)
+  mapPriorPrice   String?            @map("map_prior_price") @db.VarChar(240)
+  mapDeliveryCost String?            @map("map_delivery_cost") @db.VarChar(240)
+  mapCurrency     String?            @map("map_currency") @db.VarChar(240)
+  mapStock        String?            @map("map_stock") @db.VarChar(240)
+  mapUrl          String?            @map("map_url") @db.VarChar(240)
+  mapImageUrl     String?            @map("map_image_url") @db.VarChar(240)
+  mapProductKey   String?            @map("map_product_key") @db.VarChar(240)
+  mapCategoryKey  String?            @map("map_category_key") @db.VarChar(240)
+
+  active          Boolean            @default(true)
+  createdBy       String?            @map("created_by") @db.Uuid
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  business        Business           @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  category        Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  author          UserAccount?       @relation("OfferingFeedAuthor", fields: [createdBy], references: [id], onDelete: Restrict)
+  runs            OfferingFeedRun[]
+  items           OfferingFeedItem[]
+
+  @@unique([businessId, name])
+  @@index([active], map: "offering_feed_active_idx")
+  @@map("offering_feed")
+}
+
+/// One sync, whether it worked.
+///
+/// **A failed run is the point of this table**, not an exception to it. The
+/// Owner asked for the failures on the dashboard, and a log that recorded only
+/// successes would answer "when did this last work" and never "why did it stop".
+model OfferingFeedRun {
+  id            String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  feedId        String                    @map("feed_id") @db.Uuid
+  outcome       OfferingFeedRunOutcome
+  startedAt     DateTime                  @default(now()) @map("started_at") @db.Timestamptz(6)
+  finishedAt    DateTime                  @default(now()) @map("finished_at") @db.Timestamptz(6)
+  readCount     Int                       @default(0) @map("read_count")
+  /// Zero on every run since I88, and kept because the runs that created
+  /// listings happened. The intake no longer creates any.
+  createdCount  Int                       @default(0) @map("created_count")
+  /// I88. Products the document offered that the run did not act on: not
+  /// carried by the platform, or carried and not live. Ordinary rather than
+  /// wrong, which is why it is not counted as a rejection.
+  skippedCount  Int                       @default(0) @map("skipped_count")
+  updatedCount  Int                       @default(0) @map("updated_count")
+  rejectedCount Int                       @default(0) @map("rejected_count")
+  /// Products the platform holds that the document no longer offers. Counted
+  /// and not acted on: retiring a listing is a lifecycle decision, and one
+  /// truncated document would otherwise delete a catalogue.
+  missingCount  Int                       @default(0) @map("missing_count")
+  /// I78. What the Owner's 72-hour rule did on this run. On the run rather than
+  /// derived from the item table: that says what is withdrawn now, this says
+  /// what happened then.
+  withdrawnCount Int                      @default(0) @map("withdrawn_count")
+  restoredCount  Int                      @default(0) @map("restored_count")
+  message       String?                   @db.VarChar(2000)
+  /// I91. What kind of failure it was, where it failed. The message says what
+  /// happened; this says what kind, which is what a surface can route on.
+  failureKind   OfferingFeedFailureKind?  @map("failure_kind")
+
+  feed          OfferingFeed              @relation(fields: [feedId], references: [id], onDelete: Restrict)
+  rejections    OfferingFeedRejection[]
+
+  @@index([feedId, startedAt(sort: Desc)], map: "offering_feed_run_feed_id_started_at_idx")
+  @@index([outcome, startedAt(sort: Desc)], map: "offering_feed_run_outcome_started_at_idx")
+  @@map("offering_feed_run")
+}
+
+/// A row one run refused, and why. Bounded per run by the intake: a feed that
+/// rejects forty thousand rows has one problem, not forty thousand.
+model OfferingFeedRejection {
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  runId      String          @map("run_id") @db.Uuid
+  externalId String?         @map("external_id") @db.VarChar(160)
+  reason     String          @db.VarChar(400)
+
+  run        OfferingFeedRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId], map: "offering_feed_rejection_run_id_idx")
+  @@map("offering_feed_rejection")
+}
+
+/// What the platform holds from a feed, under the name the partner knows it by.
+///
+/// **This row is what keeps PRD-0001 §5.11.1 true.** An intake finds what to
+/// update through here, so it can only reach an Offering it created; one a
+/// Business owner authored has no row here and is unreachable. That is stronger
+/// than checking `source = FEED` before every write, because it cannot be
+/// forgotten at one call site.
+model OfferingFeedItem {
+  feedId       String       @map("feed_id") @db.Uuid
+  externalId   String       @map("external_id") @db.VarChar(160)
+  offeringId   String       @unique @map("offering_id") @db.Uuid
+  firstSeenAt  DateTime     @default(now()) @map("first_seen_at") @db.Timestamptz(6)
+  lastSeenAt   DateTime     @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  /// Set when a successful run did not find this product, cleared when it
+  /// returns. Recorded, not acted on.
+  missingSince DateTime?    @map("missing_since") @db.Timestamptz(6)
+  /// When the intake withdrew it (I78). Kept beside `missingSince` rather than
+  /// derived from it: "the document stopped listing this" and "the platform
+  /// stopped publishing it" are two events separated by the tolerance.
+  withdrawnAt  DateTime?    @map("withdrawn_at") @db.Timestamptz(6)
+
+  feed         OfferingFeed @relation(fields: [feedId], references: [id], onDelete: Restrict)
+  offering     Offering     @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+
+  @@id([feedId, externalId])
+  @@map("offering_feed_item")
+}
+
+
+/// Enum for the Admin audit trail (I83).
+enum AdminAuditAction {
+  PII_VIEW
+  REQUEST_CORRECTION
+  HIDE_OFFERING
+  RESTORE_OFFERING
+  RESTRICT_BUSINESS
+  RESTORE_BUSINESS
+  SUSPEND_USER
+  REINSTATE_USER
+  CASE_OPEN
+  /// I87. The affiliate destination's four Admin acts, validation split by its
+  /// result: the row carries no free text, so one `VALIDATE_DESTINATION` would
+  /// record that somebody judged an address and lose what they decided.
+  REVIEW_DESTINATION
+  VALIDATE_DESTINATION_VALID
+  VALIDATE_DESTINATION_INVALID
+  ENABLE_DESTINATION
+  DISABLE_DESTINATION
+
+  @@map("AdminAuditAction")
+}
+
+/// What an Admin did, and when (I83).
+///
+/// **Append-only, and the migration enforces it with triggers on UPDATE,
+/// DELETE and TRUNCATE.** Prisma cannot express that, so it is stated here for
+/// a reader and guaranteed there. This model exists for the build-time schema
+/// only, like every other one in this file: every runtime read and write is
+/// hand-written SQL.
+///
+/// `actorId` is `Restrict` on purpose — an account that has acted as an Admin
+/// cannot be deleted out from under its own audit rows, because cascading would
+/// let removing a user erase the record of what they did.
+model AdminAuditEvent {
+  id         BigInt           @id @default(autoincrement())
+  actorId    String           @map("actor_id") @db.Uuid
+  actionType AdminAuditAction @map("action_type")
+  /// Absent where an action has no single target outside its case. A fabricated
+  /// one would be worse than an absent one.
+  targetId   String?          @map("target_id") @db.Uuid
+  /// The case the action was taken under. This is what turns "somebody viewed
+  /// an address" into "this address was viewed while working case X".
+  caseId     String?          @map("case_id") @db.Uuid
+  occurredAt DateTime         @default(now()) @map("occurred_at") @db.Timestamptz(6)
+
+  actor      UserAccount      @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([actorId, occurredAt(sort: Desc)])
+  @@index([targetId, occurredAt(sort: Desc)])
+  @@map("admin_audit_event")
 }

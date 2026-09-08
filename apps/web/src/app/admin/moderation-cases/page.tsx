@@ -8,10 +8,11 @@ import { isUnavailable, orUnavailable } from "../../unavailable";
 import { fetchAdminPanel, fetchModerationCases } from "../../../platform/api";
 import {
   NO_CASES,
-  RE_REVIEW_REQUIRED_NOTICE,
-  TARGET_LABELS
+  RE_REVIEW_REQUIRED_NOTICE
 } from "../../../platform/moderation";
 import { CASES, PANEL } from "../../../platform/copy";
+import { When } from "../../../platform/when";
+import { CaseTarget, caseTargetText } from "./case-target";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 
 import type { Metadata } from "next";
@@ -92,11 +93,17 @@ export default async function ModerationCasesPage({
             <li key={entry.id}>
               <h2>
                 <Link href={`/admin/moderation-cases/${entry.id}`}>
-                  {TARGET_LABELS[entry.targetType]}
+                  {caseTargetText(entry)}
                 </Link>
               </h2>
+              {/* The target, linked to itself. The heading above goes to the
+                  case; this goes to the thing the case is about, and an Admin
+                  triaging a queue needs both. */}
               <p>
-                {CASES.opened}: {entry.openedAt}
+                <CaseTarget entry={entry} />
+              </p>
+              <p>
+                {CASES.opened}: <When value={entry.openedAt} />
               </p>
               {/* §8. The owner answered and nobody has looked since. It is
                   surfaced in the queue because it is work waiting, not a

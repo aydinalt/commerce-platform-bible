@@ -1,10 +1,52 @@
 # UX-0002 — Discovery
 
+> **Freeze Note (1.3):** Explicitly Frozen by the Product Owner /
+> Architecture Owner on 2026-09-03, together with the other documents of this
+> decision — freezing a subset would leave one of them asserting something its
+> own references do not support. This exact version must not be edited in
+> place; a further change requires a controlled revision under
+> `DOCUMENT_LIFECYCLE.md` §7–§8.
+>
+> **Approval Note (1.3):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-03 — *"onaylıyorum işleme alabilirsin"*.
+> The Discovery surface now describes the six controls and two card fields the platform ships, including the Owner's decision of the same day that a listing number is printed as digits with no prefix.
+
+
+> **Revision Note (1.3):** Controlled revision candidate **built on the v1.2
+> candidate**, not on the Frozen version. v1.2 states the Price Constraint's
+> experience and every word of it is kept; this revision adds the three controls
+> and two card fields the platform has shipped since, and it moves with
+> `PRD-0002-discovery.md` v3.0 and `DISCOVERY_FEATURE_REGISTRY.md` v2.0 — a UX
+> section describing behaviour no approved PRD owns would be the drift these
+> documents exist to prevent.
+>
+> Added: **§9B** the Product Score floor, **§9C** stated availability, **§9D**
+> the Result Arrangement, and two additions to §10's Listing Card — the listing
+> number and the Favorites mark. §10's exclusion of Favorites is **removed**,
+> because `PRD-0007-member-area.md` made keeping a product a capability the
+> platform owns and the Owner's own prototype puts the control on the card.
+
+> **Candidate Status (1.2):** **controlled revision candidate** under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v1.1 remains authoritative and is untouched at `UX-0002-discovery.md`. Nothing here is authoritative until the Owner Freezes it.
+>
+> **Revision Note (1.2):** Adds §9A — the experience of the **Price Constraint** `PRD-0002-discovery.md` v2.5 §10.6 defines — and the three lines elsewhere that would otherwise contradict it (§3, §6, §16). Requested by the Owner on 2026-09-02.
+>
+> **The one thing this section is careful about is what a control is allowed to imply.** A budget control sits beside a list and reads as though it arranges it; §9A.6 says in the surface's own terms that it does not, because §17 still refuses a Sort and a person who believes they have sorted has been told something untrue by a layout. The other care is §9A.5: while a budget is set, Offerings quoted on request disappear, and a surface that let them disappear silently would look like an empty catalogue rather than a stated exclusion.
+>
+> **Not revised:** §9 (Attribute Filters), §7, §8, §10, §11, §12, §17's refusal of a Sort control, and §21's list of what no deferral may add.
+
 - **UX ID:** UX-0002
 - **Title:** Discovery
 - **Status:** Frozen
-- **Version:** 1.1
-- **Supersedes:** Frozen v1.0 (preserved at `UX-0002-discovery-v1.0-superseded.md`)
+- **Version:** 1.3
+- **Approval Date:** 2026-09-03
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-03
+- **Frozen By:** Product Owner / Architecture Owner
+- **Supersedes:** Approved v1.2 and Frozen v1.1, preserved at `UX-0002-discovery-v1.2-superseded.md` and `UX-0002-discovery-v1.1-superseded.md`
+- **Supersedes:** Frozen v1.1 on Freeze — until then v1.1 remains authoritative
+- **Revision Requested By:** Product Owner / Architecture Owner, 2026-09-02
+- **Supersedes (1.1):** Frozen v1.0 (preserved at `UX-0002-discovery-v1.0-superseded.md`)
 - **Approval Date:** 2026-08-31
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
@@ -21,11 +63,11 @@
 
 **Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-08-31, simultaneously with the four documents listed below, because they carry one rule between them and a Freeze of any subset would reintroduce the drift this revision removes. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen together: `PRD-0002-discovery.md` v2.3, `UX-0001-home.md` v1.1, `UX-0002-discovery.md` v1.1, `US-DSC-F01-001-homepage-discovery-entry.md` v1.1, `US-DSC-F02-001-search.md` v1.2. This Freeze does not change Delivery Status, traceability, repository indexes or GitHub content.
 
-**Approval Note (1.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: *"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."* The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
+**Approval Note (1.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: _"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."_ The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
 
 **Revision Note (1.1):** Controlled superseding revision of Frozen v1.0 under `DOCUMENT_LIFECYCLE.md` §7–§8, drafted alongside `UX-0001-home-v1.1-candidate.md` and for the same reason.
 
-§ Discovery Start said *"A **new** Search Discovery Start occurs **whenever** the person explicitly submits a valid Search query inside UX-0002."* Frozen PRD-0002 v2.2 says a Start occurs when the query *reaches the platform* and that **at most one occurs per Discovery path**. The sentence conflicted with the Frozen PRD twice: on how a Search begins, and on how many Starts a path may produce.
+§ Discovery Start said _"A **new** Search Discovery Start occurs **whenever** the person explicitly submits a valid Search query inside UX-0002."_ Frozen PRD-0002 v2.2 says a Start occurs when the query _reaches the platform_ and that **at most one occurs per Discovery path**. The sentence conflicted with the Frozen PRD twice: on how a Search begins, and on how many Starts a path may produce.
 
 Two changes. The mechanism wording is replaced with the PRD's, and the one-per-path bound is stated where UX-0002 states the rule. The Gherkin is restated to match, and a scenario is added for refinement within an open path — the case that "whenever ... submits" would have counted more than once. Nothing else in this document is touched.
 
@@ -58,6 +100,7 @@ The experience reduces effort by preserving person-controlled criteria, exposing
 - Category narrowing from Search;
 - approved searchable-information set;
 - value-kind Filter behaviour;
+- Price Constraint behaviour (§9A);
 - criteria combination;
 - Listing Card product minimum;
 - fixed Search and Browse ordering;
@@ -162,7 +205,8 @@ Current criteria may contain:
 - Search query;
 - one selected active Category path;
 - one active leaf Category;
-- applicable Attribute Filters.
+- applicable Attribute Filters;
+- one Price Constraint.
 
 The experience:
 
@@ -301,6 +345,140 @@ Removing a Filter expands or preserves it.
 
 Clearing all Filters preserves the current query and active leaf Category unless the person separately changes them.
 
+## 9A. Price Constraint
+
+### 9A.1 Availability
+
+The Price Constraint is offered wherever Results are, including before a Category is chosen and with no Search query.
+
+It is the one criterion that does not wait for a leaf Category, and the experience should not make it look as though it does: it belongs beside the Results rather than inside the Filter panel §9.1 gates.
+
+### 9A.2 Form
+
+An inclusive upper bound, an inclusive lower bound, or both, expressed as currency amounts.
+
+The bounds are the person's own figures. A control that offers ranges may offer them, but a person must be able to state an amount the ranges do not contain.
+
+### 9A.3 State is visible
+
+The applied bounds are readable at all times while they apply, not only while the control is open.
+
+A narrowing a person cannot see is one they cannot undo, and the most common Zero Results in a catalogue with prices will be a budget somebody forgot they set.
+
+### 9A.4 Removal
+
+Removing or widening the constraint is available wherever the constraint is visible, and does not disturb the query, the Category or the Attribute Filters.
+
+### 9A.5 What is set aside
+
+While a Price Constraint applies, Offerings with no Fixed amount — those quoted on request, and those whose amount the platform has not read — are not Results (`PRD-0002` §10.6.5).
+
+The surface states that this is so, near the Results rather than in a legend. It does not state a count it has not been given.
+
+This wording is UX-owned; the exclusion is not.
+
+### 9A.6 Not a Sort
+
+The Price Constraint narrows Results. It does not order them, and the surface says nothing that implies otherwise — no "cheapest first", no ascending or descending control, no arrow beside a price column.
+
+§17 refuses a Sort control and this section does not quietly grant one.
+
+### 9A.7 Zero Results
+
+A constraint that admits nothing produces the §12 Zero Results experience, and the recovery offers relaxing the constraint among the criteria a person may change.
+
+## 9B. Product Score Floor
+
+### 9B.1 Availability
+
+Offered wherever Results are, with or without a query and with or without a
+Category. A product's score is a fact about the product, not something a
+Category confers.
+
+### 9B.2 Form
+
+A single lowest-acceptable score. The control moves in half steps because the
+score is presented in half stars; whole-star steps would offer a precision the
+presentation contradicts.
+
+### 9B.3 State is visible
+
+The applied floor is readable while it applies, not only while the control is
+open — §9A.3's rule, for the same reason: a criterion somebody has forgotten
+they set is how an ordinary catalogue comes to look empty.
+
+### 9B.4 What is set aside
+
+While a floor applies, products **nobody has scored** are not Results, and the
+surface says so. This is the exclusion most likely to surprise: it removes every
+newly listed product, and a person who is not told will read the gap as the
+platform having nothing.
+
+### 9B.5 Whose score it is
+
+The score presented beside a listing is the **product's** — the same number for
+every seller of it. No surface presents a score for a Business, and none is
+available to present.
+
+### 9B.6 Not a Sort
+
+A floor decides which products are Results. §9D decides the order.
+
+## 9C. Stated Availability
+
+### 9C.1 Availability
+
+Offered wherever Results are, on the same terms as §9A and §9B.
+
+### 9C.2 Form
+
+One switch: only what a seller has stated is available.
+
+### 9C.3 What is set aside
+
+While it applies, Offerings whose stock is **not stated** are not Results, and
+the surface says so. "Not stated" and "unavailable" are different answers, and a
+person who asked for the first is entitled to know the second was also removed.
+
+### 9C.4 Silence is not demoted when nothing was asked
+
+With the switch off, an Offering with unstated stock is placed by the applicable
+arrangement rather than last. The asymmetry is deliberate and is stated in
+`PRD-0002-discovery.md` v3.0 §10.8.3.
+
+## 9D. Result Arrangement
+
+### 9D.1 What it is
+
+Four arrangements the platform defines, offered together above the Results:
+**Tümü**, **En yeni**, **Yükselenler**, **Popüler**.
+
+It is not a criterion. It changes the order of the answer, not the answer.
+
+### 9D.2 Form
+
+A row of controls, one pressed at a time, with the pressed one distinguishable
+**without colour** — weight and an underline, because which arrangement is in
+force is information rather than decoration.
+
+### 9D.3 Each arrangement says what it is
+
+Beneath the row, one sentence naming what the pressed arrangement puts first.
+A platform that arranges a list by counting things people did has to say which
+things it counted; an order presented without its reason reads as an opinion.
+
+### 9D.4 What is never offered
+
+No arrangement outside the four. No "sponsored", "featured" or "promoted"
+position, and no control that could be read as one — `PRD-0002-discovery.md`
+v3.0 §12.5 excludes them and this document offers no surface for them.
+
+### 9D.5 Changing it keeps the criteria
+
+Choosing an arrangement leaves the query, the Category, the Filters, the Price
+Constraint, the score floor and the availability switch exactly as they were,
+and returns the person to the first page of the rearranged list.
+
 ## 10. Listing Card
 
 Every Listing Card provides:
@@ -309,16 +487,26 @@ Every Listing Card provides:
 - supplied primary visual where available;
 - active leaf Category display name;
 - owning Business display name;
+- **the listing number**, in the form a person would quote it;
 - clear entry to UX-0003.
+
+A Listing Card additionally provides, for a person who is signed in, **the
+Favorites mark** — filled where the product is kept, hollow where it is not.
+For everybody else the mark is **absent rather than hollow**: hollow is a
+statement ("you have not kept this") about somebody who has no favourites to
+have.
 
 A Listing Card does not include:
 
 - protected contact information;
 - Affiliate Destination;
 - Completion or external-success claims;
-- Favorites;
 - Messaging;
 - Decision execution.
+
+**Favorites left this list in v1.3.** It was excluded while nothing owned it;
+`PRD-0007-member-area.md` now does, and the Owner's prototype has carried the
+control on the card since the layout was settled. Nothing else leaves the list.
 
 ## 11. Result Handoff
 
@@ -401,6 +589,7 @@ No role receives paid, promoted, or private results through UX-0002.
 - navigate active Categories;
 - select an active leaf Category;
 - apply, remove, or clear Filters;
+- set, widen, or remove a Price Constraint;
 - inspect Listing Cards;
 - open one Offering;
 - recover from Zero Results;
@@ -408,15 +597,16 @@ No role receives paid, promoted, or private results through UX-0002.
 
 ## 17. Permissions
 
-| Action | Guest | Enabled User | Business Context | Admin Context |
-|---|---:|---:|---:|---:|
-| Search | ✓ | ✓ | ✓ | ✓ |
-| Browse | ✓ | ✓ | ✓ | ✓ |
-| Apply approved Filters | Conditional | Conditional | Conditional | Conditional |
-| Open eligible Listing Card | Conditional | Conditional | Conditional | Conditional |
-| Use Sort control | ✗ | ✗ | ✗ | ✗ |
-| Use Favorites | ✗ | ✗ | ✗ | ✗ |
-| Use Messaging | ✗ | ✗ | ✗ | ✗ |
+| Action                     |       Guest | Enabled User | Business Context | Admin Context |
+| -------------------------- | ----------: | -----------: | ---------------: | ------------: |
+| Search                     |           ✓ |            ✓ |                ✓ |             ✓ |
+| Browse                     |           ✓ |            ✓ |                ✓ |             ✓ |
+| Apply approved Filters     | Conditional |  Conditional |      Conditional |   Conditional |
+| Apply a Price Constraint   |           ✓ |            ✓ |                ✓ |             ✓ |
+| Open eligible Listing Card | Conditional |  Conditional |      Conditional |   Conditional |
+| Use Sort control           |           ✗ |            ✗ |                ✗ |             ✗ |
+| Use Favorites              |           ✗ |            ✗ |                ✗ |             ✗ |
+| Use Messaging              |           ✗ |            ✗ |                ✗ |             ✗ |
 
 ## 18. Accessibility Requirements
 

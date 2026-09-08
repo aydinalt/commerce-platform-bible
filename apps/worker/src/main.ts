@@ -3,6 +3,7 @@ import { createDatabasePool, verifyDatabaseTimeouts } from "@commerce/database";
 import { createLogger } from "@commerce/observability";
 
 import { buildDispatcher } from "./dispatcher.js";
+import { FeedSyncer } from "./feed.sync.js";
 import { OutboxProcessor } from "./outbox.processor.js";
 import { RetentionSweeper } from "./retention.sweeper.js";
 
@@ -17,6 +18,16 @@ const POLL_INTERVAL_MS = 2000;
  * enough to be invisible.
  */
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+
+/**
+ * How often partner catalogues are read (I76).
+ *
+ * Hourly, and it is a decision about partners rather than about this process. A
+ * feed is regenerated at roughly that cadence at the other end, so reading more
+ * often fetches the same document repeatedly — which buys nothing and is read
+ * as impoliteness by the server serving it.
+ */
+const FEED_INTERVAL_MS = 60 * 60 * 1000;
 
 const config = loadRuntimeConfig("worker");
 const logger = createLogger("worker", config.logLevel);
@@ -65,6 +76,14 @@ const processor = new OutboxProcessor({
 const sweeper = new RetentionSweeper(pool);
 let sweptAt = 0;
 
+const feeds = new FeedSyncer({ logger, pool });
+/*
+ * Zero rather than `Date.now()`, unlike a timer that wants to wait first: a
+ * worker starting after an outage should read the catalogues immediately rather
+ * than leave every price an hour stale because it restarted.
+ */
+let syncedAt = 0;
+
 /**
  * Deletes what the platform has finished with (ADR-0012 §3, "session cleanup").
  *
@@ -88,6 +107,34 @@ async function sweepIfDue(): Promise<void> {
   }
 }
 
+/**
+ * Reads every active partner catalogue, sharing the outbox's loop.
+ *
+ * A failed sync is logged and the loop continues, exactly like the sweep: a
+ * worker that stopped delivering email because one partner's server was down
+ * would trade a large problem for a small one. Each feed already records its
+ * own failure in a run row, which is what the dashboard reads.
+ */
+async function syncFeedsIfDue(): Promise<void> {
+  if (Date.now() - syncedAt < FEED_INTERVAL_MS) return;
+  syncedAt = Date.now();
+  try {
+    const runs = await feeds.syncAll();
+    // Logged whether or not anything changed, because "every run reads four
+    // thousand rows and changes none" is a symptom, and it is only visible
+    // against the runs that changed something.
+    logger.info(
+      {
+        failed: runs.filter((run) => run.outcome === "FAILED").length,
+        feeds: runs.length
+      },
+      "feeds_synced"
+    );
+  } catch (error) {
+    logger.error({ err: error }, "feed_sync_cycle_failed");
+  }
+}
+
 let running = true;
 
 const stop = (signal: NodeJS.Signals): void => {
@@ -105,6 +152,7 @@ const idle = () =>
 
 while (running) {
   await sweepIfDue();
+  await syncFeedsIfDue();
   try {
     const handled = await processor.processBatch();
     // Idle only when there was nothing to do, so a backlog drains promptly.

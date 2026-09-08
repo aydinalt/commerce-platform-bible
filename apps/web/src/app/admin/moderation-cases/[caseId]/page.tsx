@@ -27,6 +27,10 @@ import {
 } from "../case-actions";
 
 import { CASES } from "../../../../platform/copy";
+import { When } from "../../../../platform/when";
+import { CaseTarget } from "../case-target";
+import { RevealEmail } from "../reveal-email";
+import { revealTargetEmail } from "../actions";
 
 import type { Metadata } from "next";
 
@@ -86,9 +90,28 @@ export default async function ModerationCasePage({
         {TARGET_LABELS[found.targetType]}{" "}
         {CASES.caseTitle.toLocaleLowerCase("tr")}
       </h1>
+      {/* Which listing or business this is about, linked (I81). The heading
+          says what kind of case it is; this says which one. */}
       <p>
-        {closed ? CASES.closedAt(found.closedAt ?? "") : CASES.open} ·{" "}
-        {CASES.openedAt} {found.openedAt}
+        <CaseTarget entry={found} />
+      </p>
+
+      {/* I82. The address, behind a press. A User Account case names its target
+          by account id everywhere else; this is the one place the person's
+          email can be reached, and reaching it is a request rather than an
+          unhiding — see `reveal-email.tsx`. */}
+      {found.targetType === "USER_ACCOUNT" ? (
+        <RevealEmail reveal={revealTargetEmail.bind(null, found.id)} />
+      ) : null}
+      <p>
+        {closed && found.closedAt !== null ? (
+          <>
+            <When value={found.closedAt} /> {CASES.closedSuffix}
+          </>
+        ) : (
+          CASES.open
+        )}{" "}
+        · {CASES.openedAt} <When value={found.openedAt} />
       </p>
 
       {found.reReviewRequired ? (

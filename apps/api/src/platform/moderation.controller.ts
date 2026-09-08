@@ -16,6 +16,7 @@ import type { FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import {
+  caseTargetEmailSchema,
   moderationCaseSchema,
   moderationCasesSchema,
   openModerationCaseSchema,
@@ -27,6 +28,7 @@ import {
   CaseNotReReviewedError
 } from "@commerce/moderation";
 
+import { PgAuditRepository } from "../persistence/pg-audit.repository.js";
 import { PgModerationRepository } from "../persistence/pg-moderation.repository.js";
 import { OriginValidator } from "../security/origin.guard.js";
 import { PrincipalResolver } from "../security/principal-resolver.js";
@@ -59,7 +61,8 @@ export class ModerationCaseController {
   constructor(
     private readonly cases: PgModerationRepository,
     private readonly principals: PrincipalResolver,
-    private readonly origins: OriginValidator
+    private readonly origins: OriginValidator,
+    private readonly audit: PgAuditRepository
   ) {}
 
   /// AC-1 and AC-9. `status` filters the workflow and nothing else — there is
@@ -88,6 +91,49 @@ export class ModerationCaseController {
     const found = await this.cases.find(caseId);
     if (!found) throw this.absent();
     return moderationCaseSchema.parse(found);
+  }
+
+  /**
+   * Revealing the address of a User Account case's target (I82).
+   *
+   * The Owner's PII rule, expressed as a route: an email address never travels
+   * with a list or with the case itself, and reaches an Admin only when they
+   * ask for it on the case they are working.
+   *
+   * **A `POST`, not a `GET`, and the method is the point.** This reads no new
+   * state and changes none, so `GET` is the obvious verb — but the Owner asked
+   * for the reveal to be an action that can be attached to an audit trail, and
+   * the things that get logged, retried, cached and prefetched are exactly the
+   * things `GET` invites. A `POST` is not cached by a proxy, not prefetched by
+   * a browser, not repeated by a reload, and reads in a log as something
+   * somebody did rather than something a page loaded.
+   *
+   * `404` for a case that is not a User Account case, so an Offering case is
+   * not a route to somebody's address, and for a case that does not exist —
+   * the same answer either way, because distinguishing them would let a caller
+   * test which case ids exist.
+   */
+  @Post(":caseId/target-email")
+  @HttpCode(200)
+  async targetEmail(
+    @Param("caseId", uuidParam("caseId")) caseId: string,
+    @Req() request: FastifyRequest
+  ) {
+    this.origins.assertAcceptable(request, true);
+    const principal = await this.principals.resolveAdmin(request);
+    const email = await this.cases.targetEmail(caseId);
+    if (email === null) throw this.absent();
+    /*
+     * I83. Recorded **after** the address is found and before it is returned,
+     * so the trail holds reveals that actually produced an address and not
+     * probes that found nothing. A refused request is not a disclosure.
+     */
+    await this.audit.record({
+      action: "PII_VIEW",
+      actorId: principal.userId,
+      caseId
+    });
+    return caseTargetEmailSchema.parse({ email });
   }
 
   /// AC-2. Surfacing a target produces an Open case — the same one where a
@@ -119,6 +165,18 @@ export class ModerationCaseController {
         code: "MODERATION_TARGET_NOT_FOUND",
         message: "No target matches that identifier"
       });
+    /*
+     * I83. Recorded on every successful call, including the one that answered
+     * with a case that already existed. "Somebody surfaced this target again"
+     * is a fact worth having — a target being raised four times by four Admins
+     * is exactly the pattern a queue hides.
+     */
+    await this.audit.record({
+      action: "CASE_OPEN",
+      actorId: principal.userId,
+      caseId: opened.id,
+      targetId: opened.offeringId ?? opened.businessId ?? opened.userId ?? null
+    });
     return moderationCaseSchema.parse(opened);
   }
 

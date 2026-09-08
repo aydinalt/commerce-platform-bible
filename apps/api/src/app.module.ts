@@ -31,8 +31,13 @@ import { HttpDecisionAssistant } from "./decision/http.assistant.js";
 import { RestatingDecisionAssistant } from "./decision/restating.assistant.js";
 import { AccessModerationController } from "./platform/access-moderation.controller.js";
 import { AdminPanelController } from "./platform/admin-panel.controller.js";
+import { AdvertisingController } from "./platform/advertising.controller.js";
+import { AuditController } from "./platform/audit.controller.js";
 import { AnalyticsController } from "./platform/analytics.controller.js";
+import { ComplementaryPlacementController } from "./platform/complementary.controller.js";
+import { ListingReportController } from "./platform/listing-report.controller.js";
 import { ModerationCaseController } from "./platform/moderation.controller.js";
+import { OfferingFeedController } from "./platform/offering-feed.controller.js";
 import { DiscoveryController } from "./discovery/discovery.controller.js";
 import { HealthController } from "./health.controller.js";
 import { MetricsCollector } from "./metrics/metrics.collector.js";
@@ -49,6 +54,7 @@ import {
   OfferingController
 } from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
+import { FavouriteController } from "./offering/favourite.controller.js";
 import { PublicOfferingController } from "./offering/public-offering.controller.js";
 import { PgAffiliateRepository } from "./persistence/pg-affiliate.repository.js";
 import { PgAttributeRepository } from "./persistence/pg-attribute.repository.js";
@@ -62,9 +68,16 @@ import { PgDecisionRepository } from "./persistence/pg-decision.repository.js";
 import { PgDiscoveryRepository } from "./persistence/pg-discovery.repository.js";
 import { PgIdentityRepository } from "./persistence/pg-identity.repository.js";
 import { PgAnalyticsRepository } from "./persistence/pg-analytics.repository.js";
+import { PgAuditRepository } from "./persistence/pg-audit.repository.js";
 import { PgModerationRepository } from "./persistence/pg-moderation.repository.js";
 import { PgOfferingContentRepository } from "./persistence/pg-offering-content.repository.js";
 import { PgPresentationRepository } from "./persistence/pg-presentation.repository.js";
+import { PgFavouriteRepository } from "./persistence/pg-favourite.repository.js";
+import { PgAdvertisingRepository } from "./persistence/pg-advertising.repository.js";
+import { PgComplementaryRepository } from "./persistence/pg-complementary.repository.js";
+import { PgListingReportRepository } from "./persistence/pg-listing-report.repository.js";
+import { PgOfferingFeedRepository } from "./persistence/pg-offering-feed.repository.js";
+import { PgReviewRepository } from "./persistence/pg-review.repository.js";
 import { OriginValidator } from "./security/origin.guard.js";
 import { PrincipalResolver } from "./security/principal-resolver.js";
 
@@ -150,11 +163,16 @@ export class DatabaseLifecycle implements OnModuleDestroy {
 
 @Module({
   controllers: [
+    AuditController,
     AccessModerationController,
     AdminBusinessController,
     AdminPanelController,
+    AdvertisingController,
     AnalyticsController,
+    ComplementaryPlacementController,
+    ListingReportController,
     ModerationCaseController,
+    OfferingFeedController,
     AdminOfferingController,
     AffiliateDestinationController,
     AttributeController,
@@ -169,6 +187,7 @@ export class DatabaseLifecycle implements OnModuleDestroy {
     MetricsController,
     IdentityController,
     OfferingController,
+    FavouriteController,
     PublicOfferingController
   ],
   providers: [
@@ -194,9 +213,16 @@ export class DatabaseLifecycle implements OnModuleDestroy {
     PgDiscoveryRepository,
     PgIdentityRepository,
     PgAnalyticsRepository,
+    PgAuditRepository,
     PgModerationRepository,
     PgOfferingContentRepository,
     PgPresentationRepository,
+    PgFavouriteRepository,
+    PgAdvertisingRepository,
+    PgComplementaryRepository,
+    PgListingReportRepository,
+    PgOfferingFeedRepository,
+    PgReviewRepository,
     PrincipalResolver,
     /*
      * One pool, for the whole process.

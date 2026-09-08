@@ -158,13 +158,17 @@ describe("Increment I40 the first run", () => {
        * **The property that matters most.** Everything this does would be a
        * serious hole as an HTTP endpoint — it hands out confirmation links —
        * and nothing but its location stops somebody adding one. Asserted as the
-       * absence of any new entry file beside the ones I37 and I38 declared.
+       * absence of any new entry file beside the ones I37 and I38 declared —
+       * and I76's, which is the same kind of thing for the same reason: a
+       * scheduled job with the same secret and the same 404 to anybody without
+       * it.
        */
       const entries = ["apps/api/api", "apps/worker/api"].flatMap((dir) =>
         readdirSync(dir).map((name) => `${dir}/${name}`)
       );
       expect(entries.sort()).toEqual([
         "apps/api/api/index.js",
+        "apps/worker/api/feeds.js",
         "apps/worker/api/outbox.js",
         "apps/worker/api/sweep.js"
       ]);

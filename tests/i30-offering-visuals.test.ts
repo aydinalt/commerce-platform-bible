@@ -30,7 +30,23 @@ describe("Increment I30 Offering visuals", () => {
     businessName: "Test İşletme",
     categoryName: "Klasik",
     offeringId: "11111111-1111-4111-8111-111111111111",
+    pricing: {
+      amount: "1250.00",
+      amountSetAt: "2026-08-22T00:00:00.000Z",
+      currency: "TRY",
+      deliveryCost: null,
+      kind: "FIXED",
+      priorAmount: null,
+      stockState: "UNKNOWN"
+    },
     primaryVisualUrl,
+    // I58. No Product Key, so the card stands for one Offering — itself.
+    productKey: null,
+    handoffAvailable: false,
+    // I62. Every card carries a product score; unrated is `null` with a
+    // count of zero, which is what a fixture with no reviews must say.
+    rating: { average: null, count: 0 },
+    sellerCount: 1,
     publishedAt: "2026-08-22T00:00:00.000Z",
     slug: "test-ilan",
     title: "Test İlanı"
@@ -45,7 +61,20 @@ describe("Increment I30 Offering visuals", () => {
     categoryPath: ["Araçlar", "Klasik"],
     description: null,
     offeringId: "11111111-1111-4111-8111-111111111111",
+    pricing: {
+      amount: "1250.00",
+      amountSetAt: "2026-08-22T00:00:00.000Z",
+      currency: "TRY",
+      deliveryCost: null,
+      kind: "FIXED",
+      priorAmount: null,
+      stockState: "UNKNOWN"
+    },
+    productKey: null,
     publishedAt: "2026-08-22T00:00:00.000Z",
+    // I62. The Presentation carries the same product score the card does.
+    rating: { average: null, count: 0 },
+    sellers: [],
     slug: "test-ilan",
     title: "Test İlanı",
     visuals
@@ -151,6 +180,13 @@ describe("Increment I30 Offering visuals", () => {
     it("shows the whole supplied set, in the order it arrived", () => {
       const markup = renderToStaticMarkup(
         createElement(OfferingPresentation, {
+          // I70. No advertising is configured in these cases, which is the
+          // ordinary state: a listing suggests nothing until somebody says
+          // what it suggests.
+          complementary: [],
+          // The reviews are read beside the Presentation; these cases are
+          // about the Presentation, so there are none to show.
+          reviews: null,
           offering: presentation([
             "https://example.test/1.jpg",
             "https://example.test/2.jpg"
@@ -170,7 +206,16 @@ describe("Increment I30 Offering visuals", () => {
 
     it("renders no region at all when the set is empty", () => {
       const markup = renderToStaticMarkup(
-        createElement(OfferingPresentation, { offering: presentation([]) })
+        createElement(OfferingPresentation, {
+          // I70. No advertising is configured in these cases, which is the
+          // ordinary state: a listing suggests nothing until somebody says
+          // what it suggests.
+          complementary: [],
+          // The reviews are read beside the Presentation; these cases are
+          // about the Presentation, so there are none to show.
+          reviews: null,
+          offering: presentation([])
+        })
       );
       expect(markup).not.toContain("offering-visuals");
       // "The experience remains complete through the other required Offering
@@ -187,6 +232,13 @@ describe("Increment I30 Offering visuals", () => {
        */
       const markup = renderToStaticMarkup(
         createElement(OfferingPresentation, {
+          // I70. No advertising is configured in these cases, which is the
+          // ordinary state: a listing suggests nothing until somebody says
+          // what it suggests.
+          complementary: [],
+          // The reviews are read beside the Presentation; these cases are
+          // about the Presentation, so there are none to show.
+          reviews: null,
           offering: presentation(["data:image/svg+xml,<svg>"])
         })
       );
@@ -206,6 +258,13 @@ describe("Increment I30 Offering visuals", () => {
        */
       const markup = renderToStaticMarkup(
         createElement(OfferingPresentation, {
+          // I70. No advertising is configured in these cases, which is the
+          // ordinary state: a listing suggests nothing until somebody says
+          // what it suggests.
+          complementary: [],
+          // The reviews are read beside the Presentation; these cases are
+          // about the Presentation, so there are none to show.
+          reviews: null,
           offering: presentation([], "https://example.test/logo.png")
         })
       );
@@ -217,7 +276,16 @@ describe("Increment I30 Offering visuals", () => {
 
     it("omits it when the Business supplied none", () => {
       const markup = renderToStaticMarkup(
-        createElement(OfferingPresentation, { offering: presentation([]) })
+        createElement(OfferingPresentation, {
+          // I70. No advertising is configured in these cases, which is the
+          // ordinary state: a listing suggests nothing until somebody says
+          // what it suggests.
+          complementary: [],
+          // The reviews are read beside the Presentation; these cases are
+          // about the Presentation, so there are none to show.
+          reviews: null,
+          offering: presentation([])
+        })
       );
       expect(markup).not.toContain("business-logo");
       expect(markup).toContain("Test İşletme");

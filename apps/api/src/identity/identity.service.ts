@@ -54,6 +54,15 @@ export class IdentityService {
    */
   async beginRegistration(input: {
     correlationId: string;
+    /**
+     * The name the registration form asks for, or `null` (I62).
+     *
+     * Optional in the form and optional here. It travels with the pending
+     * record rather than being collected after confirmation, because the person
+     * typed it once and asking again after an email round trip would be asking
+     * them to repeat themselves for the platform's convenience.
+     */
+    displayName: string | null;
     email: string;
     password: string;
     subject: string;
@@ -84,6 +93,7 @@ export class IdentityService {
     // is minted by the dispatcher, not here.
     await this.repository.recordPendingRegistration({
       correlationId: input.correlationId,
+      displayName: input.displayName,
       email: input.email,
       expiresAt: new Date(Date.now() + REGISTRATION_TTL_MS),
       passwordHash
@@ -127,6 +137,7 @@ export class IdentityService {
     }
 
     const userId = await this.repository.createAccount({
+      displayName: pending.displayName,
       email: pending.email,
       passwordHash: pending.passwordHash
     });

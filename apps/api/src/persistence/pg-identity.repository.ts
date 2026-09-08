@@ -17,6 +17,8 @@ import {
 } from "@commerce/notification";
 
 export interface PendingRegistrationRow {
+  /** Carried across the confirmation link so the account keeps it (I62). */
+  displayName: string | null;
   email: string;
   id: string;
   passwordHash: string;
@@ -58,6 +60,8 @@ export class PgIdentityRepository {
   async recordPendingRegistration(input: {
     /** The request that asked for this, carried to the delivery (§12.3). */
     correlationId: string;
+    /** The name the form asked for, or `null` where none was given (I62). */
+    displayName: string | null;
     email: string;
     expiresAt: Date;
     passwordHash: string;
@@ -66,16 +70,18 @@ export class PgIdentityRepository {
     try {
       await client.query("begin");
       const pending = await client.query<{ id: string }>(
-        `insert into pending_registration (email, password_hash, expires_at)
-         values ($1,$2,$3)
+        `insert into pending_registration
+           (email, password_hash, expires_at, display_name)
+         values ($1,$2,$3,$4)
          on conflict (email) do update
            set password_hash = excluded.password_hash,
                expires_at    = excluded.expires_at,
+               display_name  = excluded.display_name,
                token_hash    = null,
                dispatched_at = null,
                created_at    = now()
          returning id`,
-        [input.email, input.passwordHash, input.expiresAt]
+        [input.email, input.passwordHash, input.expiresAt, input.displayName]
       );
       const id = pending.rows[0]?.id;
       if (!id) throw new Error("PENDING_REGISTRATION_FAILED");
@@ -99,7 +105,8 @@ export class PgIdentityRepository {
     const result = await this.pool.query<PendingRegistrationRow>(
       `delete from pending_registration
        where token_hash = $1 and expires_at > now()
-       returning id, email, password_hash as "passwordHash"`,
+       returning id, email, password_hash as "passwordHash",
+         display_name as "displayName"`,
       [tokenHash]
     );
     return result.rows[0] ?? null;
@@ -111,6 +118,7 @@ export class PgIdentityRepository {
    * without an account is an orphaned secret.
    */
   async createAccount(input: {
+    displayName: string | null;
     email: string;
     passwordHash: string;
   }): Promise<string> {
@@ -118,10 +126,11 @@ export class PgIdentityRepository {
     try {
       await client.query("begin");
       const account = await client.query<{ id: string }>(
-        `insert into user_account (email, status, email_verified_at)
-         values ($1,'ENABLED',now())
+        `insert into user_account
+           (email, status, email_verified_at, display_name)
+         values ($1,'ENABLED',now(),$2)
          returning id`,
-        [input.email]
+        [input.email, input.displayName]
       );
       const userId = account.rows[0]?.id;
       if (!userId) throw new Error("ACCOUNT_INSERT_FAILED");
@@ -437,6 +446,78 @@ export class PgIdentityRepository {
    * authenticated context. That is Identity's rule being honoured rather than
    * a consequence this Story invents.
    */
+  /**
+   * The Admin's list of accounts (I83).
+   *
+   * **Every column here is chosen by the Owner's PII rule**, and what is absent
+   * is the design: no email address, because an operational list is exactly
+   * where an address must never appear. The account is identified by its `id`,
+   * and the address is reachable only on a case, behind a press, recorded.
+   *
+   * There is no alias to show. `user_account` holds an email and nothing else
+   * a person chose to be called — the Owner asked for a "rumuz (varsa)" and the
+   * honest answer is that there is not one, so no column pretends otherwise.
+   *
+   * The two figures are the ones that say whether an account matters to the
+   * platform: how many Businesses it owns and how many reviews it has written.
+   * Both are counts of the account's own footprint rather than facts about
+   * anybody else, so neither leaks a third party's data into this list.
+   *
+   * Ordered newest first: this is a register, not a queue. Nothing here is
+   * work waiting to be done, so the useful default is "who arrived recently"
+   * rather than "who has waited longest".
+   */
+  async listAccounts(input: {
+    limit: number;
+    status: "ENABLED" | "PENDING_VERIFICATION" | "SUSPENDED" | null;
+  }): Promise<{
+    accounts: {
+      businessCount: number;
+      isAdmin: boolean;
+      registeredAt: Date;
+      reviewCount: number;
+      status: string;
+      userId: string;
+    }[];
+    total: number;
+  }> {
+    const found = await this.pool.query<{
+      businessCount: string;
+      isAdmin: boolean;
+      registeredAt: Date;
+      reviewCount: string;
+      status: string;
+      total: string;
+      userId: string;
+    }>(
+      `select u.id as "userId", u.status::text as status,
+         u.created_at as "registeredAt",
+         (a.user_id is not null) as "isAdmin",
+         (select count(*) from business_owner o where o.user_id = u.id)::text
+           as "businessCount",
+         (select count(*) from product_review r where r.user_id = u.id)::text
+           as "reviewCount",
+         count(*) over ()::text as total
+       from user_account u
+       left join admin_authorization a on a.user_id = u.id
+       where ($1::text is null or u.status::text = $1)
+       order by u.created_at desc, u.id
+       limit $2`,
+      [input.status, input.limit]
+    );
+    return {
+      accounts: found.rows.map((row) => ({
+        businessCount: Number(row.businessCount),
+        isAdmin: row.isAdmin,
+        registeredAt: row.registeredAt,
+        reviewCount: Number(row.reviewCount),
+        status: row.status,
+        userId: row.userId
+      })),
+      total: Number(found.rows[0]?.total ?? 0)
+    };
+  }
+
   async moderateAccess(input: {
     action: AccessModerationAction;
     userId: string;

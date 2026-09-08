@@ -116,16 +116,30 @@ export class PgBusinessRepository {
        * the result of a composition that no longer holds. The two have to move
        * together or the platform disagrees with itself.
        */
-      const published = await client.query<{ id: string }>(
-        `select id from offering
+      const published = await client.query<{
+        id: string;
+        intakeAvailable: boolean;
+      }>(
+        `select id, intake_available as "intakeAvailable" from offering
          where business_id = $1 and status = 'PUBLISHED'`,
         [businessId]
       );
-      const eligibility = composePublicEligibility({
-        businessExposure: status === "RESTRICTED" ? "INELIGIBLE" : "ELIGIBLE",
-        lifecycle: "PUBLISHED"
-      });
+      /*
+       * I78. Composed **per Offering** rather than once for the Business,
+       * because PRD-0001 v4.1's third input differs between them: restoring a
+       * Business restores its listings, and a listing its own feed withdrew
+       * three days ago is not one of them. Composing once and applying it to
+       * every row would put withdrawn products back into Search on the day a
+       * restriction was lifted — a fault nobody would connect to the restore.
+       */
       for (const offering of published.rows) {
+        const eligibility = composePublicEligibility({
+          businessExposure: status === "RESTRICTED" ? "INELIGIBLE" : "ELIGIBLE",
+          intakeAvailability: offering.intakeAvailable
+            ? "AVAILABLE"
+            : "UNAVAILABLE",
+          lifecycle: "PUBLISHED"
+        });
         const version = await client.query<{ version: number }>(
           `insert into offering_publication
              (offering_id, status, eligibility_version, reason_code)

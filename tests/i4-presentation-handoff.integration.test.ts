@@ -290,8 +290,22 @@ suite("Increment I4 Offering Presentation handoff", () => {
       "business",
       "categoryPath",
       "description",
+      // I67. The listing number, so a person on this page can quote which
+      // listing they are on — the identifier the UUID and the slug are not.
+      "listingNumber",
       "offeringId",
+      // I56. Presentation carries the same price shape the card carried, so a
+      // person who chose a card because of a number finds that number again.
+      "pricing",
+      // I58. The Product Key and the sellers that share it — the one question a
+      // comparison page exists to answer, and the one this page could not.
+      "productKey",
       "publishedAt",
+      // I62. The product's score, over the same grouping the seller list is
+      // drawn from. An aggregate of other buyers, published under a masked
+      // byline — nothing here can carry a reviewer's name or address.
+      "rating",
+      "sellers",
       "slug",
       "title",
       "visuals"

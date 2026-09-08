@@ -1,18 +1,32 @@
 import type {
   BrowseViewResponse,
+  Paging,
   SearchViewResponse
 } from "@commerce/contracts";
 
-import type { AppliedFilterInput } from "@commerce/contracts";
+import type {
+  AppliedFilterInput,
+  PriceConstraintInput
+} from "@commerce/contracts";
 
 import type { PreparationContext } from "../../discovery/entry";
 import {
+  applyBudget,
+  applyArrangement,
+  applyStock,
+  clearBudget,
+  goToPage,
   leavePreparation,
   narrowSearch,
   selectCategory,
   widenSearch
 } from "../actions";
+import { handoffFromCard } from "../decision/actions";
+import { keepFavourite, releaseFavourite } from "../favourites/actions";
 
+import { BudgetControl } from "./budget-control";
+import { ArrangementTabs } from "./arrangement-tabs";
+import { StockControl } from "./stock-control";
 import { FilterControls } from "./filter-controls";
 import { ListingCards } from "./listing-card";
 
@@ -93,6 +107,83 @@ function NothingMatched({ query }: { query: string | null }) {
 }
 
 /**
+ * Moving between pages of Results (I63).
+ *
+ * **Numbered pages rather than "load more"**, because the Owner's prototype
+ * asks for exactly that — *aşağıda sayfa ilerleme butonları olsun, 2 ve 3
+ * sayfaya geçebilsin* — and because a comparison list is something people
+ * scan back and forth in rather than a feed they fall down.
+ *
+ * Submissions rather than links, like every other control on this surface: the
+ * criteria live in the carrier and not in the address (UX-0002 §4), so there is
+ * no URL a link could point at, and a prefetched link would turn a page
+ * somebody never asked to turn.
+ *
+ * Nothing renders while the whole list fits on one page — a pager offering one
+ * page is furniture, not navigation.
+ */
+function Pager({ paging }: { paging: Paging }) {
+  const pages = Math.ceil(paging.total / paging.pageSize);
+  if (pages <= 1) return null;
+
+  /*
+   * A window around the current page rather than every page: fifty numbered
+   * buttons is a wall, and the two ends are what a person actually uses — where
+   * they are, and either side of it.
+   */
+  const from = Math.max(1, Math.min(paging.page - 2, pages - 4));
+  const shown = [];
+  for (let page = from; page <= Math.min(pages, from + 4); page += 1)
+    shown.push(page);
+
+  return (
+    <nav aria-label="Sayfalar" className="discovery-pager">
+      <p className="discovery-pager-count">
+        {paging.total} ürün · sayfa {paging.page} / {pages}
+      </p>
+      <form action={goToPage} className="discovery-pager-controls">
+        {paging.page > 1 ? (
+          <button
+            className="discovery-page"
+            name="page"
+            type="submit"
+            value={paging.page - 1}
+          >
+            Önceki
+          </button>
+        ) : null}
+        {shown.map((page) => (
+          <button
+            aria-current={page === paging.page ? "page" : undefined}
+            className={
+              page === paging.page
+                ? "discovery-page discovery-page-current"
+                : "discovery-page"
+            }
+            key={page}
+            name="page"
+            type="submit"
+            value={page}
+          >
+            {page}
+          </button>
+        ))}
+        {paging.page < pages ? (
+          <button
+            className="discovery-page"
+            name="page"
+            type="submit"
+            value={paging.page + 1}
+          >
+            Sonraki
+          </button>
+        ) : null}
+      </form>
+    </nav>
+  );
+}
+
+/**
  * Narrowing a Search through the active Category hierarchy (UX-0002 §7.2).
  *
  * Offered when the API says the query reaches more than one leaf, which is the
@@ -154,9 +245,15 @@ function SearchNarrowing({
 
 export function SearchResultsView({
   applied = [],
+  favourites = null,
+  inStockOnly = false,
+  price = null,
   view
 }: {
   applied?: readonly AppliedFilterInput[];
+  favourites?: ReadonlySet<string> | null;
+  inStockOnly?: boolean;
+  price?: PriceConstraintInput | null;
   view: SearchViewResponse;
 }) {
   return (
@@ -180,15 +277,53 @@ export function SearchResultsView({
           narrowed={view.categoryId !== null}
         />
 
+        {/* §10.6.1. Above the Filters and outside their gate: a budget applies
+            with or without a Category, so it must not sit inside a panel that
+            appears only once one is chosen. */}
+        <BudgetControl
+          applied={price}
+          applyAction={applyBudget}
+          clearAction={clearBudget}
+        />
+
+        {/* I64. Beside the budget rather than inside the Filter panel, and for
+            the same reason: a stock level belongs to the Offering, so the
+            criterion applies with or without a Category. */}
+        <StockControl applied={inStockOnly} applyAction={applyStock} />
+
         {/* §9.1 again, and `US-DSC-F04-001` AC-6 is the gate: Filters become
             available once the Search is narrowed to one active leaf. Before
             that the API offers none and there is nothing to show. */}
         <FilterControls applied={applied} filters={view.filters} />
 
+        {/* I68. Above the list and below the criteria, where the Owner's
+            prototype puts the four tabs: they arrange the answer rather than
+            change the question, so they belong beside the list they arrange. */}
+        <ArrangementTabs
+          applied={view.arrangement}
+          applyAction={applyArrangement}
+        />
+
         {view.results.length === 0 ? (
           <NothingMatched query={view.query} />
         ) : (
-          <ListingCards cards={view.results} />
+          <>
+            <ListingCards
+              cards={view.results}
+              handoffAction={handoffFromCard}
+              {...(favourites === null
+                ? {}
+                : {
+                    favourites: {
+                      from: "/discovery",
+                      keepAction: keepFavourite,
+                      kept: favourites,
+                      releaseAction: releaseFavourite
+                    }
+                  })}
+            />
+            <Pager paging={view.paging} />
+          </>
         )}
       </section>
     </main>
@@ -232,11 +367,17 @@ function PreparationNotice({
 
 export function BrowseResultsView({
   applied = [],
+  favourites = null,
+  inStockOnly = false,
+  price = null,
   preparation,
   view
 }: {
   applied?: readonly AppliedFilterInput[];
+  favourites?: ReadonlySet<string> | null;
+  inStockOnly?: boolean;
   preparation?: PreparationContext | undefined;
+  price?: PriceConstraintInput | null;
   view: BrowseViewResponse;
 }) {
   return (
@@ -273,6 +414,20 @@ export function BrowseResultsView({
           />
         ) : null}
 
+        {/* §10.6.1. Offered on a branch as well, where the Filters below are
+            not: a branch has no Attributes to filter by and every Offering
+            still has an amount. */}
+        <BudgetControl
+          applied={price}
+          applyAction={applyBudget}
+          clearAction={clearBudget}
+        />
+
+        {/* I64. Beside the budget rather than inside the Filter panel, and for
+            the same reason: a stock level belongs to the Offering, so the
+            criterion applies with or without a Category. */}
+        <StockControl applied={inStockOnly} applyAction={applyStock} />
+
         {/* UX-0002 §9.1. Offered on a leaf and absent on a branch, which is a
             property of what the API returned rather than a decision made here.
             They stay available inside a preparation return: §9 does not except
@@ -284,10 +439,36 @@ export function BrowseResultsView({
             eligibility, the same Listing Cards, the same ordering and the same
             Zero Results statement. Nothing about this view is special except
             what it leaves out. */}
+        {/* I68. The same four tabs, on the same terms: an arrangement is not a
+            narrowing, so it applies wherever a list does. A branch has no list
+            and the strip goes with it. */}
+        {view.results === null ? null : (
+          <ArrangementTabs
+            applied={view.arrangement}
+            applyAction={applyArrangement}
+          />
+        )}
+
         {view.results === null ? null : view.results.length === 0 ? (
           <NothingMatched query={null} />
         ) : (
-          <ListingCards cards={view.results} />
+          <>
+            <ListingCards
+              cards={view.results}
+              handoffAction={handoffFromCard}
+              {...(favourites === null
+                ? {}
+                : {
+                    favourites: {
+                      from: "/discovery",
+                      keepAction: keepFavourite,
+                      kept: favourites,
+                      releaseAction: releaseFavourite
+                    }
+                  })}
+            />
+            {view.paging === null ? null : <Pager paging={view.paging} />}
+          </>
         )}
 
         {preparation === undefined ? (

@@ -104,12 +104,35 @@ guessable. Measured against a database holding nothing but the migrations (I40).
    surprises: a granted account that has not entered gets
    `403 ADMIN_CONTEXT_REQUIRED`, which is UX-0008 §5 working rather than a
    failure. Use the explicit entry on the site.
-5. **Create the first Categories and Attributes** through the Admin panel.
+5. **Seed the taxonomy and the field sets** — not by hand:
+   ```
+   npm run seed:taxonomy     # 11 sectors, 127 headings
+   npm run seed:attributes   # their field sets — after the taxonomy, always
+   ```
    Nothing can be published until an active leaf Category exists.
 
-A fresh database is not entirely empty: a migration seeds the three Domains.
+> **This step used to read "create the first Categories and Attributes through
+> the Admin panel", and it was stale (corrected 2026-09-05).** It predated the
+> seed scripts and the eleven-sector migration, and it asked an operator to
+> hand-build 127 headings and 404 attribute definitions through a form. It also
+> said a fresh database seeds "the three Domains"; a migration has seeded
+> **eleven** since `20260901000100_sector_domains`.
+>
+> The order matters and only fails loudly in one direction: `seed:attributes`
+> resolves headings by the stable keys `seed:taxonomy` writes, so running it
+> first exits non-zero naming what it could not find. Importing a catalogue
+> before either one does **not** fail — it produces listings with no attribute
+> values, so filters return nothing and comparison tables are empty. That is the
+> expensive mistake, because it looks like success.
+
 Home says _"Şu anda açık bir kategori yok."_ until step 5 is done, which is the
 honest empty state rather than a broken page.
+
+6. **Load the catalogue.** See `V1_LAUNCH_RUNBOOK.md` for the CSV columns and
+   the dry-run-first working loop:
+   ```
+   IMPORT_PASSWORD='…' npm run import:catalogue -- businesses.csv offerings.csv --dry-run
+   ```
 
 ## After the first deploy
 
@@ -146,10 +169,13 @@ failure that looks fine in a browser.
   is `request.ip`, and behind a proxy that is the proxy's address unless the hop
   count is declared — every caller in one bucket, and the platform locking
   itself out after a few dozen attempts globally.
-- **The catalogue starts empty.** A migration seeds the three Domains and
-  nothing else, so the first Admin has to build the Categories and Attributes by
-  hand before anything can be published. Home says so plainly rather than
-  looking broken — see The first Admin above.
+- **The catalogue starts empty**, and is filled by script rather than by hand.
+  Migrations seed **eleven** Domains; `seed:taxonomy` writes 11 sector roots and
+  127 headings, `seed:attributes` their 404 field definitions, and
+  `import:catalogue` the partners and listings. Home says the catalogue is empty
+  plainly rather than looking broken — see The first Admin above and
+  `V1_LAUNCH_RUNBOOK.md`. (This entry said "three Domains" and "by hand" until
+  2026-09-05; both were stale.)
 - **No legal pages exist** — no privacy notice, terms, or cookie disclosure, and
   no route to put them on.
 - **No backup or restore has been rehearsed**, and the recovery point and

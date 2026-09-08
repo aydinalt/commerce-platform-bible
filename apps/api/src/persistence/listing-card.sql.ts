@@ -25,3 +25,19 @@ export const PRIMARY_VISUAL_SQL = `(
   select v.url from offering_visual v
   where v.offering_id = p.offering_id and v.position = 0
 ) as "primaryVisualUrl"`;
+
+/**
+ * The listing number every Listing Card carries (I67).
+ *
+ * `::text` at the edge of the database rather than in each caller: the column
+ * is a `bigint`, the `pg` driver hands a `bigint` back as a string anyway to
+ * avoid rounding it, and a cast written here says that once instead of leaving
+ * six queries to be trusted to agree about the type of an identifier.
+ *
+ * Selected from `offering` and not from the projection, deliberately, and for
+ * the same reason as the visual above: the projection is a denormalised copy
+ * with a refresh obligation, and a stale listing number is the worst kind of
+ * stale — a number a person quotes that finds a different listing, or none.
+ * The row is already joined in every query that composes a card.
+ */
+export const LISTING_NUMBER_SQL = `o.listing_number::text as "listingNumber"`;

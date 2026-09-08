@@ -180,9 +180,35 @@ describe("Increment I14 schema and migration consistency", () => {
     // Both checks above pass vacuously against an empty parse: a regex that
     // stopped matching would report nothing wrong and nothing at all. These
     // numbers are the evidence that the parses still see the datamodel.
-    // 54 since I30 added `offering_visual`.
-    expect(ownedRelations()).toHaveLength(54);
-    // 55 since I30 added `offering_visual`'s foreign key.
-    expect(writtenKeys()).toHaveLength(55);
+    // 54 since I30 added `offering_visual`; 56 since I62 added
+    // `product_review` and 58 since I64 added `favourite` — each owns two, the
+    // Offering it was written under and the account it belongs to. 61 since
+    // I69 added `listing_report`, which owns three: the listing it concerns,
+    // the reader who sent it where there was one, and the Admin who closed it.
+    // 62 since I70's `complementary_placement`, which owns one: the Category
+    // whose listings suggest it. 65 since I75's advertising settings — the
+    // single settings row names the Admin who last changed it, and each ad-free
+    // Category names the Category and the Admin who marked it. 72 since I76's
+    // feed intake: a feed names its Business, its Category and the Admin who
+    // configured it; a run names its feed; a rejection names its run; and a
+    // feed item names both the feed and the Offering it stands for. 73 since
+    // I83's `admin_audit_event`, which owns exactly one: the Admin who acted.
+    // Only the owning side counts here — `UserAccount`'s back-reference is the
+    // same relation seen from the other end — so this moves by one, not two.
+    // The row's `target_id` and `case_id` are deliberately not relations: an
+    // audit row must outlive whatever it describes, and a foreign key that
+    // could cascade or restrict would make the record depend on the very thing
+    // it exists to account for.
+    // It names a target and a case as bare ids rather than relations, and that
+    // is deliberate — an audit row must outlive whatever it describes, so a
+    // foreign key that could cascade or restrict against it would make the
+    // record depend on the thing being accounted for.
+    expect(ownedRelations()).toHaveLength(73);
+    // 55 since I30 added `offering_visual`'s foreign key; 59 with the four I62
+    // and I64 wrote inline in their `CREATE TABLE` statements, 62 with I69's
+    // three, 63 with I70's one, 66 with I75's three and 73 with I76's seven.
+    // 74 with I83's one: the audit row's actor. Its `target_id` and `case_id`
+    // are deliberately not foreign keys — see the note above.
+    expect(writtenKeys()).toHaveLength(74);
   });
 });

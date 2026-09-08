@@ -1,12 +1,20 @@
 import type {
+  ComplementaryPlacementResponse,
   OfferingPresentationResponse,
-  PresentedAttribute
+  PresentedAttribute,
+  ProductReviewsResponse
 } from "@commerce/contracts";
 
 import type { PreparationContext } from "../../../discovery/entry";
 import { imageSource } from "../../../image-source";
+import { PresentationPrice, SellerPrices } from "../../../discovery/price";
+import { ListingNumber } from "../../../discovery/listing-number";
+import { ProductRatingSummary } from "../../../discovery/rating";
 import { startDecisionFromOffering } from "../../decision/actions";
 import { CompareEntry } from "../../compare/compare-entry";
+import { ComplementaryBlock } from "./complementary-block";
+import { ReportForm } from "./report-form";
+import { ReviewsSection } from "./reviews-section";
 
 /**
  * Complete public Offering Presentation (`US-OFR-F05-001`, UX-0003).
@@ -147,11 +155,27 @@ function Visuals({ urls }: { urls: string[] }) {
 }
 
 export function OfferingPresentation({
+  complementary,
   offering,
-  preparation
+  preparation,
+  reviews
 }: {
+  /**
+   * I70. What this listing suggests beside itself, fetched by the page rather
+   * than carried in the Presentation payload — PRD-0006 §20.3 keeps advertising
+   * out of what a listing *is*, and a separate argument is that promise made
+   * structural.
+   */
+  complementary: ComplementaryPlacementResponse[];
   offering: OfferingPresentationResponse;
   preparation?: PreparationContext | undefined;
+  /**
+   * What people said about this product, or `null` where the reviews could not
+   * be read. `null` rather than an empty list, because "nobody has reviewed
+   * this" is a claim about the product and an outage is not entitled to make
+   * it.
+   */
+  reviews: ProductReviewsResponse | null;
 }) {
   const businessLogo = imageSource(offering.business.logoUrl);
   return (
@@ -160,7 +184,26 @@ export function OfferingPresentation({
         {/* AC-2. The title stays identifiable throughout (UX-0003 §8.1), and
             the Category context is the whole path rather than the leaf. */}
         <h1>{offering.title}</h1>
-        <p className="category-path">{offering.categoryPath.join(" › ")}</p>
+        <p className="category-path">
+          {offering.categoryPath.join(" › ")}
+          {/*
+           * I67. Beside the path rather than in a corner, because this is where
+           * a person looks for "which listing am I on" — and the number is the
+           * answer they can write down, read out or type back into the search
+           * box. The card they arrived from prints the same one.
+           */}
+          <span aria-hidden="true"> · </span>
+          <ListingNumber number={offering.listingNumber} />
+        </p>
+        {/*
+         * I62. The score, directly under the title, because it is a fact about
+         * the thing named above it rather than about anything below. It is the
+         * same number the card carried — one grouping, read once — so a person
+         * who opened a listing for its stars finds them unchanged.
+         */}
+        <p className="presentation-rating">
+          <ProductRatingSummary rating={offering.rating} />
+        </p>
 
         {/*
          * UX-0003 §8.2, both halves. "Where one or more visuals are supplied,
@@ -175,6 +218,28 @@ export function OfferingPresentation({
         <Visuals urls={offering.visuals} />
 
         {offering.description === null ? null : <p>{offering.description}</p>}
+
+        {/*
+         * I56. Above the Attributes, below the description.
+         *
+         * A person opens an Offering with two questions — what is it, and what
+         * does it cost — and the second one used to have no answer anywhere on
+         * this page even though the amount was in the same row the title came
+         * from. It sits after the description because the description is what
+         * makes the number mean something, and before the specification table
+         * because nobody scrolls past twenty attributes to find a price.
+         */}
+        <PresentationPrice pricing={offering.pricing} />
+
+        {/*
+         * I58. Directly under this Offering's own price, because the two
+         * answer one question together: what does it cost, and is this the
+         * best place to get it.
+         */}
+        <SellerPrices
+          currentOfferingId={offering.offeringId}
+          sellers={offering.sellers}
+        />
 
         <Attributes attributes={offering.attributes} />
 
@@ -208,10 +273,37 @@ export function OfferingPresentation({
           )}
         </section>
 
+        {/*
+         * I62's other half, and it belongs here: under the specification and
+         * above what a person may *do*. The stars have been on every card since
+         * I62 and the sentences behind them were nowhere — which is the half of
+         * a review that says why.
+         */}
+        <ReviewsSection reviews={reviews} slug={offering.slug} />
+
         <DecisionEntries
           offeringId={offering.offeringId}
           preparation={preparation}
         />
+
+        {/*
+         * I70. Directly under the actions, which is where the Owner's prototype
+         * puts it: *"Favorilere ekle, Karşılaştır, Paylaş bölümünün hemen
+         * altında"*. A person who has decided what to do about this listing is
+         * the person for whom "you will also need tyres" is useful; the same
+         * block above the price would be interrupting them.
+         */}
+        <ComplementaryBlock placements={complementary} />
+
+        {/*
+         * I69. At the foot of the page, under everything it is about.
+         *
+         * The Owner's prototype puts it where "Listeye dön" used to be, and the
+         * replacement is the point: going back duplicated the browser's own
+         * button, and this is the one thing a reader can do that nobody else on
+         * the platform can — say that what they are looking at is wrong.
+         */}
+        <ReportForm slug={offering.slug} />
       </article>
     </main>
   );

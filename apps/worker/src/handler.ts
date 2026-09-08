@@ -7,6 +7,7 @@ import { createLogger } from "@commerce/observability";
 
 import { buildDispatcher } from "./dispatcher.js";
 import { drainOutbox } from "./drain.js";
+import { FeedSyncer } from "./feed.sync.js";
 import { OutboxProcessor } from "./outbox.processor.js";
 import { RetentionSweeper } from "./retention.sweeper.js";
 
@@ -36,6 +37,7 @@ let starting: Promise<Worker> | undefined;
 
 interface Worker {
   drainBudgetMs: number;
+  feeds: FeedSyncer;
   processor: OutboxProcessor;
   sweeper: RetentionSweeper;
 }
@@ -65,6 +67,7 @@ const build = async (): Promise<Worker> => {
      * limit worth deploying on.
      */
     drainBudgetMs: Number(process.env["CRON_BUDGET_MS"] ?? "45000"),
+    feeds: new FeedSyncer({ logger, pool }),
     processor: new OutboxProcessor({
       dispatcher: buildDispatcher(loadEmailConfig(environment), logger),
       logger,
@@ -148,4 +151,20 @@ export const outboxHandler = guarded(async ({ drainBudgetMs, processor }) => ({
  */
 export const sweepHandler = guarded(async ({ sweeper }) => ({
   ...(await sweeper.sweep())
+}));
+
+/**
+ * Reads every active partner catalogue (I76).
+ *
+ * **Hourly, which is a decision about partners rather than about this code.** A
+ * price that moved is stale until the next run, and an hour is what a partner's
+ * own feed is usually regenerated at — reading more often would fetch the same
+ * document repeatedly and be read as impoliteness by the server serving it.
+ *
+ * One feed's failure never stops the next: each is its own transaction and its
+ * own run row, and the response carries every result so the scheduler's log
+ * shows which partner is broken rather than that "the sync failed".
+ */
+export const feedHandler = guarded(async ({ feeds }) => ({
+  runs: await feeds.syncAll()
 }));

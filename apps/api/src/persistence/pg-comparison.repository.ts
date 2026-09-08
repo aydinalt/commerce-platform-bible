@@ -1,4 +1,17 @@
-import { PRIMARY_VISUAL_SQL } from "./listing-card.sql.js";
+import { LISTING_NUMBER_SQL, PRIMARY_VISUAL_SQL } from "./listing-card.sql.js";
+import {
+  HANDOFF_AVAILABLE_SQL,
+  OFFERING_PRICE_SQL,
+  PRODUCT_KEY_SQL,
+  SELLER_COUNT_SCALAR,
+  type PricedRow,
+  withPrice
+} from "./offering-price.sql.js";
+import {
+  PRODUCT_RATING_SQL,
+  withRating,
+  type RatedRow
+} from "./product-rating.sql.js";
 
 import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
@@ -249,12 +262,18 @@ export class PgComparisonRepository {
     if (!header) throw new ComparisonSetNotFoundError();
 
     const members = await client.query<
-      Omit<ListingCardResponse, "publishedAt"> & { publishedAt: Date }
+      RatedRow<PricedRow<ListingCardResponse>>
     >(
       `select p.offering_id as "offeringId", p.title,
          p.business_name as "businessName", c.name as "categoryName",
          o.slug, p.published_at as "publishedAt",
-         ${PRIMARY_VISUAL_SQL}
+         ${PRIMARY_VISUAL_SQL},
+         ${LISTING_NUMBER_SQL},
+         ${OFFERING_PRICE_SQL},
+         ${PRODUCT_KEY_SQL},
+         ${SELLER_COUNT_SCALAR},
+         ${HANDOFF_AVAILABLE_SQL},
+         ${PRODUCT_RATING_SQL}
        from comparison_set_member m
        join offering_search_projection p on p.offering_id = m.offering_id
        join offering o on o.id = m.offering_id
@@ -269,10 +288,11 @@ export class PgComparisonRepository {
       categoryName: header.categoryName,
       comparisonSetId,
       full: members.rows.length >= 5,
-      members: members.rows.map((row) => ({
-        ...row,
-        publishedAt: row.publishedAt.toISOString()
-      })),
+      members: members.rows.map((row) =>
+        withPrice<ListingCardResponse>(
+          withRating<PricedRow<ListingCardResponse>>(row)
+        )
+      ),
       openable: openableInCompare(members.rows.length)
     };
   }

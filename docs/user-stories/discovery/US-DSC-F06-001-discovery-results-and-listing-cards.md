@@ -1,5 +1,17 @@
 # US-DSC-F06-001 — Discovery Results and Listing Cards
 
+> **Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-09-02. Frozen v1.1 is the authoritative Story baseline and Frozen v1.0 is preserved at `US-DSC-F06-001-discovery-results-and-listing-cards-v1.0-superseded.md`. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. No upstream document is Frozen alongside it, because none states the revised rule — the check is recorded in §15 and was made before this Freeze. Delivery Status, traceability and repository indexes are unchanged by the Freeze itself.
+>
+> **Approval Note (1.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-09-02. The Owner's recorded reasoning, in their own words: the revision was requested as *"kuralı revize edip partnere bağla"* and approved, after reviewing the built behaviour, as *"böyle kalsın"*. Approval and Freeze were taken as one decision on the same day, after the Owner had seen the revised behaviour working against real data rather than from the document alone.
+>
+> **Revision Note (1.1):** Revises **AC-7** and the §5 sentence that restates it, so that a Listing Card may initiate an Affiliate Handoff. Requested by the Owner on 2026-09-02: *"kuralı revize edip partnere bağla."*
+>
+> **What changed, and what deliberately did not.** v1.0 forbade five things through the card — complete Presentation, Compare, Decision Chat, Affiliate Handoff and Direct Contact — for one reason stated once: a card is a *bounded* representation, and a control that performs a downstream behaviour would let the card become the surface that behaviour is owned by. Four of the five keep that reasoning intact and are unchanged. The fifth turned out to be the platform's business model: the Offerings are affiliate listings, and the price on the card is the partner's price. A card that could show that price and not act on it made the person open a page whose only purpose was to offer the button the card had just withheld.
+>
+> **The prohibition's substance is preserved by three constraints written into the revision, not by dropping it.** AC-5 is unchanged, so the Affiliate Destination is still absent from the card — the new AC-9 requires the address to be resolved server-side at the moment of the choice, never carried in the page. `US-DEC-F05-001` still owns the Affiliate Handoff, so a card click passes through a Decision Flow and records the Completion that Story requires; the card gains a shortcut through the existing behaviour, not a private route to a partner. And AC-10 keeps the control off cards where no eligible destination exists, so the revision never offers something the platform cannot perform.
+>
+> **Not revised:** AC-5 (protected and destination information), AC-6 (no purchase, transaction or external-success claim), and the AC-7 prohibitions on complete Presentation, Compare, Decision Chat and Direct Contact. `US-DEC-F05-001` is not amended by this candidate and continues to own the Affiliate Handoff itself.
+
 > **Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-24. Frozen v1.0 is the locked authoritative Story baseline. This exact Story must not be edited in place. Future behaviour, Acceptance Criteria, BDD, dependency, size, scope, Epic, Feature, or reference changes require a controlled revision. Delivery Status remains Not Started. This Freeze does not change the Frozen Discovery Feature Registry, does not claim completion of all ADR-0002 §10 follow-ups, and does not update GitHub automatically.
 
 > **Approval Note (1.0):** Explicitly approved by the Product Owner / Architecture Owner on 2026-07-24. The exact In Review v0.2 candidate becomes the authoritative Approved v1.0 Story baseline. Delivery Status remains Not Started. This approval does not Freeze the Story, does not change Acceptance Criteria, BDD, dependencies, size, scope, architecture, Feature Registry, PRD/UX behaviour, or claim completion of all ADR-0002 §10 follow-ups, and does not update GitHub automatically.
@@ -31,8 +43,13 @@
 | Delivery Status | Done |
 | Priority | Must |
 | Story Size | M |
-| Version | 1.0 |
-| Last Updated | 2026-07-24 |
+| Version | 1.1 |
+| Last Updated | 2026-09-02 |
+| Supersedes | Frozen v1.0 (preserved at `US-DSC-F06-001-discovery-results-and-listing-cards-v1.0-superseded.md`) |
+| Revision Requested By | Product Owner / Architecture Owner, 2026-09-02 |
+| Approval Date (1.1) | 2026-09-02 |
+| Freeze Date (1.1) | 2026-09-02 |
+| Frozen By (1.1) | Product Owner / Architecture Owner |
 | Approval Date | 2026-07-24 |
 | Approved By | Product Owner / Architecture Owner |
 | Approved Candidate | In Review v0.2 |
@@ -78,7 +95,9 @@ Discovery Results contain only Offerings whose final Offering Public Eligibility
 
 Every result is represented by one Listing Card containing a recognizable title or name, supplied primary visual where available, active leaf Category display name, owning Business display name, and a clear Offering-open affordance.
 
-The Listing Card exposes no protected contact or Affiliate Destination information, makes no purchase, transaction, Completion, or external-success claim, and does not execute complete Offering Presentation, Compare, Decision Chat, Affiliate Handoff, or Direct Contact.
+The Listing Card exposes no protected contact or Affiliate Destination information, makes no purchase, transaction, or external-success claim, and does not execute complete Offering Presentation, Compare, Decision Chat, or Direct Contact.
+
+A Listing Card may offer one explicitly chosen Affiliate Handoff to the owning Business's destination. The card carries no destination address: the address is resolved when the person chooses, by the Affiliate Handoff `US-DEC-F05-001` owns, and the Completion that Story requires is recorded there. Where no Eligible Affiliate Destination exists, the card offers no such affordance.
 
 ---
 
@@ -107,9 +126,11 @@ The Listing Card exposes no protected contact or Affiliate Destination informati
 - **AC-3** — The system shall present the Offering title or name, active leaf Category display name, owning Business display name, and clear open affordance on every Listing Card.
 - **AC-4** — The system shall present the supplied primary visual where one is available without inventing media when it is absent.
 - **AC-5** — The system shall exclude telephone, email, external contact URL, Affiliate Destination, owner-only information, and Admin-only information from Listing Cards.
-- **AC-6** — The system shall make no purchase, transaction, Completion, or external-success claim on a Listing Card.
-- **AC-7** — The system shall not execute complete Offering Presentation, Compare, Decision Chat, Affiliate Handoff, or Direct Contact through the Listing Card.
+- **AC-6** — The system shall make no purchase, transaction, or external-success claim on a Listing Card.
+- **AC-7** — The system shall not execute complete Offering Presentation, Compare, Decision Chat, or Direct Contact through the Listing Card.
 - **AC-8** — The system shall apply the same public result and Listing Card behaviour regardless of login or role context.
+- **AC-9** — The system shall permit one explicitly chosen Affiliate Handoff from a Listing Card, shall resolve the Affiliate Destination only at the moment of that choice, and shall record it as the Affiliate Handoff `US-DEC-F05-001` owns.
+- **AC-10** — The system shall offer no Affiliate Handoff affordance on a Listing Card whose Offering has no Eligible Affiliate Destination, and shall take the person to complete Offering Presentation where a handoff is refused at the moment of choice.
 
 ---
 
@@ -139,7 +160,38 @@ And no visual is invented
 Given an Offering has contact and Affiliate Destination information
 When its Listing Card is presented
 Then protected contact and destination information are absent
-And no Completion or Decision action is executed
+And no complete Offering Presentation, Compare, Decision Chat, or Direct Contact is executed
+And no Affiliate Handoff is executed until the person chooses one
+```
+
+### Scenario: A person chooses the partner from the card
+
+```gherkin
+Given an eligible matched Offering has an Eligible Affiliate Destination
+And its Listing Card offers an Affiliate Handoff affordance
+When the person explicitly chooses it
+Then an Affiliate Handoff is initiated as `US-DEC-F05-001` defines it
+And the Completion that Story requires is recorded
+And the destination address was never present in the Listing Card
+```
+
+### Scenario: No eligible destination, no affordance
+
+```gherkin
+Given an eligible matched Offering has no Eligible Affiliate Destination
+When its Listing Card is presented
+Then no Affiliate Handoff affordance is offered
+And the Offering remains openable through complete Offering Presentation
+```
+
+### Scenario: A destination withdrawn between the result and the choice
+
+```gherkin
+Given a Listing Card offered an Affiliate Handoff affordance
+And the Affiliate Destination stopped being Eligible before the person chose it
+When the person chooses the affordance
+Then no Affiliate Handoff is performed
+And the person is taken to complete Offering Presentation for that Offering
 ```
 
 ### Scenario: Ineligible Offering never becomes a result
@@ -191,7 +243,8 @@ One result-understanding outcome with eligibility input, bounded minimum informa
 - Listing Card visual layout, truncation, spacing, responsive design, and component implementation — `UX-0002-discovery.md`.
 - Final result ordering — `US-DSC-F07-001`.
 - Complete Offering Presentation — `US-OFR-F05-001` / UX-0003.
-- Compare, Decision Chat, Affiliate Handoff, Direct Contact, and Completion.
+- Compare, Decision Chat, Direct Contact, and Completion.
+- The Affiliate Handoff itself — its eligibility, its recording and its refusals remain owned by `US-DEC-F05-001`. This Story owns only whether a Listing Card may offer the choice.
 
 ---
 
@@ -231,4 +284,15 @@ Applicable Engineering and QA obligations will be consumed from `ENGINEERING_CON
 
 PRD-0002 owns the product minimum; UX-0002 owns the Listing Card experience.
 
-This Frozen baseline must not be edited in place and does not update GitHub automatically.
+Frozen v1.0 is preserved at `US-DSC-F06-001-discovery-results-and-listing-cards-v1.0-superseded.md` and this document holds the baseline filename, following the precedent set by `US-DSC-F01-001` v1.1. This Frozen baseline must not be edited in place and does not update GitHub automatically.
+
+**No upstream document needs revising with this one, and that was checked rather than assumed.** The `US-DSC-F01-001` v1.1 note warns that a rule Frozen in one document and not its neighbours is how drift begins, so every upstream sentence about the card and the handoff was read against this candidate:
+
+| Where | What it says | Why the candidate does not disturb it |
+|---|---|---|
+| `PRD-0002` §4 and §21 | Affiliate Handoff is outside Discovery's ownership | Unchanged. `US-DEC-F05-001` still owns the Handoff; the card offers the choice and performs none of the behaviour. |
+| `PRD-0002` §11 | The card "must not expose Affiliate Destination information" and "does not own Compare, Decision Chat, Affiliate Handoff, or Direct Contact" | Unchanged, and AC-9 is what keeps the first true: the address is resolved server-side at the moment of the choice and is never in the card. |
+| `PRD-0002` §14 | Opening an Offering "does not initiate Affiliate Handoff or Direct Contact" | Unchanged. Opening is still only opening; the handoff is a separate control a person presses deliberately. |
+| `PRD-0002` §17 BDD, `UX-0002` §11 and §16 | Compare, Chat, handoff, Contact and Completion "do not begin **automatically**" | Unchanged, and this candidate depends on it: AC-9 admits only an explicitly chosen handoff, which is why the affordance is a submitted control rather than a link something could follow on the person's behalf. |
+
+Only `US-DSC-F06-001` AC-7 forbade the card from offering the choice at all, which is why this is the only document being revised.

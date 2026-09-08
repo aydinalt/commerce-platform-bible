@@ -250,3 +250,51 @@ export async function askAssistant(
     return { kind: "REFUSED", message: chatRefusal(refusal ?? "") };
   return { kind: "DONE" };
 }
+
+/**
+ * The partner, reached from a Listing Card (`US-DSC-F06-001` v1.1 AC-9).
+ *
+ * **The criterion used to forbid this, and the revision that admitted it kept
+ * every reason the prohibition had.** A card still exposes no Affiliate
+ * Destination (AC-5): the address is never in the page, it is read here, on the
+ * server, at the instant the person chooses. The Decision Flow is still where a
+ * handoff is recorded, so the Completion `US-DEC-F05-001` requires exists for a
+ * card click exactly as it does for one made from the Decision panel — the card
+ * did not gain a private route to the partner, it gained a shortcut through the
+ * one that already existed.
+ *
+ * Three calls rather than one, and each is the platform re-deciding rather than
+ * this action asserting: the flow is entered, the Offering is selected, and the
+ * handoff is initiated. An Offering retired, a destination disabled or a
+ * validation withdrawn between the search and the click is refused at the last
+ * of them, which is why a card may carry `handoffAvailable` without that ever
+ * becoming a promise.
+ *
+ * A refusal is not an error page. The person asked to see this thing's price at
+ * the partner; when that is impossible they are taken to the Offering, which
+ * still answers the question with every seller of it — the strictly smaller
+ * answer rather than an apology.
+ */
+export async function handoffFromCard(form: FormData): Promise<void> {
+  const offeringId = form.get("offeringId");
+  const slug = form.get("slug");
+  if (typeof offeringId !== "string" || typeof slug !== "string") return;
+
+  const context = await enterDecision({ offeringId });
+  const flowId = context?.decisionFlowId ?? null;
+  const selected =
+    flowId === null ? null : (await selectOffering(flowId, offeringId)).context;
+  const destination =
+    flowId === null || selected === null
+      ? null
+      : (await initiateHandoff(flowId)).destination;
+
+  /*
+   * `redirect` throws, so both branches are the last statement on their path.
+   * The flow is remembered on the way out: a person who comes back has the
+   * context they were handed off from, rather than a Decision panel that has
+   * forgotten the thing they just looked at.
+   */
+  if (flowId !== null) await remember(flowId);
+  redirect(destination ?? `/offerings/${slug}`);
+}

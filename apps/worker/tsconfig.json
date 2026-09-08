@@ -14,10 +14,16 @@
       "path": "../../packages/database"
     },
     {
+      "path": "../../packages/feed"
+    },
+    {
       "path": "../../packages/observability"
     },
     {
       "path": "../../modules/notification"
+    },
+    {
+      "path": "../../modules/offering"
     }
   ]
 }

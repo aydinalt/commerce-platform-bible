@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { Analytics } from "@commerce/contracts";
 
 import {
@@ -5,7 +7,7 @@ import {
   DOMAIN_GAP,
   INFORMATIONAL_HEADING
 } from "../../platform/panel";
-import { ANALYTICS, tallyLabel } from "../../platform/copy";
+import { ANALYTICS, HANDOFF_RATE, tallyLabel } from "../../platform/copy";
 
 /**
  * One tally, rendered as the counts it is.
@@ -87,6 +89,14 @@ export function AnalyticsTable({ analytics }: { analytics: Analytics }) {
         heading={ANALYTICS.eligibility}
         tally={analytics.affiliateDestinations.handoffEligibility}
       />
+      {/* §12.3's Affiliate workload split (I81). `/admin` sums these three
+          into one queue link; the indicator is the split, and summing it was
+          how the whole tally came to be missing from the one place that shows
+          tallies. */}
+      <Tally
+        heading={ANALYTICS.destinationWorkload}
+        tally={analytics.destinationWorkload}
+      />
       <Tally
         heading={ANALYTICS.cases}
         tally={analytics.moderationCases.status}
@@ -135,6 +145,61 @@ export function AnalyticsTable({ analytics }: { analytics: Analytics }) {
           the truth rather than a defect, and saying so is how it stays that
           way — an unexplained gap is eventually "fixed" by guessing. */}
       <p>{DOMAIN_GAP}</p>
+
+      {/*
+        I78. The Affiliate Handoff Rate (`PRD-0006-platform.md` v2.5 §11.6).
+
+        **The whole surface turns on one thing: a missing rate is shown as
+        missing.** An ilan nobody has opened has no rate, and rendering `%0`
+        would tell an Admin "nobody chose this" when the truth is "nobody has
+        looked" — opposite conclusions from the same figure. §11.6.3 requires
+        the absence to read as an absence, and this is where that is honoured
+        or quietly lost.
+
+        Ordered by views rather than by rate, because a listing opened twice and
+        handed off once scores 50% and tells nobody anything.
+      */}
+      <h3>{HANDOFF_RATE.title}</h3>
+      <p>
+        {HANDOFF_RATE.overall(analytics.affiliateHandoffRate.overall)} ·{" "}
+        {analytics.affiliateHandoffRate.overall.rate === null
+          ? HANDOFF_RATE.noRate
+          : HANDOFF_RATE.rate(analytics.affiliateHandoffRate.overall.rate)}
+      </p>
+
+      {analytics.affiliateHandoffRate.byOffering.length === 0 ? null : (
+        <table className="stacking">
+          <caption>{HANDOFF_RATE.topTitle}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{ANALYTICS.indicator}</th>
+              <th scope="col">{HANDOFF_RATE.opens}</th>
+              <th scope="col">{HANDOFF_RATE.handoffs}</th>
+              <th scope="col">{HANDOFF_RATE.title}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {analytics.affiliateHandoffRate.byOffering.map((row) => (
+              <tr key={row.offeringId}>
+                {/* Linked (I81). The slug was already in the response and the
+                    report queue links the same way; an Admin looking at a low
+                    rate wants to see the listing, and reading a title they
+                    cannot follow makes them search for it by hand. */}
+                <th scope="row">
+                  <Link href={`/offerings/${row.slug}`}>{row.title}</Link>
+                </th>
+                <td>{row.opens}</td>
+                <td>{row.handoffs}</td>
+                <td>
+                  {row.rate === null
+                    ? HANDOFF_RATE.noRate
+                    : HANDOFF_RATE.rate(row.rate)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   );
 }

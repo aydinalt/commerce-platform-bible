@@ -77,7 +77,17 @@ describe("Increment I51 the page titles", () => {
       )
       .map(([route]) => route);
 
-    expect(pages.size).toBe(22);
+    // 23 since I64 added Favorilerim; 24 since I69 added the report queue,
+    // 25 since I70 added the placements it is configured on, and 26 since I75
+    // added the switch in front of all of them. The route is behind a feature
+    // flag and still counted: the file exists, and a titleless page shipping
+    // dark would be a titleless page shipping. 27 since I76 added the partner
+    // feeds, behind a flag of its own.
+    // 29 since I83 added the register of accounts, which is unflagged because
+    // it is the missing way to reach a capability approved long ago; 30 since
+    // I84 added the audit trail's reading surface, unflagged for the same
+    // reason — the platform was already recording it.
+    expect(pages.size).toBe(30);
     expect(untitled).toEqual(["/"]);
   });
 

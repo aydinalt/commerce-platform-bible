@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
+import { PROJECT_OFFERING } from "@commerce/database";
+
 import {
   BoundedCorrectionUnavailableError,
   boundedCorrectionAvailable,
@@ -11,9 +13,7 @@ import type {
   OfferingAttributeValueInput,
   OfferingPrice,
   OfferingPriceInput,
-  OfferingSource,
-  PricingKind,
-  StockState
+  OfferingSource
 } from "@commerce/contracts";
 import {
   AttributeValueMismatchError,
@@ -32,6 +32,11 @@ import {
   type OfferingLifecycle,
   type OfferingModerationAction
 } from "@commerce/offering";
+
+import {
+  composePrice,
+  type OfferingPriceColumns
+} from "./offering-price.sql.js";
 
 const UNIQUE_VIOLATION = "23505";
 const CHECK_VIOLATION = "23514";
@@ -66,54 +71,6 @@ export interface OfferingContentRecord {
   visuals: string[];
 }
 
-/**
- * The price columns as the driver hands them back.
- *
- * `NUMERIC` arrives as a string and stays one all the way to the response,
- * which is the point: the exact decimal the column holds is never parsed into
- * a float that could round it. PRD-0001 v4.0 §5.10.5 makes the ordering of
- * these amounts the product, and an ordering computed from approximations is
- * an ordering that is sometimes wrong.
- */
-interface OfferingPriceColumns {
-  amount: string | null;
-  amountSetAt: Date | null;
-  currency: string | null;
-  deliveryCost: string | null;
-  pricingKind: PricingKind;
-  priorAmount: string | null;
-  stockState: StockState;
-}
-
-/**
- * Seven columns become the one shape §5.10.1 names.
- *
- * The union is built here rather than in SQL because it is a fact about the
- * contract, and a `case` expression assembling JSON would be that fact written
- * a second time in a second language.
- *
- * The throw is unreachable — `offering_fixed_price_is_complete` refuses such a
- * row — and it is a throw rather than a fallback to `UNKNOWN` deliberately. A
- * fallback would tell a person the platform does not know a price at the exact
- * moment the platform's own invariant has broken, which is the worst time to
- * say something reassuring.
- */
-function composePrice(row: OfferingPriceColumns): OfferingPrice {
-  if (row.pricingKind !== "FIXED")
-    return { kind: row.pricingKind, stockState: row.stockState };
-  if (row.amount === null || row.currency === null || row.amountSetAt === null)
-    throw new Error("OFFERING_FIXED_PRICE_INCOMPLETE");
-  return {
-    amount: row.amount,
-    amountSetAt: row.amountSetAt.toISOString(),
-    currency: row.currency,
-    deliveryCost: row.deliveryCost,
-    kind: "FIXED",
-    priorAmount: row.priorAmount,
-    stockState: row.stockState
-  };
-}
-
 interface DefinitionShape {
   optionIds: string[];
   valueKind: string;
@@ -131,89 +88,12 @@ export interface ApplicableAttributeRecord {
 /**
  * The Discovery projection, written from an Offering.
  *
- * Exported because it has a second caller: `US-BUS-F03-001` restores a
- * Business and every lifecycle-Published Offering has to reappear. A copy of
- * this query in a second file would be a copy that drifts.
- *
- * `$1` is the Offering, `$2` the eligibility version.
+ * **Moved to `@commerce/database` by I76** and re-exported here so the callers
+ * that already import it are unchanged. The feed intake runs in the worker and
+ * needs the same query; the worker cannot import from `apps/api`, and a second
+ * copy would be a second copy that drifts.
  */
-export const PROJECT_OFFERING = `with path as (
-         -- The active Category path, root first. A person recognises an
-         -- Offering by where it sits, not only by its leaf.
-         with recursive walk as (
-           select c.id, c.parent_id, c.name, 0 as depth
-           from category c
-           join offering o on o.category_id = c.id
-           where o.id = $1
-           union all
-           select parent.id, parent.parent_id, parent.name, walk.depth + 1
-           from category parent join walk on walk.parent_id = parent.id
-         )
-         select string_agg(name, ' ' order by depth desc) as names from walk
-       ),
-       attributes as (
-         -- Display values, not identifiers: the option label a person would
-         -- read, and the scalar as it would be shown.
-         select string_agg(
-           coalesce(opt.label, v.text_value, v.number_value::text,
-             case when v.boolean_value then 'true' else 'false' end),
-           ' '
-         ) as values
-         from offering_attribute_value v
-         left join attribute_option opt on opt.id = v.option_id
-         where v.offering_id = $1
-       )
-       insert into offering_search_projection
-         (offering_id, business_id, domain_id, category_id, title, summary,
-          business_name, category_path, attribute_text, searchable_text,
-          filter_values, published_at, eligibility_version, projected_at)
-       select o.id, o.business_id, c.domain_id, o.category_id, o.title,
-         o.summary, b.name,
-         coalesce(path.names, c.name),
-         coalesce(attributes.values, ''),
-         concat_ws(' ', o.title, o.summary, b.name, coalesce(path.names, c.name),
-           coalesce(attributes.values, '')),
-         coalesce(
-           (select jsonb_object_agg(v."attributeId", v.value)
-            from (
-              select av.attribute_definition_id::text as "attributeId",
-                case
-                  when count(av.option_id) > 0
-                    then to_jsonb(array_remove(
-                      array_agg(av.option_id::text order by av.option_id), null))
-                  else coalesce(
-                    to_jsonb(max(av.text_value)),
-                    to_jsonb(max(av.number_value)),
-                    to_jsonb(bool_or(av.boolean_value))
-                  )
-                end as value
-              from offering_attribute_value av
-              where av.offering_id = o.id
-              group by av.attribute_definition_id
-            ) v),
-           '{}'::jsonb
-         ),
-         o.published_at, $2, now()
-       from offering o
-       join business b on b.id = o.business_id
-       join category c on c.id = o.category_id
-       cross join path
-       cross join attributes
-       where o.id = $1
-       on conflict (offering_id) do update set
-         business_id = excluded.business_id,
-         domain_id = excluded.domain_id,
-         category_id = excluded.category_id,
-         title = excluded.title,
-         summary = excluded.summary,
-         business_name = excluded.business_name,
-         category_path = excluded.category_path,
-         attribute_text = excluded.attribute_text,
-         searchable_text = excluded.searchable_text,
-         filter_values = excluded.filter_values,
-         published_at = excluded.published_at,
-         eligibility_version = excluded.eligibility_version,
-         projected_at = excluded.projected_at`;
+export { PROJECT_OFFERING } from "@commerce/database";
 
 @Injectable()
 export class PgOfferingContentRepository {
@@ -429,10 +309,12 @@ export class PgOfferingContentRepository {
 
       const locked = await client.query<{
         businessId: string;
+        intakeAvailable: boolean;
         publicExposure: string;
         status: OfferingLifecycle;
       }>(
         `select o.status::text as status, o.business_id as "businessId",
+           o.intake_available as "intakeAvailable",
            b.public_exposure::text as "publicExposure"
          from offering o
          join business b on b.id = o.business_id
@@ -472,6 +354,16 @@ export class PgOfferingContentRepository {
       const eligibility = composePublicEligibility({
         businessExposure:
           current.publicExposure === "ELIGIBLE" ? "ELIGIBLE" : "INELIGIBLE",
+        /*
+         * I78. PRD-0001 v4.1's third input, carried here so that an Admin
+         * *Restore* cannot republish a listing whose feed stopped offering it.
+         * The Admin is undoing a Hide; whether the partner still sells the
+         * thing is a different question with a different owner, and answering
+         * both with one action would put a withdrawn product back into Search.
+         */
+        intakeAvailability: current.intakeAvailable
+          ? "AVAILABLE"
+          : "UNAVAILABLE",
         lifecycle
       });
       const version = await client.query<{ version: number }>(
@@ -689,11 +581,13 @@ export class PgOfferingContentRepository {
       await client.query("begin");
 
       const locked = await client.query<{
+        intakeAvailable: boolean;
         moderation: string;
         publicExposure: string;
         status: OfferingLifecycle;
       }>(
         `select o.status::text as status,
+           o.intake_available as "intakeAvailable",
            b.public_exposure::text as "publicExposure",
            coalesce(m.status::text, 'UNRESTRICTED') as moderation
          from offering o
@@ -730,11 +624,18 @@ export class PgOfferingContentRepository {
         [input.offeringId, input.businessId]
       );
 
-      // AC-6. The result is evaluated, not assumed: Published is one of two
-      // inputs, and the composition is what decides.
+      // AC-6. The result is evaluated, not assumed: Published is one of three
+      // inputs since PRD-0001 v4.1, and the composition is what decides.
       const eligibility = composePublicEligibility({
         businessExposure:
           current.publicExposure === "ELIGIBLE" ? "ELIGIBLE" : "INELIGIBLE",
+        // I78. A Business owner publishing a Draft their own feed has
+        // withdrawn does not overrule the feed: the lifecycle moves and the
+        // listing stays out of public circulation until the source offers it
+        // again. Almost always `AVAILABLE`, because almost nothing is fed.
+        intakeAvailability: current.intakeAvailable
+          ? "AVAILABLE"
+          : "UNAVAILABLE",
         lifecycle: "PUBLISHED"
       });
       const version = await client.query<{ version: number }>(

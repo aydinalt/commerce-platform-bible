@@ -41,12 +41,29 @@ describe("Increment I4 Compare preparation return", () => {
     discoveryPathId: PATH,
     domain: "MOBILITY",
     filters: [],
+    // I63. One page holding the one Result this fixture lists.
+    paging: { page: 1, pageSize: 25, total: 1 },
     results: [
       {
         businessName: "Kartal Motors",
         categoryName: "Otomobil",
         offeringId: "55555555-5555-4555-8555-555555555555",
+        pricing: {
+          amount: "1250.00",
+          amountSetAt: "2026-08-01T10:00:00.000Z",
+          currency: "TRY",
+          deliveryCost: null,
+          kind: "FIXED" as const,
+          priorAmount: null,
+          stockState: "UNKNOWN" as const
+        },
         primaryVisualUrl: null,
+        productKey: null,
+        handoffAvailable: false,
+        // I62. Every card carries a product score; unrated is `null` with a
+        // count of zero, which is what a fixture with no reviews must say.
+        rating: { average: null, count: 0 },
+        sellerCount: 1,
         publishedAt: "2026-08-01T10:00:00.000Z",
         slug: "ikinci-ilan",
         title: "İkinci ilan"
@@ -62,6 +79,19 @@ describe("Increment I4 Compare preparation return", () => {
     categoryPath: ["Araçlar", "Otomobil"],
     description: null,
     offeringId: "55555555-5555-4555-8555-555555555555",
+    productKey: null,
+    // I62. The Presentation carries the same product score the card does.
+    rating: { average: null, count: 0 },
+    sellers: [],
+    pricing: {
+      amount: "1250.00",
+      amountSetAt: "2026-08-01T10:00:00.000Z",
+      currency: "TRY",
+      deliveryCost: null,
+      kind: "FIXED" as const,
+      priorAmount: null,
+      stockState: "UNKNOWN" as const
+    },
     publishedAt: "2026-08-01T10:00:00.000Z",
     slug: "ikinci-ilan",
     title: "İkinci ilan",
@@ -73,8 +103,12 @@ describe("Increment I4 Compare preparation return", () => {
     view: unknown;
   }) => ReactElement;
   type Presented = (props: {
+    // I70. Advertising travels beside the Presentation rather than inside it,
+    // so a component rendered without any is rendering the ordinary state.
+    complementary: unknown;
     offering: unknown;
     preparation?: unknown;
+    reviews: unknown;
   }) => ReactElement;
   const Browsed = BrowseResultsView as unknown as Browse;
   const Presented = OfferingPresentation as unknown as Presented;
@@ -193,7 +227,9 @@ describe("Increment I4 Compare preparation return", () => {
   it("carries the unchanged context through to Presentation", () => {
     const markup = renderToStaticMarkup(
       Presented({
+        complementary: [],
         offering: presentation,
+        reviews: null,
         preparation: { categoryId: LEAF, offeringId: PREPARED }
       })
     );
@@ -207,7 +243,9 @@ describe("Increment I4 Compare preparation return", () => {
   it("adds nothing to a Comparison Set and claims no Compare Start", () => {
     const markup = renderToStaticMarkup(
       Presented({
+        complementary: [],
         offering: presentation,
+        reviews: null,
         preparation: { categoryId: LEAF, offeringId: PREPARED }
       })
     );
@@ -225,7 +263,12 @@ describe("Increment I4 Compare preparation return", () => {
 
   it("says nothing about preparation when there is none", () => {
     const markup = renderToStaticMarkup(
-      Presented({ offering: presentation, preparation: undefined })
+      Presented({
+        complementary: [],
+        offering: presentation,
+        preparation: undefined,
+        reviews: null
+      })
     );
 
     // The ordinary case stays ordinary: no notice, no constraint, no residue

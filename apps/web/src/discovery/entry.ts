@@ -14,8 +14,13 @@
 
 import {
   appliedFilterSchema,
-  type AppliedFilterInput
+  priceConstraintSchema,
+  RESULT_ARRANGEMENTS,
+  type AppliedFilterInput,
+  type PriceConstraintInput
 } from "@commerce/contracts";
+
+type Arrangement = (typeof RESULT_ARRANGEMENTS)[number];
 
 export const DISCOVERY_ENTRY_COOKIE = "discovery_entry";
 
@@ -44,6 +49,19 @@ export interface PathContinuation {
 
 export interface SearchEntry extends PathContinuation {
   /**
+   * I68. Which of the Owner's four tabs is pressed.
+   *
+   * In the carrier with the other criteria, for the reason UX-0002 §4 gives
+   * about all of them: persistent or shareable URL state is outside V1. Absent
+   * means `DEFAULT`, so a carrier written before the tabs existed reads as
+   * somebody looking at the ordinary arrangement — which is what they were.
+   *
+   * Unlike the page, an arrangement **survives** a criterion change: narrowing
+   * a budget while reading the newest listings is still a request for the
+   * newest ones.
+   */
+  readonly arrangement?: Arrangement;
+  /**
    * The active leaf Category the person narrowed to, if any (UX-0002 §7.2).
    *
    * A Search may begin without one and may span leaves, so its absence is the
@@ -54,6 +72,17 @@ export interface SearchEntry extends PathContinuation {
   readonly categoryId?: string;
   readonly filters?: readonly AppliedFilterInput[];
   readonly kind: "SEARCH";
+  /**
+   * The Price Constraint (`US-DSC-F11-001`, UX-0002 §9A).
+   *
+   * Unlike `filters` it survives a Category being chosen or dropped, because
+   * PRD-0002 §10.6.1 does not tie it to one: an amount belongs to the Offering.
+   * A budget that vanished when a person narrowed to a Category would be the
+   * application quietly widening a criterion they set.
+   */
+  readonly inStockOnly?: boolean;
+  readonly page?: number;
+  readonly price?: PriceConstraintInput;
   readonly query: string;
 }
 
@@ -91,6 +120,8 @@ export interface PreparationContext {
 }
 
 export interface BrowseEntry extends PathContinuation {
+  /// I68. The tab in force, absent meaning the ordinary arrangement.
+  readonly arrangement?: Arrangement;
   readonly categoryId: string;
   /**
    * Applied Attribute Filters (UX-0002 §9).
@@ -102,8 +133,29 @@ export interface BrowseEntry extends PathContinuation {
    * second mechanism with different lifetime rules.
    */
   readonly filters?: readonly AppliedFilterInput[];
+  /// I64. Only what a seller has stated is available. Like the budget and
+  /// unlike the Filters, it survives moving between leaves: a stock level
+  /// belongs to the Offering rather than to a Category.
+  readonly inStockOnly?: boolean;
   readonly kind: "BROWSE";
+  /**
+   * Which page of the Results the person is on (I63).
+   *
+   * In the carrier with the criteria rather than in the address, for the reason
+   * §4 gives about every other criterion: persistent or shareable URL state is
+   * outside V1. Absent means the first page, so a carrier written before pages
+   * existed still reads as somebody at the beginning of a list.
+   *
+   * **Every criterion change drops it.** A person who narrows a budget while
+   * standing on page four is not asking for page four of the new list — they
+   * are asking a new question, and a page number carried across it would show
+   * them an empty page and let them think nothing matched.
+   */
+  readonly page?: number;
   readonly preparation?: PreparationContext;
+  /// The same criterion as on a Search entry, and it outlives moving between
+  /// leaves for the same reason (UX-0002 §9A.1).
+  readonly price?: PriceConstraintInput;
 }
 
 export type DiscoveryEntry = BrowseEntry | SearchEntry;
@@ -133,6 +185,31 @@ export function readDiscoveryEntry(
     typeof value.pathId === "string" && UUID.test(value.pathId)
       ? { pathId: value.pathId }
       : {};
+  /*
+   * I63. A page is a whole number from one, and anything else is discarded
+   * rather than repaired — the same treatment every other field in this carrier
+   * gets, and for the same reason: a person can edit a cookie.
+   */
+  const inStockOnly = value.inStockOnly === true ? { inStockOnly: true } : {};
+  /*
+   * I68. One of four names or nothing. An unrecognised arrangement is dropped
+   * rather than corrected, like every other field here: the carrier is a cookie
+   * and a person can edit it, and an arrangement the API would refuse is better
+   * turned back into the default here than sent to be rejected there.
+   */
+  const arrangement =
+    typeof value.arrangement === "string" &&
+    (RESULT_ARRANGEMENTS as readonly string[]).includes(value.arrangement) &&
+    value.arrangement !== "DEFAULT"
+      ? { arrangement: value.arrangement as Arrangement }
+      : {};
+  const page =
+    typeof value.page === "number" &&
+    Number.isInteger(value.page) &&
+    value.page > 1 &&
+    value.page <= 400
+      ? { page: value.page }
+      : {};
 
   if (value.kind === "SEARCH") {
     const { entry } = readSearchEntry(value.query);
@@ -142,6 +219,7 @@ export function readDiscoveryEntry(
         ? { categoryId: value.categoryId }
         : {};
     const filters = readFilters(value.filters);
+    const price = readPrice(value.price);
     return {
       ...entry,
       ...pathId,
@@ -152,7 +230,11 @@ export function readDiscoveryEntry(
       // cannot be honoured.
       ...(filters.length === 0 || !("categoryId" in categoryId)
         ? {}
-        : { filters })
+        : { filters }),
+      ...(price === null ? {} : { price }),
+      ...inStockOnly,
+      ...arrangement,
+      ...page
     };
   }
   if (value.kind === "BROWSE") {
@@ -160,11 +242,16 @@ export function readDiscoveryEntry(
     if (!entry) return null;
     const preparation = readPreparation(value.preparation, entry.categoryId);
     const filters = readFilters(value.filters);
+    const price = readPrice(value.price);
     return {
       ...entry,
       ...pathId,
       ...(filters.length === 0 ? {} : { filters }),
-      ...(preparation === null ? {} : { preparation })
+      ...(preparation === null ? {} : { preparation }),
+      ...(price === null ? {} : { price }),
+      ...inStockOnly,
+      ...arrangement,
+      ...page
     };
   }
   return null;
@@ -191,6 +278,19 @@ function readFilters(raw: unknown): AppliedFilterInput[] {
     if (parsed.success) filters.push(parsed.data);
   }
   return filters;
+}
+
+/**
+ * The Price Constraint read back from the carrier.
+ *
+ * Parsed against the published contract for the same reason the Filters are: a
+ * person can edit a cookie, and an amount that is not an amount would reach the
+ * API as one. A constraint that does not read back is dropped whole rather than
+ * repaired — half a budget is a different budget.
+ */
+function readPrice(raw: unknown): PriceConstraintInput | null {
+  const parsed = priceConstraintSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
 }
 
 /**

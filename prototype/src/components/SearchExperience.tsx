@@ -140,7 +140,18 @@ export function SearchExperience({
         decided yet, and a guide placed after twenty rows is a guide for the
         people who no longer need it.
       */}
-      <DecisionChat categoryId={state.categoryId} products={results} />
+      <DecisionChat
+        /*
+          The budget flows in rather than being asked for again. `results` is
+          already narrowed by it, so the panel's counts are counts under this
+          budget — and the two numbers it reports come from the same state the
+          bar above writes, which is why they cannot disagree with it.
+        */
+        amount={state.amount}
+        categoryId={state.categoryId}
+        maxAmount={MAX_PRICE}
+        products={results}
+      />
 
       <main className="mx-auto max-w-7xl px-4 pb-20 pt-8">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">

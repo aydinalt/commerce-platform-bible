@@ -1,11 +1,155 @@
 # Traceability
 
+> **Freeze Note (2.3):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-07. This exact version must not be edited in place; a further
+> change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
+> Frozen v2.2 is preserved unchanged at `docs/traceability-v2.2-superseded.md`.
+>
+> **Approval Note (2.3):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-07 — _"Traceability v2.3 taslağını resmi olarak
+> onaylıyorum. Belgeyi hemen dondur (Freeze) ve v2.2 sürümünü `-superseded`
+> olarak arşive kaldır."_ Approval and Freeze were taken in one decision. In the
+> same message the Owner recorded why the two ownership statements below are
+> right: that `F14` owns only the reading surface, and that the personal-data
+> rule is deliberately left without a Feature, together reflect the architecture
+> as it is.
+>
+> **Revision Note (2.3):** Superseding revision of Frozen v2.2, begun
+> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7.
+>
+> **What it records: the three unowned behaviours of §5C.2 now have owners, and
+> the closure produced a fourth Feature that v2.2 could not have anticipated.**
+> v2.2 named three gaps and §10's maintenance rule requires this document to be
+> updated when an authoritative relationship is added — three PRD sections, two
+> Features and two Stories were Frozen on 2026-09-07, so the rule is due.
+>
+> Three things in it are not a simple discharge of what v2.2 listed:
+>
+> 1. **`F14` did not exist in v2.2.** Commissioning the audit trail produced a
+>    reading surface — `/admin/audit-logs` — and the Owner allocated a Feature
+>    for it rather than letting an Admin page live under the Feature for the
+>    acts it displays. §5D records the new chain.
+> 2. **§23 has no Feature, deliberately.** The personal-data rule is a
+>    horizontal constraint on every operational surface, not a capability, and
+>    the Owner declined to allocate `F15` for it. Recorded here because a reader
+>    who finds `F13`, `F14` and then a rule with no Feature will otherwise
+>    assume something was forgotten.
+> 3. **`US-PLT-F13-001` is authoritative at v0.2, not v0.1.** Frozen v0.1
+>    contained a false statement about the code, written from memory rather than
+>    from the contract. It was corrected by a superseding revision on 2026-09-07
+>    and v0.1 is preserved with its error. A traceability record that pointed at
+>    v0.1 would point at the wrong Story.
+>
+> **What remains open is named in §5D.3 and §9**, chiefly that `UX-0006` has no
+> sections for either new Feature. It is recorded rather than resolved, because
+> this document records ownership and never confers it (§2).
+
+> **Freeze Note (2.2):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-06. This exact version must not be edited in place; a further
+> change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
+> Frozen v2.1 is preserved unchanged at `docs/traceability-v2.1-superseded.md`.
+>
+> **Approval Note (2.2):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-06 — _"Traceability v2.2 taslağını resmi olarak
+> onaylıyorum; belgeyi dondurup (Freeze) v2.1 sürümünü `-superseded` olarak
+> arşive kaldırabilirsin."_ Approval and Freeze were taken in one decision.
+>
+> **Commission Note (2.2):** In the same decision the Owner commissioned all
+> three of §5C.2's unowned behaviours — _"Bu üç boşluğu V1 lansmanından hemen
+> önce kapatmak zorundayız"_ — as `PRD-0006` sections, a Security Requirement,
+> and Feature `F13` with its Stories. §9 records each as commissioned rather
+> than as open, and the documents that discharge them are drafted separately:
+> this record does not confer their status.
+>
+> **Revision Note (2.2):** Superseding revision of Frozen v2.1, begun
+> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7.
+>
+> **What it records: fifteen increments were built between 2026-09-03 and
+> 2026-09-06, and three of them shipped behaviour that no authoritative document
+> owns.** v2.1's §9 named `I76`–`I78` as "built and PRD-owned; not yet traced
+> here" and left them for a v2.2. That list has since grown to `I90`, and
+> tracing it turned up something a count of increments would have hidden: most
+> of the work is owned, two things are owned by a document that was revised to
+> own them, and **three are not owned by anything**.
+>
+> The three are named in §5C and repeated in §9 with the action each needs.
+> They are recorded rather than resolved here, because inventing a behaviour
+> owner is exactly what this document must not do — it records ownership and
+> never confers it (§2).
+
+> **Freeze Note (2.1):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-04, together with `PLATFORM_FEATURE_REGISTRY.md` v1.2,
+> `US-PLT-F11-001` v0.1 and `US-PLT-F12-001` v0.1 — the four documents whose
+> shared blocker was `PRD-0006-platform.md` §21. This exact version must not be
+> edited in place; a further change requires a controlled revision under
+> `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v2.0 is preserved unchanged at
+> `docs/traceability-v2.0-superseded.md`.
+>
+> **Approval Note (2.1):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-04 — _"Bekleyen dört aday belgeyi
+> (PLATFORM_FEATURE_REGISTRY v1.2, iki PLT story'si ve traceability v2.1) resmi
+> olarak onaylıyorum. Belgeleri dondurup (Freeze) F12'nin §21'e bağlanma
+> sürecini tamamlayabilir ve eski sürümleri arşive kaldırabilirsin."_
+>
+> **Revision Note (2.1):** Superseding revision of Frozen v2.0, begun
+> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7.
+>
+> **What it records: the two Platform chains v2.0 left open are now closed, and
+> a ninth behaviour shipped.**
+>
+> v2.0's §5A named `PLT F11` and `PLT F12` as the two Features without a Story,
+> and named Listing Reports as "the one chain that is still incomplete" —
+> allocated, implemented, UX Frozen, and with no behaviour owner at all. §9
+> recorded the required action as _"Owner commission"_.
+>
+> The Owner commissioned it on 2026-09-03, in his admin architecture document:
+> _"F12 için PRD bölümü ve saklama süresi… PLT F11/F12 story'leri"_. All four
+> documents are now authoritative:
+>
+> - `PRD-0006-platform.md` **Frozen v2.5** — §21 Listing Reports (the missing
+>   behaviour owner), §20.4 amended, a defect in v2.3's §12 corrected, and
+>   §11.2's analytics inventory extended with the Affiliate Handoff Rate.
+>   Frozen 2026-09-03;
+> - `PLATFORM_FEATURE_REGISTRY.md` **Frozen v1.2** — `F12`'s Pending reference
+>   replaced. Frozen 2026-09-04;
+> - `US-PLT-F11-001` and `US-PLT-F12-001` **Frozen v0.1**. Frozen 2026-09-04.
+>
+> **The revision that carried §21 is v2.5, not the v2.4 this document named
+> while it was a Draft.** v2.4 was superseded before it was ever Frozen, so
+> every reference below was re-pointed at v2.5 before Freeze; a Frozen
+> traceability record citing v2.4 would trace the chain to a version that never
+> became authoritative. v2.4 is preserved at
+> `docs/prd/PRD-0006-platform-v2.4-candidate.md` as evidence of what was
+> proposed and when.
+>
+> **The one question inside §21 that was a decision rather than a review item is
+> decided:** §21.5's retention period for a reviewed Listing Report was set by
+> the Owner at **180 days** on 2026-09-03, and the sweep was built in `I77`.
+>
+> A ninth behaviour also shipped: increment `I75` built the settings `PLT F11`
+> has named since 2026-08-31 and never had. §5A's row for `PLT F11` is corrected
+> to say so, because v2.0's row described the complementary region alone.
+>
+> §5A and §5B are amended and §9 is updated. Nothing in §5, §6 or §7 is altered:
+> a candidate is not counted with the Frozen set, because counting it there is
+> precisely the error v1.1 was written to correct.
+
 - **Owner:** Product Owner / Architecture Owner
 - **Document:** Cross-Tier Traceability
 - **Status:** Frozen
+- **Approval Date:** 2026-09-07
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-07
+- **Frozen By:** Product Owner / Architecture Owner
 - **Maintenance Mode:** Living
-- **Version:** 1.1
-- **Last Updated:** 2026-08-31
+- **Version:** 2.3
+- **Supersedes:** Frozen v2.2, preserved unchanged at
+  `docs/traceability-v2.2-superseded.md`
+- **Last Updated:** 2026-09-07
+- **Raised by:** Implementation, after `I92`, under §10's own maintenance rule:
+  three `PRD-0006` sections, two Features and two Stories were Frozen on
+  2026-09-07, which is precisely the event that rule names
 - **Supersedes:** Frozen v1.0 (2026-07-25), preserved unchanged at
   `docs/traceability-v1.0-superseded.md`
 
@@ -46,10 +190,10 @@ This document records cross-tier coverage and unresolved traceability work. Defi
 
 ## 3. Verified Capability Mapping
 
-| Capability | Foundation basis | PRD | UX | Story coverage | Status |
-|---|---|---|---|---|---|
-| Presentation | Direct: `V1_SCOPE.md` §§3, 5. Supporting: Vision, Mission, Product Manifesto, and Product Principles. | PRD-0001 | UX-0003 | US-0001; US-OFR-F05-001 | Mapped |
-| Handoff Enablement | `ADR-0006`, `ADR-0007`, and `ADR-0008` | PRD-0001; PRD-0005 and PRD-0006 supporting | Applicable Business/Admin and person-facing handoff surfaces | US-0001; US-OFR-F06-001; US-OFR-F07-001 | Mapped |
+| Capability         | Foundation basis                                                                                      | PRD                                        | UX                                                           | Story coverage                          | Status |
+| ------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ | --------------------------------------- | ------ |
+| Presentation       | Direct: `V1_SCOPE.md` §§3, 5. Supporting: Vision, Mission, Product Manifesto, and Product Principles. | PRD-0001                                   | UX-0003                                                      | US-0001; US-OFR-F05-001                 | Mapped |
+| Handoff Enablement | `ADR-0006`, `ADR-0007`, and `ADR-0008`                                                                | PRD-0001; PRD-0005 and PRD-0006 supporting | Applicable Business/Admin and person-facing handoff surfaces | US-0001; US-OFR-F06-001; US-OFR-F07-001 | Mapped |
 
 Accepted relationship chain:
 
@@ -61,14 +205,14 @@ Accepted relationship chain:
 
 ## 4. Reconciled Story-Domain Inventory
 
-| Story Domain | Feature-ID owner | Behaviour owner | Primary UX owners | Parent Story | Generated Stories | Repository state |
-|---|---|---|---|---|---:|---|
-| Offering (`OFR`) | `OFFERING_CAPABILITY_ARCHITECTURE.md` | PRD-0001 | UX-0003, UX-0005 and applicable handoff UX | US-0001 | 7 | Frozen |
-| Discovery (`DSC`) | `DISCOVERY_FEATURE_REGISTRY.md` | PRD-0002 | UX-0001, UX-0002, UX-0003, UX-0004 | US-0002 | 10 | Frozen |
-| Identity (`IDN`) | `IDENTITY_FEATURE_REGISTRY.md` | PRD-0003 | UX-0008 and applicable return surfaces | US-0003 | 9 | Frozen |
-| Decision (`DEC`) | `DECISION_FEATURE_REGISTRY.md` | PRD-0004 | UX-0004, UX-0008, UX-0009 | US-0004 | 7 | Frozen |
-| Business (`BUS`) | `BUSINESS_FEATURE_REGISTRY.md` | PRD-0005 | UX-0005 and applicable Admin review surface | US-0005 | 7 | Frozen |
-| Platform (`PLT`) | `PLATFORM_FEATURE_REGISTRY.md` | PRD-0006 | UX-0006, UX-0008 | US-0006 | 10 | Frozen |
+| Story Domain      | Feature-ID owner                      | Behaviour owner | Primary UX owners                           | Parent Story | Generated Stories | Repository state |
+| ----------------- | ------------------------------------- | --------------- | ------------------------------------------- | ------------ | ----------------: | ---------------- |
+| Offering (`OFR`)  | `OFFERING_CAPABILITY_ARCHITECTURE.md` | PRD-0001        | UX-0003, UX-0005 and applicable handoff UX  | US-0001      |                 7 | Frozen           |
+| Discovery (`DSC`) | `DISCOVERY_FEATURE_REGISTRY.md`       | PRD-0002        | UX-0001, UX-0002, UX-0003, UX-0004          | US-0002      |                10 | Frozen           |
+| Identity (`IDN`)  | `IDENTITY_FEATURE_REGISTRY.md`        | PRD-0003        | UX-0008 and applicable return surfaces      | US-0003      |                 9 | Frozen           |
+| Decision (`DEC`)  | `DECISION_FEATURE_REGISTRY.md`        | PRD-0004        | UX-0004, UX-0008, UX-0009                   | US-0004      |                 7 | Frozen           |
+| Business (`BUS`)  | `BUSINESS_FEATURE_REGISTRY.md`        | PRD-0005        | UX-0005 and applicable Admin review surface | US-0005      |                 7 | Frozen           |
+| Platform (`PLT`)  | `PLATFORM_FEATURE_REGISTRY.md`        | PRD-0006        | UX-0006, UX-0008                            | US-0006      |                10 | Frozen           |
 
 The table confirms repository presence and lifecycle state. Feature-level validation evidence is recorded below.
 
@@ -76,15 +220,15 @@ The table confirms repository presence and lifecycle state. Feature-level valida
 
 Each listed Feature was checked individually against its authoritative Feature owner, behaviour-owning PRD reference, applicable UX reference, Parent Story Feature Map, Generated Story identifier, and current lifecycle metadata.
 
-| Domain | Validated Feature IDs | PRD owner | Frozen V1 UX coverage | Parent | Generated Stories | Result |
-|---|---|---|---|---|---:|---|
-| Offering | F01–F07 | PRD-0001; PRD-0005/0006 supporting where cited | UX-0003, UX-0005, UX-0006 | US-0001 | 7 | PASS |
-| Discovery | F01–F10 | PRD-0002 | UX-0001, UX-0002, UX-0003, UX-0004 | US-0002 | 10 | PASS |
-| Identity | F01–F09 | PRD-0003 | UX-0001, UX-0002, UX-0005, UX-0006, UX-0008, UX-0009 as cited | US-0003 | 9 | PASS |
-| Decision | F01–F07 | PRD-0004 | UX-0004, UX-0008, UX-0009 | US-0004 | 7 | PASS |
-| Business | F01–F07 | PRD-0005 | UX-0003, UX-0005, UX-0006, UX-0009 as cited | US-0005 | 7 | PASS |
-| Platform | F01–F10 | PRD-0006; target-owning PRDs supporting where cited | UX-0005, UX-0006, UX-0008 | US-0006 | 10 | PASS |
-| **Total** | **50 authoritative Feature IDs** | **6 owning PRDs** | **8 Frozen V1 UX documents** | **6 Parents** | **50** | **PASS** |
+| Domain    | Validated Feature IDs            | PRD owner                                           | Frozen V1 UX coverage                                         | Parent        | Generated Stories | Result   |
+| --------- | -------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- | ------------- | ----------------: | -------- |
+| Offering  | F01–F07                          | PRD-0001; PRD-0005/0006 supporting where cited      | UX-0003, UX-0005, UX-0006                                     | US-0001       |                 7 | PASS     |
+| Discovery | F01–F10                          | PRD-0002                                            | UX-0001, UX-0002, UX-0003, UX-0004                            | US-0002       |                10 | PASS     |
+| Identity  | F01–F09                          | PRD-0003                                            | UX-0001, UX-0002, UX-0005, UX-0006, UX-0008, UX-0009 as cited | US-0003       |                 9 | PASS     |
+| Decision  | F01–F07                          | PRD-0004                                            | UX-0004, UX-0008, UX-0009                                     | US-0004       |                 7 | PASS     |
+| Business  | F01–F07                          | PRD-0005                                            | UX-0003, UX-0005, UX-0006, UX-0009 as cited                   | US-0005       |                 7 | PASS     |
+| Platform  | F01–F10                          | PRD-0006; target-owning PRDs supporting where cited | UX-0005, UX-0006, UX-0008                                     | US-0006       |                10 | PASS     |
+| **Total** | **50 authoritative Feature IDs** | **6 owning PRDs**                                   | **8 Frozen V1 UX documents**                                  | **6 Parents** |            **50** | **PASS** |
 
 Validation rules and results:
 
@@ -96,6 +240,251 @@ Validation rules and results:
 - supporting cross-domain references do not transfer behaviour ownership;
 - no generated Story depends on Draft `UX-0007 Messaging`.
 
+## 5A. The 2026-09-03 Extension
+
+Nine behaviours shipped after Frozen v1.1 was written. On 2026-09-03 the Owner
+approved and Froze the documents for the first eight, in five linked decisions.
+The ninth shipped later the same day and its documents are candidates; the two
+Platform chains that were incomplete now have candidates too, and both are named
+at the end.
+
+**They are recorded here rather than folded into §5's totals**, because §5 is
+the validated baseline of 2026-08-31 and rewriting it would destroy the record
+of what was checked, when, and by whom. §5B carries the new totals.
+
+| Behaviour                          | Increment | Feature ID | Behaviour owner                             | Story                            | UX                  |
+| ---------------------------------- | --------- | ---------- | ------------------------------------------- | -------------------------------- | ------------------- |
+| Price Constraint                   | I61       | `DSC F11`  | `PRD-0002` v3.0 §§5.5A, 10.6                | `US-DSC-F11-001` v1.0            | `UX-0002` v1.3 §9A  |
+| Product Score floor                | I62       | `DSC F12`  | `PRD-0002` v3.0 §§5.5B, 10.7                | `US-DSC-F12-001` v1.0            | `UX-0002` v1.3 §9B  |
+| Stated availability                | I64       | `DSC F13`  | `PRD-0002` v3.0 §§5.5C, 10.8                | `US-DSC-F13-001` v1.0            | `UX-0002` v1.3 §9C  |
+| Result Arrangement                 | I68       | `DSC F14`  | `PRD-0002` v3.0 §12.6                       | `US-DSC-F14-001` v1.0            | `UX-0002` v1.3 §9D  |
+| Listing Number                     | I67       | `DSC F15`  | `PRD-0002` v3.0 §8.2                        | `US-DSC-F15-001` v1.0            | `UX-0002` v1.3 §10  |
+| Kept Products                      | I64       | `DSC F16`  | `PRD-0007-member-area.md`                   | `US-DSC-F16-001` v1.0            | `UX-0002` v1.3 §10  |
+| Advertising — complementary region | I70       | `PLT F11`  | `PRD-0006` v2.3 §20                         | `US-PLT-F11-001` **Frozen v0.1** | `UX-0003` v1.1 §8.7 |
+| Advertising — placement settings   | I75       | `PLT F11`  | `PRD-0006` v2.3 §20 + **Frozen v2.5** §20.4 | `US-PLT-F11-001` **Frozen v0.1** | `UX-0006`           |
+| Listing Reports                    | I69       | `PLT F12`  | `PRD-0006` **Frozen v2.5** §21              | `US-PLT-F12-001` **Frozen v0.1** | `UX-0003` v1.1 §8.8 |
+
+All six Discovery Stories carry `Frozen v1.0` and Delivery Status `Done`. The
+Delivery Status is `Done` on the day of approval because each Story was written
+after its behaviour shipped and its Acceptance Criteria were extracted from a
+running, tested implementation — the Story records what was built rather than
+commissioning it.
+
+Two further behaviours have implementation and documentation but no Feature of
+their own, because they complete Features that already exist:
+
+| Behaviour                                                           | Increment | Completes                                                              |
+| ------------------------------------------------------------------- | --------- | ---------------------------------------------------------------------- |
+| Category field sets — 404 Attribute definitions across 127 headings | I66       | `DSC F05` Attribute Filtering, which had no Attributes to filter on    |
+| The product review surface                                          | I71       | `OFR F05` Offering Presentation, whose score had no reviews beneath it |
+
+### Documents Frozen on 2026-09-03
+
+| Document                            | From                        | To                                      |
+| ----------------------------------- | --------------------------- | --------------------------------------- |
+| `PRD-0002-discovery.md`             | Frozen v2.4; candidate v2.5 | **Frozen v3.0**                         |
+| `UX-0002-discovery.md`              | Frozen v1.1; candidate v1.2 | **Frozen v1.3**                         |
+| `DISCOVERY_FEATURE_REGISTRY.md`     | Frozen v1.0; candidate v1.1 | **Frozen v2.0**                         |
+| `US-DSC-F11-001` … `US-DSC-F16-001` | Draft candidates            | **Frozen v1.0**, Delivery Status `Done` |
+| `PRD-0006-platform.md`              | Frozen v2.2                 | **Frozen v2.3**                         |
+| `PLATFORM_FEATURE_REGISTRY.md`      | Frozen v1.0                 | **Frozen v1.1**                         |
+| `UX-0003-offering-detail.md`        | Frozen v1.0                 | **Frozen v1.1**                         |
+
+Superseded versions are preserved beside each: a superseded baseline is evidence
+of what was recorded and when, and deleting it removes the proof that a
+correction was a correction.
+
+### The two Platform chains, and where they now stand
+
+v2.0 recorded one chain as incomplete — **Listing Reports had no behaviour
+owner at all** — and recorded the required action as an Owner commission,
+because writing a PRD section for behaviour that had shipped without one is a
+decision rather than a gap to fill quietly.
+
+**The Owner commissioned it on 2026-09-03**, in his admin architecture document,
+and closed the chain over the two days that followed:
+
+| Document                       | From        | Now             | Frozen     | Carries                                                                                                  |
+| ------------------------------ | ----------- | --------------- | ---------- | -------------------------------------------------------------------------------------------------------- |
+| `PRD-0006-platform.md`         | Frozen v2.3 | **Frozen v2.5** | 2026-09-03 | §21 Listing Reports; §20.4 amended; §12's list corrected; §11.2 extended with the Affiliate Handoff Rate |
+| `PLATFORM_FEATURE_REGISTRY.md` | Frozen v1.1 | **Frozen v1.2** | 2026-09-04 | `F12`'s Pending behaviour-owner reference replaced                                                       |
+| `US-PLT-F11-001`               | none        | **Frozen v0.1** | 2026-09-04 | Advertising Placement Settings                                                                           |
+| `US-PLT-F12-001`               | none        | **Frozen v0.1** | 2026-09-04 | Listing Reports                                                                                          |
+
+Four things are true of this set and are stated rather than implied:
+
+1. **The order was wrong, and is recorded as wrong.** Both Features shipped
+   before their Story existed, and `PLT F12` shipped before any PRD section
+   owned it. Each document says so in its own Creation Note, and Freezing them
+   has not removed those notes. Writing the documents afterwards does not make
+   the sequence correct; hiding that it happened would make it worse.
+2. **The registry's rule was satisfied in sequence, not evaded.** v1.1 forbade
+   writing a Story against `PLT F12` until a PRD section existed. §21 was
+   written first; the Story was written against it; and neither was Approved
+   before §21 was Frozen, on 2026-09-03.
+3. **The item inside §21 that was a decision rather than a review comment is
+   decided.** §21.5 deletes a reviewed Listing Report — and the reporter's own
+   words with it — **180 days** after review, and keeps an unreviewed report
+   whatever its age. The Owner set the period on 2026-09-03; `US-PLT-F12-001`
+   AC-11 now names it, and `I77` built the sweep.
+4. **The Frozen chain names v2.5, not v2.4.** The four documents were drafted
+   against `PRD-0006` v2.4 and were re-pointed at v2.5 before Freeze, because
+   v2.4 was superseded before it was ever Frozen. Freezing the drafted text
+   would have left four Frozen documents tracing a chain to a version with no
+   authority — the same class of defect as the Pending reference this whole
+   sequence existed to discharge.
+
+**A defect in v2.3 is also corrected by the same chain.** `PRD-0006` §12 lists
+the places where platform-owned operational rules may live, and v2.2 added §20
+Advertising Placement Settings without adding it to that list — so the document
+named five places on one page and described a sixth on another. v2.5 corrects
+the list and records the omission rather than repairing it silently: it is the
+exact failure §12 exists to prevent, and it happened inside §12.
+
+## 5C. The 2026-09-03 to 2026-09-06 increments
+
+Fifteen increments were built after v2.1 was frozen. This section records what
+each one shipped and **which authoritative document owns it**, because that is
+the only question this file answers. It does not assess the code.
+
+### 5C.1 Owned, and by what
+
+| Increment           | What shipped                                                       | Behaviour owner                                      | Feature                       | Note                                                                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `I76`               | Partner feed intake, on a schedule, with failures on the dashboard | `PRD-0001` §5.11 (Source), now **v4.2** §5.11.1      | — (mechanism)                 | The intake is a mechanism; §5.11.1 fixes what it may touch and leaves the mechanism to engineering documents                                                         |
+| `I77`               | 72-hour missing-product tolerance; Listing Report retention sweep  | `PRD-0001` v4.2 §5.11.1a; `PRD-0006` v2.5 §21.5      | `PLT F12` for the report half | The tolerance figure is the Owner's decision of 2026-09-03                                                                                                           |
+| `I78`               | Intake Availability Input; Affiliate Handoff Rate                  | `PRD-0001` §7.2 (third input); `PRD-0006` v2.5 §11.2 | `PLT F10` for the rate        | Both were added to their PRDs before the code, which is the order this project keeps                                                                                 |
+| `I79`               | Admin overview dashboard with metric cards and engagement bars     | `PRD-0006` §6, §11                                   | `PLT F01`, `PLT F10`          | A presentation of indicators `F10` already owns; no new indicator was invented                                                                                       |
+| `I80`               | Brand palette applied to the interface and the Admin panel         | — (visual design)                                    | —                             | No behaviour. Recorded so that a reader does not go looking for an owner                                                                                             |
+| `I81`               | Admin surface completeness: case targets, dates, workload headings | `PRD-0006` §§7, 11                                   | `PLT F02`, `F07`, `F10`       | Filled in surfaces the Features already required                                                                                                                     |
+| `I85`, `I86`, `I90` | Catalogue importer, image ingest, development reset                | — (engineering tooling)                              | —                             | Operator tooling. `PRD-0001` v4.2 §5.11.1 says explicitly that a match rule is "an engineering concern governed by its own documents"; the same reading covers these |
+| `I87`               | Affiliate-destination acts written to the central audit trail      | `PRD-0006` §8 for the acts                           | `PLT F07`                     | The acts are owned. **The trail they are written to is not** — see §5C.2                                                                                             |
+| `I88`               | The intake restricted to price and stock of live listings          | **`PRD-0001` v4.2 §5.11.1**                          | —                             | The Owner's decision of 2026-09-05, carried into a superseding revision before the code was written                                                                  |
+| `I89`               | A feed matched to an imported listing by Product Key               | **`PRD-0001` v4.2 §5.11.1**                          | —                             | Same revision. The match rule itself is engineering, and the document says so                                                                                        |
+
+### 5C.2 Not owned by anything — three items for Owner commission
+
+> **Closed 2026-09-07.** All three now have Frozen owners; §5D records what
+> each became. The section is **left standing rather than rewritten**, because
+> a gap that is edited out of the record leaves no evidence that it was ever
+> open — and these three were open for three days while the code that
+> implements them was already in use.
+
+Each of these is **built, in use, and Frozen-document-less**. They are listed
+the way `PLT F12`'s missing behaviour owner was listed in v2.0: named, with the
+action, and not quietly folded into a Feature that does not cover them.
+
+| #   | What exists                                                                                                                                                                             | What owns it today                                                                                                                  | What it needs                                                                                                                                                                    |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **The Admin audit trail** (`I83`, `I84`, `I87`): what is recorded, that it is append-only, who may read it, that it is never swept, and that a Sub-Admin tier must not reach it         | Nothing. `PRD-0006` has no section for it; the rules live in the Owner's messages of 2026-09-04 and 2026-09-05 and in code comments | A `PRD-0006` section, and a `PLT` Feature and Story. Until then the strongest rule the platform has — an immutable record of what Admins do — rests on no authoritative document |
+| 2   | **The personal-data disclosure rule** (`I82`): no email address on any operational Admin surface; an address is revealed only on one case, only on request, and the request is recorded | Nothing. The Owner's rule of 2026-09-04, verbatim, is the only statement of it                                                      | A `PRD-0006` sentence at minimum. It is a data-protection commitment, and a commitment that exists only in an implementation is one nobody can hold the platform to              |
+| 3   | **Admin feed management** (`I76`): the surface where an Admin registers a partner feed, sets its mapping, pauses it and reads its runs                                                  | `PRD-0001` owns what an intake may do; nothing owns the Admin surface that configures one                                           | A `PLT` Feature and Story, and a `UX-0006` section. The Features stop at `F12` and none of them covers it                                                                        |
+
+**Why they are not being written here.** §2: this document records ownership
+and never confers it. Writing a Feature row for the audit trail would create the
+appearance of an authoritative chain whose PRD section does not exist — which is
+the defect v1.1 was written to correct, in a new place.
+
+### 5C.3 What `/admin/users` is, and is not
+
+`I83` also added a user list. It is a **reading surface** over accounts that
+`PLT F05` already owns the actions for, carrying ids, status, registration date
+and counts — and, by rule 2 above, no email addresses. It needs no new Feature;
+it is named here because a new Admin page that appears in no document is exactly
+the thing a later reader will not find.
+
+## 5D. The 2026-09-07 closure
+
+On 2026-09-07 the three behaviours of §5C.2 were given Frozen owners, and two
+further increments shipped. This section records the chains as they now stand.
+It assesses no code and confers no status: every document named below is
+authoritative because its own Owner decision made it so, on the date given.
+
+### 5D.1 The three gaps, and what closed each
+
+| §5C.2 item                           | Behaviour owner                                                                                                                                       | Feature                                                                                                              | Story                     | Frozen     |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------- | ---------- |
+| 1. The Admin audit trail             | `PRD-0006` **v2.6 §22** — what is recorded, append-only at the database, retained indefinitely, Super Admin only, closed to any future Sub-Admin tier | `PLT F14` for the **reading** surface; the acts remain under the Features that own them (`F02`, `F03`, `F05`, `F07`) | `US-PLT-F14-001` v0.1     | 2026-09-07 |
+| 2. The personal-data disclosure rule | `PRD-0006` **v2.6 §23**, as a **Security Requirement**                                                                                                | **None, deliberately** — see §5D.2                                                                                   | —                         | 2026-09-07 |
+| 3. Admin feed management             | `PRD-0006` **v2.6 §24**                                                                                                                               | `PLT F13`                                                                                                            | `US-PLT-F13-001` **v0.2** | 2026-09-07 |
+
+Two things about this table are worth stating rather than leaving to be
+inferred.
+
+**The audit trail's Feature covers reading it, not writing to it.** An Admin act
+is owned by the Feature that permits the act; the trail records acts owned by
+four different Features and is not a fifth kind of act. What needed a Feature
+was the surface at `/admin/audit-logs` — a page that reads every Admin's
+history, restricted to one tier — because an interface with no Feature is, in
+the Owner's words of 2026-09-07, an unowned floor in the building as far as
+authorization is concerned.
+
+**The Story is `US-PLT-F13-001` v0.2.** Frozen v0.1 stated that two Acceptance
+Criteria were unmet by the code. One of them, `AC-3`, had been met since `I76`:
+the feed mapping contract has been `.strict()` throughout, so an unnamed key was
+always refused. The statement was written from memory rather than from the
+contract, and it was Frozen before anyone checked it. The correction was made by
+superseding revision on 2026-09-07 rather than by editing the Frozen document,
+and v0.1 is preserved at `US-PLT-F13-001-feed-management-v0.1-superseded.md`
+**with its wrong sentence intact**. Anything citing v0.1 cites the error.
+
+### 5D.2 Why `§23` has no Feature
+
+The Owner declined to allocate `F15` for the personal-data rule, and the reason
+is a distinction this document exists to keep: **a Feature is a capability the
+platform offers; §23 is a constraint on how every capability behaves.** No
+screen implements "personal data protection". The rule instead binds each
+operational surface — no address in any list or queue — and its one act of
+disclosure lives inside `F02`'s case detail, where `US-PLT-F02-001` already owns
+the case surface and the reveal is recorded as an audited event.
+
+`PLATFORM_FEATURE_REGISTRY.md` v1.3 records the non-allocation explicitly. A
+registry that simply skipped from `F14` to a future `F15` would leave a reader
+to conclude the rule had been forgotten, which is the opposite of what happened.
+
+### 5D.3 The two increments after the closure
+
+| Increment | What shipped                                                                                                                                                                                                                             | Behaviour owner         | Feature   | Note                                                                                                                                                                                                                                                                                            |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `I91`     | A failed feed run records **which kind** of failure it was — source unreachable, document unreadable, mapping incomplete — and a document that parses but yields nothing usable is now a failure rather than a green run with rejections | `PRD-0006` v2.6 §24     | `PLT F13` | Discharges `US-PLT-F13-001` `AC-9`, which the Owner Frozen knowing it was unmet and ordered fixed in the first increment after the freeze                                                                                                                                                       |
+| `I92`     | The catalogue import refuses a row with no `productKey`, shows what it parsed from every row, and runs its dry run on a read-only database session                                                                                       | — (engineering tooling) | —         | Same reading as `I85`/`I86`/`I90` in §5C.1: operator tooling, governed by `V1_LAUNCH_RUNBOOK.md` rather than by a Feature. The **rule** it enforces is owned: `PRD-0001` v4.2 §5.11.1 makes `productKey` the match key, which is what makes a key-less imported listing unreachable by any feed |
+
+### 5D.4 What is still open
+
+| #   | What exists                                                                    | What owns it                                                                                                  | What it needs                                                                                                                                                                                                                                                                                                                                                                                          |
+| --- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | The Admin surfaces for `F13` (feed management) and `F14` (`/admin/audit-logs`) | `PRD-0006` v2.6 §§22.6, 24 own the behaviour; `US-PLT-F13-001` v0.2 and `US-PLT-F14-001` v0.1 own the Stories | **`UX-0006` sections.** Checked rather than assumed: `UX-0006` does not mention `F13` or `F14` anywhere. It is `PLATFORM_FEATURE_REGISTRY.md` v1.3 that carries "section pending" in their UX column — the pending state is recorded in the registry and the UX document is simply silent. Every other Platform Feature has a section, making these the only two Admin pages in the platform with none |
+| 2   | The launch catalogue itself                                                    | Nothing, and correctly so — it is data, not behaviour                                                         | Named here only because `V1_LAUNCH_RUNBOOK.md` §2 lists it as the Owner's to supply and a reader of §6's coverage figures may otherwise read "complete" as "ready to launch". As of 2026-09-07 no `businesses.csv` or `offerings.csv` exists                                                                                                                                                           |
+
+Item 1 is a real gap of the same kind §5C.2 held, and it is listed the same way:
+named, with the action, and not folded into a document that does not cover it.
+
+## 5B. Totals After the Extension
+
+|                           | Frozen at v1.1 (2026-08-31) | Added 2026-09-03 | Added 2026-09-04 | Added 2026-09-07 |          Now |
+| ------------------------- | --------------------------: | ---------------: | ---------------: | ---------------: | -----------: |
+| Authoritative Feature IDs |                          50 |                8 |                0 |                2 |       **60** |
+| Generated Stories         |                          50 |                6 |                2 |                2 |       **60** |
+| Features with a Story     |                          50 |                6 |                2 |                2 | **60 of 60** |
+
+The 2026-09-07 column is `PLT F13` and `PLT F14`, allocated in
+`PLATFORM_FEATURE_REGISTRY.md` Frozen v1.3, with `US-PLT-F13-001` Frozen **v0.2**
+and `US-PLT-F14-001` Frozen v0.1. `PRD-0006` §23 adds no row: it is a Security
+Requirement and no Feature was allocated for it (§5D.2), so it is a behaviour the
+platform is bound by and not a capability the platform offers.
+
+**The count first reached 58 of 58 on 2026-09-04, and only because the Freezes were
+taken in order.** `PLT F11` and `PLT F12` are counted here because their Stories
+are **Frozen v0.1**, not because they exist: a Draft is not a Generated Story
+for the purpose of this count, and counting a candidate with the Frozen set is
+the error v1.1 was written to correct.
+
+The order the count depended on was `PRD-0006-platform.md` v2.5 (2026-09-03),
+then `PLATFORM_FEATURE_REGISTRY.md` v1.2, then the two Stories (2026-09-04) —
+each depending on the one before it. **58 of 58 is a statement about documents,
+not about delivery**: it says every authoritative Feature has a Frozen Story,
+and says nothing about whether any of them is built.
+
 ## 6. Implementation Coverage
 
 v1.0 recorded six tiers — capability, PRD, UX, Parent, Feature, Generated Story
@@ -106,15 +495,15 @@ criterion by criterion, in `docs/implementation/DELIVERY_STATUS_ADVANCEMENT.md`.
 This section records that the tier exists and where its evidence lives; it does
 not restate the evidence, and it confers no status on any Story.
 
-| Domain | Generated Stories | Acceptance Criteria | Delivery Status | Evidence |
-|---|---:|---:|---|---|
-| Offering | 7 | 64 | `Done` | `DELIVERY_STATUS_ADVANCEMENT.md`; `US-OFR-F05-001` AC-3 also `AC3_ATTRIBUTE_GROUPING_DECISION.md` |
-| Discovery | 10 | 81 | `Done` | `DELIVERY_STATUS_ADVANCEMENT.md` |
-| Identity | 9 | 81 | `Done` | `DELIVERY_STATUS_ADVANCEMENT.md` |
-| Decision | 7 | 72 | `Done` | `DELIVERY_STATUS_ADVANCEMENT.md` |
-| Business | 7 | 95 | `Done` | `DELIVERY_STATUS_ADVANCEMENT.md` |
-| Platform | 10 | 133 | `Done` | `DELIVERY_STATUS_ADVANCEMENT.md` |
-| **Total** | **50** | **526** | **all `Done`** | — |
+| Domain    | Generated Stories | Acceptance Criteria | Delivery Status | Evidence                                                                                          |
+| --------- | ----------------: | ------------------: | --------------- | ------------------------------------------------------------------------------------------------- |
+| Offering  |                 7 |                  64 | `Done`          | `DELIVERY_STATUS_ADVANCEMENT.md`; `US-OFR-F05-001` AC-3 also `AC3_ATTRIBUTE_GROUPING_DECISION.md` |
+| Discovery |                10 |                  81 | `Done`          | `DELIVERY_STATUS_ADVANCEMENT.md`                                                                  |
+| Identity  |                 9 |                  81 | `Done`          | `DELIVERY_STATUS_ADVANCEMENT.md`                                                                  |
+| Decision  |                 7 |                  72 | `Done`          | `DELIVERY_STATUS_ADVANCEMENT.md`                                                                  |
+| Business  |                 7 |                  95 | `Done`          | `DELIVERY_STATUS_ADVANCEMENT.md`                                                                  |
+| Platform  |                10 |                 133 | `Done`          | `DELIVERY_STATUS_ADVANCEMENT.md`                                                                  |
+| **Total** |            **50** |             **526** | **all `Done`**  | —                                                                                                 |
 
 Rules this tier follows, which are the rules of the tiers above it:
 
@@ -146,15 +535,15 @@ remain unchanged; any future change to their inventories requires a controlled
 revision. A Delivery Status records delivery and confers no lifecycle authority:
 the Story files remain Frozen and their Acceptance Criteria unaltered.
 
-| Domain | Parent | Generated | Total |
-|---|---:|---:|---:|
-| Offering | 1 | 7 | 8 |
-| Discovery | 1 | 10 | 11 |
-| Identity | 1 | 9 | 10 |
-| Decision | 1 | 7 | 8 |
-| Business | 1 | 7 | 8 |
-| Platform | 1 | 10 | 11 |
-| **Total** | **6** | **50** | **56** |
+| Domain    | Parent | Generated |  Total |
+| --------- | -----: | --------: | -----: |
+| Offering  |      1 |         7 |      8 |
+| Discovery |      1 |        10 |     11 |
+| Identity  |      1 |         9 |     10 |
+| Decision  |      1 |         7 |      8 |
+| Business  |      1 |         7 |      8 |
+| Platform  |      1 |        10 |     11 |
+| **Total** |  **6** |    **50** | **56** |
 
 ## 8. Scope Decision — UX-0007 Messaging
 
@@ -169,13 +558,27 @@ Repository treatment:
 
 ## 9. Remaining Lifecycle Work
 
-| Item | State | Required action |
-|---|---|---|
-| Full Feature-level validation across all six domains | Complete — PASS | Preserve evidence and rerun after any controlled upstream revision |
-| This superseding revision | **Frozen v1.1** | Complete. Independent review passed 2026-08-31; Owner approval and, separately, Owner freeze taken the same day. This document is the baseline; v1.0 is preserved at `docs/traceability-v1.0-superseded.md` |
-| Implementation coverage of all 526 Acceptance Criteria | Complete — recorded in §6 | Rerun the per-criterion evidence extraction after any controlled Story or PRD revision |
-| Outbound email vendor and Decision Chat assistant vendor | Not selected | Owner selection. Both transports are written and tested with no vendor in them; neither affects any chain this document traces |
-| `UX-0007 Messaging` relationship to V1 | Resolved for V1 | Retain as historical Draft outside the Frozen V1 baseline |
+| Item                                                     | State                                     | Required action                                                                                                                                                                                                                                                        |
+| -------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full Feature-level validation across all six domains     | Complete — PASS                           | Preserve evidence and rerun after any controlled upstream revision                                                                                                                                                                                                     |
+| Eight in-flight chains of 2026-09-03 (§5A)               | Resolved — Approved and Frozen            | Complete. Recorded in §5A                                                                                                                                                                                                                                              |
+| `PRD-0006` section for Listing Reports                   | Resolved — **Frozen v2.5 §21**            | Complete. Approved and Frozen 2026-09-03; `PLT F12`'s behaviour owner is authoritative                                                                                                                                                                                 |
+| Listing Report retention period (§21.5)                  | Resolved — **180 days**                   | Complete. Decided by the Owner 2026-09-03; sweep built in `I77`, with `status <> 'OPEN'` guarding an unreviewed report of any age                                                                                                                                      |
+| `PLT F11` and `PLT F12` Stories                          | Resolved — **Frozen v0.1**                | Complete. Approved and Frozen 2026-09-04, after `PRD-0006` v2.5 and `PLATFORM_FEATURE_REGISTRY.md` v1.2, in that order. Both carry Delivery Status `Implemented`                                                                                                       |
+| `PRD-0006` §12 list omitting §20                         | Resolved — corrected in v2.5              | Complete. The correction is recorded as a defect in Frozen v2.3 rather than as a silent repair                                                                                                                                                                         |
+| Frozen v2.1                                              | **Frozen v2.1**                           | Complete. Owner approval and, separately, Owner freeze taken 2026-09-04; preserved as the baseline until this revision is approved                                                                                                                                     |
+| Frozen v2.2                                              | **Frozen v2.2**                           | Complete. Approved and Frozen 2026-09-06; superseded 2026-09-07 and preserved at `docs/traceability-v2.2-superseded.md`                                                                                                                                                |
+| This superseding revision (v2.3)                         | **Frozen v2.3**                           | Complete. Approved and Frozen 2026-09-07. This document is the baseline; v2.2 is preserved at `docs/traceability-v2.2-superseded.md`                                                                                                                                   |
+| Increments `I76`–`I90`                                   | **Traced — recorded in §5C**              | Complete. All fifteen now have an owner: the three that had none on 2026-09-06 were commissioned and Frozen on 2026-09-07 (§5D.1)                                                                                                                                      |
+| Increments `I91`, `I92`                                  | **Traced — recorded in §5D.3**            | Complete. `I91` discharges `US-PLT-F13-001` `AC-9`; `I92` is operator tooling enforcing a rule `PRD-0001` v4.2 §5.11.1 owns                                                                                                                                            |
+| `UX-0006` sections for `F13` and `F14`                   | **Open**                                  | Both Features are Frozen with Stories and no UX section. The pending state is recorded in the **registry**, not in `UX-0006`, which does not mention either Feature. The only two Admin surfaces in the platform without a UX section. Recorded in §5D.4               |
+| The launch catalogue (`businesses.csv`, `offerings.csv`) | **Not supplied**                          | Owner's to supply per `V1_LAUNCH_RUNBOOK.md` §2. As of 2026-09-07 neither file exists. Named so that §6's coverage figures are not read as launch readiness                                                                                                            |
+| **The Admin audit trail** (`I83`, `I84`, `I87`)          | Resolved — **`PRD-0006` Frozen v2.6 §22** | Complete. Approved and Frozen 2026-09-07. The reading surface is `PLT F14`, with `US-PLT-F14-001` Frozen v0.1; the acts stay under the Features that own them. Recorded in §5D.1                                                                                       |
+| **The personal-data disclosure rule** (`I82`)            | Resolved — **`PRD-0006` Frozen v2.6 §23** | Complete. Approved and Frozen 2026-09-07 as a Security Requirement. **No Feature was allocated, by the Owner's decision**; the reason is recorded in §5D.2 and in `PLATFORM_FEATURE_REGISTRY.md` v1.3, so that the absence reads as a decision rather than an omission |
+| **Admin feed management surface** (`I76`)                | Resolved — **`PRD-0006` Frozen v2.6 §24** | Complete. `F13` allocated in `PLATFORM_FEATURE_REGISTRY.md` Frozen v1.3; the Story is `US-PLT-F13-001` **Frozen v0.2**, not v0.1 — see §5D.1                                                                                                                           |
+| Implementation coverage of all 526 Acceptance Criteria   | Complete — recorded in §6                 | Rerun the per-criterion evidence extraction after any controlled Story or PRD revision                                                                                                                                                                                 |
+| Outbound email vendor and Decision Chat assistant vendor | Not selected                              | Owner selection. Both transports are written and tested with no vendor in them; neither affects any chain this document traces                                                                                                                                         |
+| `UX-0007 Messaging` relationship to V1                   | Resolved for V1                           | Retain as historical Draft outside the Frozen V1 baseline                                                                                                                                                                                                              |
 
 ## 10. Maintenance
 

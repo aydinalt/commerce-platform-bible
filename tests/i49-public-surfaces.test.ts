@@ -201,6 +201,25 @@ describe("Increment I49 the public surfaces", () => {
       .sort();
 
     expect(declared).toEqual([
+      /*
+       * **I79 added twelve names and had to say so here.** The overview
+       * dashboard is the first surface in this application that is scanned
+       * rather than read, and neither of its two patterns existed: a row of
+       * metric cards, and a bar per listing scaled against the most-opened one.
+       * Both are components rather than page markup, for the reason
+       * `i48-management-surfaces` states, and both are declared here so the
+       * vocabulary grew deliberately rather than quietly.
+       *
+       * **I82 added four more**, adapting the Owner's reference template: the
+       * page header and its breadcrumb, and the metric card's badge and ruled
+       * footer link.
+       */
+      // I68. The Owner's four tabs, above the list they arrange.
+      "arrangement",
+      "arrangement-note",
+      "arrangement-tab",
+      "arrangement-tab-on",
+      "arrangement-tabs",
       "attribute-absent",
       "attributes",
       "auth",
@@ -208,26 +227,153 @@ describe("Increment I49 the public surfaces", () => {
       "badge-critical",
       "badge-notice",
       "brand",
+      "breadcrumb",
+      // I61. The budget (UX-0002 §9A) — a criterion, not a Sort.
+      "budget",
+      "budget-applied",
+      "budget-form",
+      "budget-note",
+      "budget-state",
       "business-logo",
       "category-path",
       "comparison",
       "comparison-business",
+      // I70. The complementary-product block, set apart from the listing it
+      // sits beside — the visual half of the label PRD-0006 §20.1 requires.
+      "complementary",
+      "complementary-label",
+      "complementary-lead",
+      "complementary-link",
+      "complementary-list",
+      "complementary-name",
+      "complementary-note",
+      "complementary-partner",
       "decision-entries",
+      // I63. Twenty-five products a page, with the pager the Owner's prototype
+      // puts under them.
+      "discovery-page",
+      "discovery-page-current",
+      "discovery-pager",
+      "discovery-pager-controls",
+      "discovery-pager-count",
+      "engagement",
+      "engagement-figures",
+      "engagement-fill",
+      "engagement-label",
+      "engagement-note",
+      "engagement-track",
+      /*
+       * I61. The budget's two amount fields use the site's existing form-field
+       * class rather than a private one. A public surface reaching for the
+       * shared class is the point of having one — and the list records that it
+       * now does, so the next person to read it is not surprised.
+       */
+      // I64. A checkbox and its label read as one line, where the budget's
+      // text fields stack.
+      "favourites-note",
+      "field",
       "field-hint",
+      "field-inline",
       "field-wide",
       "flow",
       "listing-card",
+      // I60. The prototype's wide row: picture, what the thing is, the way out.
+      "listing-card-actions",
       "listing-card-facts",
+      // I64. The heart: the one thing a Listing Card carries that is about the
+      // person rather than about the Offering.
+      "listing-card-favourite",
+      // I59. The card's one control and the only thing on a public surface
+      // that leaves the platform. `US-DSC-F06-001` v1.1 AC-9.
+      "listing-card-handoff",
+      "listing-card-handoff-target",
+      "listing-card-heart",
+      "listing-card-heart-on",
+      "listing-card-main",
+      "listing-card-open",
+      // I62. The product's score, in the row between what the thing is and what
+      // it costs, exactly where the Owner's prototype puts it.
+      "listing-card-rating",
       "listing-card-visual",
       "listing-cards",
+      // I67. The listing number, on the card and on the page it opens: one rule
+      // set, because a number read digit by digit must line up the same way in
+      // both places.
+      "listing-number",
+      "metric-card",
+      "metric-card-detail",
+      "metric-card-link",
+      "metric-card-mark",
+      "metric-card-unavailable",
+      "metric-card-value",
+      "metric-grid",
+      // I56. The price, on the card and on the page it opens. One rule set for
+      // both, so the same fact cannot look like two different kinds of thing.
+      "offering-price",
+      "offering-price-absent",
+      "offering-price-amount",
+      "offering-price-block",
+      "offering-price-note",
+      "offering-price-prior",
+      "offering-price-quoted",
+      "offering-price-sellers",
+      "offering-price-stock",
+      // I58. One product's prices, read down a column rather than as cards.
+      "offering-seller",
+      "offering-seller-current",
+      "offering-seller-list",
+      "offering-seller-name",
+      "offering-sellers",
       "offering-visuals",
+      "page-head",
+      "period-tabs",
+      // I62. One rule set for the score, on the card and on the page it opens,
+      // so the same fact cannot look like two different kinds of thing.
+      "presentation-rating",
+      "product-rating",
+      "product-rating-count",
+      "product-rating-none",
+      "product-rating-stars",
+      // I69. "Hata Bildir", folded away until it is wanted.
+      "report",
+      "report-form",
+      "report-open",
+      "report-outcome",
+      "report-reasons",
+      // I62's surface, which arrived one increment after its API: the reviews
+      // of a product, under its specification.
+      "review",
+      "review-author",
+      "review-form",
+      "review-head",
+      "review-mine",
+      "review-outcome",
+      "review-score",
+      "review-scores",
+      "reviews",
+      "reviews-guest",
+      "reviews-summary",
+      "reviews-total",
       "site-footer",
+      // The obligations at the foot of every page (Owner decision,
+      // 2026-09-03), and the pages that are named because they do not exist
+      // yet — a link to an absent privacy policy would be the promise the
+      // notice exists to avoid.
+      "site-footer-notes",
+      "site-footer-pending",
       "site-header",
       "site-header-inner",
       "skeleton",
       "skeleton-stack",
       "skip-link",
       "stacking",
+      // I64. "Sadece stokta olanlar", built to the budget control's own rules.
+      "stock",
+      "stock-form",
+      "stock-note",
+      // I67. Text for a screen reader and not for the screen — what the digits
+      // mean to somebody who cannot see the column heading beside them.
+      "visually-hidden",
       "workspace"
     ]);
   });

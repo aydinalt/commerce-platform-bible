@@ -29,7 +29,10 @@ import {
   zeroResultRecovery
 } from "@commerce/discovery";
 
-import { PgDiscoveryRepository } from "../persistence/pg-discovery.repository.js";
+import {
+  PAGE_SIZE,
+  PgDiscoveryRepository
+} from "../persistence/pg-discovery.repository.js";
 
 /**
  * Path identifiers reach PostgreSQL `uuid` columns, so they are rejected at the
@@ -104,6 +107,9 @@ export class DiscoveryController {
     const pathId = parsed.data.discoveryPathId ?? randomUUID();
     if (terms.length === 0)
       return searchViewSchema.parse({
+        // I68. Even a query that reaches nothing was submitted under an
+        // arrangement, and the surface still has a tab to draw.
+        arrangement: parsed.data.arrangement,
         categoryId: null,
         discoveryPathId: pathId,
         domain: null,
@@ -113,6 +119,10 @@ export class DiscoveryController {
         filters: [],
         filtersAvailable: false,
         narrowing: [],
+        // I63. A list of nothing is still a list, and the page the person asked
+        // for is still where they are: a surface that had to invent a position
+        // here would invent a different one from the one below.
+        paging: { page: parsed.data.page, pageSize: PAGE_SIZE, total: 0 },
         query: parsed.data.query,
         results: [],
         // A query that reaches no searchable information is a Zero Results
@@ -134,10 +144,21 @@ export class DiscoveryController {
 
     const view = await this.attempt(() =>
       this.discovery.search({
+        // I68. The tab the person pressed, or the arrangement every list has
+        // always used when they pressed none.
+        arrangement: parsed.data.arrangement,
         categoryId: parsed.data.categoryId,
         filters: parsed.data.filters,
+        inStockOnly: parsed.data.inStockOnly,
+        page: parsed.data.page,
         pathId,
+        // §10.6.1. Carried whether or not a Category was reached: the Price
+        // Constraint is the one criterion that does not wait for a leaf.
+        price: parsed.data.price,
         query: parsed.data.query,
+        // I62, on the same terms as the Price Constraint: a product score is a
+        // fact about the product, so the floor applies before a leaf is chosen.
+        rating: parsed.data.rating,
         terms
       })
     );
@@ -178,9 +199,14 @@ export class DiscoveryController {
 
     const view = await this.attempt(() =>
       this.discovery.browse({
+        arrangement: parsed.data.arrangement,
         categoryId,
         filters: parsed.data.filters,
-        pathId: parsed.data.discoveryPathId ?? randomUUID()
+        inStockOnly: parsed.data.inStockOnly,
+        page: parsed.data.page,
+        pathId: parsed.data.discoveryPathId ?? randomUUID(),
+        price: parsed.data.price,
+        rating: parsed.data.rating
       })
     );
     // AC-4. A retired Category is absent rather than refused, so it answers the

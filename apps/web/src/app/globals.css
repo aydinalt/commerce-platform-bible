@@ -82,25 +82,50 @@
 
 :root {
   /* Neutrals. `--border` is decorative; `--border-strong` bounds a control and
-     is therefore held to WCAG 1.4.11's 3:1 rather than to taste. */
-  --surface: #fafafa;
-  --surface-raised: #ffffff;
-  --border: #e3e5e9;
-  --border-strong: #818894;
-  --text: #16202e;
-  --text-muted: #5a6577;
+     is therefore held to WCAG 1.4.11's 3:1 rather than to taste.
 
-  /* One accent. Colour marks what is interactive or what demands attention; a
-     screen where four things are coloured has said nothing. */
-  --accent: #2c5f8a;
-  --accent-strong: #1f4767;
-  --accent-surface: #eef3f8;
+     Warmed with the brand (I80). These were cool blue-greys chosen to sit
+     beside a blue accent — `#16202e` is a navy, `#e3e5e9` a blue-tinted
+     hairline. Against the ScorBurn red they read as the leftovers of a
+     different palette, so each carries a slight red bias instead: still
+     neutral, but neutral *toward* this brand rather than the previous one. */
+  --surface: #faf9f9;
+  --surface-raised: #ffffff;
+  --border: #e6e2e2;
+  --border-strong: #857c7c;
+  --text: #1b1718;
+  --text-muted: #615656;
+
+  /* One accent, and it is the logo's own red (I80).
+
+     `--accent` is `#ca2721` and `--accent-strong` `#ae201f`, both sampled from
+     the tick in `scorburn-logo.png` rather than picked to look like it — the
+     lighter is the mark's face and the darker its shaded edge, so the hover
+     state is a colour the brand already contains.
+
+     Colour marks what is interactive or what demands attention; a screen where
+     four things are coloured has said nothing. */
+  --accent: #ca2721;
+  --accent-strong: #ae201f;
+  /* **Deliberately not a red tint.** A pink quiet-surface would sit within
+     1.1:1 of `--critical-surface` below, and the two would be one colour to
+     anybody reading a badge next to an error. The red ink carries the brand
+     here; the surface stays a warm neutral so the pink belongs to the refusal
+     alone. */
+  --accent-surface: #f5f2f1;
 
   /* Two states, and only two. There is no success green and no warning amber:
      this application has three things to say about a state — it worked, it was
-     refused, it needs your attention — and a fourth colour invites a fifth. */
-  --critical: #9b2c2c;
-  --critical-surface: #fbeeee;
+     refused, it needs your attention — and a fourth colour invites a fifth.
+
+     **`--critical` moved when the brand became red (I80).** It was `#9b2c2c`,
+     which was a fine error colour beside a blue accent and is a near-twin of
+     `#ca2721`: an error message and a link would have differed only in
+     lightness. It is now `#7f1d1d`, dark enough that the refusal reads as
+     heavier than the link — the separation is measured in
+     `i26-design-foundation` so a later edit cannot quietly collapse it. */
+  --critical: #7f1d1d;
+  --critical-surface: #fbe3e2;
   --notice: #7a5a1e;
   --notice-surface: #fcf6e9;
 
@@ -133,6 +158,10 @@
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
+  /* 20px. Added by I82 for the reference template's card padding, which sits
+     between this scale's 16 and 24 — a card at 16 reads tighter than the
+     reference and one at 24 loses a column on a laptop. */
+  --space-5: 1.25rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
   --space-12: 3rem;
@@ -322,11 +351,18 @@ textarea[aria-invalid="true"] {
   margin: var(--space-2) 0 0;
 }
 
-/* Badge — lifecycle and moderation status, always with its own word beside it */
+/* Badge — lifecycle and moderation status, always with its own word beside it
+ *
+ * **Ordinary ink, not accent ink (I80).** This used to be `--accent-strong`,
+ * which read as a quiet blue when the accent was blue. With the brand red it
+ * made a `Yayında` badge and a `Gizlendi` badge both red, differing only in how
+ * dark they were — and a lifecycle status is neither interactive nor a refusal,
+ * so it had no claim on either colour. The neutral badge now carries plain text
+ * and lets `.badge-critical` be the one that is coloured. */
 .badge {
   background: var(--accent-surface);
   border-radius: var(--radius-sm);
-  color: var(--accent-strong);
+  color: var(--text);
   display: inline-block;
   font-size: var(--text-small);
   padding: var(--space-1) var(--space-2);
@@ -359,6 +395,117 @@ textarea[aria-invalid="true"] {
 
 /* Listing cards */
 .listing-cards,
+/*
+ * I56 — the price, on a card and on a page.
+ *
+ * One rule set for both surfaces, because they show the same fact and a price
+ * that looked like a different kind of thing depending on where it was read
+ * would undo the work of composing it from one place.
+ *
+ * The amount is the only thing here allowed to be heavier than body text. A
+ * comparison platform earns nothing by shouting: the number is what a person
+ * came for, so it needs to be findable, not loud.
+ */
+.offering-price {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.offering-price-amount {
+  font-size: var(--text-subheading);
+  font-weight: 600;
+}
+
+/*
+ * The superseded amount, quieter and struck through.
+ *
+ * `text-decoration` alone would carry the whole meaning in a line that a
+ * person with low vision may not see, so the colour steps back as well: two
+ * signals for one fact, which is what the reduction is.
+ */
+.offering-price-prior {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.offering-price-stock {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+/*
+ * On Request and Unknown are worded differently and look different too. Neither
+ * is an error, so neither borrows the critical colour — they are simply not
+ * amounts, and the weight says so.
+ */
+.offering-price-quoted,
+.offering-price-absent {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.offering-price-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.offering-price-note {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: 0;
+}
+
+/* I58 — one product, several sellers. */
+.offering-price-sellers {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.offering-sellers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.offering-seller-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * A row, not a card. These are one product's prices and they are read down a
+ * column; boxing each one would make them look like separate things, which is
+ * the impression this whole increment exists to remove.
+ */
+.offering-seller {
+  align-items: baseline;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+}
+
+.offering-seller:first-child {
+  border-top: 0;
+}
+
+.offering-seller-current {
+  background: var(--accent-surface);
+}
+
+.offering-seller-name {
+  font-weight: 600;
+}
+
 .decision-entries {
   list-style: none;
   margin: 0;
@@ -371,46 +518,86 @@ textarea[aria-invalid="true"] {
 }
 
 /*
- * The grid is told a minimum rather than a column count, and needs no
- * breakpoint at all.
+ * One column of wide rows, not a grid of tiles.
  *
- * **The first version wrapped this in `@media (min-width: 480px)` and
- * `i26-design-foundation` failed on "three breakpoints and no others".** The
- * query was not just forbidden, it was pointless: `minmax(15rem, 1fr)` already
- * collapses to one column below about 15rem plus the gap, which is every phone.
- * `auto-fill` follows the room available, so the number of columns is a
- * consequence of the width rather than a fourth layout to maintain.
+ * **This replaces the five-across density the Owner asked for on 2026-08-24,
+ * by the Owner's decision of 2026-09-02.** The reason the density was right
+ * then and wrong now is what a card carries: in August a card held a title, a
+ * Category and a Business, and five of those across a screen is a good way to
+ * scan a catalogue. It now holds a price, a prior amount, how many partners
+ * sell the thing and a control that leaves for one of them — and a 15rem column
+ * cannot show that without wrapping every line of it.
  *
- * 15rem is the width at which a Listing Card still holds a 4:3 visual, a
- * two-line title and two facts without any of them wrapping badly. On a wide
- * screen that is five across, which is the density the Owner asked for on
- * 2026-08-24.
+ * A comparison is read down a column. Fewer products on screen, more of each
+ * product on screen, which is the trade a comparison site exists to make.
  */
 .listing-cards {
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .listing-card {
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  /*
-   * The visual runs to the card's edge and only the text is inset. A picture
-   * with a margin around it reads as an illustration; one that fills the top of
-   * the card reads as the thing being listed, which is what it is.
-   */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  padding: 0;
+  gap: var(--space-3);
+  padding: var(--space-4);
 }
 
-.listing-card > :not(.listing-card-visual) {
-  padding-inline: var(--space-3);
+/*
+ * The row, from 768px up: picture, then what the thing is, then the way out.
+ *
+ * Three tracks in reading order, and the order is the argument — a person
+ * recognises the product, reads what it costs, and only then meets the control
+ * that leaves the platform. A layout that put the button first would be selling
+ * before it had said what it was selling.
+ */
+@media (min-width: 768px) {
+  .listing-card {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: var(--space-4);
+  }
 }
 
-.listing-card > :last-child {
-  padding-bottom: var(--space-3);
+.listing-card-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  /* Without this a long unbroken title stretches the flex item and pushes the
+     actions column off the card instead of wrapping inside it. */
+  min-width: 0;
+}
+
+/*
+ * The actions, in their own column so every card's control lines up with every
+ * other card's. A button that sits at a different height on each row is a
+ * button a person has to look for on each row.
+ */
+.listing-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@media (min-width: 768px) {
+  .listing-card-actions {
+    flex: none;
+    width: 12rem;
+  }
+}
+
+/* The secondary way in, beside the title's own link: the same destination said
+   as a control for somebody who reads the card's right-hand column first. */
+.listing-card-open {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  display: block;
+  font-size: var(--text-small);
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
 }
 
 .listing-card h2,
@@ -433,6 +620,107 @@ textarea[aria-invalid="true"] {
   color: var(--accent-strong);
 }
 
+/*
+ * The budget (UX-0002 §9A).
+ *
+ * Above the Results and outside the Filter panel, because §10.6.1 offers it
+ * with or without a Category and a control inside a panel that appears only on
+ * a leaf would say the opposite.
+ */
+.budget {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-3);
+  padding: var(--space-3);
+}
+
+.budget h2 {
+  font-size: var(--text-body);
+  margin: 0 0 var(--space-2);
+}
+
+.budget-form {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.budget-form .field {
+  margin: 0;
+}
+
+.budget-form input[type="text"] {
+  width: 8rem;
+}
+
+/* The applied bounds, readable while they apply rather than only while the
+   control is open (§9A.3). */
+.budget-applied {
+  align-items: baseline;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.budget-state {
+  font-weight: 600;
+  margin: 0;
+}
+
+.budget-note {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: 0;
+}
+
+/*
+ * The card's way out to the partner (`US-DSC-F06-001` AC-7, revised).
+ *
+ * Full width and last, beneath the price it is about. It is the only control on
+ * a card and the only one that leaves the platform, so it is allowed to look
+ * like the strongest thing in the card — every other affordance here is a link
+ * that stays inside.
+ */
+.listing-card-handoff {
+  margin: 0;
+}
+
+.listing-card-handoff button {
+  background: var(--accent);
+  border: 1px solid var(--accent-strong);
+  border-radius: var(--radius);
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  /* Small enough that "Güncel fiyatı incele" holds one line inside the 12rem
+     column. A verb broken across two lines reads as two instructions. */
+  font-size: var(--text-small);
+  font-weight: 600;
+  gap: 0.125rem;
+  line-height: 1.25;
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  width: 100%;
+}
+
+.listing-card-handoff button:hover {
+  background: var(--accent-strong);
+}
+
+/* The partner's name, quieter than the verb above it: a person reads what the
+   control does first and whose site it opens second. */
+.listing-card-handoff-target {
+  font-size: var(--text-small);
+  font-weight: 400;
+  opacity: 0.85;
+}
+
 .listing-card-facts {
   color: var(--text-muted);
   display: flex;
@@ -440,6 +728,255 @@ textarea[aria-invalid="true"] {
   font-size: var(--text-small);
   gap: var(--space-2);
   margin: 0;
+}
+
+/*
+ * I62's surface. The reviews of a product, under its specification.
+ */
+.reviews {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.review {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+}
+
+.review-head {
+  align-items: baseline;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--text-small);
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+}
+
+.review-author {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.review-score {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Somebody's own review, marked so they can find it in a list of twenty. */
+.review-mine {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+}
+
+.reviews-summary {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.reviews-total,
+.reviews-guest {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.reviews-guest {
+  margin: var(--space-3) 0 0;
+}
+
+.review-form,
+.review-scores {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.review-scores {
+  border: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+
+.review-outcome {
+  margin: 0;
+}
+
+/*
+ * I70. The complementary-product block, under the actions.
+ *
+ * Set apart from the page rather than dressed up as part of it: a dashed edge
+ * and a muted ground say "this is beside the listing, not part of it", which is
+ * the visual half of the label PRD-0006 §20.1 requires. The label itself is
+ * text, because a tint is not legible without colour.
+ */
+.complementary {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+}
+
+.complementary-label {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.complementary-lead {
+  font-weight: 600;
+  margin: 0;
+}
+
+.complementary-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.complementary-link {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+.complementary-name {
+  font-weight: 600;
+}
+
+/* Whose site it is, said quietly but said. */
+.complementary-partner,
+.complementary-note {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: 0;
+}
+
+/*
+ * I69. "Hata Bildir", folded away until it is wanted: a form of radio buttons
+ * open on every product page would say the platform expects its listings to be
+ * wrong.
+ */
+.report {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+}
+
+.report-open {
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--text-small);
+}
+
+.report-form,
+.report-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.report-reasons {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.report-outcome {
+  margin: 0;
+}
+
+/*
+ * I68. The four tabs, above the list they arrange.
+ *
+ * A row that wraps rather than scrolls: four short words fit on a telephone,
+ * and a strip that scrolled sideways would hide the tab a person is looking
+ * for behind a gesture nothing on this page teaches.
+ */
+.arrangement {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.arrangement-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/*
+ * The pressed tab is stated by weight and by a line under it, not by colour
+ * alone: which arrangement is in force is information, and information carried
+ * only in a hue is information somebody cannot read.
+ */
+.arrangement-tab {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  padding: var(--space-1) var(--space-2);
+}
+
+.arrangement-tab-on {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.arrangement-note {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: 0;
+}
+
+/*
+ * I67. The listing number, on the card and on the page it opens.
+ *
+ * Tabular figures because the number is read digit by digit — somebody
+ * comparing the one on screen with the one they wrote down should not have to
+ * account for a narrow `1`.
+ */
+.listing-number {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/*
+ * Text for a screen reader and not for the screen.
+ *
+ * The clip-path pattern rather than `display: none`: hidden content is not
+ * announced, and the point here is to say what the prefix means to somebody
+ * who cannot see that it sits in a row of facts about a listing.
+ */
+.visually-hidden {
+  border: 0;
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 .decision-entries {
@@ -579,12 +1116,23 @@ article {
 
 .listing-card-visual {
   aspect-ratio: 4 / 3;
-  /* Edge to edge: the card owns the inset, and the border here would draw a
-     second line on top of the card's own. */
-  border: 0;
-  border-radius: 0;
-  margin-bottom: var(--space-3);
   width: 100%;
+}
+
+/*
+ * Beside the text from 768px up, and square there.
+ *
+ * A 4:3 band above the text was right when the card was a tile. In a row it
+ * would take a third of the width to say what the title says in words, so it
+ * becomes a thumbnail: enough to recognise the thing, not enough to crowd out
+ * the price.
+ */
+@media (min-width: 768px) {
+  .listing-card-visual {
+    aspect-ratio: 1 / 1;
+    flex: none;
+    width: 7rem;
+  }
 }
 
 .offering-visuals {
@@ -719,13 +1267,31 @@ article {
   padding: 0 var(--space-4);
 }
 
-/* A wordmark, not a logo. There is no mark to place, and inventing one would
-   be design work on an asset that has to be right. */
+/*
+ * The Owner's logo, placed rather than drawn.
+ *
+ * This used to say "a wordmark, not a logo — there is no mark to place, and
+ * inventing one would be design work on an asset that has to be right". There
+ * is one now: the Owner supplied it on 2026-09-03, and it is his file rather
+ * than an interpretation of it.
+ *
+ * The image carries the name, so no text sits beside it — two of them would be
+ * the same word twice. `alt` is what a screen reader and a failed image both
+ * fall back to, so the name lives there.
+ *
+ * `height` is fixed and `width` is auto so the header's line never depends on
+ * the file's own dimensions: a logo re-exported at a different size later
+ * changes nothing about this row.
+ */
 .brand {
-  color: var(--text);
-  font-size: var(--text-heading);
-  font-weight: 600;
+  display: inline-flex;
   text-decoration: none;
+}
+
+.brand img {
+  display: block;
+  height: 1.75rem;
+  width: auto;
 }
 
 .site-header nav {
@@ -748,6 +1314,26 @@ article {
 
 .site-footer p {
   margin: 0;
+}
+
+/*
+ * The footer's obligations. Left-aligned inside a centred footer, because a
+ * centred list of five sentences is read as a poem rather than as terms, and
+ * bounded to the prose measure for the reason `--measure` exists.
+ */
+.site-footer-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: disc;
+  margin: 0 auto var(--space-3);
+  max-width: var(--measure);
+  padding-left: var(--space-4);
+  text-align: left;
+}
+
+.site-footer-pending {
+  margin: 0 0 var(--space-2);
 }
 
 /* ─── The management surfaces (I48) ────────────────────────────────────────
@@ -1018,4 +1604,363 @@ section[role="alert"] > h2 {
 div[role="alert"] > :last-child,
 section[role="alert"] > :last-child {
   margin-bottom: 0;
+}
+
+/* I62 — the product's score, on the card and on the page it opens. */
+.listing-card-rating {
+  margin: 0;
+}
+
+.product-rating {
+  align-items: baseline;
+  color: var(--text-muted);
+  display: inline-flex;
+  flex-wrap: wrap;
+  font-size: var(--text-small);
+  gap: var(--space-2);
+}
+
+/* The one place a colour carries meaning rather than decoration: the stars are
+   the mark people look for, and a muted row of them beside a muted row of facts
+   would be a score nobody finds. */
+.product-rating-stars {
+  color: #b45309;
+  letter-spacing: 0.05em;
+}
+
+.product-rating strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The count, quieter than the score it qualifies: a person reads how good it
+   is first and how many people said so second. */
+.product-rating-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.product-rating-none {
+  font-style: italic;
+}
+
+.presentation-rating {
+  margin: 0 0 var(--space-3);
+}
+
+/* I63 — moving between pages of Results. */
+.discovery-pager {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin-top: var(--space-6);
+}
+
+.discovery-pager-count {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.discovery-pager-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.discovery-page {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+}
+
+/* The page a person is on is stated rather than implied: `aria-current` says it
+   to a screen reader and this says it to everyone else. */
+.discovery-page-current {
+  background: var(--accent-surface);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+/* I64 — the stock criterion, beside the budget and shaped like it. */
+.stock {
+  margin-bottom: var(--space-6);
+}
+
+.stock-form {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* A checkbox and its label read as one line, unlike the stacked text fields the
+   budget uses. */
+.field-inline {
+  align-items: baseline;
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.stock-note {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: var(--space-2) 0 0;
+}
+
+/* I64 — the heart on a card, and the page it fills. */
+.listing-card-favourite {
+  margin-top: var(--space-2);
+}
+
+.listing-card-heart {
+  align-items: baseline;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--text-small);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  width: 100%;
+}
+
+/* Kept is stated in three ways at once — a filled glyph, a different label and
+   `aria-pressed` — because a state carried only by colour is a state some
+   people do not have. */
+.listing-card-heart-on {
+  background: var(--accent-surface);
+  border-color: var(--accent);
+}
+
+.favourites-note {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin-top: var(--space-6);
+}
+
+/* ---------------------------------------------------------------------------
+   SmartHR card grammar (I82)
+
+   Measured from the Owner's reference template
+   (`smarthr.dreamstechnologies.com/laravel/template/public/index`) rather than
+   guessed at: body 14px on `#f8f9fa`, cards white with `border-radius: 5px`,
+   `1px solid #ededed`, **no shadow**, `20px` of padding, muted labels at 14px
+   over figures at 20px/600, and a ruled footer carrying one link per card.
+
+   **Two things are deliberately not copied.**
+
+   *Its orange.* The template's accent is `#ff6f28`; ours is the ScorBurn red
+   the Owner supplied. A reference gives layout and rhythm; the brand colour is
+   his, and adopting the template's would put a second brand on the page.
+
+   *Its eight icon colours.* SmartHR gives each metric card a differently
+   coloured badge — orange, teal, blue, pink, purple, red, green, black. That is
+   a categorical palette, and this design direction allows one accent and two
+   states, a rule `i26-design-foundation` enforces. Eight hues that encode
+   nothing would spend the whole palette on decoration, so the badge is one
+   accent tint and the cards are told apart by their words.
+   ------------------------------------------------------------------------- */
+
+/* The page header: title and breadcrumb left, actions right — the template's
+   top row, which is also where our pages already put "back to the panel". */
+.page-head {
+  align-items: flex-start;
+  border-bottom: 2px solid var(--border-strong);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+}
+
+/* `h1` already carries the rule in `.workspace`; inside a page header the
+   header owns it, so the heading gives it back rather than drawing a second. */
+.page-head h1 {
+  border-bottom: 0;
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.breadcrumb {
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--text-small);
+  gap: var(--space-2);
+  list-style: none;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+}
+
+.breadcrumb li + li::before {
+  content: "›";
+  margin-right: var(--space-2);
+}
+
+/* ---------------------------------------------------------------------------
+   The overview dashboard (I79)
+
+   A SmartHR-shaped Admin surface: a row of metric cards, then the engagement
+   report drawn as bars. Every value below comes from the token set already
+   declared at the top of this file — no colour is introduced here. The brand
+   red the Owner supplied with the ScorBurn logo has no assigned surface yet,
+   and a dashboard is the wrong place to decide that by default.
+   ------------------------------------------------------------------------- */
+
+/* No `.overview` rule, and that is the finding rather than an omission: the
+   `workspace` segment layout already gives every Admin page the wide measure,
+   the ruled `h1` and the bordered `section` panel. A page class here would have
+   restated all three and become the second place they are defined. */
+
+/* `auto-fit` rather than a fixed count: the row holds four cards on a desktop
+   and one on a phone without a breakpoint per step, and adding a fifth card
+   later needs no change here. */
+.metric-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  margin-top: var(--space-4);
+}
+
+.metric-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  /* 20px, the template's card padding. */
+  padding: var(--space-5);
+}
+
+/* The badge the template puts at the top of every metric card. One accent
+   tint rather than eight hues — see the note above. */
+.metric-card-mark {
+  align-items: center;
+  background: var(--accent-surface);
+  border-radius: 50%;
+  color: var(--accent);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: var(--text-subheading);
+  height: 2.5rem;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+  width: 2.5rem;
+}
+
+/* The ruled footer: one link out of the card, to the queue it counts.
+
+   `margin-top: auto` pushes it to the bottom of the card rather than leaving it
+   under the last line of content. The cards in a row are already the same
+   height — the grid stretches them — but their content is not the same length,
+   so without this the footers sit at four different heights and the row stops
+   reading as a row. */
+.metric-card-link {
+  border-top: 1px solid var(--border);
+  font-size: var(--text-small);
+  margin: var(--space-3) 0 0;
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+/* The heading is the label and the number is the content, so the type sizes
+   are inverted from their usual relationship. */
+.metric-card h3 {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-weight: 500;
+  margin: 0;
+}
+
+.metric-card-value {
+  /* 20px, not the display size. The template keeps its figures close to body
+     size and lets the card do the emphasis — a wall of 24px numbers competes
+     with itself, and this page shows four at once. */
+  font-size: var(--text-heading);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.metric-card-detail {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin: 0;
+}
+
+/* Unavailable is set in the card's own body size, not the display size: it is
+   a sentence rather than a figure, and setting it large would make an outage
+   look like a reading. */
+.metric-card-unavailable {
+  color: var(--critical);
+  font-size: var(--text-small);
+  margin: 0;
+}
+
+.period-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+}
+
+.engagement {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+}
+
+.engagement-label {
+  font-size: var(--text-small);
+  margin: 0 0 var(--space-1);
+}
+
+/* The track's own width is set inline, as a share of the most-opened listing,
+   so bar length means opens across the whole chart. */
+.engagement-track {
+  background: var(--accent-surface);
+  border-radius: var(--radius-sm);
+  height: 0.75rem;
+  min-width: 2px;
+  overflow: hidden;
+}
+
+.engagement-fill {
+  background: var(--accent);
+  height: 100%;
+}
+
+.engagement-figures {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+  margin: var(--space-1) 0 0;
+}
+
+/* Named for its component rather than as a general `.note`: a generic name in
+   a shared vocabulary is where unrelated small print accumulates. */
+.engagement-note {
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  margin-top: var(--space-4);
 }

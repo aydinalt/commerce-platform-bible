@@ -14,7 +14,44 @@ export interface CoreFlowCount {
   overall: number;
 }
 
+export interface HandoffRate {
+  handoffs: number;
+  opens: number;
+  /** `null` where `opens` is zero — see `affiliateHandoffRate`. */
+  rate: number | null;
+}
+
+export interface AffiliateHandoffRate {
+  byOffering: (HandoffRate & {
+    offeringId: string;
+    slug: string;
+    title: string;
+  })[];
+  overall: HandoffRate;
+}
+
+/**
+ * How many listings the per-link breakdown carries.
+ *
+ * A number rather than a request parameter. The question an Admin has is "which
+ * of the links people actually reach are working", and that is a short list;
+ * an archive of every Offering ever opened is a different question nobody has
+ * asked, and it would make the Admin Dashboard's slowest query slower still.
+ */
+const HANDOFF_RATE_PAGE = 20;
+
+/**
+ * A rate, or nothing (`PRD-0006-platform.md` v2.5 §11.6.3).
+ *
+ * **`null` and not `0`.** An Offering nobody has opened has no rate; `0` would
+ * say "nobody chose this" where the truth is "nobody has looked", and the two
+ * are opposite conclusions from the same figure.
+ */
+const ratio = (handoffs: number, opens: number): number | null =>
+  opens === 0 ? null : Math.min(1, handoffs / opens);
+
 export interface AnalyticsSnapshot {
+  affiliateHandoffRate: AffiliateHandoffRate;
   affiliateDestinations: {
     handoffEligibility: Record<string, number>;
     status: Record<string, number>;
@@ -83,6 +120,7 @@ export class PgAnalyticsRepository {
     return {
       affiliateDestinations: destinations.byResult,
       businesses,
+      affiliateHandoffRate: await this.affiliateHandoffRate(since),
       coreFlow: await this.coreFlow(since),
       destinationWorkload: destinations.workload,
       moderationCases: cases,
@@ -101,6 +139,86 @@ export class PgAnalyticsRepository {
    * overall and appears in no Domain — which is why the Discovery Start
    * breakdown does not sum to its total.
    */
+  /**
+   * Affiliate Handoff Rate (`PRD-0006-platform.md` v2.5 §11.6).
+   *
+   * **Derived, not measured.** Both terms are occurrences §11.2 already counts
+   * — `offering_presentation_open` and `affiliate_handoff` — and §11.6.1 makes
+   * that the reason this is an addition to an inventory rather than a new
+   * capability. No event, counter or record exists to produce it, and nothing
+   * about a person is read.
+   *
+   * **A zero denominator produces `null`, not `0`.** The Owner made the point
+   * on 2026-09-03: an Offering nobody has opened has *no rate*, and `0%` would
+   * read as "nobody chose this" when the truth is "nobody has looked". The two
+   * are opposite conclusions from the same figure, which is exactly the kind of
+   * mistake a dashboard makes for years.
+   *
+   * **Per link means per Offering**, because PRD-0001 §9.1 gives an Offering
+   * zero or one Affiliate Destination. The Offering *is* the link, and
+   * inventing a second level would mean counting something the platform does
+   * not have.
+   *
+   * Ordered by opens rather than by rate: a listing opened twice and handed off
+   * once scores 50% and tells nobody anything.
+   */
+  private async affiliateHandoffRate(
+    since: Date | null
+  ): Promise<AffiliateHandoffRate> {
+    const window = since === null ? "" : " and {column} >= $1";
+    const values = since === null ? [] : [since];
+    const opensWindow = window.replace("{column}", "o.opened_at");
+    const handoffWindow = window.replace("{column}", "h.initiated_at");
+
+    const totals = await this.pool.query<{ handoffs: number; opens: number }>(
+      `select
+         (select count(*)::int from offering_presentation_open o
+          where true${opensWindow}) as opens,
+         (select count(*)::int from affiliate_handoff h
+          where true${handoffWindow}) as handoffs`,
+      values
+    );
+    const overall = totals.rows[0] ?? { handoffs: 0, opens: 0 };
+
+    const perOffering = await this.pool.query<{
+      handoffs: number;
+      offeringId: string;
+      opens: number;
+      slug: string;
+      title: string;
+    }>(
+      `select o.id as "offeringId", o.title, o.slug,
+         (select count(*)::int from offering_presentation_open p
+          where p.offering_id = o.id${window.replace("{column}", "p.opened_at")}) as opens,
+         (select count(*)::int from affiliate_handoff h
+          where h.offering_id = o.id${handoffWindow}) as handoffs
+       from offering o
+       where exists (
+         select 1 from offering_presentation_open p
+         where p.offering_id = o.id${window.replace("{column}", "p.opened_at")}
+       )
+       order by opens desc, o.title
+       limit ${HANDOFF_RATE_PAGE}`,
+      values
+    );
+
+    return {
+      byOffering: perOffering.rows.map((row) => ({
+        handoffs: row.handoffs,
+        offeringId: row.offeringId,
+        opens: row.opens,
+        rate: ratio(row.handoffs, row.opens),
+        slug: row.slug,
+        title: row.title
+      })),
+      overall: {
+        handoffs: overall.handoffs,
+        opens: overall.opens,
+        rate: ratio(overall.handoffs, overall.opens)
+      }
+    };
+  }
+
   private async coreFlow(
     since: Date | null
   ): Promise<Record<string, CoreFlowCount>> {

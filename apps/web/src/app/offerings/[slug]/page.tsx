@@ -2,11 +2,16 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { isApiUnavailable } from "../../../api-error";
-import { fetchOfferingPresentation } from "../../../discovery/api";
+import {
+  fetchComplementary,
+  fetchOfferingPresentation
+} from "../../../discovery/api";
 import {
   DISCOVERY_ENTRY_COOKIE,
   readDiscoveryEntry
 } from "../../../discovery/entry";
+import { readProductReviews } from "../../../discovery/reviews";
+import { SESSION_COOKIE } from "../../../identity/session";
 import { TERMS } from "../../../vocabulary";
 
 import { OfferingPresentation } from "./offering-presentation";
@@ -70,10 +75,26 @@ export default async function OfferingPage({
   // neither a retirement nor a moderation decision.
   if (!offering) notFound();
 
+  /*
+   * I70. Fetched after the Presentation and never in place of it: this is
+   * advertising, and a listing that cannot show a suggestion still shows the
+   * listing. `fetchComplementary` answers with an empty list on any failure,
+   * so nothing here has to decide what an outage means for an advertisement.
+   */
   return (
     <OfferingPresentation
+      complementary={await fetchComplementary(slug)}
       offering={offering}
       preparation={entry?.kind === "BROWSE" ? entry.preparation : undefined}
+      /*
+       * Read with the session where there is one, because one thing in the
+       * answer is about the caller: their own review is marked, so the page can
+       * offer to edit it rather than to write a second one.
+       */
+      reviews={await readProductReviews({
+        session: jar.get(SESSION_COOKIE)?.value,
+        slug
+      })}
     />
   );
 }

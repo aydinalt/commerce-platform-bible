@@ -5,7 +5,11 @@ import { notFound, redirect } from "next/navigation";
 import { ServiceUnavailable } from "../service-unavailable";
 import { isUnavailable, orUnavailable } from "../unavailable";
 
-import { fetchAdminPanel, fetchAnalytics } from "../../platform/api";
+import {
+  fetchAdminPanel,
+  fetchAnalytics,
+  fetchOfferingFeedRuns
+} from "../../platform/api";
 import {
   ACTIONABLE_HEADING,
   ANALYTICS_UNAVAILABLE,
@@ -17,7 +21,17 @@ import {
   PERIOD_LABELS,
   readPeriod
 } from "../../platform/panel";
-import { PANEL } from "../../platform/copy";
+import {
+  ACCOUNTS,
+  ADVERTISING,
+  AUDIT,
+  FEEDS,
+  OVERVIEW,
+  PANEL,
+  PLACEMENTS,
+  REPORTS
+} from "../../platform/copy";
+import { featureEnabled } from "../../platform/flags";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../identity/session";
 import { logout } from "../login/actions";
 import { AnalyticsTable } from "./analytics-table";
@@ -77,6 +91,21 @@ export default async function AdminDashboardPage({
   const read = await orUnavailable(fetchAnalytics(session, period));
   const analytics = isUnavailable(read) ? null : read;
 
+  /*
+   * I76. Feed sync failures, read only when the surface that shows them is on.
+   *
+   * Read here rather than derived from Core Analytics because Analytics counts
+   * Moderation Cases and Affiliate Destinations and does not count feed runs —
+   * and adding an indicator belongs to the Analytics Story rather than to a
+   * dashboard that would then hold the only definition of it.
+   */
+  const feedFailures = featureEnabled("OFFERING_FEEDS")
+    ? await orUnavailable(
+        fetchOfferingFeedRuns({ failuresOnly: true, session })
+      )
+    : [];
+  const failedFeeds = isUnavailable(feedFailures) ? null : feedFailures;
+
   const openCases = analytics?.moderationCases.status.OPEN ?? 0;
   const destinationWork = Object.values(
     analytics?.destinationWorkload ?? {}
@@ -85,6 +114,15 @@ export default async function AdminDashboardPage({
   return (
     <main>
       <h1>{PANEL.title}</h1>
+
+      {/* I79. The overview dashboard, linked only where it exists. Behind the
+          same flag as the page itself, for the reason the advertising link is:
+          a link to a `404` is worse than no link. */}
+      {featureEnabled("ADMIN_DASHBOARD") ? (
+        <p>
+          <Link href="/admin/overview">{OVERVIEW.title}</Link>
+        </p>
+      ) : null}
 
       {/* §6. The queues that are waiting for an Admin, kept apart from the
           figures that merely describe the platform. Mixing them would make
@@ -104,6 +142,69 @@ export default async function AdminDashboardPage({
                   {PANEL.casesWaiting(openCases)}
                 </Link>
               )}
+            </li>
+            <li>
+              {/*
+                I69. The reader-report queue.
+                
+                A plain link rather than a count, and the difference is stated
+                rather than hidden: Core Analytics counts Moderation Cases and
+                Affiliate Destinations and does not yet count reports, so a
+                number here would have to be fetched by this page alone. Adding
+                it belongs to the Analytics story rather than to a page that
+                would then hold the only definition of it.
+              */}
+              <Link href="/admin/listing-reports">{REPORTS.title}</Link>
+            </li>
+            {/* I75. Whether advertising runs at all, and where it may not.
+                Behind the same flag as the page: a link to a `404` is worse
+                than no link, and the Owner asked for the new surfaces to be
+                adopted deliberately rather than by being merged. */}
+            {/* I76. What is broken in the partner catalogues, said as a
+                count. A link that always looks the same stops being read, and
+                the whole value of this line is that it changes. */}
+            {featureEnabled("OFFERING_FEEDS") ? (
+              <li>
+                {failedFeeds === null ? (
+                  <span role="alert">{FEEDS.unreadable}</span>
+                ) : failedFeeds.length === 0 ? (
+                  FEEDS.noFailures
+                ) : (
+                  <Link href="/admin/offering-feeds">
+                    {FEEDS.failuresWaiting(failedFeeds.length)}
+                  </Link>
+                )}
+              </li>
+            ) : null}
+            {featureEnabled("ADVERTISING_SETTINGS") ? (
+              <li>
+                <Link href="/admin/advertising">{ADVERTISING.title}</Link>
+              </li>
+            ) : null}
+            <li>
+              {/* I83. The register of accounts. Unflagged, unlike the surfaces
+                  I75–I79 added, because it is not a new capability the Owner
+                  has yet to adopt — it is the missing way to reach Suspend and
+                  Reinstate, which `US-PLT-F05-001` approved long ago and which
+                  have been unreachable ever since. A flag would keep an
+                  approved capability switched off. */}
+              <Link href="/admin/users">{ACCOUNTS.title}</Link>
+            </li>
+            <li>
+              {/* I84. The trail, readable by the platform's administrator.
+                  Unflagged for the same reason the register is: it is not a
+                  capability awaiting adoption but the way to read something the
+                  platform is already recording. */}
+              <Link href="/admin/audit-logs">{AUDIT.title}</Link>
+            </li>
+            <li>
+              {/* I70. Where the complementary-product advertising comes from.
+                  A link rather than a count for the same reason as the queue
+                  above: this is configuration, and a number beside it would be
+                  a measurement the platform deliberately does not take. */}
+              <Link href="/admin/complementary-placements">
+                {PLACEMENTS.title}
+              </Link>
             </li>
             <li>
               {/* §14. An empty Affiliate workload is said as itself and is not

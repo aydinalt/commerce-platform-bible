@@ -463,12 +463,23 @@ suite("Increment I7 General Moderation case management", () => {
     // AC-9. The strongest form of "case status is not target status" is a
     // shape with nowhere to put one. There is no lifecycle, moderation status,
     // access status, eligibility or validation result in a case.
+    //
+    // **I81 added three keys and they are identity, not state.** UX-0006 §17
+    // requires the target's identity to be perceivable, and a queue that named
+    // only the target's *type* rendered twenty Offering cases as twenty rows
+    // reading "İlan". A name says which thing the case is about; the fields
+    // this case exists to exclude say how that thing is doing. The distinction
+    // is the whole of AC-9, so the list grew deliberately rather than by the
+    // check being loosened.
     expect(Object.keys(opened.body).sort()).toEqual([
       "availableActions",
       "businessId",
+      "businessName",
       "closedAt",
       "id",
       "offeringId",
+      "offeringSlug",
+      "offeringTitle",
       "openedAt",
       "reReviewRequired",
       "resolutions",
@@ -476,7 +487,24 @@ suite("Increment I7 General Moderation case management", () => {
       "targetType",
       "userId"
     ]);
-    expect(JSON.stringify(opened.body)).not.toMatch(
+
+    /*
+     * **Every state word is still forbidden, and the search now skips the
+     * fields a partner writes.**
+     *
+     * The body carries a listing title and slug for the first time, and those
+     * are somebody else's words: a real product called "Enabled Pro" would fail
+     * this assertion while the platform had done nothing wrong. Dropping a word
+     * from the pattern to accommodate that would weaken a guard on the values
+     * it exists to catch, so the pattern keeps all five and the *free text* is
+     * removed before it runs.
+     */
+    const { businessName, offeringSlug, offeringTitle, ...structural } =
+      opened.body as Record<string, unknown>;
+    void businessName;
+    void offeringSlug;
+    void offeringTitle;
+    expect(JSON.stringify(structural)).not.toMatch(
       /PUBLISHED|ELIGIBLE|RESTRICTED|ENABLED|VALIDATED/u
     );
   });

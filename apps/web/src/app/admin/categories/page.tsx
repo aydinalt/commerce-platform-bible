@@ -7,7 +7,7 @@ import { isUnavailable, orUnavailable } from "../../unavailable";
 
 import { fetchAdminPanel, fetchCategories } from "../../../platform/api";
 import { NO_CATEGORIES, asTree } from "../../../platform/catalog";
-import { CATEGORIES, PANEL } from "../../../platform/copy";
+import { CATEGORIES, PANEL, RETIRED } from "../../../platform/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import {
   createCategory,
@@ -85,7 +85,7 @@ export default async function CategoriesPage() {
                     {/* Retired is stated rather than implied by absence: the
                         definition survives, and an Admin needs to see that it
                         is still there and no longer taking anything new. */}
-                    {category.active ? null : <span>(retired)</span>}
+                    {category.active ? null : <span>{RETIRED}</span>}
                   </h2>
                   <p>
                     {category.domainName} · {category.stableKey}

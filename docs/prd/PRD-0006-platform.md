@@ -1,10 +1,124 @@
 # PRD-0006 — Platform
 
+> **Freeze Note (2.6):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-07. This exact version must not be edited in place; a further
+> change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
+> Frozen v2.5 is preserved unchanged at `PRD-0006-platform-v2.5-superseded.md`.
+>
+> **Approval Note (2.6):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-06 — _"Hazırladığın PRD-0006 v2.6, Registry v1.3
+> ve US-PLT-F13-001 taslaklarını resmi olarak onaylıyorum."_
+>
+> **Amendment after approval, on the Owner's instruction in the same message.**
+> The approved text carried §22 without a description of the surface that reads
+> the trail. In the same message the Owner allocated `F14` for that surface and
+> asked for it before the Freeze: _"Kesinlikle F14'ü (Denetim İzi Okuma Yüzeyi)
+> açıyoruz… Bu belgeleri dondurmadan önce, Registry v1.3 taslağına F14'ü dahil
+> etmeni ve `US-PLT-F14-001` … Story'sini oluşturmanı rica ediyorum."_ **§22.6
+> and the seven Acceptance Criteria that follow from it were written after the
+> approval and are Frozen with it.** They are recorded here rather than folded
+> in silently, because a Freeze Note that did not say so would make an approval
+> cover text the Owner had not read.
+>
+> **Revision Note (2.6):** Superseding revision of Frozen v2.5, begun
+> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7.
+>
+> **Three additions, all of them commissioned by the Owner on 2026-09-06** after
+> `traceability.md` v2.2 §5C.2 recorded that they were built and owned by
+> nothing: _"Platformun en kritik kalkanlarının (denetim izi, kişisel veri
+> koruması, feed yönetimi) sohbet geçmişine ve kod satırlarına emanet edilmesine
+> izin veremeyiz."_
+>
+> | New | What it does |
+> | --- | --- |
+> | **§22 Admin Audit Trail** | Makes the trail a binding commitment rather than an implementation detail: what is recorded, that it is append-only **at the database**, that it is never swept, and that it is closed to any future Sub-Admin tier |
+> | **§23 Personal Data on Admin Surfaces** | States the Owner's rule of 2026-09-04 as a **Security Requirement**: no address on any operational surface, revealed only by a deliberate act on one case, and that act recorded in §22's trail |
+> | **§22.6 Reading the trail** | Added after the Owner's approval of 2026-09-06, on his instruction in the same message: `F14` is allocated for the reading surface, and a Feature needs a section that describes what it is |
+> | **§24 Feed Management** | The behaviour owner for the Admin surface that registers a partner feed, holds its mapping, pauses it and reads its runs — Feature `F13` |
+>
+> **What it does not change.** No lifecycle state, no moderation action, no
+> eligibility composition, no Capability, no ownership boundary, and no existing
+> section's meaning. §12's exhaustive list gains two entries because two of the
+> three additions are places where platform-owned operational rules live, and
+> §12 is precisely the section that fails when that is forgotten — as it did
+> once already, recorded in its own text.
+>
+> **The behaviour was built first, again, and that is recorded rather than
+> tidied.** The audit trail shipped in `I83`, its reading surface in `I84`, its
+> extension to affiliate acts in `I87`; the disclosure rule in `I82`; feed
+> management in `I76`. This revision is written from the requirement, and where
+> it disagrees with what exists, the document wins and the code changes.
+
+> **Freeze Note (2.5):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-03, together with `PRD-0001-offering.md` v4.1. This exact
+> version must not be edited in place; a further change requires a controlled
+> revision under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v2.3 is preserved
+> unchanged at `PRD-0006-platform-v2.3-superseded.md`, and Draft v2.4 — which
+> was never Frozen — at `PRD-0006-platform-v2.4-candidate.md`, because a
+> candidate that was superseded before Freeze is still evidence of what was
+> proposed and when.
+>
+> **Approval Note (2.5):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-03 — _"Gösterimi olmayan ilanın oranını '%0'
+> yerine 'Yok (Null)' olarak tanımlaman veri okuryazarlığı açısından çok
+> isabetli. CTR'ın Discovery (sıralama) algoritmasını kesinlikle etkilememesi
+> kuralı da platformun güvenilirliğini koruyor… taslaklarını resmi olarak
+> onaylıyorum."_ Approval and Freeze were separate decisions taken on the same
+> day.
+>
+> **Revision Note (2.5):** Superseding revision of Draft v2.4, begun under
+> `DOCUMENT_LIFECYCLE.md` §7.
+>
+> **v2.4 is superseded before it was Frozen, and that is deliberate.** Freezing
+> v2.4 and then immediately revising it would put two decisions in front of the
+> Owner where one will do, and would leave a Frozen version whose only life was
+> a few hours. v2.5 carries everything v2.4 carried, with two changes.
+>
+> **(a) §21.5's retention period is decided rather than proposed.** The Owner
+> took the decision on 2026-09-03: _"Önerdiğin 180 gün kuralını onaylıyorum.
+> Altı ay, yasal veya operasyonel bir itirazı geçmişe dönük incelemek için
+> fazlasıyla yeterli ve makul bir veri tutma süresidir."_ The section now states
+> the rule instead of asking for it, and records who decided and when.
+>
+> **(b) §11.2 gains one indicator: Affiliate Handoff Rate.** The Owner asked for
+> per-link click-through reporting, and asked for this revision by name —
+> _"analitik kapsamına CTR metriğini resmi olarak dahil edecek revizyon
+> taslağını da eşzamanlı olarak hazırla"_ — because §11.2's inventory is a
+> closed list and a Story may not widen it.
+>
+> **Three things make this a small change rather than a new capability**, and
+> each is stated in §11.6 so that a later reader does not have to reconstruct
+> them:
+>
+> - it **measures nothing new**. Both terms are occurrences §11.2 already counts:
+>   `Offering Presentation Open` (PRD-0001) and `Affiliate Handoff Completion`
+>   (PRD-0004). No event is added, no counter is created, and nothing is recorded
+>   about a person;
+> - it is **not advertising reporting**. §20.5 excludes impression, click,
+>   revenue and fill-rate reporting for advertising, and that exclusion is
+>   unchanged. An Affiliate Handoff is not an advertisement: it is a person
+>   choosing to go to a seller they were comparing, and §11.2 has counted it
+>   since v1.0;
+> - it **may not reach Discovery**. A rate that could order Results would be
+>   ranking by commercial performance, which PRD-0002 forbids outright and §20.3
+>   forbids for advertising. §11.6 says so, and §11.5's action-handoff boundary
+>   already forbids Analytics from acting.
+
 - **Owner:** Product Owner / Architecture Owner
 - **PRD ID:** PRD-0006
 - **Title:** Platform
 - **Status:** Frozen
-- **Version:** 2.2
+- **Version:** 2.6
+- **Approval Date:** 2026-09-06
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-07
+- **Frozen By:** Product Owner / Architecture Owner
+- **Supersedes:** Frozen v2.5, preserved at `PRD-0006-platform-v2.5-superseded.md`
+- **Raised by:** Owner commission of 2026-09-06, recorded in `traceability.md`
+  Frozen v2.2 §5C.2
+- **Supersedes:** Frozen v2.3, preserved at `PRD-0006-platform-v2.3-superseded.md`; Draft v2.4, preserved at `PRD-0006-platform-v2.4-candidate.md`
+- **Supersedes:** Frozen v2.2, preserved at `PRD-0006-platform-v2.2-superseded.md`
 - **Supersedes:** Frozen v2.1 (preserved at `PRD-0006-platform-v2.1-superseded.md`)
 - **Approval Date:** 2026-08-31
 - **Approved By:** Product Owner / Architecture Owner
@@ -23,8 +137,8 @@
 > advertising in three named regions** and to give an Admin the settings that
 > configure it.
 >
-> §4 excluded *"billing, payments, subscriptions, CRM, advertising, or
-> transaction processing"* as one line. That line bundles six things and only
+> §4 excluded _"billing, payments, subscriptions, CRM, advertising, or
+> transaction processing"_ as one line. That line bundles six things and only
 > one is being reconsidered: the platform still takes no payment, issues no
 > invoice, holds no subscription and runs no CRM. **Advertising is separated out
 > and bounded**, because a blanket word in an exclusion list cannot express
@@ -34,11 +148,11 @@
 > individually rather than covered by one word: the platform does not **sell**
 > advertising, does not **moderate** advertising creative, and does not
 > **report** advertising performance. An external network does all three. What
-> the platform owns is *where* advertising may appear and *whether* it appears
+> the platform owns is _where_ advertising may appear and _whether_ it appears
 > at all — and both are settings, which is why they belong to PRD-0006.
 >
 > **What stays excluded, and it is most of it.** Sponsored, paid or promoted
-> *ordering* remains forbidden — an advertiser may buy a region of the page and
+> _ordering_ remains forbidden — an advertiser may buy a region of the page and
 > may not buy a position in the Results. Advertising may not read, receive or
 > influence a Discovery path, a Comparison Set, a Decision Chat, or any
 > protected contact information. No advertising appears on Home, in Decision
@@ -47,6 +161,7 @@
 > §20 is new and is the only section added. It is appended rather than
 > inserted, because renumbering nineteen sections would break every
 > reference in the repository to make room for one.
+
 - **Supersedes:** Approved v1.0
 - **Approved candidate:** In Review v2.1
 - **Approval Date:** 2026-07-21
@@ -139,6 +254,8 @@ V1 Platform includes:
   - filterable;
   - comparable;
 - Admin-facing Basic Analytics;
+- Advertising Placement Settings (§20);
+- Listing Reports and their review (§21);
 - consistent Platform behaviour across Mobility, Real Estate, and Technology.
 
 The Admin Panel must combine visibility with action.
@@ -177,6 +294,9 @@ The following are outside PRD-0006:
 - affiliate-network integration, attribution, commission, settlement, or external conversion tracking;
 - in-platform Messaging or a Business inbox;
 - message moderation;
+- replying to, notifying, or corresponding with the person who sent a Listing Report;
+- forwarding a Listing Report to the Business or the partner it concerns;
+- any Listing Report count entering Discovery ordering, an indicator inventory, or a public surface;
 - user impersonation;
 - permanent Category deletion;
 - Category merge or automated replacement;
@@ -395,15 +515,15 @@ Platform must reject an unauthorized attempt to target an Admin-authorized accou
 
 ### 7.2 Action-to-outcome map
 
-| Platform action | Target | Outcome owner | Approved product result |
-|---|---|---|---|
+| Platform action    | Target                                                                                                     | Outcome owner                             | Approved product result                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Request Correction | Business Information, Offering content, Affiliate Destination configuration, or Direct Contact information | PRD-0005 notice; applicable content owner | No lifecycle, moderation-status, access-status, or eligibility change by itself; case remains Open |
-| Hide Offering | Published Offering | PRD-0001 | `Published → Hidden` |
-| Restore Offering | Hidden Offering | PRD-0001 | `Hidden → Published` |
-| Restrict Business | Unrestricted Business | PRD-0005 | `Unrestricted → Restricted`; lifecycle-Published Offerings lose public eligibility |
-| Restore Business | Restricted Business | PRD-0005 | `Restricted → Unrestricted`; only lifecycle-Published Offerings may regain public eligibility |
-| Suspend User | Enabled non-Admin-authorized User Account | PRD-0003 | `Enabled → Suspended` |
-| Reinstate User | Suspended non-Admin-authorized User Account | PRD-0003 | `Suspended → Enabled` |
+| Hide Offering      | Published Offering                                                                                         | PRD-0001                                  | `Published → Hidden`                                                                               |
+| Restore Offering   | Hidden Offering                                                                                            | PRD-0001                                  | `Hidden → Published`                                                                               |
+| Restrict Business  | Unrestricted Business                                                                                      | PRD-0005                                  | `Unrestricted → Restricted`; lifecycle-Published Offerings lose public eligibility                 |
+| Restore Business   | Restricted Business                                                                                        | PRD-0005                                  | `Restricted → Unrestricted`; only lifecycle-Published Offerings may regain public eligibility      |
+| Suspend User       | Enabled non-Admin-authorized User Account                                                                  | PRD-0003                                  | `Enabled → Suspended`                                                                              |
+| Reinstate User     | Suspended non-Admin-authorized User Account                                                                | PRD-0003                                  | `Suspended → Enabled`                                                                              |
 
 User Account correction is outside V1.
 
@@ -551,12 +671,12 @@ Disable Affiliate Destination
 
 ### 8.3 Action effects consumed from PRD-0001
 
-| Action | PRD-0001-owned product result |
-|---|---|
-| Review Affiliate Destination | No status, validation, or Handoff Eligibility change by itself |
-| Validate Affiliate Destination | Produces `Valid` or `Invalid`; status unchanged |
-| Enable Affiliate Destination | Requires `Valid`; produces `Enabled` and Handoff Eligibility `Eligible` |
-| Disable Affiliate Destination | Produces `Disabled` and Handoff Eligibility `Ineligible`; current validation result preserved |
+| Action                         | PRD-0001-owned product result                                                                 |
+| ------------------------------ | --------------------------------------------------------------------------------------------- |
+| Review Affiliate Destination   | No status, validation, or Handoff Eligibility change by itself                                |
+| Validate Affiliate Destination | Produces `Valid` or `Invalid`; status unchanged                                               |
+| Enable Affiliate Destination   | Requires `Valid`; produces `Enabled` and Handoff Eligibility `Eligible`                       |
+| Disable Affiliate Destination  | Produces `Disabled` and Handoff Eligibility `Ineligible`; current validation result preserved |
 
 PRD-0006 does not define or modify:
 
@@ -578,12 +698,12 @@ Affiliate Destination Administration:
 ### 8.5 Derived workload
 
 | PRD-0001-owned result | Platform workload category |
-|---|---|
-| Draft + Not Validated | Needs Validation |
-| Draft + Invalid | Business Correction Needed |
-| Draft + Valid | Ready to Enable |
-| Enabled | No pending item |
-| Disabled | No pending item |
+| --------------------- | -------------------------- |
+| Draft + Not Validated | Needs Validation           |
+| Draft + Invalid       | Business Correction Needed |
+| Draft + Valid         | Ready to Enable            |
+| Enabled               | No pending item            |
+| Disabled              | No pending item            |
 
 `Business Correction Needed` may be surfaced through the PRD-0005 Business Dashboard correction notice.
 
@@ -725,7 +845,8 @@ The Admin Panel provides the following product indicators.
 - Compare starts;
 - Decision Chat starts;
 - Affiliate Handoff Completion count;
-- Direct Contact Completion count.
+- Direct Contact Completion count;
+- **Affiliate Handoff Rate**, per Offering and overall (§11.6).
 
 ### 11.3 Completion consumption
 
@@ -743,6 +864,83 @@ AND external contact channel made available
 ```
 
 Basic Analytics does not interpret Completion as purchase, sale, contract, response, or external transaction success.
+
+### 11.6 Affiliate Handoff Rate
+
+**What it is.** For one Offering, the number of Affiliate Handoff Completions
+divided by the number of Offering Presentation Opens, over the selected period.
+Overall, the same ratio across every Offering in the selection.
+
+```text
+Affiliate Handoff Rate = Affiliate Handoff Completion ÷ Offering Presentation Open
+```
+
+**Per link means per Offering.** PRD-0001 §9.1 gives an Offering zero or one
+Affiliate Destination, so an Offering *is* the link. There is no second level to
+report at, and inventing one would mean counting something the platform does not
+have.
+
+#### 11.6.1 It adds no measurement
+
+Both terms are occurrences this document already consumes and §11.2 already
+counts. **No new event, counter, identifier or record is created**, and nothing
+about a person is stored — which is why this is an addition to an inventory
+rather than a new capability, and why §19's deferral of technical analytics
+measurement is untouched.
+
+#### 11.6.2 It is not advertising reporting
+
+§20.5 excludes impression, click, revenue and fill-rate reporting for
+advertising, **and that exclusion is unchanged.** An Affiliate Handoff is not an
+advertisement: it is a person who was comparing sellers choosing to go to one,
+and §11.2 has counted it since v1.0. The platform still sells no advertising,
+prices none, moderates no creative and reports no advertising performance.
+
+The distinction is worth stating because the two look alike from outside and are
+governed oppositely. An advertisement is a placement somebody bought; an
+Affiliate Handoff is the outcome of the comparison this platform exists to
+provide.
+
+#### 11.6.3 What it may never do
+
+- **order, weight or mark anything in Discovery Results.** A rate that could
+  move a listing would be ranking by commercial performance — forbidden by
+  PRD-0002 for Results and by §20.3 for advertising, and no less forbidden for
+  arriving through Analytics;
+- appear on any public surface, or on a Business-facing one. §4 excludes
+  Business-facing analytics and this is Admin-facing like every other indicator;
+- be interpreted as purchase, sale, contract, response or external transaction
+  success (§11.3);
+- be reported where the denominator is zero. An Offering nobody has opened has
+  **no rate**, and that is stated as *no rate* rather than as `0%` — a zero
+  would read as "nobody chose this" when the truth is "nobody has looked".
+
+#### 11.6.4 Acceptance Criteria
+
+```gherkin
+Scenario: The rate is derived rather than measured
+  Given Offering Presentation Opens and Affiliate Handoff Completions are counted
+  When the Affiliate Handoff Rate is presented
+  Then it is computed from those two counts
+  And no additional event, counter or record exists to produce it
+
+Scenario: An Offering nobody has opened has no rate
+  Given an Offering with no Offering Presentation Open in the selected period
+  When the Affiliate Handoff Rate is presented for it
+  Then no rate is shown
+  And the absence is stated as no rate rather than as zero
+
+Scenario: The rate cannot move a listing
+  Given Offerings with different Affiliate Handoff Rates
+  When Discovery Results containing them are ordered
+  Then the order is the product-defined order
+  And no Offering is advanced, delayed or marked by its rate
+
+Scenario: The rate stays inside the Admin surface
+  Given an Affiliate Handoff Rate exists for an Offering
+  When any public or Business-facing surface is presented
+  Then the rate does not appear
+```
 
 ### 11.4 Time and grouping
 
@@ -790,9 +988,40 @@ Platform-owned operational rules are represented only through explicit approved 
 - Affiliate Destination Administration;
 - Category Management;
 - Attribute Management;
-- Basic Analytics periods and groupings.
+- Basic Analytics periods and groupings;
+- Advertising Placement Settings (§20);
+- Listing Reports (§21);
+- Feed Management (§24).
+
+The Admin Audit Trail (§22) is not on this list and is not a settings area: it
+holds no setting, has no form, and offers reading only. Personal Data on Admin
+Surfaces (§23) is a Security Requirement over every surface rather than a place
+where operational rules live, so it is not on this list either. Both are named
+here so that a reader who checks this list against the section numbers finds the
+answer rather than a gap.
 
 No Admin setting may introduce a new capability, role, state, action, metric meaning, or ownership boundary.
+
+**This list is exhaustive and is the test.** A screen is permitted here when
+every field on it is named by one of the sections above; it is the standalone
+Settings area this section refuses when it accepts a key nobody wrote down. The
+difference is not the number of fields — it is whether adding one requires a
+decision. A settings store with an Admin form in front of it is precisely the
+shape in which a new capability arrives without anybody agreeing to add it, and
+that is what §12 exists to prevent.
+
+**§24 was built before it was listed.** Feed Management shipped in `I76` on
+2026-09-03 and this list did not name it until v2.6 — the same failure as the one
+recorded below, two revisions later, and recorded the same way rather than
+quietly repaired.
+
+**§20 was missing from this list from 2026-08-31 until v2.3.** v2.2
+added Advertising Placement Settings as a sixth place where platform-owned
+operational rules live and did not add it here, so the document said "these
+five" on one page and described a sixth on another. The omission is recorded
+rather than silently repaired: it is the exact failure mode this section
+describes — a capability arriving without the document that forbids ungoverned
+capabilities noticing.
 
 ---
 
@@ -805,26 +1034,29 @@ Legend:
 - `Conditional` — permitted only when the target and action conditions are satisfied;
 - `Owner only` — reserved to Product Owner / Architecture Owner.
 
-| Action | Guest | User | Business | Ordinary Admin | Product Owner / Architecture Owner |
-|---|---:|---:|---:|---:|---:|
-| Enter Admin Panel | ✗ | ✗ | ✗ | ✓ | ✓ |
-| View Admin action guidance | ✗ | ✗ | ✗ | ✓ | ✓ |
-| View Basic Analytics | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Request Correction | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Hide Offering | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Restore Offering | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Restrict Business | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Restore Business | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Suspend non-Admin-authorized User | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Reinstate non-Admin-authorized User | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Suspend Admin-authorized User | ✗ | ✗ | ✗ | ✗ | Owner only |
-| Reinstate Admin-authorized User | ✗ | ✗ | ✗ | ✗ | Owner only |
-| Review / Validate / Enable / Disable Affiliate Destination | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Manage Categories | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Manage Attributes | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Grant or remove Admin authorization | ✗ | ✗ | ✗ | ✗ | Owner only through controlled operational provisioning |
-| Use Messaging moderation | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Use generic Platform Settings | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Action                                                     | Guest | User | Business | Ordinary Admin |                     Product Owner / Architecture Owner |
+| ---------------------------------------------------------- | ----: | ---: | -------: | -------------: | -----------------------------------------------------: |
+| Enter Admin Panel                                          |     ✗ |    ✗ |        ✗ |              ✓ |                                                      ✓ |
+| View Admin action guidance                                 |     ✗ |    ✗ |        ✗ |              ✓ |                                                      ✓ |
+| View Basic Analytics                                       |     ✗ |    ✗ |        ✗ |              ✓ |                                                      ✓ |
+| Request Correction                                         |     ✗ |    ✗ |        ✗ |    Conditional |                                            Conditional |
+| Hide Offering                                              |     ✗ |    ✗ |        ✗ |    Conditional |                                            Conditional |
+| Restore Offering                                           |     ✗ |    ✗ |        ✗ |    Conditional |                                            Conditional |
+| Restrict Business                                          |     ✗ |    ✗ |        ✗ |    Conditional |                                            Conditional |
+| Restore Business                                           |     ✗ |    ✗ |        ✗ |    Conditional |                                            Conditional |
+| Suspend non-Admin-authorized User                          |     ✗ |    ✗ |        ✗ |    Conditional |                                            Conditional |
+| Reinstate non-Admin-authorized User                        |     ✗ |    ✗ |        ✗ |    Conditional |                                            Conditional |
+| Suspend Admin-authorized User                              |     ✗ |    ✗ |        ✗ |              ✗ |                                             Owner only |
+| Reinstate Admin-authorized User                            |     ✗ |    ✗ |        ✗ |              ✗ |                                             Owner only |
+| Review / Validate / Enable / Disable Affiliate Destination |     ✗ |    ✗ |        ✗ |    Conditional |                                            Conditional |
+| Manage Categories                                          |     ✗ |    ✗ |        ✗ |              ✓ |                                                      ✓ |
+| Manage Attributes                                          |     ✗ |    ✗ |        ✗ |              ✓ |                                                      ✓ |
+| Manage Advertising Placement Settings                      |     ✗ |    ✗ |        ✗ |              ✓ |                                                      ✓ |
+| Submit a Listing Report                                    |     ✓ |    ✓ |        ✓ |              ✓ |                                                      ✓ |
+| Read or review the Listing Report queue                    |     ✗ |    ✗ |        ✗ |              ✓ |                                                      ✓ |
+| Grant or remove Admin authorization                        |     ✗ |    ✗ |        ✗ |              ✗ | Owner only through controlled operational provisioning |
+| Use Messaging moderation                                   |     ✗ |    ✗ |        ✗ |              ✗ |                                                      ✗ |
+| Use generic Platform Settings                              |     ✗ |    ✗ |        ✗ |              ✗ |                                                      ✗ |
 
 Admin authorization does not grant automatic Business-management authority.
 
@@ -966,6 +1198,10 @@ Admin opens operational overview
 31. Platform shall provide Today, Last 7 days, Last 30 days, and All time periods.
 32. Platform shall support overall and applicable domain grouping.
 33. Analytics shall not perform actions automatically.
+33a. Platform shall present Affiliate Handoff Rate as Affiliate Handoff Completion divided by Offering Presentation Open, per Offering and overall.
+33b. Affiliate Handoff Rate shall be derived from counted occurrences and shall create no additional event, counter or record.
+33c. Platform shall present no Affiliate Handoff Rate where Offering Presentation Open is zero, and shall state the absence as no rate rather than as zero.
+33d. Affiliate Handoff Rate shall not order, weight or mark anything in Discovery Results, and shall not appear on any public or Business-facing surface.
 
 ### Configuration boundary
 
@@ -990,6 +1226,26 @@ Admin opens operational overview
 52. Platform shall require the corrected Offering to preserve the Universal Publication Minimum.
 53. Platform shall keep the case Open after the owner edit and require re-review.
 54. The bounded path shall not expand the seven-action General Moderation set.
+
+### Advertising Placement Settings
+
+55. Platform shall hold exactly the settings named in §20.4 and no key an Admin may invent.
+56. Advertising shall be absent until configured, and an empty publisher identifier shall mean none anywhere.
+57. The master switch shall suppress every region of §20.1, including the region the platform serves itself.
+58. A Category on the exclusion list shall keep advertising out of that Category and every Category beneath it.
+59. Suppressing advertising shall not discard the identifiers or the exclusion list.
+60. Platform shall record no impression, click, revenue or fill-rate figure for any region.
+
+### Listing Reports
+
+61. Platform shall accept a report about a publicly eligible listing from anybody, signed in or not, without requesting identity.
+62. A report shall carry a reason from the closed list in §21.2 and, optionally, the person's own words.
+63. Report statuses shall be Open, Accepted and Dismissed, and a non-Open report shall record its reviewer and review time.
+64. Reviewing a report shall change nothing about the listing and shall open no Moderation Case automatically.
+65. A report count shall not order, demote or mark a listing anywhere in Discovery, and shall not enter the §11.2 indicator inventory.
+66. A dismissed report shall be kept as evidence for the retention period in §21.5.
+67. Platform shall delete a reviewed report, and the words it carries, 180 days after its review, and shall never delete an Open report.
+68. Platform shall bound the number of reports one source may send within an hour.
 
 ---
 
@@ -1285,15 +1541,27 @@ The platform does not sell, price, moderate or report advertising. It configures
 an external network and decides **where** advertising may appear and **whether**
 it appears at all. Both are Admin settings.
 
-### 20.1 The three permitted regions
+### 20.1 The permitted regions
 
-Advertising may appear in exactly these three regions and nowhere else:
+Advertising may appear in exactly these regions and nowhere else:
 
-| Region | Position |
-| --- | --- |
-| Discovery Results | Between Listing Cards, no earlier than the sixth |
-| Offering Presentation | Below the seller list |
-| Category page | Below the results grid |
+| Region                 | Position                                                | Served by            |
+| ---------------------- | ------------------------------------------------------- | -------------------- |
+| Discovery Results      | Between Listing Cards, no earlier than the sixth        | the external network |
+| Offering Presentation  | Below the seller list                                   | the external network |
+| Category page          | Below the results grid                                  | the external network |
+| Complementary products | On an Offering Presentation, directly below the actions | the platform         |
+
+The fourth region is the platform's own: a **Complementary Placement** is a
+label, a partner name, an optional line and an outbound address, written by an
+Admin against a Category and inherited by every listing under it. No external
+network is involved, and no creative is served — what a person reads is exactly
+what was written.
+
+Its position is above the seller list because it answers a question a person
+has _after_ deciding what to do about the listing and not before: a car needs
+tyres, a laptop needs a bag. It is the only region whose position is set by what
+it says rather than by keeping it out of the way.
 
 Every unit is **labelled as advertising** in the person's own language, in a way
 that is legible without colour.
@@ -1327,12 +1595,37 @@ Advertising is **absent by default**. A setting left empty means no advertising
 in that region, and an empty publisher identifier means none anywhere. The
 platform never invents an identifier and never falls back to one.
 
+**The master switch covers every region in §20.1, including the fourth.** Off,
+no external unit is requested and no Complementary Placement is served. This is
+stated rather than left to be inferred, because the whole value of a single
+control is that the person pressing it does not have to remember what it does
+not cover — and the fourth region arrived one version after the switch was
+written, which is exactly when a gap of that kind opens.
+
+**A Category exclusion is inherited downwards.** A Category on the list, and
+every Category beneath it, is ad-free — the same inheritance §20.1 gives a
+Complementary Placement, and for the same reason: the decision is about a
+section of the catalogue, and one that stopped at the heading it names would
+leave a sector marked ad-free advertising everywhere under it.
+
+**Off is a state, not an erasure.** Turning the master switch off does not
+discard the publisher identifier, the unit identifiers or the exclusion list. An
+operator who suppressed advertising in a hurry has not lost the configuration
+they will restore.
+
 ### 20.5 What the settings do not do
 
 They do not report impressions, clicks, revenue or fill rate; they do not
 review creative; and they do not target. Targeting, if the network performs any,
 is the network's behaviour on the person's own browser, and the platform sends
 it nothing about the person.
+
+**This applies to the platform's own region too**, and there it is a decision
+rather than a consequence: the platform could count a press on a Complementary
+Placement and does not. A count would make the placement a thing to optimise,
+and the next question after "which one is pressed most" is "which one should be
+shown first" — which is advertising deciding an order, one region away from the
+Results where §20.3 forbids it outright.
 
 ### 20.6 Acceptance Criteria
 
@@ -1364,4 +1657,643 @@ Scenario: Advertising cannot buy a position
   When Results are ordered
   Then the order is the product-defined order
   And no Offering is advanced, delayed, or marked by any advertising decision
+
+Scenario: A complementary placement is inherited by the headings beneath it
+  Given a Complementary Placement is written against a sector
+  When an Offering Presentation under any heading of that sector is presented
+  Then the placement appears there
+  And a placement written against one heading replaces the sector's under that
+    heading rather than appearing beside it
+
+Scenario: A complementary placement is not part of the listing
+  Given a Complementary Placement applies to a listing
+  When that Offering's Presentation content is composed
+  Then the Presentation carries no advertising
+  And the placement is presented beside it rather than within it
+
+Scenario: The master switch suppresses the platform's own region too
+  Given a Complementary Placement applies to a listing
+  And the master switch is off
+  When that Offering's Presentation is presented
+  Then no complementary placement appears
+  And no external advertising appears
+
+Scenario: An ad-free Category covers the Categories beneath it
+  Given a sector is on the Category exclusion list
+  And a Complementary Placement is written against that sector
+  When an Offering Presentation under any heading of that sector is presented
+  Then no advertising appears
+  And removing the sector from the exclusion list restores it
+
+Scenario: Suppressing advertising does not discard its configuration
+  Given a publisher identifier and unit identifiers are set
+  When an Admin turns the master switch off
+  Then no advertising appears anywhere
+  And the identifiers are unchanged
+  And turning the switch on restores advertising without them being re-entered
+```
+
+---
+
+## 21. Listing Reports
+
+A **Listing Report** is an unverified claim by a member of the public that
+something on one listing is wrong, and an Admin's decision about whether it is.
+It is the platform's only inbound signal about facts only a partner can correct
+— a price that has moved, stock that has gone, a link that no longer resolves —
+and before it existed the platform had no way to hear any of them.
+
+### 21.1 Why it is not a Moderation Case
+
+§5.3 defines a Moderation Case: opened by an Admin with authority, carrying a
+lifecycle other sections govern, and able to change a target's state through the
+seven actions of §7.2. A report is none of those things.
+
+| | General Moderation Case | Listing Report |
+| --- | --- | --- |
+| Opened by | an Admin | anybody, signed in or not |
+| Concerns | a Business, an Offering or an account | one listing |
+| Changes target state | yes, through §7.2 | **never** |
+| Produces | an action | a judgement |
+
+Folding the two together would make the queue an Admin reviews indistinguishable
+from a queue anybody can fill, and would give a member of the public a route into
+a lifecycle §7 reserves to Admins. They are separate, and §21.4 is explicit that
+accepting a report performs no moderation action.
+
+### 21.2 What a report carries
+
+- the **listing** it concerns;
+- a **reason**, from a closed list: the price is wrong, the stock state is wrong,
+  it is in the wrong Category, the information is misleading, the link is broken;
+- optionally, the person's **own words**, bounded to a sentence rather than a
+  document;
+- the **account** that sent it, where there was one.
+
+The reason is a closed list because a report that is only free text is a report
+nobody can count, and the value of the queue is that five reports about one
+listing reads differently from one.
+
+**No identity is requested.** A person is not asked for a name, an email address
+or a telephone number, and a Guest may report. The account is recorded when the
+person happens to be signed in, so that a pattern of reports from one source is
+visible; it is never a condition of being heard. Requiring an account first
+would collect fewer reports from exactly the people who noticed.
+
+### 21.3 The states a report has
+
+`Open` until an Admin has looked at it, and then `Accepted` or `Dismissed`.
+
+A dismissed report is kept rather than deleted, because it is evidence too:
+five dismissed reports about one listing is a different fact from one, and a
+queue that forgot what it had already answered would ask an Admin the same
+question repeatedly.
+
+A report that is no longer Open records **who** reviewed it and **when**, and one
+that is Open records neither. This is the same evidence rule §7.3.2 applies to
+case closure.
+
+### 21.4 What reviewing a report does, and what it does not
+
+Accepting a report records that an Admin agrees there is something to fix. **It
+changes nothing about the listing.** Whatever is then done happens through the
+sections that own the consequences — a Moderation Case under §7, a Request
+Correction under §7.3, or a message to the partner outside this platform.
+
+- A report shall not hide, restore, restrict or retire anything.
+- A report shall not open a Moderation Case automatically.
+- A count of reports shall not order, demote or mark a listing anywhere in
+  Discovery. This is the same boundary §20.3 draws around advertising, and for
+  the same reason: an unverified claim that could move a listing is a way to
+  move a listing by making claims.
+- The reporter is not told the outcome. The platform does not hold an address to
+  tell them at, and asking for one would change what §21.2 collects.
+
+### 21.5 Retention
+
+A report holds a member of the public's own words about a third party's listing.
+That is the reason a retention period exists at all: everything else on the row
+is a reason code and a timestamp.
+
+**Decided by the Product Owner on 2026-09-03** — _"Önerdiğin 180 gün kuralını
+onaylıyorum. Altı ay, yasal veya operasyonel bir itirazı geçmişe dönük
+incelemek için fazlasıyla yeterli ve makul bir veri tutma süresidir."_
+
+- an **Open** report is kept until it is reviewed, **whatever its age**. A queue
+  that deleted work nobody had done would lose the report *and* the fact that it
+  was never answered — and the second is the more damaging loss, because it is
+  the one that hides a queue nobody is reading;
+- a **reviewed** report is deleted **180 days** after its review;
+- the person's own words are deleted **with** the report and not before. A row
+  that outlived its note would keep the fact that somebody complained without
+  keeping what they said, which is the worst of both.
+
+**Why 180 days.** Long enough that an Admin can re-read a decision across two
+quarters and that a repeated claim about one listing is still visible as a
+repetition; short enough that free text written by the public is not held
+indefinitely for a purpose nobody can name.
+
+**Deletion is deletion.** The report is removed, not anonymised into a row that
+survives for ever without its content.
+
+### 21.6 Volume
+
+A single source may send a bounded number of reports in an hour. The bound is
+deliberately generous: somebody working through a Category and finding four
+stale prices is the best thing that can happen to a comparison platform, and a
+limit that punished them would cost more than the noise it prevents. What the
+bound stops is one source producing volume.
+
+### 21.7 What Listing Reports do not do
+
+- They do not measure anything. A report count is a queue depth, not an
+  indicator, and §11.2's Basic Analytics inventory does not include it. Adding it
+  is a change to §11, not something a report queue may do on its own.
+- They do not carry a conversation. There is no reply, no thread and no
+  notification.
+- They do not reach the Business. What a partner is told, and by whom, is
+  outside this platform.
+
+### 21.8 Acceptance Criteria
+
+```gherkin
+Scenario: Anybody may report a listing
+  Given a publicly eligible listing
+  When a person who is not signed in submits a reason
+  Then the report is recorded
+  And no identity is requested
+
+Scenario: A report changes nothing about the listing
+  Given an Open report about a listing
+  When an Admin accepts it
+  Then the report is Accepted
+  And the listing's exposure, eligibility and lifecycle are unchanged
+  And no Moderation Case is opened automatically
+
+Scenario: A dismissed report is kept
+  Given an Open report about a listing
+  When an Admin dismisses it
+  Then the report is Dismissed
+  And it remains readable as evidence
+
+Scenario: A reviewed report records who and when
+  Given an Open report
+  Then it records no reviewer and no review time
+  When an Admin reviews it
+  Then it records both
+
+Scenario: A report cannot move a listing in Results
+  Given a listing with several reports about it
+  When Results containing that listing are ordered
+  Then the order is the product-defined order
+  And no report has advanced, delayed or marked it
+
+Scenario: An Open report is never swept
+  Given an Open report older than the retention period
+  When retention is applied
+  Then the report is kept
+  And the fact that it was never answered is kept with it
+
+Scenario: A reviewed report is deleted with its words
+  Given a report reviewed longer ago than the retention period
+  When retention is applied
+  Then the report is deleted
+  And the words it carried are deleted with it
+
+Scenario: A report about a listing nobody can open is not accepted
+  Given an address that is not a publicly eligible listing
+  When a report is submitted against it
+  Then the report is refused
+  And the refusal says nothing about whether the listing ever existed
+```
+
+---
+
+## 22. Admin Audit Trail
+
+Every Admin action this document governs changes something a person can see: a
+listing disappears, an account cannot sign in, a partner's handoff starts
+earning. The platform has always recorded the **consequences** of those acts in
+the places that own them — a case note, a validation result, a moderation
+status. It records the **acts** here.
+
+A case note answers _"what happened to this Business"_. It cannot answer _"what
+has this Admin done this month"_, and it cannot answer it in a way that survives
+somebody who would rather it did not. Those are the two questions this section
+exists for, and they are questions about people rather than about targets.
+
+### 22.1 What the trail is
+
+An **append-only record of Admin acts**, held separately from the records those
+acts produce. Each entry states:
+
+- **who** acted — the account, as an identifier;
+- **what** they did, from the closed list of §22.2;
+- **what it concerned** — the target, where the act has one outside its case;
+- **which case** it was taken under, where there was one;
+- **when** it happened.
+
+An entry carries **no name and no email address**, for the reason §23 gives: a
+trail that named people would be a second place personal data lives, and the one
+place nobody would think to look for it.
+
+### 22.2 What is recorded
+
+Every act by which an Admin changes something, and one act by which an Admin
+merely *sees* something:
+
+| Recorded | Why |
+| --- | --- |
+| The seven General Moderation actions (§7.2) | They change a target's state |
+| Opening a Moderation Case (§5.3) | It is the act that starts a governed process |
+| **Revealing a personal email address** (§23) | It is a disclosure of personal data, and §23 makes the record a condition of the disclosure |
+| Affiliate Destination review, validation result, enablement and disablement (§8) | They decide whether a handoff earns. The Owner, 2026-09-05: *"platformun para kazandıran en kritik eylemleridir"* |
+
+A validation is recorded **by its result**, because "an address was judged" and
+"an address was judged invalid" are different facts and only the second explains
+a handoff that never went live.
+
+**This list is exhaustive and adding to it is a revision of this section.** An
+Admin act that is not on it is not recorded, which is a statement about what the
+platform promises rather than about what an implementation happens to do.
+
+### 22.3 Append-only, and where that is enforced
+
+The trail **shall not be editable or deletable by any surface, any Admin, or any
+application code.** This is a technical commitment and not a convention:
+
+- the enforcement lives **at the database**, in constraints the application
+  cannot ask nicely to be excused from;
+- it covers `UPDATE`, `DELETE` **and** whole-table truncation, because a
+  guarantee that stops at row-level deletion is one somebody steps over with a
+  single statement — this was found by testing, not by reasoning;
+- the platform exposes **no route** that writes, edits or removes an entry.
+  Reading is the only operation any surface offers;
+- an account that has acted as an Admin **cannot be deleted** while its entries
+  exist. Removing a person must not erase the record of what they did.
+
+**Failure to write an entry shall not fail the act it describes.** The act has
+already happened by then — the address was read, the account was suspended — and
+refusing it would report a failure that did not occur. A lost entry is logged
+where operators look. The cost is named rather than hidden: a database fault can
+lose an entry while its act succeeds, and the alternative loses the act *and*
+misreports it.
+
+### 22.4 Retention: none
+
+The trail is **kept indefinitely.** No sweep, no window, no archival.
+
+The 180-day retention of §21.5 belongs to Listing Reports and to nothing else.
+The two were conflated once, in conversation, and the distinction is the whole
+point: a report is a claim that stops being useful, and an audit entry is
+evidence whose value **increases** with age. A trail that forgets cannot answer
+the question it exists for, which is always asked about the past.
+
+### 22.5 Who may read it
+
+**The platform administrator alone.**
+
+V1 has one Admin tier, so today this is every Admin. The commitment is about
+what happens when that stops being true: a later tier — a Sub-Admin, a
+moderator, a partner-support role — **shall not reach this trail**, and admitting
+one is a revision of this section rather than a configuration change.
+
+The reason is structural. The trail exists to record what Admins do; a tier that
+can read it can see what is recorded about it, and a tier that can be *given*
+access can be given it by somebody who is recorded in it.
+
+Reading the trail is **not itself recorded**. An audit of the audit answers no
+question the trail does not already answer, and a log that grows when somebody
+looks at it teaches Admins not to look.
+
+### 22.6 Reading the trail — Feature `F14`
+
+Reading is an **operational surface** and not a query somebody runs against a
+table. It carries filters, paging and an export, each of which is a decision:
+
+- **Filters** — by the account that acted, by the act, and by a date range.
+  Those are the three questions an audit is asked, and a surface answering only
+  "everything, newest first" cannot answer any of them.
+- **Paging** — the trail is a record being searched rather than a queue being
+  emptied, and a record nobody can page through is a record nobody can audit.
+  The page states **how many entries match** as well as which page it is, because
+  a page that does not say how many there are cannot tell a reader whether they
+  have seen the entry they came for.
+- **The filters travel in the address.** A compliance question is answered by
+  sending somebody a view, and a view held only inside a screen cannot be sent.
+- **Export.** The same entries the screen describes, as a file, built from the
+  **same filters** — an export that describes a different set of rows from the
+  screen it came from is how a file quietly becomes wrong. It carries no email
+  address and no name, per §23.3.
+
+The default view is the **last thirty days**, and the range may reach back as far
+as the trail goes. There is no cap: §22.4 keeps every entry, and a view that
+hid entries which exist would be hiding them from the one surface built to
+disclose them.
+
+**Authorization is this Feature's whole risk.** §22.5 reserves the trail to the
+platform administrator, and this surface is where that reservation is either
+kept or lost: a filter, a page or an export reachable by a tier §22.5 excludes
+discloses exactly what the trail exists to protect. The surface therefore
+resolves its own authority — the same check by a different name from every other
+Admin surface — so that a later Sub-Admin revision has one place to change and a
+reviewer has one name to look for.
+
+### 22.7 What the trail does not do
+
+- It **grants nothing**. An entry confers no authority and removes none.
+- It **judges nothing**. It records that an act happened, never whether it was
+  right; that judgement belongs to a person reading it.
+- It is **not a moderation record**. §7's case history remains the account of
+  what happened to a target; this is the account of who acted.
+- It is **not analytics**. §11's indicators count occurrences for a dashboard;
+  this identifies actors for accountability, and the two must not be merged —
+  §11.4 forbids Analytics from identifying a person, and this section requires
+  it. They answer to different rules because they are for different things.
+
+### 22.8 Acceptance Criteria
+
+```gherkin
+Scenario: An Admin act is recorded with its actor
+  Given an authorized Admin performs an act listed in §22.2
+  When the act succeeds
+  Then the trail holds an entry naming the acting account, the act and the time
+
+Scenario: A refused act is not recorded
+  Given an Admin attempts an act the platform refuses
+  When the refusal is returned
+  Then no entry describing that act exists
+
+Scenario: A validation is recorded by its result
+  Given an Admin records an Affiliate Destination validation result
+  When the result is Invalid
+  Then the entry distinguishes it from a result of Valid
+
+Scenario: The trail cannot be edited
+  Given an entry exists
+  When any actor attempts to change or remove it
+  Then the attempt is refused by the database
+
+Scenario: The trail cannot be emptied
+  Given entries exist
+  When any actor attempts to truncate the record
+  Then the attempt is refused
+
+Scenario: An acting account cannot be erased
+  Given an account has entries in the trail
+  When deletion of that account is attempted
+  Then the deletion is refused
+
+Scenario: The trail is not swept
+  Given an entry older than any retention period applied elsewhere
+  When the platform performs its retention work
+  Then the entry remains
+
+Scenario: A losable entry does not lose its act
+  Given the trail cannot be written for a technical reason
+  When an Admin performs an act
+  Then the act completes
+  And the failure to record is reported to operators
+
+Scenario: Reading is the only operation
+  Given any Admin surface
+  When it addresses the trail
+  Then it may read
+  And no surface offers a write, an edit or a removal
+
+Scenario: The reading surface narrows by actor, act and date
+  Given entries by two accounts, of two kinds, on two days
+  When the surface is filtered by one account, one act or one day
+  Then only the matching entries are returned
+
+Scenario: A page says how many there are
+  Given more entries than one page holds
+  When a page is read
+  Then it states the total number matching the filters
+
+Scenario: The filters are in the address
+  Given a filtered view
+  When its address is opened again
+  Then the same filters apply
+
+Scenario: The export describes the screen
+  Given a filtered view
+  When the export is taken
+  Then it contains the entries those filters match
+  And it contains no email address and no name
+
+Scenario: The range is not capped
+  Given an entry older than any retention period applied elsewhere on the platform
+  When the range is widened to include its date
+  Then the entry is returned
+
+Scenario: The surface is closed to anybody the trail is not for
+  Given a caller who is not the platform administrator
+  When it addresses the reading surface or its export
+  Then the request is refused
+  And no entry, count or filter value is disclosed
+```
+
+---
+
+## 23. Personal Data on Admin Surfaces
+
+**Security Requirement.** This section states a data-protection commitment, not
+a preference about screen layout. It is stated here because the Owner set it on
+2026-09-04 and it existed nowhere any reader could hold the platform to:
+
+> _"E-posta adresleri hassas kişisel veridir. Operasyonel ekranlarda (örneğin
+> liste veya vaka kuyruğu görünümlerinde) e-posta adreslerini kesinlikle açıkça
+> göstermiyoruz."_
+
+### 23.1 The rule
+
+**No email address shall appear on any operational Admin surface.** Operational
+means every list, queue, table, dashboard, export and analytics view — anywhere
+an Admin is working through more than one subject at a time.
+
+Where a person must be identified, the surface shows the **account identifier**,
+or an alias the account has chosen. That is enough to act, to open a case, and
+to find the same person again.
+
+### 23.2 The single exception, and its conditions
+
+An address may be disclosed **only** when all four hold:
+
+1. it is on the **detail of one Moderation Case**, never in a list;
+2. the case's target **is a user account** — a case about an Offering or a
+   Business reveals nothing, because no address is needed to act on either;
+3. an Admin **asks for it deliberately**, in an act of its own. It is never part
+   of what a surface returns because it was opened;
+4. the request **is recorded in §22's trail** before the address reaches the
+   screen. The record is a condition of the disclosure and not a consequence of
+   it: an address disclosed without a record is a breach of this section, not an
+   incomplete log.
+
+### 23.3 What this forbids
+
+- A surface **shall not fetch an address and hide it** behind a control. What is
+  sent has been disclosed, whatever the screen chooses to paint; the address
+  must not leave the platform until condition 3 is met.
+- A search, filter or sort **shall not accept an address** as its input on an
+  operational surface. Answering "which account is this address" for anybody who
+  can type is disclosure by another route.
+- An export **shall not carry addresses**, including the audit export of §22.
+- An address **shall not appear** in analytics, in a report queue, in a
+  moderation queue, or in any list of accounts.
+
+### 23.4 Why the mechanism is the rule
+
+A rule enforced by a screen is a rule until the next screen. This section
+therefore requires the **absence of the data** rather than its concealment: the
+address is not in what an operational surface receives, so no future page, export
+or debugging view can display what it was never given. A toggle over data
+already sent satisfies the sentence and defeats the purpose.
+
+### 23.5 Beyond email
+
+Email is the address the platform holds. The rule is about **personal data
+reaching an operational surface**, and any further personal datum the platform
+ever holds — a telephone number, a postal address, a document identifier — falls
+under §23.1 by default, and reaches a surface only through a revision of this
+section that says so.
+
+### 23.6 Acceptance Criteria
+
+```gherkin
+Scenario: A queue never carries an address
+  Given a moderation case queue containing cases about user accounts
+  When an Admin views the queue
+  Then no email address appears
+  And each subject is identified by its account identifier or alias
+
+Scenario: An address is not sent before it is asked for
+  Given the detail of a Moderation Case whose target is a user account
+  When the case is opened
+  Then the response carries no email address
+
+Scenario: A deliberate request discloses it, and is recorded
+  Given an Admin on the detail of a case whose target is a user account
+  When the Admin requests the address
+  Then the address is returned
+  And an entry recording the disclosure exists in the §22 trail
+
+Scenario: A case about an Offering discloses nothing
+  Given a Moderation Case whose target is an Offering
+  When an Admin requests an address
+  Then none is returned
+
+Scenario: An export carries no address
+  Given any Admin export, including the audit trail export
+  When the file is produced
+  Then it contains no email address
+
+Scenario: An operational surface cannot be searched by address
+  Given an Admin list of accounts
+  When an email address is supplied as a filter
+  Then the surface does not answer with the matching account
+```
+
+---
+
+## 24. Feed Management
+
+`PRD-0001-offering.md` §5.11 governs what an automated intake may do to an
+Offering. **This section governs the Admin surface where an intake is configured
+at all** — the thing that exists between "a partner publishes a document" and "a
+price on this platform changes", and which no section owned until now.
+
+It is Feature `F13`.
+
+### 24.1 What an Admin holds
+
+A **feed** is a partner's document the platform reads on a schedule. An Admin
+registers one, and what they register is:
+
+- the **partner** whose listings it may touch, and the **heading** its products
+  are filed under;
+- the **address** of the document and its **format**;
+- the **mapping** — which field in the partner's document is the identifier, the
+  title, the price, the currency, the stock state, the product key;
+- whether it is **active**.
+
+An Admin may **pause** a feed and start it again. A paused feed is not read.
+
+### 24.2 What an Admin reads
+
+For each feed, the record of its **runs**: when it ran, whether it succeeded,
+and — for a run that succeeded — how many products were read, how many listings
+were updated, how many were passed over, and how many rows were refused with the
+reason for each.
+
+A run that failed carries **the reason in words an operator can act on**: that
+the partner's server refused, that the document is malformed, or that the mapping
+names a field that is not there. Those are three different jobs for three
+different people, and a feed that reports only "failed" sends all three to the
+same person.
+
+Refusals are **sampled rather than exhaustive**. A feed that refuses forty
+thousand rows has one problem, not forty thousand, and a platform that stored
+every one of them would make the run that reports a problem the run that fills
+the disk.
+
+### 24.3 What pausing does not do
+
+Pausing says _"stop reading this partner's document"_. It does not withdraw the
+listings that feed maintains, does not hide them, and does not retire them —
+those are moderation and lifecycle decisions that §7 and `PRD-0001` §6 own, and
+an Admin who wanted them would take them deliberately.
+
+### 24.4 What this surface may not do
+
+- It **shall not create a listing**, directly or by configuring something that
+  does. `PRD-0001` §5.11.1 removes that capability from every intake.
+- It **shall not publish, hide or retire** anything.
+- It **shall not edit** a listing's title, summary, heading, product key or any
+  other authored content, through the mapping or otherwise.
+- It **shall not accept a setting this section does not name.** §12's rule
+  applies here in full: a mapping is a description of somebody else's document,
+  not a place to put a key nobody wrote down.
+
+### 24.5 Acceptance Criteria
+
+```gherkin
+Scenario: An Admin registers a feed
+  Given an authorized Admin
+  When a partner, a heading, an address, a format and a mapping are supplied
+  Then the feed exists and is active
+
+Scenario: The surface is closed to everybody else
+  Given a signed-in account without Admin authorization
+  When it addresses any feed management surface
+  Then the request is refused
+
+Scenario: A paused feed is not read
+  Given an active feed
+  When an Admin pauses it
+  Then the scheduled reading does not include it
+
+Scenario: Pausing withdraws nothing
+  Given a feed that maintains published listings
+  When the feed is paused
+  Then those listings remain published
+  And their public eligibility is unchanged
+
+Scenario: A failed run says why
+  Given a feed whose document cannot be read
+  When the run completes
+  Then the run is recorded as failed
+  And its reason distinguishes a refused server, a malformed document and a mapping that names a missing field
+
+Scenario: A successful run reports what it did and what it passed over
+  Given a feed whose document offers products the platform does not carry
+  When the run completes
+  Then the count of listings updated and the count of products passed over are both recorded
+  And products passed over are not counted as refusals
+
+Scenario: Refusals are sampled
+  Given a run that refuses more rows than the platform stores
+  When the run is recorded
+  Then a bounded sample of refusals with reasons is kept
+  And the full count is recorded
 ```

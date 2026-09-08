@@ -216,15 +216,32 @@ describe("Increment I38 the scheduled worker", () => {
         crons?: { path: string; schedule: string }[];
       };
 
-    it("schedules the two jobs separately", () => {
+    it("schedules each job separately", () => {
       /*
        * **The cadence had to move into the schedule.** In the loop the sweep is
        * gated by a five-minute timer and the outbox polls every two seconds; a
        * function has no memory between invocations, so `sweptAt` is always zero
        * in a fresh process and one shared endpoint would sweep on every tick.
+       *
+       * Three since I76: the partner feed sync is hourly, and putting it on
+       * either of the others' schedules would mean fetching every partner's
+       * document every minute — which buys nothing and would be read as
+       * impoliteness by the servers serving them.
        */
       const paths = (config().crons ?? []).map((entry) => entry.path).sort();
-      expect(paths).toEqual(["/api/outbox", "/api/sweep"]);
+      expect(paths).toEqual(["/api/feeds", "/api/outbox", "/api/sweep"]);
+    });
+
+    it("reads partner catalogues hourly, not on the outbox's cadence", () => {
+      /*
+       * The number is a decision about partners rather than about this code: a
+       * feed is regenerated at roughly that cadence at the other end, so reading
+       * more often fetches the same document repeatedly.
+       */
+      const feeds = (config().crons ?? []).find(
+        (entry) => entry.path === "/api/feeds"
+      );
+      expect(feeds?.schedule).toBe("0 * * * *");
     });
 
     it("sweeps less often than it delivers", () => {

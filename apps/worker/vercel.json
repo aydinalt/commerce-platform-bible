@@ -2,8 +2,18 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build --workspace @commerce/worker",
   "crons": [
-    { "path": "/api/outbox", "schedule": "* * * * *" },
-    { "path": "/api/sweep", "schedule": "*/5 * * * *" }
+    {
+      "path": "/api/feeds",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/outbox",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/sweep",
+      "schedule": "*/5 * * * *"
+    }
   ],
   "framework": null,
   "installCommand": "npm ci"

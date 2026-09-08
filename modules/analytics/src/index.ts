@@ -89,7 +89,18 @@ export function associatesDomain(indicator: CoreFlowIndicator): boolean {
  * that would.
  */
 export const ACTIONABLE_QUEUES = {
-  DESTINATION_WORKLOAD: "/admin/offerings/affiliate-destinations/workload",
+  /*
+   * **A page, not an endpoint (I81).** This read
+   * `/admin/offerings/affiliate-destinations/workload`, which is the API route
+   * the workload is *fetched* from — an Admin who followed it as an address
+   * would arrive at JSON, or at nothing. AC-15 says an actionable indicator
+   * opens the queue it counts, and the queue a person opens is the Admin
+   * surface at `/admin/destinations`.
+   *
+   * The sibling entry was always a page, which is how the mistake survived:
+   * one of the two worked, so the pair looked like addresses of one kind.
+   */
+  DESTINATION_WORKLOAD: "/admin/destinations",
   OPEN_MODERATION_CASES: "/admin/moderation-cases?status=OPEN"
 } as const;
 

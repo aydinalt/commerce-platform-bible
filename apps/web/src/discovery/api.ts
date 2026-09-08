@@ -1,10 +1,12 @@
 import {
   browseRootsSchema,
   browseViewSchema,
+  complementaryPlacementsSchema,
   offeringPresentationSchema,
   searchViewSchema,
   type BrowseRoots,
   type BrowseViewResponse,
+  type ComplementaryPlacementResponse,
   type OfferingPresentationResponse,
   type SearchViewResponse
 } from "@commerce/contracts";
@@ -93,6 +95,20 @@ export async function fetchSearchView(
         ? {}
         : { categoryId: entry.categoryId }),
       ...(entry.filters === undefined ? {} : { filters: entry.filters }),
+      // §10.6.1. Sent with or without a Category, unlike the Filters above.
+      ...(entry.price === undefined ? {} : { price: entry.price }),
+      // I63. Absent means the first page, which is what the contract defaults
+      // to — so a carrier written before pages existed asks for page one.
+      ...(entry.page === undefined ? {} : { page: entry.page }),
+      // I64. Sent only when set: absent and `false` are the same request, and
+      // sending `false` would put a criterion in every payload that nobody set.
+      ...(entry.inStockOnly === true ? { inStockOnly: true } : {}),
+      // I68. Sent only when a tab is pressed: absent and `DEFAULT` are the
+      // same request, and sending the default in every payload would put a
+      // criterion on the wire that nobody chose.
+      ...(entry.arrangement === undefined
+        ? {}
+        : { arrangement: entry.arrangement }),
       ...(entry.pathId === undefined ? {} : { discoveryPathId: entry.pathId })
     })
   );
@@ -133,7 +149,46 @@ export async function fetchBrowseView(
       // filtering a full result set after the fact, which would be a second
       // implementation of the same rule and eventually a different one.
       ...(entry.filters === undefined ? {} : { filters: entry.filters }),
+      ...(entry.price === undefined ? {} : { price: entry.price }),
+      // I63. Absent means the first page, which is what the contract defaults
+      // to — so a carrier written before pages existed asks for page one.
+      ...(entry.page === undefined ? {} : { page: entry.page }),
+      // I64. Sent only when set: absent and `false` are the same request, and
+      // sending `false` would put a criterion in every payload that nobody set.
+      ...(entry.inStockOnly === true ? { inStockOnly: true } : {}),
+      // I68. Sent only when a tab is pressed: absent and `DEFAULT` are the
+      // same request, and sending the default in every payload would put a
+      // criterion on the wire that nobody chose.
+      ...(entry.arrangement === undefined
+        ? {}
+        : { arrangement: entry.arrangement }),
       ...(entry.pathId === undefined ? {} : { discoveryPathId: entry.pathId })
     })
   );
+}
+
+/**
+ * What goes with this listing (I70).
+ *
+ * **Never throws and never empties the page.** The block is advertising; the
+ * product page is the page. An outage, a refusal or a malformed answer means
+ * the person reads the listing without a suggestion beside it, which is exactly
+ * what they get when nothing is configured — and PRD-0006 §20.4 makes that the
+ * default state rather than a degraded one.
+ */
+export async function fetchComplementary(
+  slug: string
+): Promise<ComplementaryPlacementResponse[]> {
+  try {
+    const response = await fetchWithBudget(
+      `${apiBaseUrl()}/offerings/${encodeURIComponent(slug)}/complementary`,
+      { cache: "no-store", headers: { accept: "application/json" } },
+      "COMPLEMENTARY"
+    );
+    if (!response.ok) return [];
+    return complementaryPlacementsSchema.parse(await response.json())
+      .placements;
+  } catch {
+    return [];
+  }
 }

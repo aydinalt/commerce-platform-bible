@@ -253,7 +253,7 @@ describe("Increment I43 the published types", () => {
     expect(comparableCount()).toBeGreaterThan(250);
   });
 
-  it("skips exactly the eight contracts JSON Schema cannot express", () => {
+  it("skips exactly the fourteen contracts JSON Schema cannot express", () => {
     /*
      * A `transform` is code and JSON Schema describes data, so `z.toJSONSchema`
      * is right to refuse these — every one is an **input** schema that trims or
@@ -269,17 +269,42 @@ describe("Increment I43 the published types", () => {
      * eight. The guess was wrong in the direction that would have blocked a
      * correct state, which is the better direction, and it was replaced by a
      * measurement rather than by a larger guess.
+     *
+     * Ten as of I62, and both additions are the mechanism working as intended:
+     * the registration now normalises an absent name to `null`, and writing a
+     * review normalises an absent body the same way. Each had to be
+     * acknowledged here rather than absorbed by a bound.
+     *
+     * Eleven as of I69: a report normalises an absent or empty note to `null`,
+     * so that "nothing was typed" and "an empty box was submitted" are one
+     * fact in the queue rather than two. Twelve as of I70, where a placement's
+     * note does the same.
+     *
+     * Thirteen as of I75, and it is the same normalisation applied to four
+     * fields at once: a blank publisher identifier or unit identifier means
+     * "nothing is configured here" (PRD-0006 §20.4), and storing it as `""`
+     * would be a unit named nothing rather than no unit.
+     *
+     * Fourteen as of I76: a feed's mapping normalises every optional field name
+     * the same way, so a cleared box means "this partner does not send that"
+     * rather than "look for a field called nothing".
      */
     contractSide();
     expect([...unrenderable].sort()).toEqual([
+      "beginRegistrationSchema",
       "browseSelectionSchema",
       "createAttributeSchema",
+      "createComplementaryPlacementSchema",
+      "createOfferingFeedSchema",
       "editOfferingSchema",
       "reviewAffiliateDestinationSchema",
       "searchSubmissionSchema",
+      "submitListingReportSchema",
+      "updateAdvertisingSettingsSchema",
       "updateAttributePropertiesSchema",
       "updateBusinessInformationSchema",
-      "validateAffiliateDestinationSchema"
+      "validateAffiliateDestinationSchema",
+      "writeProductReviewSchema"
     ]);
   });
 

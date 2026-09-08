@@ -186,8 +186,10 @@ describe("Increment I25 request budget", () => {
 
       /*
        * Asserted against the source because the property is an absence, and an
-       * absence has no call to make. Sixteen reads are budgeted; the eight
-       * writes deliberately are not.
+       * absence has no call to make. Twenty-two reads are budgeted — I76's
+       * feed list and its sync log are the most recent, after I75's advertising
+       * settings — and the sixteen writes deliberately are not. Three of those
+       * writes are I75's and two are I76's: writing a feed and pausing one.
        *
        * Aborting a write does not undo it — the API may have created the
        * Offering a moment after this side stopped listening — so reporting a
@@ -195,8 +197,8 @@ describe("Increment I25 request budget", () => {
        * know. UX-0005 §15's "a failed Offering action does not claim a
        * lifecycle transition" cuts both ways.
        */
-      expect(source.match(/fetchWithBudget\(/gu)).toHaveLength(16);
-      expect(source.match(/await fetch\(/gu)).toHaveLength(8);
+      expect(source.match(/fetchWithBudget\(/gu)).toHaveLength(24);
+      expect(source.match(/await fetch\(/gu)).toHaveLength(18);
     });
 
     it("keeps a timeout distinguishable from the absence it is not", () => {

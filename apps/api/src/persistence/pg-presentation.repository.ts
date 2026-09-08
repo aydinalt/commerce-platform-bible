@@ -7,6 +7,19 @@ import type {
 } from "@commerce/contracts";
 import { publicBusinessIdentity } from "@commerce/business";
 
+import {
+  OFFERING_PRICE_SQL,
+  TOTAL_COST_SQL,
+  composePrice,
+  type OfferingPriceColumns
+} from "./offering-price.sql.js";
+import {
+  PRODUCT_RATING_SQL,
+  type ProductRatingColumns
+} from "./product-rating.sql.js";
+
+import type { SellerOffer } from "@commerce/contracts";
+
 /**
  * Complete public Offering Presentation (`US-OFR-F05-001`, PRD-0001 §8.2).
  *
@@ -16,12 +29,22 @@ import { publicBusinessIdentity } from "@commerce/business";
  * easy to answer a Presentation question with a Discovery rule.
  */
 
-interface PresentationRow {
+interface SellerRow extends OfferingPriceColumns {
+  businessName: string;
+  offeringId: string;
+  slug: string;
+}
+
+interface PresentationRow extends OfferingPriceColumns, ProductRatingColumns {
   businessLogoUrl: string | null;
   businessName: string;
+  productKey: string | null;
   businessShortDescription: string | null;
   categoryId: string;
   domainId: string;
+  /// I67. `bigint` in the database, read back as digits: the driver hands a
+  /// `bigint` over as a string rather than rounding it into a `number`.
+  listingNumber: string;
   offeringId: string;
   publicExposure: string;
   publishedAt: Date;
@@ -99,9 +122,13 @@ export class PgPresentationRepository {
         `select p.offering_id as "offeringId", p.domain_id as "domainId",
            p.title, p.published_at as "publishedAt", o.slug, o.summary,
            o.category_id as "categoryId", b.name as "businessName",
+           o.listing_number::text as "listingNumber",
            b.logo_url as "businessLogoUrl",
            b.short_description as "businessShortDescription",
-           b.public_exposure::text as "publicExposure"
+           b.public_exposure::text as "publicExposure",
+           o.product_key as "productKey",
+           ${OFFERING_PRICE_SQL},
+           ${PRODUCT_RATING_SQL}
          from offering_search_projection p
          join offering o on o.id = p.offering_id
          join business b on b.id = p.business_id
@@ -134,8 +161,28 @@ export class PgPresentationRepository {
         business,
         categoryPath: await this.categoryPath(client, row.categoryId),
         description: row.summary,
+        // I67. The number the card carried, on the page the card opened.
+        listingNumber: row.listingNumber,
         offeringId: row.offeringId,
+        /*
+         * The same composer Discovery uses, so the amount on the card and the
+         * amount on the page it opened cannot disagree.
+         */
+        pricing: composePrice(row),
+        productKey: row.productKey,
         publishedAt: row.publishedAt.toISOString(),
+        /*
+         * I62. The same grouping the seller list below is drawn from, so the
+         * score above the page and the shops beneath it are two readings of
+         * one product rather than of two.
+         */
+        rating: { average: row.ratingAverage, count: row.ratingCount },
+        /*
+         * §5.12.1 on screen. The other partners selling the same thing, which
+         * is the one question a price comparison page exists to answer and the
+         * one this page could not answer at all.
+         */
+        sellers: await this.sellers(client, row),
         slug: row.slug,
         title: row.title,
         /*
@@ -164,6 +211,58 @@ export class PgPresentationRepository {
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * Every publicly eligible Offering carrying the same Product Key.
+   *
+   * `or so.id = $2` is not a special case for the keyless Offering, it is the
+   * rule: an Offering is always a seller of itself. Without it a page for
+   * something no partner has matched would show an empty price list, which
+   * reads as "nobody sells this" beside a price that says otherwise.
+   *
+   * Eligibility is the projection's existence, the same test Discovery uses, so
+   * a sibling hidden by moderation stops being a seller here at the same
+   * moment.
+   */
+  private async sellers(
+    client: PoolClient,
+    row: PresentationRow
+  ): Promise<SellerOffer[]> {
+    const result = await client.query<SellerRow>(
+      `select o.id as "offeringId", o.slug, b.name as "businessName",
+         ${OFFERING_PRICE_SQL}
+       from offering_search_projection sp
+       join offering o on o.id = sp.offering_id
+       join business b on b.id = sp.business_id
+       where (o.product_key is not null and o.product_key = $1) or o.id = $2
+       -- Three keys, in the prototype's own order (its sortedOffers).
+       --
+       -- Out of stock goes last however cheap it is, and that is the Owner's
+       -- rule rather than an optimisation: a price a person cannot buy at is
+       -- not a better offer than one they can, and putting it at the top makes
+       -- the cheapest row the one row that cannot be acted on. UNKNOWN is not
+       -- OUT_OF_STOCK -- an unstated stock level is not a claim that there is
+       -- none -- so it stays with the buyable rows.
+       --
+       -- Then 5.10.5: priced rows order among themselves by what they cost
+       -- delivered rather than by the amount alone; unpriced ones follow.
+       --
+       -- The card above this list is deliberately not sorted this way. It is
+       -- drawn from the cheapest seller full stop, which is what the
+       -- prototype's card does. The card answers "what does this cost at
+       -- best"; the list answers "who can I buy it from now".
+       order by (o.stock_state = 'OUT_OF_STOCK'),
+         (o.pricing_kind = 'FIXED') desc, ${TOTAL_COST_SQL} asc nulls last,
+         b.name, o.id`,
+      [row.productKey, row.offeringId]
+    );
+    return result.rows.map((seller) => ({
+      businessName: seller.businessName,
+      offeringId: seller.offeringId,
+      pricing: composePrice(seller),
+      slug: seller.slug
+    }));
   }
 
   /**

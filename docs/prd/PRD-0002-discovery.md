@@ -1,14 +1,86 @@
 # PRD-0002 — Discovery
 
+> **Freeze Note (3.0):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-03, **together with the four documents that state this
+> decision between them**: `PRD-0002-discovery.md` v3.0, `UX-0002-discovery.md`
+> v1.3, `DISCOVERY_FEATURE_REGISTRY.md` v2.0 and the six Discovery Stories
+> `US-DSC-F11-001` to `US-DSC-F16-001`. Freezing a subset would leave a Story
+> whose Feature ID is not allocated or a UX section describing behaviour no
+> approved PRD owns — the drift these revisions exist to remove. This exact
+> version must not be edited in place; a further change requires a controlled
+> revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
+>
+> **Approval Note (3.0):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-03, in these terms: *"onaylıyorum işleme
+> alabilirsin"*. The approval covers v2.5 and v3.0 together — v3.0 is built on
+> v2.5 and neither stands alone — and it converts six behaviours that were live
+> without a document into behaviours this PRD owns. It advances no Delivery
+> Status by itself and changes no other document's content.
+>
+> **The Owner's decision of the same day is in §8.2:** a listing number is
+> printed as digits, with no prefix in front of it.
+
+
+> **Revision Note (3.0):** Controlled revision candidate **built on the v2.5
+> candidate**, not on Frozen v2.4. v2.5 is In Review and states the Price
+> Constraint; this revision keeps every word of it and adds what the platform
+> has done since. Frozen v2.4 remains authoritative until the Owner approves
+> and Freezes; **the two candidates are meant to be approved together**, because
+> v3.0 would otherwise reference a §10.6 that no approved document contains.
+>
+> **What v3.0 adds, in one list.** Each was built from the Owner's own
+> instruction and each has been running without a sentence in this document:
+>
+> 1. **§12.6 — Result Arrangement.** The Owner's four tabs: _Tümü, En yeni,
+>    Yükselenler, Popüler_. §12.5's blanket exclusion of a "user-controlled
+>    Sort" is replaced by a narrower one; the four exclusions that protect a
+>    reader from a _sold_ order — paid placement, sponsored priority, promoted
+>    cards, Business-controlled ranking — are restated verbatim and untouched.
+> 2. **§12.2 and §12.3 corrected.** Both ordered on `Initial Published At`
+>    alone; the platform stopped doing that in I63 on the Owner's instruction —
+>    _"kargo dâhil en ucuzdan başlayarak"_, unavailable stock last. The
+>    ordering is now stated once, as §12.6's Default Arrangement, and recency is
+>    the third key rather than the first.
+> 3. **§10.7 and §10.8 — the Product Score floor and Stated Availability.** Two
+>    more criteria live since I62 and I64, neither of them written down. §5.6's
+>    list grows to match.
+> 4. **§8.1 — an Attribute's name and unit are matchable, not only its value.**
+>    A person types _"16 gb ram laptop"_ and three of those four words are the
+>    **names** of things; the catalogue seeded in I66 is what made the omission
+>    visible.
+> 5. **§8.2 — a listing number is answered as an identity.** Typing `İLN-482007`
+>    names one listing; it is a lookup rather than a match, and saying so is what
+>    keeps it from being ranked among the rows that merely contain those digits.
+>
+> **What does not change.** §10.6 is v2.5's, word for word. Eligibility, the
+> Listing Card minimum, Filter semantics, Zero Results, the Presentation
+> boundary and Discovery Start behaviour are untouched. No ranking algorithm is
+> defined and none is implied: an arrangement states which recorded fact leads,
+> and nothing about how a score is computed from several.
+
+> **Candidate Status (2.5):** **controlled revision candidate** under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v2.4 remains authoritative and is untouched at `PRD-0002-discovery.md`. Nothing here is authoritative until the Owner Freezes it.
+>
+> **Revision Note (2.5):** Adds one Discovery criterion — a **Price Constraint** — and nothing else. Requested by the Owner on 2026-09-02, after the platform's own comparison surfaces made the omission visible.
+>
+> **What was missing, and why it was missing.** §5.6 closes the Discovery criteria to three: a Search query, an active leaf Category, and Attribute Filters. §5.5 then requires every Filter to be _an Attribute whose `filterable` property is enabled_. Price is not an Attribute — `PRD-0001-offering.md` §5.10 makes it a first-class property of the Offering with its own Pricing Kind, amount, currency and instant — so between them those two sections do not merely omit a budget control, they **exclude one by construction**. That was correct while no Offering carried an amount. PRD-0001 v4.0 gave every Offering one; the surfaces now show it on the Listing Card, on complete Presentation and in a per-product seller list. A comparison platform that shows a price on every card and cannot narrow by it is asking a person to do by eye the one filtering a machine does perfectly.
+>
+> **What this revision deliberately does not do.**
+>
+> - **It adds no Sort.** §12.5 and §21.5 keep user-controlled Sorting outside V1 and this revision does not touch either. A Price Constraint changes _which_ Offerings are Results; §12 still decides the order they appear in, and §10.6.6 says so in the same words §12.4 uses for Filters. **Narrowing and ordering are different powers, and only the first is being granted.**
+> - **It does not make price an Attribute.** §5.5 is unchanged, `US-DSC-F05-001` is unchanged, and no Attribute definition gains a meaning it did not have. The Price Constraint is a fourth criterion beside the three, defined in its own §10.6, precisely so that the Attribute model stays what `PRD-0006-platform.md` owns.
+> - **It resolves an apparent conflict rather than creating one.** `PRD-0001-offering.md` v4.0 §5.10.5 states how a surface _that orders by price_ must behave — on the amount a person would pay, delivery included. Read beside PRD-0002 §12 that looked like two Frozen documents disagreeing. They do not: §5.10.5 governs the price ordering **inside one product's seller list** on complete Presentation, which `US-OFR-F05-001` owns and which exists today, not a Discovery result ordering. §10.6.4 borrows the same measure for the constraint, so one rule about "what a person would pay" now governs both places rather than each inventing its own.
+>
+> **Not revised by this candidate:** §5.5, §8, §9, §11, §12, §13, §14, §22, and every Frozen document downstream of them. `DISCOVERY_FEATURE_REGISTRY.md` gains `F11` in its own controlled revision, because a criterion this document defines needs a Feature to hang a Story from.
+
 > **Freeze Note (2.2):** Frozen by separate explicit decision of the Product Owner / Architecture Owner on 2026-08-31, taken after and distinctly from the approval below. **Frozen simultaneously with `US-DSC-F02-001` v1.1, and deliberately so:** that Story consumes the Discovery Start definition this document owns, and freezing one without the other would leave a Story asserting a criterion its PRD no longer held — the drift both revisions exist to prevent. Frozen v2.1 is preserved unchanged at `docs/prd/PRD-0002-discovery-v2.1-superseded.md`. This document must not be edited in place; any future change requires a controlled superseding revision under `DOCUMENT_LIFECYCLE.md` §7.
 
 > **Freeze Note (2.3):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-08-31, simultaneously with the four other documents that state this rule, because a Freeze of any subset would reintroduce the drift these revisions remove. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen together: `PRD-0002-discovery.md` v2.3, `UX-0001-home.md` v1.1, `UX-0002-discovery.md` v1.1, `US-DSC-F01-001-homepage-discovery-entry.md` v1.1, `US-DSC-F02-001-search.md` v1.2. This Freeze does not change Delivery Status, traceability, repository indexes or GitHub content.
 >
-> **Approval Note (2.3):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: *"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."* The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
+> **Approval Note (2.3):** Explicitly approved by the Product Owner / Architecture Owner on 2026-08-31. The Owner's recorded reasoning: _"BDD senaryosundaki çelişkiyi erken yakalamak, ileride analitik verilerinin sessizce kaymasını engelledi. Yetim kalmış kuralları temizlemek, dokümantasyon borcunun birikmesini önlemenin en iyi yoludur."_ The five revisions were approved together because they state one rule between them; approving a subset would have left the contradiction alive in whichever document was omitted. This Approval Note records that approval and Freeze were separate decisions.
 >
 > **Revision Note (2.3):** Controlled superseding revision of Frozen v2.2, **one sentence, for the reason v2.2 exists.**
 >
-> §5.10 was rewritten in v2.2 so that a Search Discovery Start occurs when a query *reaches the platform*. §5.2 — the definition of Search itself — was left saying *"A Discovery path started by **submitting** a non-empty person-entered query."* The same document then defined the same thing two ways, with the older, narrower word sitting in the definition and the newer one in the rule. That is the shape of defect the four accompanying revisions exist to remove, kept alive inside the document that governs them.
+> §5.10 was rewritten in v2.2 so that a Search Discovery Start occurs when a query _reaches the platform_. §5.2 — the definition of Search itself — was left saying _"A Discovery path started by **submitting** a non-empty person-entered query."_ The same document then defined the same thing two ways, with the older, narrower word sitting in the definition and the newer one in the rule. That is the shape of defect the four accompanying revisions exist to remove, kept alive inside the document that governs them.
 >
 > §5.2 now defers to §5.10 rather than restating it, under Reference Never Redefine. §5.3 (Browse) is untouched: "choosing and navigating an active Category hierarchy" names no mechanism that changed.
 
@@ -20,14 +92,24 @@
 
 **What does not change, and this is most of it.** The Browse half of §5.10 is untouched — it already said "**selects** the first active Category that begins a Browse path", and a selection is a selection whether it posts a form or not, so the Category dropdown never conflicted with this document. Domain attribution is unchanged. The Listing Card minimum, Filter semantics, ordering, Zero Results and the Presentation boundary are unchanged. No Search engine, ranking algorithm, Pagination, Sorting, Autocomplete, Recommendation, Capability or Feature is introduced, and no Story Delivery Status moves.
 
-**The bound is the substance of the change.** Without it, live filtering would record a Discovery Start on every keystroke that survived a debounce, and the figure Basic Analytics reports would stop meaning what it has meant since I3. "At most one per Discovery path" is not new: it is what the Browse half has always required and what the implementation already does — `i3-browse` names a test *"creates no further Start for descendants of the same path"*. This revision applies the same bound to Search.
+**The bound is the substance of the change.** Without it, live filtering would record a Discovery Start on every keystroke that survived a debounce, and the figure Basic Analytics reports would stop meaning what it has meant since I3. "At most one per Discovery path" is not new: it is what the Browse half has always required and what the implementation already does — `i3-browse` names a test _"creates no further Start for descendants of the same path"_. This revision applies the same bound to Search.
 
 - **Owner:** Product Owner / Architecture Owner
 - **PRD ID:** PRD-0002
 - **Title:** Discovery
 - **Status:** Frozen
-- **Version:** 2.4
-- **Supersedes:** Frozen v2.3 (preserved at `PRD-0002-discovery-v2.3-superseded.md`)
+- **Version:** 3.0
+- **Approval Date:** 2026-09-03
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-03
+- **Frozen By:** Product Owner / Architecture Owner
+- **Supersedes:** Approved v2.5 and Frozen v2.4, preserved at
+  `PRD-0002-discovery-v2.5-superseded.md` and
+  `PRD-0002-discovery-v2.4-superseded.md`
+- **Supersedes:** Frozen v2.4 on Freeze — until then v2.4 remains authoritative
+- **Revision Requested By:** Product Owner / Architecture Owner, 2026-09-02
+- **Supersedes (2.4):** Frozen v2.3 (preserved at `PRD-0002-discovery-v2.3-superseded.md`)
 - **Approval Date:** 2026-08-31
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
@@ -55,9 +137,9 @@
 > v2.3, opened by Owner decision of 2026-08-31. Two lines leave §4 and one
 > section is appended.
 >
-> **Pagination.** §4 excluded *"Pagination style, page size, continuous loading,
-> or another result-delivery mechanism"* and the section closed by requiring
-> *"a future explicit scope and ownership decision"* for it. This is that
+> **Pagination.** §4 excluded _"Pagination style, page size, continuous loading,
+> or another result-delivery mechanism"_ and the section closed by requiring
+> _"a future explicit scope and ownership decision"_ for it. This is that
 > decision. The exclusion was correct when written — a result-delivery mechanism
 > chosen early is chosen without knowing how many Results there will be — and it
 > has now been made with the number in hand: the platform returns **every**
@@ -73,6 +155,7 @@
 > §22 is new and is the only section added; it is appended rather than inserted,
 > because renumbering twenty-one sections would break every reference in the
 > repository to make room for one.
+
 - **Supersedes:** Approved v1.0
 - **Approved candidate:** In Review v2.1
 - **Approval Date:** 2026-07-21
@@ -155,7 +238,8 @@ V1 Discovery includes:
 - active leaf Category selection before category-specific result display;
 - Category narrowing for cross-category Search Results;
 - Attribute Filters supplied by authoritative filterable definitions;
-- combining Search, active leaf Category, and Filters;
+- a Price Constraint on what a person would pay (§10.6);
+- combining Search, active leaf Category, Filters, and a Price Constraint;
 - Filter-combination semantics;
 - Discovery Results containing only publicly eligible Offerings;
 - the Listing Card product minimum;
@@ -246,13 +330,49 @@ A Discovery constraint based on an Attribute definition whose authoritative `fil
 
 V1 Filter behaviour depends on the PRD-0006-owned Attribute value kind and definition properties, together with the PRD-0001-owned authoritative Offering value and its product meaning.
 
+### 5.5A Price Constraint
+
+A Discovery constraint on **the amount a person would pay** for an Offering, as `PRD-0001-offering.md` §5.10 owns that amount and §5.10.5 defines what it includes.
+
+A Price Constraint is not an Attribute Filter and does not become one. §5.5 continues to describe every Attribute Filter this document admits; this section describes the one criterion that is not one.
+
+Unlike an Attribute Filter it does not depend on a Category, because the amount is a property every Offering may carry rather than one a Category confers.
+
+### 5.5B Product Score floor
+
+A Discovery constraint on the **product's** score: the aggregate of the reviews
+of the Offerings sharing a Product Key, as `PRD-0001-offering.md` §5.12 defines
+that grouping.
+
+Like a Price Constraint and unlike an Attribute Filter, it does not depend on a
+Category: a product's score is a fact about the product wherever it is listed.
+
+It is never a seller's reputation. `PRD-0006-platform.md` excludes seller
+reputation from V1 and this section does not admit it by another name.
+
+### 5.5C Stated availability
+
+A Discovery constraint admitting only Offerings a seller has **stated** are
+available.
+
+The word _stated_ is the whole of it: `PRD-0001-offering.md` §5.10.3 separates
+"in stock", "out of stock" and "not known", and this criterion asks for the
+first.
+
 ### 5.6 Discovery criteria
 
 The current combination of:
 
 - submitted Search query, where present;
 - selected active leaf Category, where present;
-- applied Attribute Filters.
+- applied Attribute Filters;
+- applied Price Constraint, where present (§5.5A, §10.6);
+- applied Product Score floor, where present (§5.5B, §10.7);
+- an applied request for stated availability, where present (§5.5C, §10.8).
+
+The chosen **Result Arrangement** (§12.6) travels beside them and is not one of
+them: it arranges the Results rather than narrowing them. It is listed here
+because §9A.3's rule covers it too — what applies is readable while it applies.
 
 ### 5.7 Discovery Results
 
@@ -279,7 +399,7 @@ The bounded product occurrence when a person:
 Start occurs on the first valid non-empty query in a path; later narrowing
 within the same path — a changed query, a Category selection, an Attribute
 Filter — produces no further Start. The same has always been true of Browse,
-where only the *first* active Category begins one.
+where only the _first_ active Category begins one.
 
 This bound is what the word "submits" used to supply. An interface that filters
 as a person types would otherwise record a Discovery Start for every keystroke
@@ -414,7 +534,8 @@ A Search query may match only public authoritative information belonging to an e
 - Offering description;
 - active Category display names in the Offering's Category path;
 - public Business display name;
-- applicable public Offering Attribute display values.
+- applicable public Offering Attribute display **names, units and values**;
+- the Offering's listing number.
 
 Search must not match against or expose:
 
@@ -433,6 +554,16 @@ An Offering may enter Search Results only when the approved matching process fin
 An Offering that matches none of the approved searchable information must not enter the Search Result set.
 
 The exact linguistic processing used to identify a meaningful relationship is implementation-owned and must not expand the searchable-information set.
+
+**A listing number is answered as an identity rather than as text.** A query
+that names one listing number and nothing else returns that listing, or nothing.
+The number is **digits**; a surface prints no prefix in front of it, and Search
+accepts the prefixed forms earlier surfaces printed because people paste what
+they wrote down.
+Ranking a named listing among the rows that merely contain its digits would
+answer a question nobody asked, and a number no listing carries produces Zero
+Results under §13 rather than an error — the person searched, and the query
+stays visible beside the recovery.
 
 ### 8.3 Category narrowing from Search
 
@@ -569,6 +700,120 @@ Clearing all Filters retains the current Search query and active leaf Category u
 
 Discovery does not invent a Filter for a missing Attribute definition.
 
+### 10.6 Price Constraint behaviour
+
+#### 10.6.1 Availability
+
+A Price Constraint is available wherever Discovery Results are available, with or without a Search query and with or without an active leaf Category.
+
+This is the difference between it and an Attribute Filter, and it follows from what each one is: an Attribute is governed _for a Category_, so §10.1 can only offer it once a leaf is chosen; an amount is carried by the Offering itself.
+
+#### 10.6.2 Form
+
+A Price Constraint is an inclusive upper bound, an inclusive lower bound, or both.
+
+It expresses a currency amount. Discovery does not convert between currencies, and an Offering whose currency differs from the constraint's is outside the constraint rather than converted into it — a converted amount is a figure nobody quoted.
+
+#### 10.6.3 Bound direction
+
+Where both bounds are present and the lower exceeds the upper, no Offering satisfies the constraint. Discovery does not silently swap them: reversing a person's stated bounds answers a question they did not ask.
+
+#### 10.6.4 What is compared
+
+An Offering satisfies a Price Constraint when **the amount a person would pay**, as `PRD-0001-offering.md` §5.10.5 defines it — the amount together with a stated delivery cost — falls within the stated bounds.
+
+A delivery cost that is not stated is not treated as zero and not guessed at. §5.10.5 separates _not stated_ from _free_, and the comparison uses the amount alone where nothing is stated, which is the least the Offering could cost.
+
+#### 10.6.5 Offerings with no amount
+
+An Offering whose Pricing Kind is not _Fixed_ has no amount and therefore does not satisfy an applied Price Constraint.
+
+This is §10.4 applied unchanged: an Offering without a value for an applied criterion does not satisfy it, and Discovery does not invent a default value. It is not a judgement that quoted work is expensive — a person who has stated a budget has asked to see things whose cost is known, and an Offering that answers "it depends" is not one of them until it is asked.
+
+Discovery states that such Offerings exist and are excluded, so a person can remove the constraint deliberately rather than conclude the catalogue is empty. Exact wording is UX-owned.
+
+#### 10.6.6 Ordering is unchanged
+
+A Price Constraint does not create a new ordering mode.
+
+- constrained Search retains Best Match order (§12.2);
+- constrained Browse retains the Default Result Arrangement (§12.3, §12.6).
+
+This is the same sentence §12.4 makes about Filters, for the same reason.
+**Narrowing what a person sees and choosing the order they see it in are
+different powers.** v3.0 changes which order that is and who may choose among
+the four this document defines (§12.6); it does not give a criterion the power
+to order, and the exclusions of paid, sponsored, promoted and
+Business-controlled ordering in §12.5 and §21.5 stand.
+
+#### 10.6.7 Constraint changes
+
+Applying a Price Constraint narrows or preserves the current result set. Widening or removing it expands or preserves that set.
+
+Removing it retains the current Search query, active leaf Category and Attribute Filters unless the person separately changes them.
+
+#### 10.6.8 Zero Results
+
+A Price Constraint that admits nothing produces Zero Results under §13, and the constraint is one of the criteria §13's recovery may relax.
+
+### 10.7 Product Score floor behaviour
+
+#### 10.7.1 Availability
+
+Available wherever Results are, with or without a query and with or without a
+Category — §10.6.1's reasoning unchanged: a product's score is carried by the
+product rather than conferred by a Category.
+
+#### 10.7.2 What is compared
+
+The floor compares against the aggregate over the reviews of the **product
+group**, never over one seller's listing. Two partners selling one phone answer
+with one score, because they are one product.
+
+#### 10.7.3 Products nobody has scored
+
+A product with no reviews does not satisfy a floor.
+
+This is §10.4 again. Somebody asking for four stars and up is asking about
+products people have scored; an unscored one cannot answer that question, and
+admitting it would answer with silence. §10.9 requires the exclusion to be
+stated.
+
+### 10.8 Stated availability behaviour
+
+#### 10.8.1 What it admits
+
+Only Offerings whose stock is stated as available.
+
+#### 10.8.2 Unstated stock
+
+An Offering whose stock is not stated does not satisfy the request. §10.4
+unchanged: an unstated stock level is not a statement of availability.
+
+#### 10.8.3 The deliberate asymmetry with ordering
+
+The **arrangement** treats silence differently. §12.6's Default Arrangement
+places last only what a seller has stated is _unavailable_, and leaves
+unstated stock where its price puts it.
+
+This is not an inconsistency and is worth stating so that it is not later
+"fixed": **absence of a claim is not a claim of absence.** A filter for a stated
+fact requires the statement, or it is not a filter; an ordering that punished
+silence would demote every Offering whose seller simply has not said.
+
+### 10.9 What a criterion sets aside is stated
+
+Where a criterion excludes a class of Offering that would otherwise be a
+Result — Offerings quoted on request under a Price Constraint (§10.6.5),
+unscored products under a floor (§10.7.3), unstated stock under an availability
+request (§10.8.2) — the exclusion is stated on the surface while it applies.
+
+The statement names only the exclusions actually in force. A sentence claiming
+something is missing when nothing is missing teaches people to stop reading
+sentences. Exact wording is UX-owned.
+
+---
+
 ## 11. Listing Card Product Minimum
 
 Every Discovery Result must be represented by one Listing Card.
@@ -627,19 +872,23 @@ Best Match prioritizes, in this order:
 3. public Business display-name relationship;
 4. Offering description and applicable Attribute-value relationship.
 
-Within the same product match level:
+Within the same product match level, the **Default Result Arrangement** of
+§12.6 applies:
 
-1. the later `Initial Published At` appears first;
-2. any remaining tie uses a stable deterministic order.
+1. a product no seller states is available appears last;
+2. then the lowest amount a person would pay (§10.6.4) appears first;
+3. then the later `Initial Published At`;
+4. any remaining tie uses a stable deterministic order.
 
 This section defines product priority, not a ranking algorithm.
 
 ### 12.3 Browse default order
 
-Browse Results use:
+Browse Results use the **Default Result Arrangement** of §12.6:
 
 ```text
-later Initial Published At first
+unavailable stock last, then the lowest amount a person would pay,
+then later Initial Published At
 ```
 
 Any remaining tie uses a stable deterministic order.
@@ -651,15 +900,60 @@ Filters do not create a new ordering mode.
 - filtered Search retains Best Match order;
 - filtered Browse retains Initial-Published-At order.
 
+The same holds for a Price Constraint (§10.6.6), a Product Score floor and a
+request for stated availability. **No criterion in §5.6 chooses an order.** §12
+is the only section that does, and within §12 the person's own choice is the
+Result Arrangement of §12.6 — which is a choice among orders this document
+defines, not a criterion and not a Sort a caller composes.
+
 ### 12.5 Ordering exclusions
 
 V1 provides no:
 
-- user-controlled Sort;
+- open or caller-composed Sort — a surface may offer only the Result
+  Arrangements §12.6 names, and no other ordering may be requested;
 - paid placement;
 - sponsored priority;
 - promoted Listing Card;
 - Business-controlled ranking override.
+
+The four exclusions after the first are absolute and unchanged: **no
+arrangement may be sold, requested by a Business, or granted to one.**
+
+### 12.6 Result Arrangement
+
+A person may choose the arrangement of a Result list from a closed set this
+document defines:
+
+| Arrangement | What leads                                                                                                     |
+| ----------- | -------------------------------------------------------------------------------------------------------------- |
+| **Default** | §12.3's arrangement: unavailable stock last, then the lowest amount a person would pay                         |
+| **Newest**  | later `Initial Published At` first                                                                             |
+| **Popular** | more Offering Presentation Opens over the last thirty days                                                     |
+| **Rising**  | the higher average of Offering Presentation Opens, Affiliate Handoffs and product reviews over the same window |
+
+Rules, and they hold for every arrangement:
+
+1. **The set is closed.** A surface offers these four and nothing else. Any
+   other requested arrangement is refused rather than approximated.
+2. **An arrangement leads; it does not replace.** Where the leading fact cannot
+   separate two products, the Default arrangement decides — so a list is never
+   arranged arbitrarily, and a newly listed product appears where its price puts
+   it rather than at the bottom of a list of zeroes.
+3. **Counted over the product, not the Offering**, using the §5.12 grouping a
+   Listing Card, a product score and a kept product already use.
+4. **Counted from recorded platform occurrences only.** Nothing a Business
+   supplies, states or pays for may enter an arrangement.
+5. **Within a match level, in Search.** §12.2 decides which level a result is
+   in; the arrangement orders inside it.
+6. **The counts are not published.** An arrangement changes the order of a list
+   and states no figure on a Listing Card: "opened 41 times" is a claim about a
+   product this document does not make.
+7. **Default is the default.** A request naming no arrangement receives it.
+
+The thirty-day window is a rolling interval and not a calendar month: a calendar
+month discards every product's history at midnight on the first, and the tab
+would then show whatever happened to be opened overnight.
 
 ## 13. Zero Results
 
@@ -717,20 +1011,21 @@ Legend:
 - `✗` — not permitted;
 - `Conditional` — available when applicable public criteria exist.
 
-| Action | Guest | Enabled User | Business Context | Admin Context |
-|---|---:|---:|---:|---:|
-| View Homepage prompt | ✓ | ✓ | ✓ | ✓ |
-| Start Search | ✓ | ✓ | ✓ | ✓ |
-| Start Browse | ✓ | ✓ | ✓ | ✓ |
-| Navigate active Categories | ✓ | ✓ | ✓ | ✓ |
-| Select active leaf Category | ✓ | ✓ | ✓ | ✓ |
-| Apply or remove applicable Filters | Conditional | Conditional | Conditional | Conditional |
-| View Discovery Results | ✓ | ✓ | ✓ | ✓ |
-| View Zero Results | ✓ | ✓ | ✓ | ✓ |
-| Open an Offering | ✓ | ✓ | ✓ | ✓ |
-| Receive role-specific Discovery priority | ✗ | ✗ | ✗ | ✗ |
-| Use user-controlled Sorting | ✗ | ✗ | ✗ | ✗ |
-| Access Admin-specific Discovery tooling through PRD-0002 | ✗ | ✗ | ✗ | ✗ |
+| Action                                                   |       Guest | Enabled User | Business Context | Admin Context |
+| -------------------------------------------------------- | ----------: | -----------: | ---------------: | ------------: |
+| View Homepage prompt                                     |           ✓ |            ✓ |                ✓ |             ✓ |
+| Start Search                                             |           ✓ |            ✓ |                ✓ |             ✓ |
+| Start Browse                                             |           ✓ |            ✓ |                ✓ |             ✓ |
+| Navigate active Categories                               |           ✓ |            ✓ |                ✓ |             ✓ |
+| Select active leaf Category                              |           ✓ |            ✓ |                ✓ |             ✓ |
+| Apply or remove applicable Filters                       | Conditional |  Conditional |      Conditional |   Conditional |
+| Apply or remove a Price Constraint                       |           ✓ |            ✓ |                ✓ |             ✓ |
+| View Discovery Results                                   |           ✓ |            ✓ |                ✓ |             ✓ |
+| View Zero Results                                        |           ✓ |            ✓ |                ✓ |             ✓ |
+| Open an Offering                                         |           ✓ |            ✓ |                ✓ |             ✓ |
+| Receive role-specific Discovery priority                 |           ✗ |            ✗ |                ✗ |             ✗ |
+| Use user-controlled Sorting                              |           ✗ |            ✗ |                ✗ |             ✗ |
+| Access Admin-specific Discovery tooling through PRD-0002 |           ✗ |            ✗ |                ✗ |             ✗ |
 
 Business and Admin contexts receive only the public person baseline.
 
@@ -852,6 +1147,19 @@ or
 26. Search, selected leaf Category, and Attribute Filters shall combine with AND.
 27. An Offering with no value for an applied Filter shall not satisfy that Filter.
 28. Discovery shall allow applied Filters to be removed or cleared.
+
+### Price Constraint
+
+28A. A Price Constraint shall be available with or without a Search query and with or without an active leaf Category.
+28B. A Price Constraint shall express an inclusive upper bound, an inclusive lower bound, or both.
+28C. A Price Constraint shall be satisfied by the amount a person would pay as `PRD-0001-offering.md` §5.10.5 defines it, using the amount alone where no delivery cost is stated.
+28D. An Offering whose Pricing Kind is not _Fixed_ shall not satisfy an applied Price Constraint.
+28E. Discovery shall state that Offerings without a Fixed amount are excluded while a Price Constraint is applied.
+28F. An Offering whose currency differs from the Price Constraint's shall not satisfy it, and shall not be converted.
+28G. A Price Constraint whose lower bound exceeds its upper bound shall be satisfied by no Offering, and shall not be reversed.
+28H. A Price Constraint shall combine with Search, active leaf Category, and Attribute Filters using AND.
+28I. A Price Constraint shall not change the applicable §12 ordering.
+28J. Discovery shall allow an applied Price Constraint to be widened, narrowed, or removed.
 
 ### Listing Card
 
@@ -1002,6 +1310,52 @@ Scenario: Browse uses publication recency
   Then the Offering with the later Initial Published At appears first
   And no user-controlled Sort is required
 
+Scenario: Browse uses the Default Result Arrangement
+  Given multiple eligible Offerings belong to the selected active leaf Category
+  When Browse Results are ordered
+  Then a product no seller states is available appears last
+  And among the rest the lowest amount a person would pay appears first
+  And the later Initial Published At breaks a remaining tie
+
+Scenario: An arrangement leads and does not replace
+  Given two products neither of which has been opened in the last thirty days
+  When the Popular arrangement applies
+  Then the Default Result Arrangement decides between them
+
+Scenario: An arrangement cannot be bought
+  Given any arrangement applies
+  When Results are ordered
+  Then no Offering is advanced, delayed, or marked by a payment, a Business
+    request, or a sponsorship
+
+Scenario: An unscored product fails a Product Score floor
+  Given a product has no reviews
+  When a Product Score floor applies
+  Then that product is not a Result
+  And the exclusion is stated on the surface while the floor applies
+
+Scenario: Unstated stock fails an availability request
+  Given a seller has not stated whether an Offering is available
+  When stated availability is requested
+  Then that Offering is not a Result
+
+Scenario: Unstated stock is not demoted when nothing was asked
+  Given a seller has not stated whether an Offering is available
+  And no availability request applies
+  When Results are arranged
+  Then that Offering is placed by its price rather than last
+
+Scenario: A listing number is answered as an identity
+  Given a query names one listing number and nothing else
+  When Search Results are produced
+  Then that listing is the only Result
+  And a number no listing carries produces Zero Results rather than an error
+
+Scenario: An Attribute is matched by its name as well as its value
+  Given an eligible Offering carries an applicable Attribute named "RAM" with the value "16 GB"
+  When a person searches for "16 gb ram"
+  Then that Offering is a Result
+
 Scenario: Zero Results preserves user control
   Given no eligible Offering matches the current criteria
   When Zero Results is presented
@@ -1128,6 +1482,7 @@ The following are accepted V1 deferrals and do not block Freeze:
 
 5. **Future Discovery capabilities**
    - User-controlled Sorting, Autocomplete, URL-state persistence, Search History, Saved Search, Notifications, Recommendations, and sponsored placement remain outside V1.
+   - **The v2.5 Price Constraint does not reopen the first of these.** A constraint narrows the set; a Sort arranges it. §10.6.6 keeps them apart in the document, and a surface that offered "cheapest first" would be exercising a power this deferral still withholds.
 
 No downstream UX or User Story may broaden these deferrals.
 

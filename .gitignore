@@ -6,3 +6,9 @@ coverage/
 dist/
 node_modules/
 *.tsbuildinfo
+
+# Transport leftovers from assistant sessions — never part of the repository.
+_to_delete/
+COMMIT_MESSAGE.txt
+Claude outputs/
+katalog-prototipi.html

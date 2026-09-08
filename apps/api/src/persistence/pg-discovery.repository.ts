@@ -1,12 +1,55 @@
-import { PRIMARY_VISUAL_SQL } from "./listing-card.sql.js";
+import { LISTING_NUMBER_SQL, PRIMARY_VISUAL_SQL } from "./listing-card.sql.js";
+import {
+  HANDOFF_AVAILABLE_SQL,
+  LISTING_ORDER,
+  OFFERING_PRICE_SQL,
+  PRODUCT_GROUP_KEY,
+  PRODUCT_GROUP_PICK,
+  PRODUCT_KEY_SQL,
+  SELLER_COUNT_SQL,
+  TOTAL_COST_SQL,
+  type PricedRow,
+  withPrice
+} from "./offering-price.sql.js";
+import {
+  arrangementOrder,
+  attentionColumns,
+  withoutAttention,
+  type AttentionColumns
+} from "./result-arrangement.sql.js";
+import {
+  PRODUCT_RATING_SQL,
+  ratingPredicate,
+  stockPredicate,
+  withRating,
+  type RatedRow
+} from "./product-rating.sql.js";
 
 import { Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
+
+/*
+ * The row shapes come from the contract rather than from the Discovery module.
+ *
+ * The module's `ListingCard` is the domain's idea of a card and has drifted
+ * behind the wire shape before — it still does not name `primaryVisualUrl`,
+ * which I30 added to the contract and to this query. Selecting into the
+ * contract's own type means a field added there is a compile error here until
+ * the query supplies it, which is the only version of this that cannot go
+ * quietly out of date.
+ */
+import type {
+  ListingCardResponse,
+  PriceConstraintInput,
+  RatingConstraintInput,
+  SearchResultResponse
+} from "@commerce/contracts";
 
 import {
   FILTERABLE_VALUE_KINDS,
   FilterContextMissingError,
   FilterNotAvailableError,
+  listingReference,
   SEARCH_MATCH_LEVELS,
   zeroResultRecovery,
   type AppliedFilter,
@@ -14,7 +57,7 @@ import {
   type BrowseCategory,
   type BrowseView,
   type ListingCard,
-  type SearchResult,
+  type ResultArrangement,
   type SearchView,
   type ZeroResults
 } from "@commerce/discovery";
@@ -24,6 +67,20 @@ import {
  * Category becomes a branch the moment an active child appears under it, and
  * stops being one when that child retires.
  */
+/**
+ * How many products one page of Results carries (I63).
+ *
+ * Twenty-five, which is the Owner's own number — *sayfa başına 25 kart
+ * gösterilsin* — and it is published in every response rather than assumed by
+ * the surface, so a client cannot mis-paginate by guessing a boundary.
+ *
+ * A constant rather than a request parameter: PRD-0002 §12.5 refuses
+ * user-controlled ordering for V1, and a caller-chosen page size is the same
+ * kind of control by another name — one request could ask for the whole
+ * catalogue and undo the reason the page exists.
+ */
+export const PAGE_SIZE = 25;
+
 const BROWSE_CATEGORY = `c.id, c.name, c.slug,
    not exists (
      select 1 from category child
@@ -95,6 +152,60 @@ function filterPredicate(
     // all conjoined.
     sql: clauses.map((clause) => `and (${clause})`).join(" ")
   };
+}
+
+/**
+ * The Price Constraint as SQL (`US-DSC-F11-001`, PRD-0002 v2.5 §10.6).
+ *
+ * Three conditions, and each is an acceptance criterion rather than a
+ * convenience:
+ *
+ * - **`pricing_kind = 'FIXED'` (AC-5).** An Offering quoted on request has no
+ *   amount, and §10.4's rule — no value for an applied criterion means the
+ *   criterion is not satisfied — applies unchanged. Admitting it "because it
+ *   might be cheap" would be Discovery inventing the one number it is least
+ *   entitled to invent.
+ * - **`currency = $n` (AC-7).** §10.6.2 refuses conversion. A converted amount
+ *   is a figure no partner quoted, and a budget compared against one is a
+ *   comparison against a number the platform made up.
+ * - **`TOTAL_COST_SQL` between the bounds (AC-3, AC-4).** The same expression
+ *   the card and the seller list order by, so "what a person would pay" means
+ *   one thing across the whole platform. `coalesce(delivery_cost, 0)` inside it
+ *   is not "unstated means free": it is the least the Offering could cost,
+ *   which is the only honest thing to compare when nothing was stated.
+ *
+ * Reversed bounds produce no rows and are not corrected (AC-8). The clause is
+ * simply unsatisfiable, which is exactly what §10.6.3 asks for — an answer of
+ * "nothing", beside the two figures the person typed.
+ */
+function pricePredicate(
+  price: PriceConstraintInput | null,
+  firstParameter: number
+): { parameters: unknown[]; sql: string } {
+  if (price === null) return { parameters: [], sql: "" };
+
+  const parameters: unknown[] = [price.currency];
+  const clauses = [
+    `o.pricing_kind = 'FIXED'`,
+    `o.currency = $${firstParameter}`
+  ];
+
+  if (price.maxAmount !== null) {
+    parameters.push(price.maxAmount);
+    clauses.push(
+      `${TOTAL_COST_SQL} <= $${firstParameter + parameters.length - 1}::numeric`
+    );
+  }
+  if (price.minAmount !== null) {
+    parameters.push(price.minAmount);
+    clauses.push(
+      `${TOTAL_COST_SQL} >= $${firstParameter + parameters.length - 1}::numeric`
+    );
+  }
+
+  // AC-9. Conjoined with the query, the Category and every Attribute Filter,
+  // like every other criterion in §5.6.
+  return { parameters, sql: clauses.map((c) => `and (${c})`).join(" ") };
 }
 
 /**
@@ -197,9 +308,15 @@ export class PgDiscoveryRepository {
    * call a client might forget to make.
    */
   async browse(input: {
+    /// I68. Which of the Owner's four tabs the Results are arranged by.
+    arrangement: ResultArrangement;
     categoryId: string;
     filters: AppliedFilter[];
+    inStockOnly: boolean;
     pathId: string;
+    page: number;
+    price: PriceConstraintInput | null;
+    rating: RatingConstraintInput | null;
   }): Promise<BrowseView | null> {
     const client = await this.pool.connect();
     try {
@@ -274,12 +391,24 @@ export class PgDiscoveryRepository {
       // AC-5, AC-6 and AC-7 of `US-DSC-F03-001`. A branch withholds Results
       // rather than showing an empty set or gathering its descendants' —
       // `null` says "not shown", and an empty array would say "none here".
-      const results = category.leaf
-        ? await this.results(client, input.categoryId, input.filters)
+      const listed = category.leaf
+        ? await this.results(
+            client,
+            input.arrangement,
+            input.categoryId,
+            input.filters,
+            input.price,
+            input.rating,
+            input.page,
+            input.inStockOnly
+          )
         : null;
+      const results = listed === null ? null : listed.cards;
 
       await client.query("commit");
       return {
+        // I68. The arrangement the Results are actually in.
+        arrangement: input.arrangement,
         ancestors,
         category,
         children,
@@ -287,12 +416,29 @@ export class PgDiscoveryRepository {
         domain,
         domainName,
         filters,
+        // I63. `null` exactly where the Results are: a branch withheld them, so
+        // there is no list for the person to be anywhere in.
+        paging:
+          listed === null
+            ? null
+            : {
+                page: input.page,
+                pageSize: PAGE_SIZE,
+                total: listed.total
+              },
         results,
         siblings,
-        // AC-1. A branch has withheld Results rather than found none, so it is
-        // not a Zero Results state — there was no question to answer.
+        /*
+         * AC-1. A branch has withheld Results rather than found none, so it is
+         * not a Zero Results state — there was no question to answer.
+         *
+         * I63: an empty *page* is not Zero Results either. Somebody on page
+         * nine of three has overshot a list that exists, and telling them their
+         * criteria matched nothing would be a false statement about the
+         * catalogue rather than about their position in it.
+         */
         zeroResults:
-          results !== null && results.length === 0
+          listed !== null && listed.total === 0
             ? zeroResults({
                 applied: input.filters,
                 available: filters,
@@ -326,10 +472,16 @@ export class PgDiscoveryRepository {
    * never in the set being matched.
    */
   async search(input: {
+    /// I68. Arranged within a match level, never across them.
+    arrangement: ResultArrangement;
     categoryId: string | null;
     filters: AppliedFilter[];
+    inStockOnly: boolean;
     pathId: string;
+    page: number;
+    price: PriceConstraintInput | null;
     query: string;
+    rating: RatingConstraintInput | null;
     terms: string[];
   }): Promise<SearchView | null> {
     const client = await this.pool.connect();
@@ -401,26 +553,80 @@ export class PgDiscoveryRepository {
         this.assertApplicable(filters, input.filters);
       }
 
-      const all = input.terms.join(" & ");
-      const any = input.terms.join(" | ");
+      /*
+       * I67. A query that names a listing is answered by that listing.
+       *
+       * The Owner's requirement — *"İlan numarasını arama kutusuna yazınca
+       * listelensin"* — is a lookup wearing a search box, and it is written
+       * here as one substituted predicate rather than as a second route:
+       * everything around it is the same Search. The Category narrowing, the
+       * Filters, the price and rating floors, the stock switch, the paging and
+       * the Zero Results state all still apply, because a person who typed a
+       * number into a filtered page has not stopped being on it.
+       *
+       * `matchLevel` is left to fall to `DESCRIPTION_OR_ATTRIBUTE`. It is the
+       * least fitting of the four names and the only honest option: PRD-0002
+       * §12.2 fixes the list, a fifth level would be product behaviour invented
+       * from a repository, and with one row the ordering the level feeds has
+       * nothing to arrange.
+       */
+      const reference = listingReference(input.query);
+      const all = reference ?? input.terms.join(" & ");
+      const any = reference ?? input.terms.join(" | ");
+      const matched =
+        reference === null
+          ? `to_tsvector('simple', p.searchable_text)
+             @@ to_tsquery('simple', $1)`
+          : `o.listing_number = $1::bigint`;
       // `US-DSC-F05-001` AC-8. The Search match, the Category and every Filter
       // are conjoined in one `where`; PRD-0002 §12.4 keeps Best Match ordering
       // across them, which is why the `order by` below does not consult them.
       const applied = filterPredicate(input.filters, 5);
+      // Numbered after the Filters' own parameters, because both predicates are
+      // spliced into one statement.
+      const priced = pricePredicate(input.price, 5 + applied.parameters.length);
+      // I62. Numbered after both, because all three predicates are spliced
+      // into the same statement.
+      const rated = ratingPredicate(
+        input.rating === null ? null : input.rating.minimum,
+        5 + applied.parameters.length + priced.parameters.length
+      );
+      const stocked = stockPredicate(input.inStockOnly);
+      const after =
+        5 +
+        applied.parameters.length +
+        priced.parameters.length +
+        rated.parameters.length;
       const found = await client.query<
-        Omit<SearchResult, "publishedAt"> & { publishedAt: Date }
+        AttentionColumns &
+          RatedRow<PricedRow<SearchResultResponse>> & { total: number }
       >(
         // The match level is computed in an inner query so the ordering can
         // name it. PostgreSQL only accepts an output column in `order by` as a
         // bare name, not inside an expression, and the level is the input to
         // one.
         `select "offeringId", title, "businessName", "categoryName", slug,
-           "publishedAt", "primaryVisualUrl", "matchLevel"
+           "publishedAt", "primaryVisualUrl", "matchLevel", "listingNumber",
+           "openCount", "trendScore",
+           "productKey", "sellerCount", "handoffAvailable",
+           "ratingAverage", "ratingCount",
+           "pricingKind", amount, currency, "amountSetAt", "priorAmount",
+           "deliveryCost", "stockState",
+           count(*) over ()::int as total
          from (
-           select p.offering_id as "offeringId", p.title,
+           -- §5.12.1. One row per product, drawn from its cheapest seller.
+           select distinct on (${PRODUCT_GROUP_KEY})
+             p.offering_id as "offeringId", p.title,
              p.business_name as "businessName", c.name as "categoryName",
              o.slug, p.published_at as "publishedAt",
              ${PRIMARY_VISUAL_SQL},
+             ${LISTING_NUMBER_SQL},
+             ${attentionColumns(input.arrangement)},
+             ${OFFERING_PRICE_SQL},
+             ${PRODUCT_KEY_SQL},
+             ${SELLER_COUNT_SQL},
+             ${HANDOFF_AVAILABLE_SQL},
+             ${PRODUCT_RATING_SQL},
              case
                when to_tsvector('simple', p.title) @@ to_tsquery('simple', $2)
                  then 'TITLE'
@@ -433,17 +639,39 @@ export class PgDiscoveryRepository {
            from offering_search_projection p
            join offering o on o.id = p.offering_id
            join category c on c.id = p.category_id
-           where to_tsvector('simple', p.searchable_text)
-             @@ to_tsquery('simple', $1)
+           where ${matched}
              and ($3::uuid is null or p.category_id = $3)
              ${applied.sql}
+             ${priced.sql}
+             ${rated.sql}
+             ${stocked}
+           order by ${PRODUCT_GROUP_PICK}
          ) matched
          -- US-DSC-F07-001 AC-1 to AC-3, in that order. The priority is not
          -- written out again here: array_position reads it from the module's
          -- list, so PRD-0002 12.2 is stated once and consulted twice.
+         --
+         -- I63: what changes underneath it is the tie-break. Relevance still
+         -- decides which tier a result is in -- a query that names a title is
+         -- answered by that title first, which is 12.2 and stays -- and inside
+         -- one tier the arrangement is now the Owner's: cheapest delivered
+         -- first, out of stock last. "Most recently listed" was what 12.2's
+         -- second key said, and it was decided when no Offering carried an
+         -- amount at all.
          order by array_position($4::text[], "matchLevel"),
-           "publishedAt" desc, "offeringId"`,
-        [all, any, input.categoryId, SEARCH_MATCH_LEVELS, ...applied.parameters]
+           ${arrangementOrder(input.arrangement)}${LISTING_ORDER}
+         limit $${after} offset $${after + 1}`,
+        [
+          all,
+          any,
+          input.categoryId,
+          SEARCH_MATCH_LEVELS,
+          ...applied.parameters,
+          ...priced.parameters,
+          ...rated.parameters,
+          PAGE_SIZE,
+          (input.page - 1) * PAGE_SIZE
+        ]
       );
 
       // AC-1. Computed from the *unnarrowed* set, so choosing one leaf never
@@ -451,16 +679,36 @@ export class PgDiscoveryRepository {
       const reachable = await client.query<BrowseCategory>(
         `select c.id, c.name, c.slug, true as leaf
          from offering_search_projection p
+         join offering o on o.id = p.offering_id
          join category c on c.id = p.category_id
-         where to_tsvector('simple', p.searchable_text)
-           @@ to_tsquery('simple', $1)
+         where ${matched}
          group by c.id, c.name, c.slug
          order by c.name`,
         [all]
       );
 
+      /*
+       * I63. The window counted the whole ordered list before the page was cut
+       * from it. A page past the end carries no row to report from, so the
+       * count is taken separately there — an overshooting pager can then find
+       * its way back rather than being told the query matched nothing.
+       */
+      const total =
+        found.rows[0]?.total ??
+        (await this.matchCount(client, {
+          all,
+          matched,
+          categoryId: input.categoryId,
+          filters: input.filters,
+          inStockOnly: input.inStockOnly,
+          price: input.price,
+          rating: input.rating
+        }));
+
       await client.query("commit");
       return {
+        // I68. The arrangement the list is actually in, sent back beside it.
+        arrangement: input.arrangement,
         categoryId: input.categoryId,
         discoveryPathId: input.pathId,
         domain: narrowedTo?.domain ?? null,
@@ -469,14 +717,26 @@ export class PgDiscoveryRepository {
         // `US-DSC-F04-001` AC-6's gate, now with something behind it.
         filtersAvailable: narrowedTo !== null,
         narrowing: reachable.rows.length > 1 ? reachable.rows : [],
+        paging: { page: input.page, pageSize: PAGE_SIZE, total },
         query: input.query,
-        results: found.rows.map((row) => ({
-          ...row,
-          publishedAt: row.publishedAt.toISOString()
-        })),
-        // AC-1. The query stays visible beside the emptiness it produced.
+        // The window's count rides along on every row and is not part of a
+        // result; the schema is `.strict()` and would refuse it.
+        results: found.rows.map(({ total: _total, ...row }) =>
+          withPrice<SearchResultResponse>(
+            withRating<PricedRow<SearchResultResponse>>(withoutAttention(row))
+          )
+        ),
+        /*
+         * AC-1. The query stays visible beside the emptiness it produced.
+         *
+         * I63: an empty page is not the same thing. Somebody on page nine of
+         * three has overshot a list that exists, and the recovery actions §13
+         * offers — change the query, clear the filters — would be answering a
+         * question they did not ask. `paging.total` is what distinguishes them,
+         * so it is what this consults.
+         */
         zeroResults:
-          found.rows.length === 0
+          total === 0
             ? zeroResults({
                 applied: input.filters,
                 available: filters,
@@ -495,6 +755,64 @@ export class PgDiscoveryRepository {
   }
 
   /**
+   * How many products a Search matches, where the page it asked for held none
+   * (I63).
+   *
+   * Only reached past the end of the list: the ordinary path takes the count
+   * from the window in the same statement that drew the page, which is one
+   * query and one snapshot. This exists so that overshooting a pager reports a
+   * position rather than an empty catalogue.
+   */
+  private async matchCount(
+    client: PoolClient,
+    input: {
+      all: string;
+      categoryId: string | null;
+      filters: AppliedFilter[];
+      inStockOnly: boolean;
+      /**
+       * The match, already written by the caller (I67): either the text index
+       * or one listing number. Passed rather than rebuilt because the two
+       * statements must ask the same question — a count taken by other means
+       * than the page it explains is a position computed from a different list.
+       */
+      matched: string;
+      price: PriceConstraintInput | null;
+      rating: RatingConstraintInput | null;
+    }
+  ): Promise<number> {
+    /*
+     * The predicates are rebuilt rather than reused, because a predicate
+     * carries its own parameter numbers and this statement has two leading
+     * parameters where the paged one has four. Rebuilding states the numbering
+     * once per statement; renumbering a built string would state it twice.
+     */
+    const applied = filterPredicate(input.filters, 3);
+    const priced = pricePredicate(input.price, 3 + applied.parameters.length);
+    const rated = ratingPredicate(
+      input.rating === null ? null : input.rating.minimum,
+      3 + applied.parameters.length + priced.parameters.length
+    );
+    const stocked = stockPredicate(input.inStockOnly);
+    const counted = await client.query<{ total: number }>(
+      `select count(distinct ${PRODUCT_GROUP_KEY})::int as total
+       from offering_search_projection p
+       join offering o on o.id = p.offering_id
+       where ${input.matched}
+         and ($2::uuid is null or p.category_id = $2)
+         ${applied.sql} ${priced.sql} ${rated.sql} ${stocked}`,
+      [
+        input.all,
+        input.categoryId,
+        ...applied.parameters,
+        ...priced.parameters,
+        ...rated.parameters
+      ]
+    );
+    return counted.rows[0]?.total ?? 0;
+  }
+
+  /**
    * The Listing Cards for one active leaf Category.
    *
    * The projection is the only eligibility input: a row is there because
@@ -506,29 +824,115 @@ export class PgDiscoveryRepository {
    */
   private async results(
     client: PoolClient,
+    arrangement: ResultArrangement,
     categoryId: string,
-    filters: AppliedFilter[]
-  ): Promise<ListingCard[]> {
-    // PRD-0002 §12.4: a filtered Browse keeps Browse's ordering. Filters narrow
-    // the set; they do not change how it is arranged.
+    filters: AppliedFilter[],
+    price: PriceConstraintInput | null,
+    rating: RatingConstraintInput | null,
+    page: number,
+    inStockOnly: boolean
+  ): Promise<{ cards: ListingCard[]; total: number }> {
+    // PRD-0002 §12.4 and §10.6.6: a narrowed Browse keeps Browse's ordering.
+    // Criteria narrow the set; they do not change how it is arranged.
     const applied = filterPredicate(filters, 2);
+    const priced = pricePredicate(price, 2 + applied.parameters.length);
+    const rated = ratingPredicate(
+      rating === null ? null : rating.minimum,
+      2 + applied.parameters.length + priced.parameters.length
+    );
+    const stocked = stockPredicate(inStockOnly);
+    const after =
+      2 +
+      applied.parameters.length +
+      priced.parameters.length +
+      rated.parameters.length;
     const result = await client.query<
-      Omit<ListingCard, "publishedAt"> & { publishedAt: Date }
+      AttentionColumns &
+        RatedRow<PricedRow<ListingCardResponse>> & { total: number }
     >(
-      `select p.offering_id as "offeringId", p.title, p.business_name as "businessName",
-         c.name as "categoryName", o.slug, p.published_at as "publishedAt",
-         ${PRIMARY_VISUAL_SQL}
+      /*
+       * Two levels, because `distinct on` fixes the sort order it deduplicates
+       * with and Browse's own order is a different one. The inner query picks
+       * one row per product; the outer restores PRD-0002 §12.4's ordering.
+       */
+      /*
+       * I63. `count(*) over ()` rather than a second query: a window is
+       * computed before `limit`, so the total is the length of the whole
+       * ordered list and the rows are one page of it — one statement, one
+       * snapshot, and no chance of a total that disagrees with the page it
+       * describes because something was published between two queries.
+       */
+      `select *, count(*) over ()::int as total from (
+         select distinct on (${PRODUCT_GROUP_KEY})
+           p.offering_id as "offeringId", p.title,
+           p.business_name as "businessName",
+           c.name as "categoryName", o.slug, p.published_at as "publishedAt",
+           ${PRIMARY_VISUAL_SQL},
+           ${LISTING_NUMBER_SQL},
+           ${attentionColumns(arrangement)},
+           ${OFFERING_PRICE_SQL},
+           ${PRODUCT_KEY_SQL},
+           ${SELLER_COUNT_SQL},
+           ${HANDOFF_AVAILABLE_SQL},
+           ${PRODUCT_RATING_SQL}
+         from offering_search_projection p
+         join offering o on o.id = p.offering_id
+         join category c on c.id = p.category_id
+         where p.category_id = $1 ${applied.sql} ${priced.sql} ${rated.sql} ${stocked}
+         order by ${PRODUCT_GROUP_PICK}
+       ) grouped
+       order by ${arrangementOrder(arrangement)}${LISTING_ORDER}
+       limit $${after} offset $${after + 1}`,
+      [
+        categoryId,
+        ...applied.parameters,
+        ...priced.parameters,
+        ...rated.parameters,
+        PAGE_SIZE,
+        (page - 1) * PAGE_SIZE
+      ]
+    );
+    const first = result.rows[0];
+    if (first !== undefined)
+      return {
+        /*
+         * The window's count rides along on every row and is not part of a
+         * card, so it is taken off before the row becomes one. The card schema
+         * is `.strict()` and would refuse it — which is the guard working, and
+         * the reason it is stripped here rather than tolerated there.
+         */
+        cards: result.rows.map(({ total: _total, ...card }) =>
+          withPrice<ListingCardResponse>(
+            withRating<PricedRow<ListingCardResponse>>(withoutAttention(card))
+          )
+        ),
+        total: first.total
+      };
+
+    /*
+     * An empty page carries no row, so the window has nothing to report from —
+     * and "no rows" is not "no results" when the person asked for page nine of
+     * three. The count is taken separately in exactly that case, so a pager
+     * that overshot can still show where the list actually ends rather than
+     * telling somebody their Category emptied.
+     *
+     * `count(distinct …)` rather than a second grouping pass: the number wanted
+     * is how many products the criteria admit, and that is what the expression
+     * the grouping deduplicates on counts.
+     */
+    const counted = await client.query<{ total: number }>(
+      `select count(distinct ${PRODUCT_GROUP_KEY})::int as total
        from offering_search_projection p
        join offering o on o.id = p.offering_id
-       join category c on c.id = p.category_id
-       where p.category_id = $1 ${applied.sql}
-       order by p.published_at desc, p.offering_id`,
-      [categoryId, ...applied.parameters]
+       where p.category_id = $1 ${applied.sql} ${priced.sql} ${rated.sql} ${stocked}`,
+      [
+        categoryId,
+        ...applied.parameters,
+        ...priced.parameters,
+        ...rated.parameters
+      ]
     );
-    return result.rows.map((row) => ({
-      ...row,
-      publishedAt: row.publishedAt.toISOString()
-    }));
+    return { cards: [], total: counted.rows[0]?.total ?? 0 };
   }
 
   /**

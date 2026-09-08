@@ -52,7 +52,16 @@ export default tseslint.config(
            * the platform's entry points, and an unlinted entry point is exactly
            * where a wrong import path would sit unnoticed.
            */
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 12,
+          /*
+           * Raised from twelve to fourteen by I57's two seed scripts, to
+           * fifteen by I66's attribute catalogue, to sixteen by I76's scheduled
+           * feed entry, to seventeen by I85's catalogue importer, and to
+           * eighteen by I90's development reset. The number
+           * is a count of files, not a budget with meaning of its own — it
+           * exists so that the list below stays a list somebody reads rather
+           * than a pattern that quietly swallows a directory.
+           */
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 18,
           allowDefaultProject: [
             "*.mjs",
             "prisma.config.ts",

@@ -495,13 +495,40 @@ suite("Increment I3 Search", () => {
     expect(Object.keys(card ?? {}).sort()).toEqual([
       "businessName",
       "categoryName",
+      /*
+       * I59. Whether the card may send the person to the partner — and
+       * pointedly not where. `US-DSC-F06-001` AC-5 is unchanged by the AC-7
+       * revision, so this list is exactly where a leaked Affiliate Destination
+       * would be caught: a boolean may appear here, an address may not.
+       */
+      "handoffAvailable",
+      /*
+       * I67. The listing number, which is public by construction: it names a
+       * listing and can say nothing about the seller behind it. It earns its
+       * place on this list for the opposite reason to the rest — typing it into
+       * Search is how a person reaches this row on purpose.
+       */
+      "listingNumber",
       "matchLevel",
       "offeringId",
+      // I56. The amount is part of the Listing Card minimum now. It is not
+      // protected information — it is the fact a comparison site exists to
+      // carry — and naming it here keeps the exact-key guard doing its job.
+      "pricing",
       // I30. A visual is part of the Listing Card minimum and is not protected
       // information; the exact key list is what keeps a telephone or an
       // Affiliate Destination from arriving beside it unnoticed.
       "primaryVisualUrl",
+      // I58. The grouping and the only evidence for it. `sellerCount` is a fact
+      // about a product; `productKey` is why those rows are one product.
+      "productKey",
       "publishedAt",
+      // I62. The product's score, and it is not protected information either:
+      // it is an aggregate of what other buyers said, published under a masked
+      // byline. What would be a leak is a reviewer's name or address, and
+      // neither has a field on a card.
+      "rating",
+      "sellerCount",
       "slug",
       "title"
     ]);

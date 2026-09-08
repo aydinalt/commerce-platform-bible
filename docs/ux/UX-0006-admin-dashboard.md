@@ -3,15 +3,62 @@
 - **UX ID:** UX-0006
 - **Title:** Admin Dashboard
 - **Status:** Frozen
-- **Version:** 1.0
-- **Supersedes:** Draft v0.2
-- **Approved candidate:** In Review v0.4
-- **Approval Date:** 2026-07-22
+- **Version:** 1.1
+- **Supersedes:** Frozen v1.0, preserved unchanged at
+  `UX-0006-admin-dashboard-v1.0-superseded.md`
+- **Approval Date:** 2026-09-07
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
-- **Freeze Date:** 2026-07-22
+- **Freeze Date:** 2026-09-07
 - **Frozen By:** Product Owner / Architecture Owner
 - **Scope level:** UX behaviour (non-visual, non-technical)
+
+**Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture
+Owner on 2026-09-07. Frozen v1.1 is the locked V1 UX baseline for UX-0006 —
+Admin Dashboard. This exact version must not be edited in place. Any future
+change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`,
+`REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`.
+Frozen v1.0 is preserved unchanged at
+`UX-0006-admin-dashboard-v1.0-superseded.md`.
+
+**Approval Note (1.1):** Explicitly approved by the Product Owner / Architecture
+Owner on 2026-09-07 — _"UX-0006 v1.1 taslağını resmi olarak onaylıyorum."_
+Approval and Freeze were taken in one decision. The Owner recorded his reasons
+for three structural choices in the same message: the `12A`/`12B` numbering,
+which keeps every existing section number and therefore every external reference
+intact; the permission row that closes writing to the audit trail to everyone
+including the Owner, which seals the immutability rule on paper as well as in
+the database; and the reading restriction written before a Sub-Admin tier
+exists, which removes a decision that would otherwise be taken under pressure.
+
+**Revision Note (1.1):** Superseding revision of Frozen v1.0, begun
+independently at Draft under `DOCUMENT_LIFECYCLE.md` §7. **It adds two sections
+and amends three; it alters no existing behaviour.**
+
+Frozen `traceability.md` v2.3 §5D.4 names the one gap this closes: `PLT F13`
+(Feed Management) and `PLT F14` (Audit Trail Reading) were Frozen on 2026-09-07
+with behaviour owners and Stories, and are the only two Admin surfaces in the
+platform with no UX section. `PLATFORM_FEATURE_REGISTRY.md` v1.3 carries
+"section pending" in their UX column; this revision is what discharges it.
+
+**Both surfaces already exist and are in use.** `I76` built feed management and
+`I84` built the audit reading surface. This document therefore records what they
+do rather than proposing what they might do — with one exception, stated so it
+is not mistaken for description: **§22's reading rules for `F14` are stricter
+than the surface enforces today.** `US-PLT-F14-001` §13 records that `AC-1` is
+met by a seam rather than a boundary, because the platform has one Admin tier
+and no Sub-Admin exists yet to be refused. The rule is written here as the rule,
+and the day a second tier is added it is the thing that must already have been
+written down.
+
+Three amendments to existing sections: §5.1 gains the two subareas, §16 gains
+their permission rows — including the row that distinguishes them — and §18
+gains the two Stories and the registry.
+
+**Nothing in §§6–12 changes.** The two new sections are numbered 12A and 12B
+rather than inserted as 13 and 14, so that every existing section number in this
+document, and every reference to one from another document, still points at the
+same content.
 
 **Freeze Note (1.0):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-22. Frozen v1.0 is the locked V1 UX baseline for UX-0006 — Admin Dashboard. This exact version must not be edited in place. Any future change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise User Stories, traceability, repository indexes, or GitHub content.
 
@@ -73,7 +120,9 @@ UX-0006 may be entered when UX-0008 sends:
 - an existing Admin authorization relationship;
 - an explicit person choice to enter Admin context.
 
-UX-0006 may resume from one of its own Admin subareas while preserving the same authorized Admin context.
+UX-0006 may resume from one of its own Admin subareas while preserving the same authorized Admin context. Its subareas include Feed Management (§12A) and Audit Trail Reading (§12B); the second is reachable only by the platform administrator, per §12B.1.
+
+Audit Trail Reading may also be entered by an address carrying filters (§12B.2). The entry conditions in §5.2 are evaluated first: a filtered address is a view of the trail, not a way into it.
 
 Logout requested from UX-0006 is handed to UX-0008 for execution.
 
@@ -322,6 +371,212 @@ Actionable indicators may open the relevant queue or management area.
 
 Informational indicators need not be interactive.
 
+## 12A. Feed Management
+
+The surface where an Admin registers a partner's product document, sets how its
+fields are read, pauses it, and reads what each run did. Behaviour owner:
+`PRD-0006` v2.6 §24. Story: `US-PLT-F13-001` v0.2.
+
+**What it is not** is the more useful half of the definition. This surface
+configures an intake; it does not curate a catalogue. It creates no listing,
+publishes no listing, and changes no word a person wrote. A feed reaches only
+price and stock, and only on a listing that is already published and already
+matched — `PRD-0001` v4.2 §5.11.1 owns that boundary and this experience
+neither widens nor restates it.
+
+### 12A.1 Registering a feed
+
+A registration carries five things and no more:
+
+```text
+the partner the feed may touch
+the heading its products are filed under
+the document address
+the document format
+the field mapping
+```
+
+**The mapping is a closed list.** It names which field in the partner's document
+carries the identifier, the title, the price, the currency, the stock and the
+product key — the fields §24.1 names, and nothing else. A mapping carrying any
+other key is refused rather than stored and ignored.
+
+The reason is worth stating in a UX document, because it is the difference the
+person filling the form experiences: an unnamed key that is quietly dropped
+looks like it was accepted, and the Admin learns otherwise weeks later from a
+column that was never read. A refusal is the only outcome that reaches them
+while they are still looking at the form.
+
+The mapping's help text says which fields are required. Where the document's
+product list can be found automatically, the path is optional and says so.
+
+### 12A.2 Pausing
+
+An Admin may pause a running feed and start a paused one.
+
+```text
+Active   → read on the schedule
+Paused   → not read at all
+```
+
+**Pausing withdraws nothing.** Every listing keeps its lifecycle state, its
+price, its stock and its public eligibility exactly as the last run left them.
+The surface says so where the pause is offered, because "pause" is a word a
+person can reasonably read as "take these down", and the two would be very
+different acts.
+
+### 12A.3 Reading a run
+
+Every run is recorded with its outcome, its start and its finish. A run that
+succeeded reports four numbers:
+
+```text
+read      — products in the document
+updated   — listings whose price or stock changed
+skipped   — products the platform does not carry, or whose listing is not published
+rejected  — rows the run could not use
+```
+
+**Skipped and rejected must not be presented as one number.** A partner's
+document is their whole catalogue and the platform carries a part of it, so a
+healthy run skips most of what it reads. Folded into "rejected", every run would
+look broken, and the one row that genuinely needs reading would sit inside four
+thousand ordinary ones.
+
+Refusals are shown as a bounded sample with a reason for each, beside the full
+count. The count is never the sample size: a surface that showed twenty
+refusals when there were four hundred would be lying by omission.
+
+### 12A.4 Reading a failure
+
+A failed run says **what kind** of failure it was, and the kind is separate from
+the message:
+
+```text
+the partner's server could not be reached
+the document arrived and could not be read
+the mapping fits nothing in the document
+a failure that could not be classified
+```
+
+The message keeps the partner's own words — often their server's. The kind
+answers the question an Admin actually decides in the first seconds: whose job
+this is. The first belongs to the partner's engineer, the second to whoever
+publishes their document, the third to the Admin's own mapping.
+
+**A failure that cannot be classified is named as such rather than hidden.** An
+unexplained failure that says nothing is worse than one that admits it does not
+know, because the first invites an Admin to invent an explanation.
+
+A document that parses and yields nothing usable is a failure, not a success
+with refusals. A run reported green beside a feed that has updated nothing for a
+week is the shape in which a misconfigured feed looks healthy.
+
+### 12A.5 Empty, loading, error
+
+- No feed registered yet is stated as a fact, not as an error.
+- A feed that has never run says so, rather than showing an empty history.
+- A feed list that cannot be read says the reading failed. It does not present
+  an empty list, which would read as "no feeds" and is a different claim.
+- A registration that is refused says which of the partner, the heading and the
+  address to check.
+
+### 12A.6 Not in this surface
+
+- Creating, publishing, retiring or editing any listing.
+- Anything a feed may write beyond price and stock.
+- Any disclosure of a feed, a run, a mapping or a refusal outside an authorized
+  active Admin context.
+
+## 12B. Audit Trail Reading
+
+The surface where the platform administrator reads what Admins have done.
+Behaviour owner: `PRD-0006` v2.6 §22, and §22.6 for this surface. Story:
+`US-PLT-F14-001` v0.1.
+
+### 12B.1 Who may read it
+
+**The platform administrator, and no one else.** §22.5 excludes every future
+Sub-Admin or moderator tier from this trail, and the exclusion is part of the
+experience rather than a technical footnote: a trail readable by the people it
+records is not an audit trail.
+
+The platform has one Admin tier today, so there is currently no tier to refuse.
+This rule is written in advance deliberately. The moment a second tier is added,
+the question "may they read the trail?" must already have an answer, because
+that is not a question anybody wants to answer under time pressure while
+building the tier.
+
+### 12B.2 Reading
+
+Entries are returned **newest first**, paged, and every page states the total
+number matching the current filters — not the number on the page. A reader who
+cannot see the total cannot tell a narrow filter from an empty trail.
+
+Filters may be combined freely:
+
+```text
+the acting account
+the act
+a date range
+```
+
+The act filter offers only the acts §22.2 names. It is a closed list for the
+same reason the feed mapping is: an act the trail does not record is not a
+filter that returns nothing, it is a question the surface should not have
+allowed.
+
+**The filters live in the address of the view.** Opening the same address
+reproduces the same view — which is what makes a finding shareable, citable in a
+case, and returnable to.
+
+With no range given, the last thirty days are shown, and the surface says that
+is what is being shown. A range reaches back **without limit**: the trail is
+never swept, so an entry of any age is returnable, and a reader who narrows to
+last year gets last year rather than nothing.
+
+The end of a range means the whole of the day it names. A person who types
+today's date and gets nothing from today has been given a correct answer to a
+question they did not ask.
+
+### 12B.3 Exporting
+
+The export contains exactly the entries the current filters match, and no
+others.
+
+**Where the export would be truncated, the surface says so before it is taken.**
+An export that silently stops short is worse than no export at all, because it
+looks complete — and it is the file somebody will later attach to something that
+matters.
+
+### 12B.4 What the trail never shows
+
+No email address and no personal name appears in this view or in its export
+(§23.3). Accounts are identified the way every other operational surface
+identifies them.
+
+This is the personal-data rule applied here, not a rule of this surface. It has
+no Feature of its own by the Owner's decision, precisely because it binds every
+operational surface rather than describing one.
+
+### 12B.5 Reading is not writing
+
+- The surface offers no operation that writes, edits or removes an entry. There
+  is no such control to find, not a control that refuses.
+- **Reading the trail records nothing in the trail.** A read that wrote an entry
+  would make the trail grow by being looked at, and the record of Admin acts
+  would fill with the act of reading it.
+- The surface states that entries are never deleted and cannot be altered at the
+  database. The immutability is the reason the trail is worth reading, so it is
+  said where it is read rather than left in an engineering document.
+
+### 12B.6 Empty, loading, error
+
+- No entry matching the filters is stated as a fact about the filters.
+- A trail that cannot be read says the reading failed, and does not show an
+  empty table — which would say "nothing has happened", the most misleading
+  sentence this surface could produce.
+
 ## 13. User and Owner Authority Boundaries
 
 Ordinary Admin may suspend or reinstate only non-Admin-authorized User Accounts.
@@ -355,18 +610,28 @@ These Owner actions occur outside the V1 Admin UI.
 
 ## 16. Permissions
 
-| Action | Guest | User | Business | Ordinary Admin | Product Owner / Architecture Owner |
-|---|---:|---:|---:|---:|---:|
-| Enter Admin Dashboard | ✗ | ✗ | ✗ | ✓ | ✓ |
-| View Basic Analytics | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Use seven General Moderation actions | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Suspend/Reinstate Admin-authorized User | ✗ | ✗ | ✗ | ✗ | Owner only |
-| Review/Validate/Enable/Disable Affiliate Destination | ✗ | ✗ | ✗ | Conditional | Conditional |
-| Manage Categories | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Manage Attributes | ✗ | ✗ | ✗ | ✓ | ✓ |
-| Grant/remove Admin authorization in UI | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Use generic Platform Settings | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Use Messaging moderation | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Action                                               | Guest | User | Business | Ordinary Admin | Product Owner / Architecture Owner |
+| ---------------------------------------------------- | ----: | ---: | -------: | -------------: | ---------------------------------: |
+| Enter Admin Dashboard                                |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| View Basic Analytics                                 |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Use seven General Moderation actions                 |     ✗ |    ✗ |        ✗ |    Conditional |                        Conditional |
+| Suspend/Reinstate Admin-authorized User              |     ✗ |    ✗ |        ✗ |              ✗ |                         Owner only |
+| Review/Validate/Enable/Disable Affiliate Destination |     ✗ |    ✗ |        ✗ |    Conditional |                        Conditional |
+| Manage Categories                                    |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Manage Attributes                                    |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Register, map or pause a partner feed                |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Read feed runs and refusals                          |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Read or export the Admin audit trail                 |     ✗ |    ✗ |        ✗ |              ✗ |                         Owner only |
+| Write, edit or remove an audit entry                 |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
+| Grant/remove Admin authorization in UI               |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
+| Use generic Platform Settings                        |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
+| Use Messaging moderation                             |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
+
+Two rows above say something the others do not, and both are deliberate.
+
+**Reading the audit trail is Owner-only**, unlike every other Admin capability in this table. §22.5 excludes any future Sub-Admin or moderator tier. The platform has one Admin tier today, so the row describes a boundary with nothing yet on the far side of it; it is written now so that adding a tier is a decision about that tier and not a rediscovery of this rule.
+
+**Writing to the trail is refused to everyone, including the Owner.** It is not an authority anybody holds. The trail is append-only at the database, and no interface in this document offers a control that edits or removes an entry.
 
 ## 17. Accessibility Requirements
 
@@ -386,6 +651,14 @@ These Owner actions occur outside the V1 Admin UI.
 - `PRD-0006-platform.md` — Admin action surface, queues, management, analytics.
 - `UX-0005-business-dashboard.md` — Business correction notice and bounded response.
 - `UX-0008-authentication.md` — authenticated Admin-context entry and Logout execution.
+- `PRD-0006-platform.md` v2.6 §22 — the Admin audit trail: what is recorded, that it is append-only, who may read it, and that it is never swept; §22.6 owns the reading surface.
+- `PRD-0006-platform.md` v2.6 §23 — personal data on Admin surfaces, as a Security Requirement. It has no Feature by the Owner's decision; §12B.4 applies it here.
+- `PRD-0006-platform.md` v2.6 §24 — Admin feed management, and §24.1 the closed field list.
+- `PRD-0001-offering.md` v4.2 §5.11.1 — what a feed intake may touch. §12A does not restate it.
+- `US-PLT-F13-001-feed-management.md` v0.2 — Feed Management. The authoritative version is **v0.2**; Frozen v0.1 is preserved with a statement about the code that was wrong.
+- `US-PLT-F14-001-audit-trail-reading-and-export.md` v0.1 — Audit Trail Reading and export.
+- `PLATFORM_FEATURE_REGISTRY.md` v1.3 — `F13` and `F14`, and the record that no Feature is allocated for §23.
+- `traceability.md` v2.3 §5D — the chains these two sections complete.
 
 ## 19. Acceptance Criteria
 
@@ -458,6 +731,93 @@ Scenario: Generic Platform Configuration is absent
   Given the Admin Dashboard
   When primary areas are presented
   Then no generic Settings or Platform Configuration area exists
+```
+
+### 19A. Feed Management and Audit Trail Reading (1.1)
+
+```gherkin
+Scenario: A mapping key nobody named is refused, not ignored
+  Given an Admin is registering a partner feed
+  When the mapping carries a field name §24.1 does not list
+  Then the registration is refused
+  And the refusal reaches the Admin while the form is still open
+
+Scenario: Pausing a feed takes nothing down
+  Given a running feed maintains the price of published listings
+  When an Admin pauses it
+  Then the feed is not read on the schedule
+  And every listing keeps its lifecycle state and public eligibility
+  And the surface says so where the pause is offered
+
+Scenario: A healthy run does not look broken
+  Given a partner document carries the partner's whole catalogue
+  When a run updates the listings the platform carries and passes over the rest
+  Then passed over and refused are reported as separate numbers
+  And the run is not presented as a failure
+
+Scenario: A failed run says whose job it is
+  Given a run has failed
+  When an Admin reads it
+  Then the kind of failure is stated separately from the message
+  And the kind distinguishes the partner's server, the document, and the mapping
+
+Scenario: A document that yields nothing is a failure
+  Given a partner document parses and every row is unusable
+  When the run finishes
+  Then the run is recorded as failed
+  And it is not recorded as a success carrying refusals
+
+Scenario: Refusals are sampled and the true count is shown
+  Given a run refused more rows than the surface displays
+  When an Admin reads the refusals
+  Then a bounded sample is shown with a reason for each
+  And the full refusal count is shown beside it
+
+Scenario: The audit trail is not readable by a tier §22.5 excludes
+  Given a caller is not the platform administrator
+  When the caller requests the audit trail or its export
+  Then the request is refused
+
+Scenario: A filtered view is reproducible
+  Given the platform administrator has narrowed the trail by account, act and date
+  When the same address is opened again
+  Then the same view is reproduced
+
+Scenario: The default window is stated
+  Given no date range is given
+  When the trail is read
+  Then the last thirty days are shown
+  And the surface says that is what is being shown
+
+Scenario: A range has no floor
+  Given an entry is older than any retention period other tables use
+  When a range reaching that far back is given
+  Then the entry is returned
+
+Scenario: The end of a range is the whole of its day
+  Given a range ends on a named day
+  When entries from later in that day exist
+  Then they are returned
+
+Scenario: An export says when it would be short
+  Given the current filters match more entries than an export may carry
+  When the export is offered
+  Then the surface says the file would be truncated before it is taken
+
+Scenario: Reading the trail writes nothing to it
+  Given the platform administrator reads or exports the trail
+  When the read completes
+  Then no entry is recorded for the read
+
+Scenario: No surface offers to change an entry
+  Given the platform administrator is reading the trail
+  When the available operations are examined
+  Then no operation writes, edits or removes an entry
+
+Scenario: No personal identifier appears
+  Given entries name the accounts that acted
+  When the trail is read or exported
+  Then no email address and no personal name appears in either
 ```
 
 ## 20. Accepted UX Deferrals

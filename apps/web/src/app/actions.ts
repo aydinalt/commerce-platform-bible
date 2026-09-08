@@ -5,7 +5,11 @@ import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { AvailableFilterResponse } from "@commerce/contracts";
+import {
+  priceConstraintSchema,
+  RESULT_ARRANGEMENTS,
+  type AvailableFilterResponse
+} from "@commerce/contracts";
 
 import { isApiUnavailable } from "../api-error";
 import { fetchBrowseView, fetchSearchView } from "../discovery/api";
@@ -37,6 +41,27 @@ import {
  */
 
 async function handOff(entry: DiscoveryEntry): Promise<never> {
+  /*
+   * I63. **Every criterion change puts the person back on page one.** A budget
+   * narrowed while standing on page four is a new question, and page four of
+   * the new answer is usually empty — which reads as "nothing matched" to
+   * somebody who has simply overshot a shorter list.
+   *
+   * Dropped here rather than in each action, because this is exactly the kind
+   * of thing one action out of six would forget. Moving between pages writes
+   * the carrier through `handOffAt`, which is the one path that keeps it.
+   */
+  const { page: _dropped, ...atFirstPage } = entry;
+  return writeEntry(atFirstPage);
+}
+
+/** The one hand-off that keeps a page number: moving between pages (I63). */
+async function handOffAt(entry: DiscoveryEntry, page: number): Promise<never> {
+  const { page: _dropped, ...criteria } = entry;
+  return writeEntry(page <= 1 ? criteria : { ...criteria, page });
+}
+
+async function writeEntry(entry: DiscoveryEntry): Promise<never> {
   const jar = await cookies();
   jar.set(DISCOVERY_ENTRY_COOKIE, JSON.stringify(entry), {
     httpOnly: true,
@@ -227,6 +252,66 @@ export async function applyFilters(form: FormData): Promise<void> {
 }
 
 /**
+ * Setting or changing the budget (UX-0002 §9A, `US-DSC-F11-001`).
+ *
+ * **Not routed through `offeredFilters`, and that is the whole difference
+ * between this action and `applyFilters`.** A Filter is offered by a Category
+ * and has to be checked against the one being browsed; a Price Constraint is
+ * offered wherever Results are (§10.6.1), so there is nothing to check it
+ * against here — the API validates the amounts, and an amount that is not one
+ * never reaches the carrier because the contract refuses it first.
+ *
+ * An empty pair of bounds removes the constraint rather than writing one with
+ * no bound: a person who clears both fields has stopped constraining, and
+ * `PRICE_CONSTRAINT_HAS_NO_BOUND` is the API's answer to a request nobody
+ * meant to make.
+ */
+export async function applyBudget(form: FormData): Promise<void> {
+  const entry = await currentEntry();
+  if (!entry) return;
+
+  const read = (name: string): string | null => {
+    const raw = form.get(name);
+    if (typeof raw !== "string") return null;
+    const trimmed = raw.trim();
+    return trimmed === "" ? null : trimmed;
+  };
+
+  const parsed = priceConstraintSchema.safeParse({
+    currency: (read("currency") ?? "TRY").toUpperCase(),
+    maxAmount: read("maxAmount"),
+    minAmount: read("minAmount")
+  });
+
+  /*
+   * A refusal leaves the carrier alone, exactly as a refused Filter does. The
+   * fields the person typed are still on the page, so correcting the figure is
+   * the next thing they can do — and the results they were looking at are
+   * still the results of the criteria they actually confirmed.
+   */
+  const { price: _dropped, ...kept } = entry;
+  await handOff({
+    ...kept,
+    ...(parsed.success ? { price: parsed.data } : {}),
+    pathId: entry.pathId ?? randomUUID()
+  });
+}
+
+/**
+ * Removing it (§9A.4).
+ *
+ * Drops one field and nothing else: the query, the Category and the Attribute
+ * Filters are the person's other criteria and removing a budget is not a
+ * statement about any of them.
+ */
+export async function clearBudget(): Promise<void> {
+  const entry = await currentEntry();
+  if (!entry) return;
+  const { price: _dropped, ...kept } = entry;
+  await handOff({ ...kept, pathId: entry.pathId ?? randomUUID() });
+}
+
+/**
  * Clearing them (§9.7).
  *
  * "Clearing all Filters preserves the current query and active leaf Category
@@ -301,4 +386,87 @@ export async function leavePreparation(form: FormData): Promise<void> {
   const entry = readBrowseEntry(form.get("categoryId"));
   if (!entry) return;
   await handOff({ ...entry, pathId: (await currentPathId()) ?? randomUUID() });
+}
+
+/**
+ * Moving between pages of Results (I63).
+ *
+ * A submitted form rather than a link, like every other criterion control on
+ * this surface, and for the same reason: the criteria live in the carrier
+ * rather than in the address (UX-0002 §4), so there is no URL for a link to
+ * point at. Nothing else about the person's question changes — the query, the
+ * Category, the Filters and the budget are all untouched, because turning a
+ * page is not a statement about any of them.
+ *
+ * An unreadable or out-of-range number leaves the carrier alone rather than
+ * guessing a page: the person is still where they were, and the pager they
+ * pressed is still on the screen.
+ */
+export async function goToPage(form: FormData): Promise<void> {
+  const entry = await currentEntry();
+  if (!entry) return;
+
+  const raw = form.get("page");
+  const page = typeof raw === "string" ? Number(raw) : Number.NaN;
+  if (!Number.isInteger(page) || page < 1 || page > 400) return;
+
+  await handOffAt({ ...entry, pathId: entry.pathId ?? randomUUID() }, page);
+}
+
+/**
+ * Setting or clearing "only what is in stock" (I64).
+ *
+ * One action rather than an apply and a clear, because a checkbox has two
+ * states and both arrive in the same submission — an unticked box sends
+ * nothing, which is exactly the request to stop constraining. The budget needs
+ * two actions because clearing it means emptying two fields somebody typed;
+ * this one does not.
+ *
+ * Like every criterion change, it returns the person to the first page:
+ * `handOff` drops the page for all of them.
+ */
+export async function applyStock(form: FormData): Promise<void> {
+  const entry = await currentEntry();
+  if (!entry) return;
+
+  const { inStockOnly: _dropped, ...kept } = entry;
+  await handOff({
+    ...kept,
+    ...(form.get("inStockOnly") === "true" ? { inStockOnly: true } : {}),
+    pathId: entry.pathId ?? randomUUID()
+  });
+}
+
+/**
+ * Pressing one of the four tabs (I68).
+ *
+ * An arrangement is a criterion, so it goes through the same hand-off as the
+ * budget and the stock switch — which also means it drops the page, and that is
+ * right: page four of the newest listings is not page four of the cheapest
+ * ones, and keeping the number would put somebody in a position they never
+ * asked for.
+ *
+ * `DEFAULT` is written as an absence rather than as a value, so the carrier
+ * holds a criterion only while one is in force. An unrecognised value is
+ * ignored entirely: the tabs are a closed set, and a form field is editable.
+ */
+export async function applyArrangement(form: FormData): Promise<void> {
+  const entry = await currentEntry();
+  if (!entry) return;
+
+  const chosen = form.get("arrangement");
+  if (
+    typeof chosen !== "string" ||
+    !(RESULT_ARRANGEMENTS as readonly string[]).includes(chosen)
+  )
+    return;
+
+  const { arrangement: _dropped, ...kept } = entry;
+  await handOff({
+    ...kept,
+    ...(chosen === "DEFAULT"
+      ? {}
+      : { arrangement: chosen as (typeof RESULT_ARRANGEMENTS)[number] }),
+    pathId: entry.pathId ?? randomUUID()
+  });
 }

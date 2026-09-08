@@ -6,7 +6,8 @@ import type {
   PriceOffer,
   Product,
   Review,
-  Spec
+  Spec,
+  Subcategory
 } from "./types";
 
 /**
@@ -45,7 +46,176 @@ import type {
  * The commission bands are the analysis's own figures and are a market
  * observation rather than a quotation.
  */
-export const CATEGORIES: Category[] = [
+/**
+ * The headings under each Category.
+ *
+ * **A Category is a section of the market; a heading is a thing somebody
+ * buys.** "Sigorta Hizmetleri" is not a purchase — "Kasko Sigortası" is, and
+ * on the affiliate side it is also the level at which a quote form, a
+ * commission band and a landing page exist. Everything the platform is paid
+ * for happens at this level, so it is the level the Decision Chat asks about.
+ *
+ * Three headings here are **not** in the Owner's list and are marked `EK:`.
+ * They were added because the prototype catalogue already contains Offerings
+ * the list has no heading for, and the alternative — filing a workplace policy
+ * under "Ev (Konut) Sigortası" because it is the nearest word — makes the
+ * Offering wrong twice: absent where it belongs and misleading where it
+ * landed. They are separated so they are easy to remove if the Owner would
+ * rather drop the sample Offerings instead.
+ */
+const SUBCATEGORIES: Record<string, Subcategory[]> = {
+  software: [
+    { id: "web-barindirma", name: "Web Barındırma (Hosting)" },
+    { id: "sunucu-cozumleri", name: "Sunucu (Server) Çözümleri" },
+    { id: "alan-adi", name: "Alan Adı (Domain) Hizmetleri" },
+    { id: "ai-icerik", name: "Yapay Zeka İçerik Üretim Araçları" },
+    { id: "ai-gorsel-video", name: "Yapay Zeka Görsel/Video Araçları" },
+    { id: "is-otomasyonu", name: "İş Otomasyonu Yazılımları" },
+    { id: "b2b-saas", name: "B2B SaaS Platformları" },
+    { id: "vpn", name: "VPN Hizmetleri" },
+    { id: "siber-guvenlik", name: "Siber Güvenlik Yazılımları" },
+    { id: "antivirus", name: "Antivirüs Yazılımları" },
+    { id: "eticaret-altyapi", name: "E-Ticaret Altyapıları" },
+    { id: "sanal-pos", name: "Sanal POS ve Ödeme Sistemleri" }
+  ],
+  finance: [
+    { id: "kredi-kartlari", name: "Kredi Kartları" },
+    { id: "avantaj-puan", name: "Avantaj ve Puan Programları" },
+    { id: "kripto-borsalari", name: "Kripto Para Borsaları" },
+    { id: "dijital-cuzdan", name: "Dijital Cüzdanlar (E-Cüzdan)" },
+    { id: "hisse-senedi", name: "Hisse Senedi Uygulamaları" },
+    { id: "forex", name: "Forex Platformları" },
+    { id: "mikro-yatirim", name: "Mikro Yatırım Uygulamaları" },
+    { id: "bes", name: "Bireysel Emeklilik (BES)" },
+    { id: "fon-yonetimi", name: "Fon Yönetimi Hizmetleri" },
+    { id: "butce-planlama", name: "Bütçe Planlama Araçları" },
+    { id: "kisisel-finans", name: "Kişisel Finans Uygulamaları" }
+  ],
+  insurance: [
+    { id: "kasko", name: "Kasko Sigortası" },
+    { id: "trafik-sigortasi", name: "Zorunlu Trafik Sigortası" },
+    { id: "tamamlayici-saglik", name: "Tamamlayıcı Sağlık Sigortası" },
+    { id: "hayat-sigortasi", name: "Hayat Sigortası" },
+    { id: "konut-sigortasi", name: "Ev (Konut) Sigortası" },
+    { id: "dask", name: "DASK (Zorunlu Deprem Sigortası)" },
+    { id: "seyahat-sigortasi", name: "Seyahat Sigortası" },
+    { id: "vize-sigortasi", name: "Vize Sigortası" },
+    { id: "pet-saglik", name: "Evcil Hayvan (Pet) Sağlık Sigortası" },
+    { id: "isyeri-sigortasi", name: "İşyeri ve KOBİ Paket Sigortası" }
+  ],
+  realestate: [
+    { id: "satilik-konut", name: "Satılık Konut" },
+    { id: "satilik-proje", name: "Satılık Proje (Yeni Konut)" },
+    { id: "satilik-isyeri", name: "Satılık İş Yeri" },
+    { id: "satilik-ticari", name: "Satılık Ticari Gayrimenkul" },
+    { id: "satilik-arsa", name: "Satılık Arsa" },
+    { id: "satilik-arazi", name: "Satılık Arazi" },
+    { id: "turistik-tesis", name: "Turistik Tesis" },
+    { id: "gunluk-kiralik-ev", name: "Günlük Kiralık Ev" },
+    { id: "emlak-danismanligi", name: "Emlak Danışmanlığı Hizmetleri" },
+    { id: "online-ekspertiz", name: "Çevrimiçi Ekspertiz Hizmetleri" }
+  ],
+  electronics: [
+    { id: "cep-telefonlari", name: "Cep Telefonları" },
+    { id: "mobil-aksesuar", name: "Mobil Aksesuarlar (Kılıf, Şarj Cihazı)" },
+    { id: "laptop", name: "Dizüstü Bilgisayarlar (Laptop)" },
+    { id: "masaustu", name: "Masaüstü Bilgisayarlar" },
+    { id: "donanim-parcalari", name: "Bilgisayar Donanım Parçaları" },
+    { id: "televizyon", name: "Televizyonlar" },
+    { id: "ev-sinema", name: "Ev Sinema Sistemleri" },
+    { id: "akilli-saat", name: "Akıllı Saatler" },
+    { id: "giyilebilir", name: "Giyilebilir Teknoloji Ürünleri" },
+    { id: "fotograf-makinesi", name: "Fotoğraf Makineleri" },
+    { id: "video-kamera", name: "Video Kameralar" },
+    { id: "dron", name: "Dronlar" },
+    { id: "kulaklik", name: "Kulaklıklar ve Kişisel Ses" }
+  ],
+  education: [
+    { id: "yazilim-kodlama", name: "Yazılım ve Kodlama Kursları" },
+    { id: "tasarim-egitimleri", name: "Tasarım Eğitimleri" },
+    { id: "teknoloji-kurslari", name: "Teknoloji Kursları" },
+    { id: "dijital-pazarlama", name: "Dijital Pazarlama Eğitimleri" },
+    { id: "eticaret-egitimleri", name: "E-Ticaret Eğitimleri" },
+    { id: "dil-ogrenme", name: "Yabancı Dil Öğrenme Uygulamaları" },
+    { id: "sertifika-programlari", name: "Çevrimiçi Sertifika Programları" },
+    { id: "kariyer-gelisimi", name: "Kariyer Gelişimi Eğitimleri" },
+    { id: "cocuk-egitimleri", name: "Çocuklar İçin Çevrimiçi Eğitimler" }
+  ],
+  beauty: [
+    { id: "vitaminler", name: "Vitaminler" },
+    { id: "besin-takviyeleri", name: "Besin Takviyeleri" },
+    { id: "sporcu-beslenmesi", name: "Sporcu Beslenmesi (Protein Tozu vb.)" },
+    { id: "cilt-bakimi", name: "Cilt Bakım Ürünleri" },
+    { id: "yuz-bakimi", name: "Yüz Bakım Ürünleri" },
+    { id: "anti-aging", name: "Anti-Aging (Yaşlanma Karşıtı) Ürünler" },
+    { id: "parfum", name: "Parfümler" },
+    { id: "deodorant", name: "Deodorantlar" },
+    { id: "sac-bakimi", name: "Saç Bakım Ürünleri" },
+    { id: "sac-sekillendirici", name: "Saç Şekillendiriciler" },
+    { id: "diyet-programlari", name: "Diyet Programları" },
+    { id: "fitness-uygulamalari", name: "Fitness Uygulamaları" },
+    { id: "kilo-kontrolu", name: "Kilo Kontrolü Programları" }
+  ],
+  gaming: [
+    { id: "dijital-oyun", name: "Dijital Oyun Satışları" },
+    { id: "oyun-abonelikleri", name: "Oyun Abonelikleri (Game Pass, PS Plus)" },
+    { id: "oyun-ici-satin-alim", name: "Oyun İçi Satın Alımlar" },
+    { id: "oyuncu-kulakliklari", name: "Oyuncu Kulaklıkları" },
+    { id: "oyuncu-klavyeleri", name: "Oyuncu Klavyeleri" },
+    { id: "oyuncu-mouselari", name: "Oyuncu Mouse'ları" },
+    { id: "oyun-konsollari", name: "Oyun Konsolları" },
+    { id: "konsol-aksesuarlari", name: "Konsol Aksesuarları" },
+    { id: "espor-platformlari", name: "E-Spor Platformları" },
+    { id: "igaming", name: "iGaming (Bahis/Casino) Platformları" },
+    { id: "yayinci-ekipmanlari", name: "Yayıncı (Streamer) Ekipmanları" }
+  ],
+  home: [
+    { id: "robot-supurge", name: "Robot Süpürgeler" },
+    { id: "kucuk-ev-aletleri", name: "Küçük Ev Aletleri" },
+    { id: "akilli-ev", name: "Akıllı Ev Sistemleri" },
+    { id: "guvenlik-kameralari", name: "Güvenlik Kameraları" },
+    { id: "beyaz-esya", name: "Beyaz Eşyalar" },
+    { id: "ankastre", name: "Ankastre Setler" },
+    { id: "oturma-odasi", name: "Oturma Odası Mobilyaları" },
+    { id: "yatak-odasi", name: "Yatak Odası Mobilyaları" },
+    { id: "dekorasyon", name: "Ev Dekorasyon Ürünleri" },
+    { id: "ergonomi", name: "Ergonomi Ürünleri (Çalışma Koltuğu vb.)" },
+    { id: "evcil-mama", name: "Evcil Hayvan Mamaları" },
+    { id: "evcil-aksesuar", name: "Evcil Hayvan Aksesuarları" },
+    { id: "el-aletleri", name: "Elektrikli El Aletleri ve Bahçe" }
+  ],
+  automotive: [
+    { id: "arac-kiralama", name: "Araç Kiralama (Günlük Rent a Car)" },
+    { id: "filo-kiralama", name: "Filo Kiralama (Uzun Dönem)" },
+    { id: "oto-lastik", name: "Oto Lastikleri" },
+    { id: "jant", name: "Otomobil Jantları" },
+    { id: "dis-donanim", name: "Araç Dış Donanım Ürünleri" },
+    { id: "arac-multimedya", name: "Araç İçi Multimedya Sistemleri" },
+    { id: "oto-ici-aksesuar", name: "Oto İçi Aksesuarlar" },
+    { id: "oto-bakim", name: "Oto Bakım Ürünleri" },
+    { id: "oto-temizlik", name: "Oto Temizlik Ürünleri" },
+    { id: "motor-yaglari", name: "Motor Yağları" },
+    { id: "yedek-parca", name: "Oto Yedek Parça" },
+    { id: "oto-ekspertiz", name: "Çevrimiçi Oto Ekspertiz Randevuları" }
+  ],
+  travel: [
+    { id: "ucak-bileti", name: "Uçak Bileti" },
+    { id: "otobus-bileti", name: "Otobüs Bileti" },
+    { id: "tren-bileti", name: "Tren Bileti" },
+    { id: "otel-rezervasyonu", name: "Otel Rezervasyonu" },
+    { id: "tatil-koyu", name: "Tatil Köyü Rezervasyonu" },
+    { id: "gunluk-kiralik-konaklama", name: "Günlük Kiralık Konaklama (Airbnb vb.)" },
+    { id: "yurtici-turlar", name: "Yurtiçi Turlar" },
+    { id: "yurtdisi-turlar", name: "Yurtdışı Turlar" },
+    { id: "havaalani-transfer", name: "Havaalanı Transfer Hizmetleri" },
+    { id: "vip-ulasim", name: "VIP Ulaşım Hizmetleri" },
+    { id: "kamp-ekipmanlari", name: "Kamp Ekipmanları" },
+    { id: "karavan-ekipmanlari", name: "Karavan Ekipmanları" },
+    { id: "doga-sporlari", name: "Doğa Sporları Ekipmanları" }
+  ]
+};
+
+const CATEGORY_BASE: Omit<Category, "children">[] = [
   {
     commission: "—",
     id: "all",
@@ -119,6 +289,19 @@ export const CATEGORIES: Category[] = [
     name: "Seyahat ve Turizm"
   }
 ];
+
+/**
+ * The Categories, each carrying its headings.
+ *
+ * Attached by a map rather than written into the literal so that the two lists
+ * cannot drift apart by hand: a Category with no entry in `SUBCATEGORIES` gets
+ * an empty array and shows up as a Category with no headings, which is visible
+ * on screen — rather than a typo'd key that silently keeps the old list.
+ */
+export const CATEGORIES: Category[] = CATEGORY_BASE.map((category) => ({
+  ...category,
+  children: SUBCATEGORIES[category.id] ?? []
+}));
 
 /* ------------------------------------------------------------- merchants */
 
@@ -599,6 +782,8 @@ interface Seed {
   name: string;
   brand: string;
   categoryId: string;
+  /** The heading inside the Category. `null` where the taxonomy has none. */
+  subcategoryId: string | null;
   gallery: [string, string][];
   base: number;
   listPrice: number | null;
@@ -649,6 +834,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[0]!,
     heat: 91,
     id: "p1",
+    subcategoryId: "cep-telefonlari",
     releaseYear: 2026,
     listPrice: 49990,
     listedAt: "2026-08-27",
@@ -701,6 +887,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[1]!,
     heat: 74,
     id: "p2",
+    subcategoryId: "cep-telefonlari",
     releaseYear: 2025,
     listPrice: 45900,
     listedAt: "2026-08-25",
@@ -753,6 +940,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[3]!,
     heat: 88,
     id: "p4",
+    subcategoryId: "cep-telefonlari",
     releaseYear: 2026,
     listPrice: 31900,
     listedAt: "2026-08-28",
@@ -805,6 +993,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[4]!,
     heat: 55,
     id: "p5",
+    subcategoryId: "laptop",
     releaseYear: 2025,
     listPrice: null,
     listedAt: "2026-08-22",
@@ -834,6 +1023,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[5]!,
     heat: 79,
     id: "p6",
+    subcategoryId: "laptop",
     releaseYear: 2025,
     listPrice: 64900,
     listedAt: "2026-08-26",
@@ -863,6 +1053,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[0]!,
     heat: 84,
     id: "p7",
+    subcategoryId: "kulaklik",
     releaseYear: 2023,
     listPrice: 8490,
     listedAt: "2026-08-29",
@@ -899,6 +1090,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[1]!,
     heat: 47,
     id: "p8",
+    subcategoryId: "kulaklik",
     releaseYear: 2024,
     listPrice: null,
     listedAt: "2026-08-20",
@@ -931,6 +1123,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[2]!,
     heat: 69,
     id: "p9",
+    subcategoryId: "yuz-bakimi",
     releaseYear: 2023,
     listPrice: 2790,
     listedAt: "2026-08-28",
@@ -963,6 +1156,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[3]!,
     heat: 52,
     id: "p10",
+    subcategoryId: "anti-aging",
     releaseYear: 2024,
     listPrice: null,
     listedAt: "2026-08-23",
@@ -992,6 +1186,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[5]!,
     heat: 66,
     id: "p11",
+    subcategoryId: "el-aletleri",
     releaseYear: 2025,
     listPrice: 2839,
     listedAt: "2026-08-24",
@@ -1042,6 +1237,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[3]!,
     heat: 96,
     id: "p12",
+    subcategoryId: "dijital-oyun",
     releaseYear: 2026,
     listPrice: 249,
     listedAt: "2026-08-30",
@@ -1078,6 +1274,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[0]!,
     heat: 71,
     id: "p13",
+    subcategoryId: "web-barindirma",
     releaseYear: 2024,
     listPrice: 720,
     listedAt: "2026-08-28",
@@ -1114,6 +1311,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[4]!,
     heat: 58,
     id: "p14",
+    subcategoryId: "b2b-saas",
     releaseYear: 2023,
     listPrice: null,
     listedAt: "2026-08-22",
@@ -1149,6 +1347,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[2]!,
     heat: 63,
     id: "p15",
+    subcategoryId: "dijital-cuzdan",
     releaseYear: 2025,
     listPrice: 1149,
     listedAt: "2026-08-20",
@@ -1185,6 +1384,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[4]!,
     heat: 44,
     id: "p16",
+    subcategoryId: "b2b-saas",
     releaseYear: 2023,
     listPrice: 1990,
     listedAt: "2026-08-18",
@@ -1218,6 +1418,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[4]!,
     heat: 52,
     id: "p17",
+    subcategoryId: "cilt-bakimi",
     releaseYear: 2026,
     listPrice: 3200,
     listedAt: "2026-08-19",
@@ -1251,6 +1452,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[5]!,
     heat: 68,
     id: "p18",
+    subcategoryId: "el-aletleri",
     releaseYear: 2024,
     listPrice: 6250,
     listedAt: "2026-08-21",
@@ -1285,6 +1487,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[0]!,
     heat: 77,
     id: "p19",
+    subcategoryId: "kulaklik",
     releaseYear: 2026,
     listPrice: 11250,
     listedAt: "2026-08-26",
@@ -1321,6 +1524,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[3]!,
     heat: 69,
     id: "p20",
+    subcategoryId: "donanim-parcalari",
     releaseYear: 2025,
     listPrice: 22900,
     listedAt: "2026-08-23",
@@ -1372,6 +1576,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[3]!,
     heat: 61,
     id: "p21",
+    subcategoryId: "kasko",
     releaseYear: 2026,
     listPrice: 11400,
     listedAt: "2026-08-29",
@@ -1408,6 +1613,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[1]!,
     heat: 44,
     id: "p22",
+    subcategoryId: "isyeri-sigortasi",
     releaseYear: 2026,
     listPrice: null,
     listedAt: "2026-08-27",
@@ -1443,6 +1649,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[2]!,
     heat: 58,
     id: "p23",
+    subcategoryId: "satilik-konut",
     releaseYear: 2024,
     listPrice: 5200000,
     listedAt: "2026-08-26",
@@ -1477,6 +1684,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[5]!,
     heat: 39,
     id: "p24",
+    subcategoryId: "satilik-ticari",
     releaseYear: 2023,
     listPrice: null,
     listedAt: "2026-08-24",
@@ -1513,6 +1721,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[0]!,
     heat: 73,
     id: "p25",
+    subcategoryId: "yazilim-kodlama",
     releaseYear: 2026,
     listPrice: 2490,
     listedAt: "2026-08-30",
@@ -1547,6 +1756,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[4]!,
     heat: 55,
     id: "p26",
+    subcategoryId: "dil-ogrenme",
     releaseYear: 2025,
     listPrice: null,
     listedAt: "2026-08-25",
@@ -1579,6 +1789,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[1]!,
     heat: 67,
     id: "p27",
+    subcategoryId: "arac-kiralama",
     releaseYear: 2025,
     listPrice: 3100,
     listedAt: "2026-08-28",
@@ -1614,6 +1825,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[5]!,
     heat: 49,
     id: "p28",
+    subcategoryId: "oto-bakim",
     releaseYear: 2026,
     listPrice: null,
     listedAt: "2026-08-23",
@@ -1646,6 +1858,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[3]!,
     heat: 84,
     id: "p29",
+    subcategoryId: "yurtici-turlar",
     releaseYear: 2026,
     listPrice: 23500,
     listedAt: "2026-08-31",
@@ -1681,6 +1894,7 @@ const SEEDS: Seed[] = [
     gallery: TONES[2]!,
     heat: 62,
     id: "p30",
+    subcategoryId: "otel-rezervasyonu",
     releaseYear: 2025,
     listPrice: 4200,
     listedAt: "2026-08-22",
@@ -1728,6 +1942,7 @@ export const PRODUCTS: Product[] = SEEDS.map((seed, index) => {
   return {
     brand: seed.brand,
     categoryId: seed.categoryId,
+    subcategoryId: seed.subcategoryId,
     description: seed.description,
     editorial: editorialFor(seed),
     gallery: seed.gallery,
@@ -1785,6 +2000,22 @@ export const sameCategory = (product: Product): Product[] =>
 
 export const categoryById = (id: string): Category | undefined =>
   CATEGORIES.find((category) => category.id === id);
+
+/** The headings under one Category, or none when the id is not a Category. */
+export const subcategoriesOf = (categoryId: string): Subcategory[] =>
+  categoryById(categoryId)?.children ?? [];
+
+/** One heading by id, looked up across every Category — ids are unique. */
+export const subcategoryById = (id: string): Subcategory | undefined =>
+  CATEGORIES.flatMap((category) => category.children).find(
+    (child) => child.id === id
+  );
+
+/** The Category a heading belongs to, which is exactly one by construction. */
+export const categoryOfSubcategory = (id: string): Category | undefined =>
+  CATEGORIES.find((category) =>
+    category.children.some((child) => child.id === id)
+  );
 
 export const productBySlug = (slug: string): Product | undefined =>
   PRODUCTS.find((product) => product.slug === slug);

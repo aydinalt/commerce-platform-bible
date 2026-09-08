@@ -17,10 +17,20 @@ const suite = enabled ? describe : describe.skip;
 const ORIGIN = "http://localhost:3000";
 const PASSWORD = "correct horse battery staple";
 
-/** Exactly the indicator groups `US-PLT-F10-001` names, and nothing else. */
+/**
+ * Exactly the indicator groups the Story names, and nothing else.
+ *
+ * **Ten since `PRD-0006-platform.md` v2.5 §11.2**, which the Owner approved and
+ * Froze on 2026-09-03 after asking for it by name. `affiliateHandoffRate` is a
+ * ratio of two occurrences already in this list — `coreFlow`'s Presentation
+ * Opens and Affiliate Handoff Completions — so it measures nothing new, and
+ * §11.6.1 says so. It is still named here rather than absorbed, because the
+ * point of this list is that a tenth key had to be argued for.
+ */
 const ANALYTICS_GROUPS = [
   "actionable",
   "affiliateDestinations",
+  "affiliateHandoffRate",
   "businesses",
   "coreFlow",
   "destinationWorkload",
@@ -132,13 +142,34 @@ suite("Increment I9 Platform delivery evidence", () => {
     });
     const snapshot = answered.json<Record<string, unknown>>();
 
-    // `US-PLT-F10-001` AC-18. Nine groups, counted from their own authorities.
+    // `US-PLT-F10-001` AC-18. Ten groups, counted from their own authorities.
     // Asserted as an equality rather than a set of `toContain` checks, because
     // the criterion is about what must never be added: a forecast, a trend, a
     // score or a recommendation would each arrive as a tenth key, and this is
     // the line it would break.
     expect(Object.keys(snapshot).sort()).toEqual(ANALYTICS_GROUPS);
-    expect(JSON.stringify(snapshot)).not.toMatch(
+    /*
+     * **Applied to the payload's vocabulary rather than to the whole payload.**
+     *
+     * It used to run against `JSON.stringify(snapshot)`, which was right while
+     * every value was a number. §11.6's per-Offering breakdown puts **titles**
+     * in — words a partner wrote — and a product legitimately called "Trend
+     * Mikrofon" would then fail a case about what the *platform* may report.
+     *
+     * The criterion is about the platform's own vocabulary: a forecast, a
+     * trend, a score or a recommendation would arrive as a key. So the keys are
+     * what is read, at every depth, and the guard keeps every word it had.
+     */
+    const keysOf = (value: unknown): string[] =>
+      value === null || typeof value !== "object"
+        ? []
+        : Array.isArray(value)
+          ? value.flatMap(keysOf)
+          : Object.entries(value).flatMap(([key, child]) => [
+              key,
+              ...keysOf(child)
+            ]);
+    expect(keysOf(snapshot).join(" ")).not.toMatch(
       /forecast|predict|trend|recommend|score|ranking|billing|invoice|advert/iu
     );
   });

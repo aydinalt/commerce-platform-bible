@@ -78,13 +78,30 @@ describe("Increment I48 the management surfaces", () => {
      * on the page, this list grew by one, and the question the case exists to
      * force was asked and answered rather than skipped.
      */
+    /*
+     * **Comments are stripped before the check, and I79 is why.** This read the
+     * raw file, so a page whose doc comment explained that it deliberately
+     * carries *no* class was reported as carrying one — the check could not
+     * tell markup from prose about markup. The effect was worse than a false
+     * positive: the cheapest way to make it pass is to delete the sentence
+     * explaining the decision, so the guard was quietly pushing authors to
+     * remove exactly the documentation it exists to force them to write.
+     *
+     * `i51-page-titles` already strips comments before reading a title, for the
+     * same reason.
+     */
+    const markup = (source: string): string =>
+      source
+        .replaceAll(/\/\*[\s\S]*?\*\//gu, " ")
+        .replaceAll(/^\s*\/\/.*$/gmu, " ");
+
     const classed: string[] = [];
     const walk = (directory: string): void => {
       for (const entry of readdirSync(directory, { withFileTypes: true })) {
         const path = `${directory}/${entry.name}`;
         if (entry.isDirectory()) walk(path);
         else if (entry.name === "page.tsx")
-          if (readFileSync(path, "utf8").includes("className"))
+          if (markup(readFileSync(path, "utf8")).includes("className"))
             classed.push(
               path.replace("apps/web/src/app", "").replace("/page.tsx", "")
             );
@@ -94,7 +111,12 @@ describe("Increment I48 the management surfaces", () => {
     expect(classed.sort()).toEqual([
       "",
       "/businesses/[businessId]",
-      "/compare"
+      "/compare",
+      // I64. Favorilerim is a public reading surface — the same Listing Cards
+      // Discovery draws, on a page a person arrives at from the header — so it
+      // carries the public layout classes for the same reason `/compare` does.
+      // A management page gaining one still fails here.
+      "/favourites"
     ]);
   });
 

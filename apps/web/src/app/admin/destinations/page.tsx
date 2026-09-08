@@ -25,7 +25,10 @@ import {
   STATUS_COPY,
   VALIDATION_COPY
 } from "../../../business/destination";
-import { DESTINATIONS, PANEL } from "../../../platform/copy";
+import { CASES, DESTINATIONS, PANEL } from "../../../platform/copy";
+import { TERMS } from "../../../vocabulary";
+import { OpenCase } from "../open-case";
+import { openCaseFor } from "../open-case-action";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import { administerDestination } from "./actions";
 import { DestinationAction } from "./destination-actions";
@@ -67,11 +70,28 @@ function WorkloadItem({ item }: { item: DestinationWorkloadItem }) {
           : ` ${destination.validationReason}`}
       </p>
       <p>{ELIGIBILITY_COPY[destination.handoffEligibility]}</p>
+      {/*
+        I82. The Business, and the action against it.
+
+        This used to be the business id rendered as a link to the *whole* case
+        queue — an address that answered a different question from the one the
+        link appeared to ask, and the one place §8.5's "so an Admin can reach
+        it" was not honoured. The id now names the Business plainly, and the
+        control beside it does the thing somebody looking at a broken
+        destination actually wants: open a case against the Business that owns
+        it, without leaving the queue or copying a UUID.
+      */}
       <p>
-        <Link href={`/admin/moderation-cases?status=OPEN`}>
-          {DESTINATIONS.business} {item.businessId}
-        </Link>
+        {DESTINATIONS.business} <code>{item.businessId}</code>
       </p>
+      <OpenCase
+        label={CASES.openFor(TERMS.business)}
+        open={openCaseFor.bind(null, {
+          businessId: item.businessId,
+          targetType: "BUSINESS"
+        })}
+        targetName={item.businessId}
+      />
 
       <DestinationAction action={action} verb="REVIEW" />
       {/* Validate produces one of two results and never the absence of one:

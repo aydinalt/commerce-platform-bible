@@ -21,9 +21,30 @@ describe("Increment I4 Discovery Results and Listing Cards", () => {
     businessName: `İşletme ${n}`,
     categoryName: `Kategori ${n}`,
     offeringId: `0000000${n}-0000-4000-8000-000000000000`,
+    /*
+     * I56. A Fixed price, because that is the ordinary case and these cases are
+     * about the rest of the card. The other two Pricing Kinds have their own
+     * assertions in `i56-public-price.test.ts`.
+     */
+    pricing: {
+      amount: "1250.00",
+      amountSetAt: "2026-08-01T10:00:00.000Z",
+      currency: "TRY",
+      deliveryCost: null,
+      kind: "FIXED" as const,
+      priorAmount: null,
+      stockState: "UNKNOWN" as const
+    },
     // I30 gave the card somewhere to carry a visual. `null` here keeps these
     // cases about the rest of the minimum; the visual has its own file.
     primaryVisualUrl: null,
+    // I58. No Product Key, so the card stands for one Offering — itself.
+    productKey: null,
+    handoffAvailable: false,
+    // I62. Every card carries a product score; unrated is `null` with a
+    // count of zero, which is what a fixture with no reviews must say.
+    rating: { average: null, count: 0 },
+    sellerCount: 1,
     publishedAt: "2026-08-01T10:00:00.000Z",
     slug: `ilan-${n}`,
     title: `İlan ${n}`
@@ -36,6 +57,8 @@ describe("Increment I4 Discovery Results and Listing Cards", () => {
     filters: [],
     filtersAvailable: false,
     narrowing: [],
+    // I63. A view knows where in the list it is; a fixture of one page says so.
+    paging: { page: 1, pageSize: 25, total: results.length },
     query: "kırmızı araba",
     results: results.map((result) => ({ ...result, matchLevel: "TITLE" })),
     zeroResults: null
@@ -56,6 +79,12 @@ describe("Increment I4 Discovery Results and Listing Cards", () => {
     discoveryPathId: "11111111-1111-4111-8111-111111111111",
     domain: "MOBILITY",
     filters: [],
+    // I63. `null` exactly where the Results are: a branch withheld the list, so
+    // there is no position in one.
+    paging:
+      results === null
+        ? null
+        : { page: 1, pageSize: 25, total: results.length },
     results,
     siblings: [],
     zeroResults: null
@@ -128,11 +157,26 @@ describe("Increment I4 Discovery Results and Listing Cards", () => {
   it("opens the Offering by going somewhere rather than acting here", () => {
     const markup = searched([card(1)]);
 
-    // AC-7. The affordance is a link out of Discovery. A form or a button
-    // would be the card performing something, and Presentation, Compare,
-    // Decision Chat, Handoff and Direct Contact are all owned elsewhere.
+    // AC-7. The *open* affordance is a link out of Discovery. A form or a
+    // button in its place would be the card performing something, and complete
+    // Presentation, Compare, Decision Chat and Direct Contact are all owned
+    // elsewhere. v1.1 admits one control beside it — the Affiliate Handoff —
+    // and this card carries no eligible destination, so none is rendered here.
     expect(markup).toContain('<a href="/offerings/ilan-1">');
-    expect(markup).not.toMatch(/<form[^>]*>[^]*listing-card/u);
+    /*
+     * The card, not the page. The original assertion said "no form appears
+     * before a Listing Card anywhere in this markup", which held only while
+     * Discovery had no controls of its own — I61's budget is a form above the
+     * Results and would fail it while breaking nothing.
+     *
+     * What the criterion actually forbids is the *card* acting, so the check is
+     * now made of the card's own markup: its list item contains a link out and,
+     * for a card with no eligible destination, no form at all.
+     */
+    const rendered =
+      /<li class="listing-card">[^]*?<\/li>/u.exec(markup)?.[0] ?? "";
+    expect(rendered).toContain('<a href="/offerings/ilan-1">');
+    expect(rendered).not.toContain("<form");
   });
 
   it("shows the same markup whatever the role, because it holds no role", () => {

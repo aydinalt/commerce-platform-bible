@@ -64,8 +64,20 @@ check("yıl etiketi anlamlı", has("2026 ve sonrası") === false || true);
 check("Karar Sohbeti girişi var", has("Hangisini almalıyım?"));
 click(find("button", "Hangisini almalıyım?"));
 await wait(150);
+/*
+ * The Category is a precondition, so the unfiltered page says so rather than
+ * offering a second place to choose one. Once it is chosen above, the panel
+ * reads that Category's headings — there is no category control inside here at
+ * all, which is what keeps the panel and the bar from disagreeing.
+ */
 check("kategori seçilmeden bağlam eksikliğini söylüyor",
   has("Karar sohbeti tek bir kategori içinde çalışır"));
+check("kategori seçince başlıkların geleceğini söylüyor",
+  has("o kategorinin başlıkları buraya kendiliğinden gelir"));
+check("panelin içinde ikinci bir kategori seçici yok",
+  panel()?.querySelector('[aria-label="Başlık grupları"]') === null ||
+  panel()?.querySelector('[aria-label="Başlık grupları"]') === undefined);
+check("bütçe ikinci kez sorulmuyor", !has("Bütçeniz hangi aralıkta"));
 
 // choose a category with several products
 const dropdown = find("button", "Tüm kategoriler");
@@ -83,14 +95,32 @@ check("kategori seçildi", has("Teknoloji ve Tüketici Elektroniği"));
 
 const box = panel();
 check("sohbet üç soruyu soruyor",
-  has("1. Bütçeniz hangi aralıkta?", box) &&
+  has("1. Hangi başlıkta ürünü görmek istersin?", box) &&
   has("2. Sizin için hangisi daha önemli?", box) &&
   has("3. Ne zaman lazım?", box));
+check("birinci soru bütçe sormuyor", !has("Bütçeniz hangi aralıkta", box));
+check("bütçe yukarıdan geldiği söyleniyor",
+  has("Bütçeyi yukarıdaki çubuktan değiştirdiğinizde", box));
 check("oturum sınırı yazılı", has("yalnızca bu oturum içindir", box));
 check("henüz öneri yok", has("Üç soruyu da yanıtlayın", box));
 
-const bandButtons = [...(box?.querySelectorAll("button[aria-pressed]") ?? [])];
-click(bandButtons[0]);
+/*
+ * The heading chips.
+ *
+ * A chip with nothing under it is rendered and disabled rather than hidden —
+ * so the first *clickable* one is what a person can actually choose, and the
+ * disabled ones are the assertion that the taxonomy is shown in full.
+ */
+const headingChips = [...(box?.querySelectorAll('[aria-label="Başlıklar"] button') ?? [])];
+const chosenHeadings = headingChips.filter((b) => !b.disabled);
+check("boş başlıklar gösteriliyor ama seçilemiyor",
+  headingChips.some((b) => b.disabled),
+  `${headingChips.filter((b) => b.disabled).length} soluk`);
+check("dolu başlık seçilebiliyor", chosenHeadings.length > 0,
+  String(chosenHeadings.length));
+check("başlıklarda sayaç var",
+  chosenHeadings.every((b) => /\d/u.test(b.textContent ?? "")));
+click(chosenHeadings[0]);
 click(find("button", "En düşük fiyat", box));
 click(find("button", "Hemen lazım", box));
 await wait(200);
@@ -110,6 +140,8 @@ check("hiçbir öneri satıcıya çıkmıyor",
   suggestions.every((li) =>
     /^#?\/urun\//u.test(li.querySelector("a")?.getAttribute("href") ?? "")));
 check("sitenin kendi sınırı yazılı", has("Sizin adınıza bir satın alma yapılmaz", box));
+check("öneri başlığı hangi başlıkta olduğunu söylüyor",
+  /›/u.test(visible(panel() ?? undefined)));
 
 click(find("button", "En güncel model", box));
 await wait(150);

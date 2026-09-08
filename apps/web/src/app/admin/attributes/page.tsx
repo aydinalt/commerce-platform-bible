@@ -11,7 +11,7 @@ import {
   fetchCategories
 } from "../../../platform/api";
 import { NO_ATTRIBUTES, VALUE_KIND_LABELS } from "../../../platform/catalog";
-import { ATTRIBUTES, PANEL } from "../../../platform/copy";
+import { ATTRIBUTES, PANEL, RETIRED } from "../../../platform/copy";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import {
   addAttributeOption,
@@ -104,7 +104,7 @@ export default async function AttributesPage() {
             <li key={attribute.id}>
               <h2>
                 {attribute.name}{" "}
-                {attribute.active ? null : <span>(retired)</span>}
+                {attribute.active ? null : <span>{RETIRED}</span>}
               </h2>
               <p>
                 {VALUE_KIND_LABELS[attribute.valueKind]} · {attribute.stableKey}
@@ -143,7 +143,7 @@ export default async function AttributesPage() {
                           label={option.label}
                         />
                       ) : (
-                        <span> (retired)</span>
+                        <span> {RETIRED}</span>
                       )}
                     </li>
                   ))}

@@ -135,6 +135,58 @@ describe("Increment I26 design foundation", () => {
         ).toBeGreaterThanOrEqual(4.5);
     });
 
+    it("keeps the brand red and the refusal red apart", () => {
+      /*
+       * **The case that exists because the brand became red (I80).**
+       *
+       * `--accent` is the logo's `#ca2721`. `--critical` was `#9b2c2c`, chosen
+       * when the accent was a blue and unremarkable beside it; against the
+       * brand red the two are the same hue and differ only slightly in lightness, so
+       * an error message would have read as a link and an invalid field border
+       * as an interactive one.
+       *
+       * **Luminance ratio is the right instrument here and contrast was the
+       * wrong one elsewhere**, and the difference is worth stating because I
+       * got it backwards once already: asking "can these two be told apart as
+       * light and dark" *is* a luminance question, whereas asking "are these
+       * two different colours" is a hue question that a contrast ratio answers
+       * with a confident, meaningless number near 1.
+       *
+       * 1.6 rather than a round 2: the pair currently measures 1.82, and a
+       * threshold set at exactly what passes today fails on the next
+       * legitimate nudge. This one fails when somebody moves either red
+       * materially toward the other.
+       */
+      const separation = contrast(token("--accent"), token("--critical"));
+      expect(separation, "--accent vs --critical").toBeGreaterThanOrEqual(1.6);
+    });
+
+    it("keeps the quiet accent surface out of the refusal's pink", () => {
+      /*
+       * The second half of the same problem, and the one that cannot be solved
+       * by lightness at all: two tints this pale sit within about 1.1:1 of each
+       * other whatever their hue, so a luminance test would pass a badge and an
+       * error block painted the same colour.
+       *
+       * **So this measures hue distance.** `--critical-surface` is a pink;
+       * `--accent-surface` is a warm neutral, and a neutral is what makes them
+       * distinguishable — a red-tinted accent surface would be the defect.
+       * Saturation is checked rather than hue angle, because the hue of a
+       * near-grey is numerically unstable and would make this case flap.
+       */
+      const saturation = (hex: string): number => {
+        const [r = 0, g = 0, b = 0] = [1, 3, 5].map(
+          (at) => Number.parseInt(hex.slice(at, at + 2), 16) / 255
+        );
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        return max === 0 ? 0 : (max - min) / max;
+      };
+      // The refusal's surface is a real tint; the accent's is all but grey.
+      expect(saturation(token("--critical-surface"))).toBeGreaterThan(0.06);
+      expect(saturation(token("--accent-surface"))).toBeLessThan(0.04);
+    });
+
     it("keeps the palette to one accent and two states", () => {
       /*
        * The direction's own constraint, made checkable. "Calm, content-first"

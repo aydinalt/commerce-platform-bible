@@ -28,6 +28,7 @@ import {
   type OwnedBusinesses
 } from "@commerce/contracts";
 
+import { PgAuditRepository } from "../persistence/pg-audit.repository.js";
 import { PgModerationRepository } from "../persistence/pg-moderation.repository.js";
 import { OriginValidator } from "../security/origin.guard.js";
 import { PrincipalResolver } from "../security/principal-resolver.js";
@@ -228,6 +229,9 @@ export class BusinessController {
 @Controller("admin/businesses")
 export class AdminBusinessController {
   constructor(
+    /// The central trail (I87). See `AdminOfferingController` for why a case
+    /// note is not one.
+    private readonly audit: PgAuditRepository,
     private readonly businesses: BusinessService,
     private readonly cases: PgModerationRepository,
     private readonly corrections: CorrectionService,
@@ -260,9 +264,17 @@ export class AdminBusinessController {
         fieldErrors: z.flattenError(parsed.error).fieldErrors,
         message: "Invalid correction request"
       });
-    return correctionNoticeSchema.parse(
-      await this.corrections.request(businessId, parsed.data, principal)
+    const requested = await this.corrections.request(
+      businessId,
+      parsed.data,
+      principal
     );
+    await this.audit.record({
+      action: "REQUEST_CORRECTION",
+      actorId: principal.userId,
+      targetId: businessId
+    });
+    return correctionNoticeSchema.parse(requested);
   }
 
   @Post(":businessId/restriction")
@@ -298,10 +310,21 @@ export class AdminBusinessController {
     // `US-PLT-F02-001` AC-7. The action's consequences are this Story's; that
     // it was applied is the case's, so it is written down where a later
     // closure can cite it. A Business with no Open case records nothing.
+    const action =
+      status === "RESTRICTED" ? "RESTRICT_BUSINESS" : "RESTORE_BUSINESS";
     await this.cases.recordApplied({
-      action:
-        status === "RESTRICTED" ? "RESTRICT_BUSINESS" : "RESTORE_BUSINESS",
+      action,
       recordedBy: principal.userId,
+      targetId: businessId
+    });
+    /*
+     * And in the trail (I87). Both names have been in the audit enum since I83
+     * with nothing writing them — the case note was doing duty as the record,
+     * which is the substitution the Owner rejected.
+     */
+    await this.audit.record({
+      action,
+      actorId: principal.userId,
       targetId: businessId
     });
     return moderated;

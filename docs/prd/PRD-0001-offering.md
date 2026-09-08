@@ -1,10 +1,186 @@
 # PRD-0001 — Offering
 
-- **PRD ID:** PRD-0001
-- **Title:** Offering
+> **Freeze Note (4.3):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-07. This exact version must not be edited in place; a further
+> change requires a controlled superseding revision under
+> `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v4.2 is preserved unchanged at
+> `PRD-0001-offering-v4.2-superseded.md`.
+>
+> **Approval Note (4.3):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-07 — _"PRD-0001 v4.3 taslağını resmi olarak
+> onaylıyorum."_ Approval and Freeze were taken in one decision. He recorded his
+> reason for §5.12.4's shape in the same message: allocating the key's capacity
+> to `PRD-0009`'s editorial review alone, rather than opening a broad
+> "product data" category, is what prevents later leakage into it.
+>
+> **Commission Note (4.3):** In the same decision the Owner took §4.1's recorded
+> defect — the crowd review surface built in `I71` with no behaviour owner — and
+> **deferred it deliberately rather than leaving it unanswered**: it is to be
+> closed under V1.1 as a separate discussion, immediately after the editorial
+> review chain completes, and it must not block that chain. §4.1 stands as
+> written; nothing about it is resolved by this Freeze.
+>
+> **Revision Note (4.3):** Superseding revision of Frozen v4.2, begun
+> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7. Raised by the Owner's
+> decision of 2026-09-07 in `PRD-0009` §6.1, and **required by it**: that
+> decision attaches an editorial review to the Product Key, and this document
+> currently says the Product Key is a matching hint and nothing more. Two Frozen
+> documents describing the same value differently is the defect this revision
+> exists to prevent, which is why it comes first and `PRD-0009` waits.
+>
+> **One change of substance: §5.12 says what the Product Key may carry.**
+> §4's restated exclusion is amended to match, because an exclusion list that
+> contradicts a section of the same document is worse than either statement
+> alone.
+>
+> **A second thing this revision does is name a defect it does not fix.** While
+> checking §4 against reality, the crowd review surface built in `I71` was found
+> to have no behaviour owner at all, and to be excluded by the same §4 line this
+> revision amends. It is recorded in §4.1 the way `traceability.md` v2.2 §5C.2
+> recorded its three: named, with the action it needs, and not quietly folded
+> into a section that does not cover it.
+>
+> No lifecycle state, eligibility composition, publication minimum, moderation
+> rule, Capability, Feature or ownership boundary changes. §6.1.1's Universal
+> Publication Minimum is **not** extended: an Offering needs no Product Key to
+> publish, and a Product Key needs no review to exist.
+
+> **Freeze Note (4.2):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-05. This exact version must not be edited in place; a further
+> change requires a controlled superseding revision under
+> `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v4.1 is preserved unchanged at
+> `PRD-0001-offering-v4.1-superseded.md`.
+>
+> **Approval Note (4.2):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-05 — _"PRD-0001 v4.2-candidate taslağını resmi
+> olarak onaylıyorum. Bu belgeyi dondurup (Freeze) platformun yetkili belgesi
+> kılabilir ve v4.1 sürümünü `-superseded` olarak arşive kaldırabilirsin."_
+> Approval and Freeze were taken in one decision, and this note records both.
+>
+> **Revision Note (4.2):** Superseding revision of Frozen v4.1, begun
+> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7 and raised by
+> implementation in `I89` rather than by a change of product intent: the code
+> that the Owner's decision of 2026-09-05 required could not be written under
+> v4.1, and was held until this document was approved.
+>
+> **One change: §5.11.1 says what an intake may touch, and it is no longer
+> answered by Source alone.**
+>
+> ## The decision, and why v4.1 cannot carry it
+>
+> The Owner, 2026-09-05: _"feed entegrasyonu bizim titizlikle içeri aktardığımız
+> (import) ve zenginleştirdiğimiz katalogda kafasına göre yeni ilan
+> oluşturmamalı veya bizim kapattığımız ilanları diriltmemeli. Feed'in görevi
+> yalnızca eşleşen ve yayında olan ilanların fiyat ve stok durumunu (price &
+> stock updates) güncellemektir."_
+>
+> The catalogue is now built by file import and enriched by hand — Category,
+> field values, affiliate address, pictures — and a partner's feed is used for
+> the one thing it is genuinely good at: what a price is today and whether the
+> thing is in stock. That is a **narrowing** of what an intake may do in every
+> respect but one: the listing it updates was not created by an intake, so its
+> Source is not Feed.
+>
+> v4.1 §5.11.1 answers "what may an intake touch?" with "an Offering whose
+> Source is Feed". Under the Owner's model no such Offering will ever be
+> created again, so the sentence permits an intake to maintain exactly the
+> listings that no longer arrive, and forbids it to maintain the ones that do.
+> The rule has become the opposite of its own purpose, which is why it is
+> changed here rather than worked around in an implementation.
+>
+> ## What replaces it, and what is kept
+>
+> The boundary moves from **provenance** to an **explicit link**, and everything
+> the old boundary protected is protected by the new one:
+>
+> | v4.1 protected                              | v4.2 keeps it by                                                                                                                                                                             |
+> | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | An Admin's typed correction                 | An intake may write **price and stock state only**. Title, summary, Category, Product Key and every other field are outside what it may touch, whatever it is linked to.                     |
+> | A Business owner's authoring                | A link is established by one explicit match rule against a **Published** listing and only where the match is unambiguous; nothing is linked by inference and nothing is created.             |
+> | "An intake may only update what it created" | An intake may only update **what it is linked to**, and a listing holds at most one link. What it may do to that listing is now strictly smaller than what v4.1 allowed it to do to its own. |
+>
+> ## What it does not change
+>
+> - **no lifecycle state, transition or rule changes.** §6 is untouched, and an
+>   intake may now reach **no** lifecycle state at all: it may not create,
+>   publish, hide, retire or restore anything;
+> - §7.1's composition and §7.2's three inputs are unchanged;
+> - the Universal Publication Minimum is unchanged;
+> - Source keeps its meaning as provenance and §5.11.2 stands: it still confers
+>   no authority. This revision **stops** an authority being read out of it.
+
+> **Freeze Note (4.1):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-03, together with `PRD-0006-platform.md` v2.5 — the two were
+> approved in one decision and freezing one without the other would leave §21.5
+> and §11.6 resting on a revision that is not authoritative. This exact version
+> must not be edited in place; a further change requires a controlled revision
+> under `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v4.0 is preserved unchanged at
+> `PRD-0001-offering-v4.0-superseded.md`.
+>
+> **Approval Note (4.1):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-03 — _"Yaşam döngüsüne (`Archived` veya
+> `Hidden`) dokunmadan, tamamen otomatik ve geri alınabilir bir 'yayından
+> çekme' (Intake Availability Input) durumu icat etmen en temiz çözüm oldu…
+> Hazırladığın PRD-0001 v4.1 ve PRD-0006 v2.5 taslaklarını resmi olarak
+> onaylıyorum."_ This Approval Note records that approval and Freeze were
+> separate decisions taken on the same day.
+>
+> **Revision Note (4.1):** Superseding revision of Frozen v4.0, begun
+> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7.
+>
+> **One change: §7.2 admits a third final-eligibility input, and §5.11 says who
+> may set it.** It exists because a decision the Owner took on 2026-09-03 cannot
+> be implemented without it.
+>
+> ## The decision, and why v4.0 cannot carry it
+>
+> The Owner set the rule for a product that disappears from a partner's feed:
+> _"Ürün feed'den düştüğünde derhal emekliye ayrılmasın. Bunun yerine 3 ardışık
+> gün (72 saat) boyunca 'stokta yok' durumuna çekilsin. Bu tolerans süresinin
+> sonunda hala feed'de yoksa, sistem ürünü otomatik olarak yayından
+> kaldırsın."_ His stated reason is the one that shapes this revision: a single
+> API outage or one bad partner sync must not delete a catalogue.
+>
+> The first half needs nothing new — an out-of-stock state is a plain update and
+> §5.11.1 already permits one. **The second half has nowhere to go.**
+>
+> | Candidate  | Why it fails                                                                                                                                                                                                                                                                       |
+> | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | `Archived` | §6.5: no V1 transition exists out of it, and FR-17 makes it irreversible. A three-day partner outage would permanently destroy their catalogue — **the exact outcome the tolerance exists to prevent**.                                                                            |
+> | `Hidden`   | §7.2 makes it the outcome of an Admin's _Hide Offering_ action, and FR-15 reserves the restore to an Admin. An intake producing Hidden would be an intake performing a moderation action, and a partner coming back would leave an Admin restoring four thousand listings by hand. |
+> | `Draft`    | §6.5: no transition exists from Published back to Draft, and §6.2 says an edit "does not silently move the Offering to Draft".                                                                                                                                                     |
+>
+> **The shape that fits already exists in this document and is not a lifecycle
+> state.** §7.3 lets a Business restriction make a lifecycle-Published Offering
+> publicly ineligible _without changing its lifecycle state_ — reversible,
+> automatic, and invisible to the lifecycle. That is precisely what withdrawing
+> a vanished feed product needs to be.
+>
+> §7.2 names **exactly two** inputs, and §7.1 forbids consumers recalculating
+> the result. So a third input is a change to this document and cannot be made
+> anywhere else. That is what this revision makes.
+>
+> ## What it does not change
+>
+> - **no lifecycle state, transition or rule changes.** §6 is untouched;
+> - `Archived` stays irreversible and `Hidden` stays an Admin outcome;
+> - the new input applies **only to an Offering whose Source is Feed**, and only
+>   through the intake that created it — §5.11.1's boundary is unchanged and is
+>   now stated twice rather than once;
+> - a Business owner's authoring and an Admin's typed correction remain
+>   untouchable by any intake;
+> - `Initial Published At` is unaffected, because nothing here republishes.
+
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Frozen
-- **Version:** 4.0
+- **Version:** 4.2
+- **Approval Date:** 2026-09-05
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-05
+- **Frozen By:** Product Owner / Architecture Owner
+- **Supersedes:** Frozen v4.1, preserved at `PRD-0001-offering-v4.1-superseded.md`
+- **Raised by:** Implementation, `I89`, on the Owner's decision of 2026-09-05
 - **Last Updated:** 2026-08-31
 - **Scope level:** Product behaviour (non-technical)
 - **Supersedes:** Frozen v3.1
@@ -23,7 +199,7 @@
 
 **Revision Note (4.0):** Controlled superseding revision of Frozen v3.1. Adds §5.10 Offering Price, §5.11 Offering Source, and §5.12 Product Key. Lifts the V1 restriction of the Domain set to three. Restates §6.1.1 unchanged in substance, recording explicitly that the Universal Publication Minimum is **not** extended by Price, Source or Product Key. Extends §8.2's optional Presentation content and §10's Business Rules. No lifecycle state, eligibility composition, moderation rule, Capability, Feature, or ownership boundary changes. The revision introduces no Product entity, no Merchant entity, no payment or checkout, no price history or alerts, and no rating or seller score; the mechanism by which an amount is obtained remains an engineering concern governed by its own documents.
 
-> **On the two absences of price.** The three Pricing Kinds in §5.10.1 exist because *On Request* and *Unknown* are different answers. The Owner named the case this document was about to lose: an Offering may genuinely have no price because the amount is settled after the Handoff, according to the service asked for. A single missing value would have reported a platform failure where none occurred. This is the distinction PRD-0002 §14 already draws between zero results and results unavailable, and PRD-0006 §14 between absent and unavailable.
+> **On the two absences of price.** The three Pricing Kinds in §5.10.1 exist because _On Request_ and _Unknown_ are different answers. The Owner named the case this document was about to lose: an Offering may genuinely have no price because the amount is settled after the Handoff, according to the service asked for. A single missing value would have reported a platform failure where none occurred. This is the distinction PRD-0002 §14 already draws between zero results and results unavailable, and PRD-0006 §14 between absent and unavailable.
 
 **Freeze Note (3.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-07-21. Frozen v3.1 is the locked V1 PRD baseline for PRD-0001 — Offering. This exact version must not be edited in place. Any future change requires a controlled revision under `DOCUMENT_LIFECYCLE.md`, `REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`. This Freeze does not automatically revise UX, User Stories, traceability, repository indexes, or GitHub content.
 
@@ -127,12 +303,43 @@ The following are outside PRD-0001:
 
 Restated for v4.0, which introduces price without introducing any of these:
 
-- a Product entity, Product ownership, or a Product lifecycle — §5.12 defines a matching hint and nothing more;
+- a Product entity, Product ownership, or a Product lifecycle. §5.12 defines a **key** that groups Offerings and, since v4.3, may carry product-level material named there; it defines no record that is created, owned, edited or retired as a thing in its own right, and §5.12.4 states plainly what that distinction does and does not survive;
 - a Merchant or seller entity distinct from Business;
 - basket, checkout, or order;
 - price history, price alerts, or price trend presentation;
-- rating, review, or seller score;
+- a seller score, and any aggregate rating treated as a property of the Offering or of the Business. **The editorial review of §5.12.4 is not excluded here**; it is not a property of any Offering, which is the whole reason it hangs on the key. See §4.1 for what this line covered when it was written and what it was found to be excluding in fact;
 - the mechanism by which an amount is obtained — feeds, merchant APIs and any other intake are engineering concerns governed by their own documents.
+
+### 4.1 Recorded, not resolved: the crowd review surface has no behaviour owner
+
+The line above read _"rating, review, or seller score"_ from v4.0 until this
+revision. Checking it against the repository while amending it turned up
+something the line was not written to say.
+
+**`I71` built a review surface, and it is in use.** `traceability.md` records it
+as completing `OFR F05` Offering Presentation — a Feature this document owns —
+and no section of this document, or of any other PRD, defines it. §8.2's
+Presentation list does not include it. So the platform has a surface that
+collects and shows what people write about a product, and its behaviour rests on
+no authoritative document at all.
+
+That is the same defect `traceability.md` v2.2 §5C.2 named for the audit trail,
+the personal-data rule and feed management: **built, in use, and
+Frozen-document-less.** All three were commissioned and closed. This one was not
+found at the time because nobody was reading §4's exclusion list against the
+running platform.
+
+**It is named here and not fixed here**, for the reason §2 of the traceability
+document gives about itself: writing the behaviour into this revision would
+confer ownership by drafting rather than by decision, and what a crowd review is
+— who may write one, what moderates it, whether it survives the Offering it was
+written under, how it relates to the score `PRD-0002` already orders by — is a
+product decision with several defensible answers.
+
+**What it needs:** an Owner decision on where it belongs, then a section in the
+document that takes it, and a Story. Until then this revision narrows §4's line
+to what the platform actually excludes rather than leaving a Frozen document
+forbidding something it ships.
 
 ---
 
@@ -283,25 +490,25 @@ PRD-0005 and PRD-0006 participate only through supporting relationships.
 
 An Offering states a **Pricing Kind**, and it is one of exactly three:
 
-| Kind | Meaning |
-|---|---|
-| **Fixed** | The Offering has a stated amount. |
+| Kind           | Meaning                                                                                                                            |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Fixed**      | The Offering has a stated amount.                                                                                                  |
 | **On Request** | The Offering has no fixed amount **by its nature**. What it costs is determined after the Handoff, according to what is asked for. |
-| **Unknown** | The platform does not currently know what it costs. |
+| **Unknown**    | The platform does not currently know what it costs.                                                                                |
 
 **These are three different answers and the product must never show one as another.**
 
-*On Request* is a property of **the Offering**: a consultancy, a repair service, a bespoke installation genuinely has no price until the work is specified. Showing such an Offering as "price unknown" tells a person the platform has failed, when nothing has failed.
+_On Request_ is a property of **the Offering**: a consultancy, a repair service, a bespoke installation genuinely has no price until the work is specified. Showing such an Offering as "price unknown" tells a person the platform has failed, when nothing has failed.
 
-*Unknown* is a property of **the platform's knowledge**: a source did not carry a price, a reading has not happened yet, a source went quiet. It is a temporary state and it is honest to say so.
+_Unknown_ is a property of **the platform's knowledge**: a source did not carry a price, a reading has not happened yet, a source went quiet. It is a temporary state and it is honest to say so.
 
 #### 5.10.2 Price is never required
 
-Pricing Kind is required; **an amount is not**. No Pricing Kind blocks publication, and §6.1.1 is not extended by this section. An Offering priced *On Request* is as publishable as one priced at a stated amount.
+Pricing Kind is required; **an amount is not**. No Pricing Kind blocks publication, and §6.1.1 is not extended by this section. An Offering priced _On Request_ is as publishable as one priced at a stated amount.
 
 #### 5.10.3 What a price carries
 
-When Pricing Kind is *Fixed*, the Offering carries:
+When Pricing Kind is _Fixed_, the Offering carries:
 
 - an **amount**, in minor-unit precision;
 - a **currency**;
@@ -313,7 +520,7 @@ The Offering may additionally carry:
 
 - a **prior amount**, so a reduction can be shown;
 - a **delivery cost**, where delivery is a separable charge;
-- a **stock state**: *In Stock*, *Out of Stock*, or *Unknown*.
+- a **stock state**: _In Stock_, _Out of Stock_, or _Unknown_.
 
 #### 5.10.4 A reduction is derived, never stored
 
@@ -325,21 +532,71 @@ Where no prior amount is present, **no reduction is claimed**. The platform does
 
 Where a surface orders Offerings by price, it orders on **the amount a person would pay**, including delivery cost where one is stated. Ordering on the amount alone while delivery differs makes the ordering wrong, and the ordering is the only thing a comparison offers.
 
-Offerings that are not *Fixed* have no position in a price ordering and are not silently placed at either end.
+Offerings that are not _Fixed_ have no position in a price ordering and are not silently placed at either end.
 
 ### 5.11 Offering Source
 
 Every Offering records **how its record came to exist**:
 
-| Source | Meaning |
-|---|---|
-| **Manual** | Created by an Admin acting for the platform. |
-| **Feed** | Created by an automated intake from an external source. |
-| **Business** | Created by a Business owner in their own context. |
+| Source       | Meaning                                                 |
+| ------------ | ------------------------------------------------------- |
+| **Manual**   | Created by an Admin acting for the platform.            |
+| **Feed**     | Created by an automated intake from an external source. |
+| **Business** | Created by a Business owner in their own context.       |
 
-#### 5.11.1 An intake may only update what it created
+#### 5.11.1 An intake may only update what it is linked to, and only its price and stock
 
-An automated intake **may create and update Offerings whose Source is Feed, and may not modify any other.** An Admin's typed correction and a Business owner's authoring are decisions; an intake that overwrites them destroys a decision and leaves no trace that it did.
+An automated intake **creates no Offering.** It may **update the Price and the
+Stock State** of an Offering it is **linked** to, and may change nothing else
+about any Offering.
+
+- **The link is the boundary.** An Offering carries at most one intake link.
+  Without one, an intake has no way to name the Offering at all — the boundary
+  is structural rather than a check an implementation performs.
+- **A link is established once, explicitly, and only against a Published
+  Offering.** The match rule is an engineering concern governed by its own
+  documents; what this document fixes is that a link is made only where the
+  match is **unambiguous**, and that an ambiguous or absent match links nothing
+  and reports itself.
+- **An intake may reach no lifecycle state.** It may not create, publish, hide,
+  retire or restore an Offering, and it may not make a Draft live. An Offering
+  that is not Published is not updated at all.
+- **Everything else about an Offering is outside an intake.** Title, Summary,
+  Category, Product Key, Presentation content, Affiliate Destination and every
+  Attribute value are decisions made by a person. An intake that overwrote one
+  would destroy a decision and leave no trace that it did.
+- **An absent field is not an empty one.** A source document that says nothing
+  about a price or a stock state has stated nothing, and an intake must leave
+  what it does not carry alone rather than clearing it.
+
+Source (§5.11) records provenance and no longer decides this: under v4.1 the
+answer was "an Offering whose Source is Feed", which under the Owner's decision
+of 2026-09-05 would permit an intake to maintain only the listings that are no
+longer created and forbid it the ones that are.
+
+#### 5.11.1a Intake Availability
+
+An intake that maintains an Offering may record that **the source no longer
+offers it**. This is the `Intake Availability Input` of §7.2 and it is the only
+eligibility input an intake may set.
+
+- it applies **only** to an Offering that intake is linked to, and only through
+  that link. The boundary is §5.11.1's, restated here because this is the one
+  place an intake touches something a person can see disappear;
+- it is **reversible by the same intake**: a product that returns to the source
+  is available again, without an Admin and without a lifecycle transition;
+- it is **not a moderation outcome and not a retirement.** An Admin's Hide and
+  an owner's retirement remain the only ways to reach `Hidden` and `Archived`,
+  and an intake may reach neither;
+- **a source that cannot be read says nothing.** An intake that failed to reach
+  or parse its source has learned nothing about availability, and must not
+  record absence on the strength of its own failure. This is the rule that makes
+  the whole input safe, and it is the one an implementation would omit.
+
+The tolerance before absence is recorded — how long a product may be missing
+before it stops being published — is an operational setting outside this
+document. What this document fixes is that the tolerance **exists**: absence on
+a single reading is never enough.
 
 #### 5.11.2 Source is not authority
 
@@ -349,11 +606,13 @@ Source records provenance. It does not grant or withhold any capability, does no
 
 An Offering may carry a **Product Key** — a value identifying the product the Offering is an instance of, where such a value exists and is known.
 
-#### 5.12.1 It is a matching hint, not an identity
+#### 5.12.1 It groups Offerings, and it is not an identity for them
 
 Offerings that share a Product Key **may be presented together**, so a person comparing the same product across Offerings sees one product with several Offerings rather than several unrelated results.
 
-**A Product Key does not create an entity.** There is no Product record, no Product lifecycle and no Product ownership. Every rule in this document continues to be about the Offering.
+**A Product Key creates no entity that is owned, edited or retired.** There is no Product record with a lifecycle, no Product ownership, and no Offering rule that runs through one. Every rule in this document continues to be about the Offering.
+
+**What changed in v4.3, stated here rather than only in §5.12.4:** until v4.2 this section could say the key carried nothing whatever, and it can no longer say that. It may carry material that is about the product rather than about any one Offering — today, the editorial review. The distinction that survives is between _grouping and carrying_ on one side and _ownership and lifecycle_ on the other; it is a real distinction and it is a narrower one than v4.2 held.
 
 #### 5.12.2 Absence is not a defect
 
@@ -362,6 +621,26 @@ An Offering with no Product Key stands alone, and that is a complete and correct
 #### 5.12.3 The platform does not guess
 
 Two Offerings are presented as the same product **only when they carry the same Product Key**. Similar titles, similar attributes and similar prices are not evidence, and grouping on them would put a person in front of a comparison the platform invented.
+
+#### 5.12.4 What the Product Key may carry
+
+A Product Key **may carry material that is about the product rather than about any one Offering**. Today there is exactly one such thing, and it is named rather than described by a category:
+
+- the **editorial review**, whose behaviour is owned by `PRD-0009`.
+
+Nothing else is admitted by this section. A second kind of material is a decision of the same weight as this one and gets it, not a consequence of this one.
+
+**Why the review hangs here and could hang nowhere else.** A review is a judgement about a product that several Businesses sell. Copying it onto each of their Offerings would create three records that must agree and will not; attaching it to one of them would make one seller's listing the home of a judgement about all of them, and would delete the judgement when that seller withdrew. Neither is a presentation problem to be solved later; both are the record being in the wrong place.
+
+**What this costs, recorded because the Owner insisted on recording it.** His decision of 2026-09-07 characterised it exactly:
+
+> _"incelemeyi `productKey`'e bağlamak, PRD-0001'de kapıdan kovduğumuz 'Ürün' varlığını (Virtual Product Entity) bacadan içeri almaktır. … Bu yapısal sapmayı bilinçli olarak kabul ediyorum."_
+
+Attaching material to the key admits through the chimney what §4 turned away at the door. He weighed that against the two alternatives above and judged them worse — a data-integrity fault rather than an architectural drift — and accepted the deviation knowingly.
+
+**The obligation that follows is on whoever reads this next.** The failure mode of an accepted deviation is not the deviation; it is that three increments later nobody remembers it was one, and the next thing attached to the key arrives without a decision. That is why this section names one thing instead of opening a category, and why the paragraph above is here rather than in a changelog nobody opens.
+
+**The Publication Minimum is untouched.** An Offering publishes with no Product Key, and a Product Key exists with no review. Neither is a gate on the other, and §6.1.1 is not extended by this section.
 
 ---
 
@@ -397,7 +676,7 @@ Business authorization and Business Moderation Status are separate transition/ed
 
 They are not part of the Universal Publication Minimum.
 
-**Price, Source and Product Key are not part of it either.** An Offering may be published with Pricing Kind *Unknown* and no amount, with no Product Key, and with any Source.
+**Price, Source and Product Key are not part of it either.** An Offering may be published with Pricing Kind _Unknown_ and no amount, with no Product Key, and with any Source.
 
 > Recorded explicitly in v4.0 because "we have price now, so a published Offering should have one" is the obvious next step and it is wrong. It would make every service Offering unpublishable and every Offering awaiting its first price reading disappear.
 
@@ -543,7 +822,17 @@ Consumers must not recalculate it.
 V1 composition consumes:
 
 1. Offering lifecycle state, owned here;
-2. Business Public Exposure Input, owned by `PRD-0005-business.md`.
+2. Business Public Exposure Input, owned by `PRD-0005-business.md`;
+3. **Intake Availability Input**, owned here and set only as §5.11.1a permits.
+
+The third input exists so that an automated intake can stop publishing a
+product its source no longer offers **without reaching for a lifecycle state**.
+Both lifecycle answers are wrong for it: `Archived` is irreversible (§6.5), so a
+partner's outage would destroy their catalogue permanently, and `Hidden` is an
+Admin's moderation outcome that only an Admin may undo (§7.2, FR-15). This input
+is reversible, is set by the intake that owns the Offering, and changes no
+lifecycle state — which is exactly what §7.3 already does for a Business
+restriction.
 
 The approved Offering moderation outcome is expressed through the Offering lifecycle:
 
@@ -573,12 +862,34 @@ Business Moderation Status = Restricted
 → Business Public Exposure Input = Ineligible
 ```
 
+Intake Availability input:
+
+```text
+The Offering has no intake link
+→ Intake Availability Input = Eligible
+
+The Offering has an intake link AND that intake has not recorded the source as
+no longer offering it
+→ Intake Availability Input = Eligible
+
+The Offering has an intake link AND that intake has recorded the source as no
+longer offering it
+→ Intake Availability Input = Ineligible
+```
+
+Every Offering has this input and for almost every Offering it is `Eligible` by
+construction: an Offering no intake maintains cannot be made unavailable by one.
+v4.1 wrote `Source is Feed` where this writes `has an intake link`, and the two
+said the same thing while an intake could only maintain what it created.
+
 Final composition:
 
 ```text
 Offering lifecycle input = Eligible
 AND
 Business Public Exposure Input = Eligible
+AND
+Intake Availability Input = Eligible
 → final Offering Public Eligibility = Eligible
 ```
 
@@ -637,10 +948,11 @@ Protected telephone, email, and external website or contact URL information is n
 
 Offering Presentation **may** additionally carry:
 
-- the Pricing Kind, and where *Fixed*, the amount, currency and the instant it was established;
+- the Pricing Kind, and where _Fixed_, the amount, currency and the instant it was established;
 - the prior amount and the derived reduction, where a prior amount exists;
 - the delivery cost and stock state, where stated;
-- where a Product Key is present, the other Offerings sharing it, ordered by the amount a person would pay.
+- where a Product Key is present, the other Offerings sharing it, ordered by the amount a person would pay;
+- where a Product Key is present **and an editorial review exists for it**, that review, whose behaviour is owned by `PRD-0009`. It is listed here because a reader takes this list as exhaustive, and a thing that appears on the page while absent from the list is how the defect §4.1 records came about.
 
 **Each is present only when the underlying fact is.** The rule above stands: the Presentation does not invent what was not supplied.
 
@@ -928,7 +1240,16 @@ Offering retirement does not permanently delete the Affiliate Destination. The d
 32. A reduction is derived from two amounts and is never stored.
 33. Price ordering uses the amount a person would pay, including stated delivery.
 34. Every Offering records exactly one Source.
-35. An automated intake may modify only Offerings whose Source is Feed.
+35. An automated intake may modify only Offerings it is linked to, and of those may change only the Price and the Stock State.
+    35a1. An automated intake shall create no Offering and shall reach no lifecycle state.
+    35a2. An intake link shall be established only against a Published Offering, only where the match is unambiguous, and an Offering shall carry at most one.
+    35a3. An automated intake shall not modify an Offering that is not Published.
+    35a4. A field a source document does not carry shall be left unchanged rather than cleared.
+    35a. An automated intake may set the Intake Availability Input only for an Offering it is linked to.
+    35b. The Intake Availability Input shall be reversible by the same intake without an Admin action and without a lifecycle transition.
+    35c. An intake shall not record source absence on the strength of a reading it failed to complete.
+    35d. Source absence on a single reading shall not by itself make an Offering ineligible.
+    35e. The Intake Availability Input shall not produce Hidden or Archived, and shall not change any lifecycle state.
 36. Source confers no authority and does not affect eligibility or moderation.
 37. A Product Key groups Offerings for presentation and creates no entity.
 38. Offerings are presented as the same product only when their Product Keys are equal.
@@ -1197,6 +1518,50 @@ Scenario: Admin hides a Published Offering
   Then the Offering lifecycle state becomes Hidden
   And the Offering is not publicly eligible
 
+Scenario: A vanished feed product stops being published without being retired
+  Given a Published Offering linked to an intake
+  When its intake records that the source no longer offers it
+  Then final Offering Public Eligibility becomes Ineligible
+  And the Offering lifecycle state is still Published
+  And no Admin action occurred
+
+Scenario: A product that comes back is available again
+  Given an Offering whose Intake Availability Input is Ineligible
+  When the same intake finds it in the source again
+  Then the Intake Availability Input becomes Eligible
+  And no Admin action is required
+  And Initial Published At is unchanged
+
+Scenario: A failed reading says nothing about availability
+  Given a Published Offering linked to an intake
+  When its intake cannot reach or parse the source
+  Then no Intake Availability Input changes
+  And the Offering remains publicly eligible
+
+Scenario: An intake cannot reach an Offering it is not linked to
+  Given a Published Offering with no intake link
+  When any intake attempts to update or withdraw it
+  Then the attempt is refused
+  And final Offering Public Eligibility is unchanged
+
+Scenario: An intake cannot create a listing a source offers
+  Given a source document that offers a product the platform does not carry
+  When the intake reads the document
+  Then no Offering is created
+  And the product is reported as not acted upon
+
+Scenario: An intake cannot make a listing live
+  Given an Offering that is not Published and is linked to an intake
+  When the intake reads the source, which offers that product
+  Then the Offering lifecycle state is unchanged
+  And its Price and Stock State are unchanged
+
+Scenario: An intake leaves the words alone
+  Given a Published Offering linked to an intake
+  When the source document states a different title and a different price
+  Then the Price changes
+  And the Title is unchanged
+
 Scenario: Admin restores a Hidden Offering
   Given an authorized Admin targets a Hidden Offering
   When Restore Offering is applied
@@ -1399,4 +1764,3 @@ The following are accepted V1 deferrals and do not block Freeze:
    - This PRD defines editing behaviour but creates no Feature → Capability association.
 
 No downstream UX or User Story may broaden these deferrals.
-

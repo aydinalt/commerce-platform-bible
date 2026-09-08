@@ -3,7 +3,9 @@ import type { Pool } from "pg";
 import {
   EXPIRED_COMPARISON_SETS_SQL,
   EXPIRED_DECISION_FLOWS_SQL,
+  FEED_RUN_RETENTION_MS,
   IDENTITY_GRACE_MS,
+  LISTING_REPORT_RETENTION_MS,
   OUTBOX_RETENTION_MS,
   THROTTLE_RETENTION_MS
 } from "@commerce/database";
@@ -37,6 +39,8 @@ export interface SweepCounts {
   authThrottles: number;
   comparisonSets: number;
   decisionFlows: number;
+  feedRuns: number;
+  listingReports: number;
   outboxEvents: number;
   passwordResets: number;
   pendingRegistrations: number;
@@ -124,10 +128,46 @@ export class RetentionSweeper {
     const decisionFlows = await this.run(EXPIRED_DECISION_FLOWS_SQL, []);
     const comparisonSets = await this.run(EXPIRED_COMPARISON_SETS_SQL, []);
 
+    /*
+     * I77. Reviewed Listing Reports, at the window the Owner set on 2026-09-03
+     * (`PRD-0006-platform.md` §21.5).
+     *
+     * **`status <> 'OPEN'` is the whole rule and it is load-bearing.** An Open
+     * report of any age survives: a queue that deleted work nobody had done
+     * would lose the report and the fact that it was never answered, and the
+     * second is the more damaging loss because it is the one that hides a
+     * queue nobody is reading.
+     *
+     * Deleted rather than anonymised. §21.5 is explicit: a row that outlived
+     * its note would keep the fact that somebody complained without keeping
+     * what they said, which is the worst of both.
+     */
+    const listingReports = await this.run(
+      `delete from listing_report
+       where status <> 'OPEN'
+         and reviewed_at <= now() - ($1::double precision * interval '1 millisecond')`,
+      [LISTING_REPORT_RETENTION_MS]
+    );
+
+    /*
+     * I77. Feed runs, and the rejections that cascade from them.
+     *
+     * An operational log rather than anybody's data, and the only question it
+     * answers — "why did this stop working" — has a short useful life. Forty
+     * partners at hourly runs is a third of a million rows a year.
+     */
+    const feedRuns = await this.run(
+      `delete from offering_feed_run
+       where started_at <= now() - ($1::double precision * interval '1 millisecond')`,
+      [FEED_RUN_RETENTION_MS]
+    );
+
     return {
       authThrottles,
       comparisonSets,
       decisionFlows,
+      feedRuns,
+      listingReports,
       outboxEvents,
       passwordResets,
       pendingRegistrations,

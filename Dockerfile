@@ -31,6 +31,7 @@ COPY apps/worker/package.json apps/worker/
 COPY packages/config/package.json packages/config/
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/database/package.json packages/database/
+COPY packages/feed/package.json packages/feed/
 COPY packages/observability/package.json packages/observability/
 COPY packages/testing/package.json packages/testing/
 COPY modules/analytics/package.json modules/analytics/

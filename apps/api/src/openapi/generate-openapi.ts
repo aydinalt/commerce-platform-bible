@@ -97,6 +97,13 @@ const document = {
         additionalProperties: false,
         properties: {
           email: { format: "email", maxLength: 320, type: "string" },
+          name: {
+            description:
+              "The name the registration form asks for (I62). Optional, because it is optional in the form and because every account created before the field existed has none. It buys a byline: a product review needs a name on it, and the alternative to a supplied one is an email address in public or an invented handle. Published masked — given name plus surname initial — never in full.",
+            maxLength: 80,
+            minLength: 1,
+            type: ["string", "null"]
+          },
           password: { maxLength: 256, minLength: 12, type: "string" }
         },
         required: ["email", "password"],
@@ -587,28 +594,676 @@ const document = {
         required: ["id", "leaf", "name", "slug"],
         type: "object"
       },
+      Favourites: {
+        additionalProperties: false,
+        description:
+          "What a person has kept (I64). The cards rather than the identifiers, drawn from the cheapest currently eligible seller of each kept product — so a favourite shows today's price rather than the price it was kept at. `unavailable` counts what is kept and no longer reachable (every seller withdrew, or moderation hid it); those rows are not deleted, because the person kept a product and the catalogue losing a way to buy it is not them changing their mind.",
+        properties: {
+          cards: {
+            items: { $ref: "#/components/schemas/ListingCard" },
+            type: "array"
+          },
+          unavailable: { minimum: 0, type: "integer" }
+        },
+        required: ["cards", "unavailable"],
+        type: "object"
+      },
+      FavouriteMarks: {
+        additionalProperties: false,
+        description:
+          "Which products this person has kept, as product group keys (I64). The one place keys are the right answer: a page of Listing Cards needs to know which hearts are filled and already holds the cards. Separate from the list so that rendering Results does not fetch a page of cards nobody is going to look at.",
+        properties: {
+          productGroupKeys: { items: { type: "string" }, type: "array" }
+        },
+        required: ["productGroupKeys"],
+        type: "object"
+      },
+      Paging: {
+        additionalProperties: false,
+        description:
+          "Where a person is in a list of products, and how long the list is (I63). `total` counts **products** — the same grouping the cards are drawn from — so a pager never promises more pages than the list has things in it. `pageSize` is published rather than assumed: a client cannot check a boundary it has to guess.",
+        properties: {
+          page: { minimum: 1, type: "integer" },
+          pageSize: { minimum: 1, type: "integer" },
+          total: { minimum: 0, type: "integer" }
+        },
+        required: ["page", "pageSize", "total"],
+        type: "object"
+      },
+      ProductRating: {
+        additionalProperties: false,
+        description:
+          "What people scored this **product**, and how many of them (I62). A product score and deliberately not a seller score: the average is taken over the reviews of the product group — the Offerings sharing a Product Key, PRD-0001 v4.0 §5.12's own definition — so the same thing answers with one number wherever it is sold, and PRD-0001 §4's exclusion of seller reputation stands untouched. `average` is a decimal string for the reason money is: 4.3 has no exact binary representation. `null` with `count: 0` is a product nobody has scored, which a surface must show as unrated rather than as zero stars.",
+        properties: {
+          average: { pattern: "^[1-5](?:\\.\\d)?$", type: ["string", "null"] },
+          count: { minimum: 0, type: "integer" }
+        },
+        required: ["average", "count"],
+        type: "object"
+      },
       ListingCard: {
         additionalProperties: false,
         description:
-          "The Listing Card product minimum. It carries no telephone, email, external contact URL or Affiliate Destination information — those have no representation here at all. `primaryVisualUrl` is the supplied primary visual or `null`; before I30 the shape had no field for one, so `US-DSC-F06-001` AC-4 could only ever be half true.",
+          "The Listing Card product minimum. It carries no telephone, email, external contact URL or Affiliate Destination information — those have no representation here at all. `primaryVisualUrl` is the supplied primary visual or `null`; before I30 the shape had no field for one, so `US-DSC-F06-001` AC-4 could only ever be half true. `pricing` carries the whole PRD-0001 §5.10.1 union rather than a formatted amount: On Request is an answer and Unknown is an admission, and a card that flattened both to blank space would report a failure where none occurred.",
         properties: {
           businessName: { type: "string" },
           categoryName: { type: "string" },
+          handoffAvailable: {
+            description:
+              "Whether this card may offer an Affiliate Handoff (`US-DSC-F06-001` v1.1 AC-9). A boolean and never an address: the Affiliate Destination stays absent from the card (AC-5) and is resolved server-side at the moment the person chooses, by the Affiliate Handoff `US-DEC-F05-001` owns. `false` where the Offering has no Eligible destination, which is the ordinary case rather than a failure.",
+            type: "boolean"
+          },
+          listingNumber: {
+            description:
+              "The listing number a person reads, quotes and types (I67). Digits, as a string: it is an identifier rather than a quantity, and a number long enough to be unique is a number a JSON reader may round. Surfaces print it with the `\u0130LN-` prefix; typing it into Search returns that listing.",
+            pattern: "^\\d+$",
+            type: "string"
+          },
           offeringId: { format: "uuid", type: "string" },
+          pricing: { $ref: "#/components/schemas/OfferingPrice" },
           primaryVisualUrl: { type: ["string", "null"] },
+          productKey: { type: ["string", "null"] },
           publishedAt: { format: "date-time", type: "string" },
+          rating: { $ref: "#/components/schemas/ProductRating" },
+          sellerCount: {
+            description:
+              "How many Offerings this card stands for. Offerings sharing a Product Key are presented as one product (PRD-0001 v4.0 §5.12.1); the count is taken over what the criteria admitted, so a filter that sets a seller aside also stops the card claiming it.",
+            minimum: 1,
+            type: "integer"
+          },
           slug: { type: "string" },
           title: { type: "string" }
         },
         required: [
           "businessName",
           "categoryName",
+          "handoffAvailable",
+          "listingNumber",
           "offeringId",
+          "pricing",
           "primaryVisualUrl",
+          "productKey",
           "publishedAt",
+          "rating",
+          "sellerCount",
           "slug",
           "title"
         ],
+        type: "object"
+      },
+      AdminAuditEvent: {
+        additionalProperties: false,
+        description:
+          "One line of the Admin audit trail (I84). Carries no email address and no name: an actor and a target are account ids, like everywhere else on the Admin surfaces. A trail that named people would be a second place personal data lives, and the one place nobody would think to look for it.",
+        properties: {
+          actionType: {
+            enum: [
+              "PII_VIEW",
+              "REQUEST_CORRECTION",
+              "HIDE_OFFERING",
+              "RESTORE_OFFERING",
+              "RESTRICT_BUSINESS",
+              "RESTORE_BUSINESS",
+              "SUSPEND_USER",
+              "REINSTATE_USER",
+              "CASE_OPEN",
+              "REVIEW_DESTINATION",
+              "VALIDATE_DESTINATION_VALID",
+              "VALIDATE_DESTINATION_INVALID",
+              "ENABLE_DESTINATION",
+              "DISABLE_DESTINATION"
+            ],
+            type: "string"
+          },
+          actorId: { format: "uuid", type: "string" },
+          caseId: { format: "uuid", type: ["string", "null"] },
+          id: { type: "string" },
+          occurredAt: { format: "date-time", type: "string" },
+          targetId: { format: "uuid", type: ["string", "null"] }
+        },
+        required: [
+          "actionType",
+          "actorId",
+          "caseId",
+          "id",
+          "occurredAt",
+          "targetId"
+        ],
+        type: "object"
+      },
+      AdminAuditEvents: {
+        additionalProperties: false,
+        properties: {
+          events: {
+            items: { $ref: "#/components/schemas/AdminAuditEvent" },
+            type: "array"
+          },
+          offset: { minimum: 0, type: "integer" },
+          total: { minimum: 0, type: "integer" }
+        },
+        required: ["events", "offset", "total"],
+        type: "object"
+      },
+      AdminUserAccount: {
+        additionalProperties: false,
+        description:
+          "One account, as the Admin register shows it (I83). **No email address**, and that absence is the schema doing the enforcing rather than a query remembering to drop a field. `isAdmin` is present because it changes what is possible: an Admin-authorized account may not be moderated from this surface at all (AC-5), and a control offered and then refused is worse than one never offered.",
+        properties: {
+          businessCount: {
+            description:
+              "How many Businesses this account owns. Its own footprint, not anybody else\u0027s data.",
+            minimum: 0,
+            type: "integer"
+          },
+          isAdmin: { type: "boolean" },
+          registeredAt: { format: "date-time", type: "string" },
+          reviewCount: { minimum: 0, type: "integer" },
+          status: {
+            enum: ["ENABLED", "PENDING_VERIFICATION", "SUSPENDED"],
+            type: "string"
+          },
+          userId: { format: "uuid", type: "string" }
+        },
+        required: [
+          "businessCount",
+          "isAdmin",
+          "registeredAt",
+          "reviewCount",
+          "status",
+          "userId"
+        ],
+        type: "object"
+      },
+      AdminUserAccounts: {
+        additionalProperties: false,
+        properties: {
+          accounts: {
+            items: { $ref: "#/components/schemas/AdminUserAccount" },
+            type: "array"
+          },
+          total: { minimum: 0, type: "integer" }
+        },
+        required: ["accounts", "total"],
+        type: "object"
+      },
+      CaseTargetEmail: {
+        additionalProperties: false,
+        description:
+          "A revealed email address (I82). A response of its own rather than a field on the case: the Owner's PII rule turns on when the address travels — never in a list, and on a case page only after somebody asks — and a field would put it in every payload.",
+        properties: { email: { format: "email", type: "string" } },
+        required: ["email"],
+        type: "object"
+      },
+      ComplementaryPlacement: {
+        additionalProperties: false,
+        description:
+          "One complementary product a listing suggests. The partner is named on the row because a person about to leave the platform is entitled to know whose site they are going to before they press it. No identifier and no counter: nothing about a placement is measured.",
+        properties: {
+          destinationUrl: { type: "string" },
+          label: { type: "string" },
+          note: { type: ["string", "null"] },
+          partnerName: { type: "string" }
+        },
+        required: ["destinationUrl", "label", "note", "partnerName"],
+        type: "object"
+      },
+      ComplementaryPlacements: {
+        additionalProperties: false,
+        properties: {
+          placements: {
+            items: { $ref: "#/components/schemas/ComplementaryPlacement" },
+            type: "array"
+          }
+        },
+        required: ["placements"],
+        type: "object"
+      },
+      AdminComplementaryPlacement: {
+        additionalProperties: false,
+        properties: {
+          active: { type: "boolean" },
+          categoryId: { format: "uuid", type: "string" },
+          categoryName: { type: "string" },
+          destinationUrl: { type: "string" },
+          label: { type: "string" },
+          note: { type: ["string", "null"] },
+          partnerName: { type: "string" },
+          placementId: { format: "uuid", type: "string" },
+          position: { minimum: 0, type: "integer" }
+        },
+        required: [
+          "active",
+          "categoryId",
+          "categoryName",
+          "destinationUrl",
+          "label",
+          "note",
+          "partnerName",
+          "placementId",
+          "position"
+        ],
+        type: "object"
+      },
+      AdminComplementaryPlacements: {
+        additionalProperties: false,
+        properties: {
+          placements: {
+            items: { $ref: "#/components/schemas/AdminComplementaryPlacement" },
+            type: "array"
+          }
+        },
+        required: ["placements"],
+        type: "object"
+      },
+      CreateComplementaryPlacement: {
+        additionalProperties: false,
+        description:
+          "A placement is written against a Category and inherited by every listing under it: the rule is about sections, and repeating it per listing would guarantee it stops being true somewhere. The address must parse as http or https.",
+        properties: {
+          categoryId: { format: "uuid", type: "string" },
+          destinationUrl: { maxLength: 2048, minLength: 1, type: "string" },
+          label: { maxLength: 120, minLength: 1, type: "string" },
+          note: { maxLength: 240, type: ["string", "null"] },
+          partnerName: { maxLength: 160, minLength: 1, type: "string" },
+          position: { maximum: 99, minimum: 0, type: "integer" }
+        },
+        required: ["categoryId", "destinationUrl", "label", "partnerName"],
+        type: "object"
+      },
+      AdvertisingExclusion: {
+        additionalProperties: false,
+        description:
+          "One Category kept clear of advertising, and everything beneath it (PRD-0006 §20.4).",
+        properties: {
+          categoryId: { format: "uuid", type: "string" },
+          categoryName: { type: "string" },
+          excludedAt: { format: "date-time", type: "string" }
+        },
+        required: ["categoryId", "categoryName", "excludedAt"],
+        type: "object"
+      },
+      AdvertisingSettings: {
+        additionalProperties: false,
+        description:
+          "Whether advertising runs and where it may not (I75). Five named decisions rather than a settings store: PRD-0006 §12 refuses a generic Platform Configuration capability, so adding a sixth takes a migration. No impression, click or revenue figure is here, because §20.5 excludes all four and the platform records none of them.",
+        properties: {
+          enabled: {
+            description:
+              "The master switch. False suppresses every region including the platform's own complementary block, because a kill switch that needed somebody to remember its scope would not be one.",
+            type: "boolean"
+          },
+          exclusions: {
+            items: { $ref: "#/components/schemas/AdvertisingExclusion" },
+            type: "array"
+          },
+          publisherId: { type: ["string", "null"] },
+          units: { $ref: "#/components/schemas/AdvertisingUnits" },
+          updatedAt: { format: "date-time", type: "string" }
+        },
+        required: [
+          "enabled",
+          "exclusions",
+          "publisherId",
+          "units",
+          "updatedAt"
+        ],
+        type: "object"
+      },
+      AdvertisingUnits: {
+        additionalProperties: false,
+        description:
+          "One unit identifier per permitted region (§20.1). A region with no unit shows nothing, which is a configuration state rather than a fault.",
+        properties: {
+          category: { type: ["string", "null"] },
+          presentation: { type: ["string", "null"] },
+          results: { type: ["string", "null"] }
+        },
+        required: ["category", "presentation", "results"],
+        type: "object"
+      },
+      ExcludeCategoryFromAdvertising: {
+        additionalProperties: false,
+        properties: { categoryId: { format: "uuid", type: "string" } },
+        required: ["categoryId"],
+        type: "object"
+      },
+      UpdateAdvertisingSettings: {
+        additionalProperties: false,
+        description:
+          "The whole form travels, because a partial write is how a kill switch ends up back on because somebody submitted the field beside it. A blank identifier is stored as absence, which is what clearing a field means.",
+        properties: {
+          enabled: { type: "boolean" },
+          publisherId: { maxLength: 64, type: ["string", "null"] },
+          units: {
+            additionalProperties: false,
+            properties: {
+              category: { maxLength: 64, type: ["string", "null"] },
+              presentation: { maxLength: 64, type: ["string", "null"] },
+              results: { maxLength: 64, type: ["string", "null"] }
+            },
+            type: "object"
+          }
+        },
+        required: ["enabled", "units"],
+        type: "object"
+      },
+      FeedMapping: {
+        additionalProperties: false,
+        description:
+          "Which key in the partner's record holds each thing the platform understands. A list of named fields rather than an expression language: a general one would let a partner's feed be configured into anything, which is a capability arriving without a decision. Only the identifier and the title are required.",
+        properties: {
+          categoryKey: { type: ["string", "null"] },
+          currency: { type: ["string", "null"] },
+          deliveryCost: { type: ["string", "null"] },
+          externalId: {
+            description:
+              "The partner's own identifier for a product. Without one, every sync is a fresh import and the catalogue doubles every hour.",
+            type: "string"
+          },
+          imageUrl: { type: ["string", "null"] },
+          price: { type: ["string", "null"] },
+          priorPrice: { type: ["string", "null"] },
+          productKey: { type: ["string", "null"] },
+          stock: { type: ["string", "null"] },
+          summary: { type: ["string", "null"] },
+          title: { type: "string" },
+          url: { type: ["string", "null"] }
+        },
+        required: [
+          "categoryKey",
+          "currency",
+          "deliveryCost",
+          "externalId",
+          "imageUrl",
+          "price",
+          "priorPrice",
+          "productKey",
+          "stock",
+          "summary",
+          "title",
+          "url"
+        ],
+        type: "object"
+      },
+      OfferingFeedRun: {
+        additionalProperties: false,
+        description:
+          'How one sync went (I76). A failed run is the point of this rather than an exception to it: a log recording only successes answers "when did this last work" and never "why did it stop".',
+        properties: {
+          created: {
+            description:
+              "Listings this run created. Zero on every run since I88, when the intake was scoped to price and stock; kept because the runs that did create listings happened.",
+            minimum: 0,
+            type: "integer"
+          },
+          failureKind: {
+            description:
+              "Why the run failed (I91): the partner's server could not be reached, the document could not be parsed, the mapping names fields the document does not carry, or something else. Null on a run that succeeded.",
+            enum: [
+              "SOURCE_UNREACHABLE",
+              "DOCUMENT_UNREADABLE",
+              "MAPPING_INCOMPLETE",
+              "UNCLASSIFIED",
+              null
+            ],
+            type: ["string", "null"]
+          },
+          feedId: { format: "uuid", type: "string" },
+          feedName: { type: "string" },
+          finishedAt: { format: "date-time", type: "string" },
+          message: {
+            description:
+              "Why it failed, in words somebody can act on. Null on success.",
+            type: ["string", "null"]
+          },
+          missing: {
+            description:
+              "Products the platform holds that the document no longer offers. A number and not an action: retiring a listing is a lifecycle decision, and one truncated response would otherwise delete a catalogue.",
+            minimum: 0,
+            type: "integer"
+          },
+          outcome: { enum: ["SUCCEEDED", "FAILED"], type: "string" },
+          read: { minimum: 0, type: "integer" },
+          rejected: { minimum: 0, type: "integer" },
+          restored: {
+            description:
+              "Products that came back and were published again (I78). The reversibility PRD-0001 v4.1 §7.2 exists to provide, counted — a promise nobody can see kept is one somebody eventually re-implements by hand.",
+            minimum: 0,
+            type: "integer"
+          },
+          rejections: {
+            description:
+              "A bounded sample of the rows this run refused, with a reason for each. Bounded because a feed that rejects forty thousand rows has one problem, not forty thousand.",
+            items: {
+              additionalProperties: false,
+              properties: {
+                externalId: { type: ["string", "null"] },
+                reason: { type: "string" }
+              },
+              required: ["externalId", "reason"],
+              type: "object"
+            },
+            type: "array"
+          },
+          runId: { format: "uuid", type: "string" },
+          skipped: {
+            description:
+              "Products the document offered that the run did not act on (I88): not carried by the platform, or carried and not live. Ordinary rather than wrong — a partner's document is their whole catalogue and the platform carries a curated part of it — which is why it is counted apart from rejections.",
+            minimum: 0,
+            type: "integer"
+          },
+          startedAt: { format: "date-time", type: "string" },
+          updated: { minimum: 0, type: "integer" },
+          withdrawn: {
+            description:
+              "Products withdrawn at the end of the Owner's 72-hour tolerance (I78). Publicly ineligible without a lifecycle change: the listing is still Published and returns the moment the source offers it again.",
+            minimum: 0,
+            type: "integer"
+          }
+        },
+        required: [
+          "created",
+          "failureKind",
+          "feedId",
+          "feedName",
+          "finishedAt",
+          "message",
+          "missing",
+          "outcome",
+          "read",
+          "rejected",
+          "rejections",
+          "restored",
+          "runId",
+          "skipped",
+          "startedAt",
+          "updated",
+          "withdrawn"
+        ],
+        type: "object"
+      },
+      OfferingFeedRuns: {
+        additionalProperties: false,
+        properties: {
+          runs: {
+            items: { $ref: "#/components/schemas/OfferingFeedRun" },
+            type: "array"
+          }
+        },
+        required: ["runs"],
+        type: "object"
+      },
+      AdminOfferingFeed: {
+        additionalProperties: false,
+        properties: {
+          active: { type: "boolean" },
+          businessId: { format: "uuid", type: "string" },
+          businessName: { type: "string" },
+          categoryId: { format: "uuid", type: "string" },
+          categoryName: { type: "string" },
+          documentUrl: { type: "string" },
+          feedId: { format: "uuid", type: "string" },
+          format: { enum: ["XML", "JSON"], type: "string" },
+          itemPath: { type: ["string", "null"] },
+          lastRun: {
+            anyOf: [
+              { $ref: "#/components/schemas/OfferingFeedRun" },
+              { type: "null" }
+            ]
+          },
+          listingCount: { minimum: 0, type: "integer" },
+          mapping: { $ref: "#/components/schemas/FeedMapping" },
+          name: { type: "string" }
+        },
+        required: [
+          "active",
+          "businessId",
+          "businessName",
+          "categoryId",
+          "categoryName",
+          "documentUrl",
+          "feedId",
+          "format",
+          "itemPath",
+          "lastRun",
+          "listingCount",
+          "mapping",
+          "name"
+        ],
+        type: "object"
+      },
+      AdminOfferingFeeds: {
+        additionalProperties: false,
+        properties: {
+          feeds: {
+            items: { $ref: "#/components/schemas/AdminOfferingFeed" },
+            type: "array"
+          }
+        },
+        required: ["feeds"],
+        type: "object"
+      },
+      CreateOfferingFeed: {
+        additionalProperties: false,
+        description:
+          "A partner catalogue read on a schedule. The address must parse as http or https, the Business must exist and the Category must be active. Repeating a Business and name corrects that feed rather than adding a second one pointing at the same document.",
+        properties: {
+          businessId: { format: "uuid", type: "string" },
+          categoryId: { format: "uuid", type: "string" },
+          documentUrl: { maxLength: 2048, minLength: 1, type: "string" },
+          format: { enum: ["XML", "JSON"], type: "string" },
+          itemPath: { maxLength: 240, type: ["string", "null"] },
+          mapping: { $ref: "#/components/schemas/FeedMapping" },
+          name: { maxLength: 160, minLength: 1, type: "string" }
+        },
+        required: [
+          "businessId",
+          "categoryId",
+          "documentUrl",
+          "format",
+          "mapping",
+          "name"
+        ],
+        type: "object"
+      },
+      SubmitListingReport: {
+        additionalProperties: false,
+        description:
+          "A report about one listing (I69). No identity and no contact address: whoever the reporter is, is a fact of the request rather than something they are asked to type.",
+        properties: {
+          note: {
+            description:
+              "The person's own words, where they added any. A report is a sentence, not a document.",
+            maxLength: 600,
+            type: ["string", "null"]
+          },
+          reason: {
+            description:
+              "What the reader says is wrong. A closed list, because a report that was only free text is a report nobody can count.",
+            enum: [
+              "PRICE_WRONG",
+              "STOCK_WRONG",
+              "WRONG_CATEGORY",
+              "MISLEADING_INFORMATION",
+              "LINK_BROKEN"
+            ],
+            type: "string"
+          }
+        },
+        required: ["reason"],
+        type: "object"
+      },
+      ListingReport: {
+        additionalProperties: false,
+        description:
+          "One report, as the Admin queue reads it. The listing is named by title, address and listing number because the queue is a working surface.",
+        properties: {
+          listingNumber: { pattern: "^\\d+$", type: "string" },
+          note: { type: ["string", "null"] },
+          offeringId: {
+            description:
+              "So an Admin who accepts a report can open a Moderation Case against the listing without leaving the queue or copying an identifier (I82). The slug addresses the public page; opening a case needs the id.",
+            format: "uuid",
+            type: "string"
+          },
+          offeringSlug: { type: "string" },
+          offeringTitle: { type: "string" },
+          reason: {
+            enum: [
+              "PRICE_WRONG",
+              "STOCK_WRONG",
+              "WRONG_CATEGORY",
+              "MISLEADING_INFORMATION",
+              "LINK_BROKEN"
+            ],
+            type: "string"
+          },
+          reportId: { format: "uuid", type: "string" },
+          reportsForListing: {
+            description:
+              "How many reports this listing has open. A pattern is the fact an Admin acts on; one report rarely is.",
+            minimum: 1,
+            type: "integer"
+          },
+          status: {
+            enum: ["OPEN", "ACCEPTED", "DISMISSED"],
+            type: "string"
+          },
+          submittedAt: { format: "date-time", type: "string" }
+        },
+        required: [
+          "listingNumber",
+          "note",
+          "offeringSlug",
+          "offeringTitle",
+          "reason",
+          "reportId",
+          "reportsForListing",
+          "status",
+          "submittedAt"
+        ],
+        type: "object"
+      },
+      ListingReports: {
+        additionalProperties: false,
+        properties: {
+          reports: {
+            items: { $ref: "#/components/schemas/ListingReport" },
+            type: "array"
+          },
+          total: { minimum: 0, type: "integer" }
+        },
+        required: ["reports", "total"],
+        type: "object"
+      },
+      ReviewListingReport: {
+        additionalProperties: false,
+        description:
+          "Closing one report. ACCEPTED means the platform agreed there is something wrong and it is now somebody's job; DISMISSED means it looked and there was not. Neither is an action on the listing.",
+        properties: {
+          outcome: { enum: ["ACCEPTED", "DISMISSED"], type: "string" }
+        },
+        required: ["outcome"],
         type: "object"
       },
       AskDecision: {
@@ -994,6 +1649,19 @@ const document = {
         ],
         type: "object"
       },
+      SellerOffer: {
+        additionalProperties: false,
+        description:
+          "One seller's row in the price list. The Business name and its price, and deliberately nothing else — no seller rating and no authorised-dealer mark, both of which PRD-0001 v4.0 §4 puts out of scope.",
+        properties: {
+          businessName: { type: "string" },
+          offeringId: { format: "uuid", type: "string" },
+          pricing: { $ref: "#/components/schemas/OfferingPrice" },
+          slug: { type: "string" }
+        },
+        required: ["businessName", "offeringId", "pricing", "slug"],
+        type: "object"
+      },
       OfferingPresentation: {
         additionalProperties: false,
         description:
@@ -1011,8 +1679,24 @@ const document = {
             type: "array"
           },
           description: { type: ["string", "null"] },
+          listingNumber: {
+            description:
+              "The listing number a person reads, quotes and types (I67). Digits, as a string: it is an identifier rather than a quantity, and a number long enough to be unique is a number a JSON reader may round. Surfaces print it with the `\u0130LN-` prefix; typing it into Search returns that listing.",
+            pattern: "^\\d+$",
+            type: "string"
+          },
           offeringId: { format: "uuid", type: "string" },
+          pricing: { $ref: "#/components/schemas/OfferingPrice" },
+          productKey: { type: ["string", "null"] },
           publishedAt: { format: "date-time", type: "string" },
+          rating: { $ref: "#/components/schemas/ProductRating" },
+          sellers: {
+            description:
+              "Every publicly eligible Offering carrying the same Product Key, cheapest first, including this one. Never empty: an Offering with no key is the only seller of itself.",
+            items: { $ref: "#/components/schemas/SellerOffer" },
+            minItems: 1,
+            type: "array"
+          },
           slug: { type: "string" },
           title: { type: "string" },
           visuals: { items: { type: "string" }, type: "array" }
@@ -1022,17 +1706,92 @@ const document = {
           "business",
           "categoryPath",
           "description",
+          "listingNumber",
           "offeringId",
+          "pricing",
+          "productKey",
           "publishedAt",
+          "rating",
+          "sellers",
           "slug",
           "title",
           "visuals"
         ],
         type: "object"
       },
+      PriceConstraint: {
+        additionalProperties: false,
+        description:
+          "A Price Constraint (PRD-0002 v2.5 §10.6, `US-DSC-F11-001`): an inclusive upper bound, an inclusive lower bound, or both, on the amount a person would pay — the amount together with a stated delivery cost, as PRD-0001 §5.10.5 defines it. At least one bound is required. Amounts are decimal strings, never floats, because an inclusive boundary that a person types exactly has to be met exactly. `currency` is required and never defaulted: §10.6.2 refuses to convert between currencies, so an Offering in another currency is outside the constraint rather than converted into it. An Offering whose Pricing Kind is not FIXED does not satisfy a constraint at all. A lower bound above an upper one is valid, is satisfied by nothing, and is not reversed.",
+        properties: {
+          currency: { maxLength: 3, minLength: 3, type: "string" },
+          maxAmount: { type: ["string", "null"] },
+          minAmount: { type: ["string", "null"] }
+        },
+        required: ["currency"],
+        type: "object"
+      },
+      ProductReview: {
+        additionalProperties: false,
+        description:
+          'One review, as a public reader sees it (I62). The byline is a masking rule rather than a stored value: the account holds the name the person typed and the API publishes "Aylin K." — given name, surname initial — because that is enough to tell two reviewers apart and the full surname is not needed to make a review credible. `null` where the account has no name at all: an anonymous review is honest, an invented byline is not. `body` is nullable because a score with no words is a complete review.',
+        properties: {
+          author: { type: ["string", "null"] },
+          body: { type: ["string", "null"] },
+          mine: { type: "boolean" },
+          rating: { maximum: 5, minimum: 1, type: "integer" },
+          reviewId: { format: "uuid", type: "string" },
+          writtenAt: { format: "date-time", type: "string" }
+        },
+        required: ["author", "body", "mine", "rating", "reviewId", "writtenAt"],
+        type: "object"
+      },
+      ProductReviews: {
+        additionalProperties: false,
+        description:
+          "The reviews of one product, newest first, with the aggregate they produce. The average travels with the page rather than being left for the caller to compute, because the page is a page and the average is over all of them — a surface that averaged what it received would publish a different number on page two. `writable` is a fact about the request rather than about the product: an anonymous reader gets `false` and a sign-in prompt, not a form that fails on submit.",
+        properties: {
+          rating: { $ref: "#/components/schemas/ProductRating" },
+          reviews: {
+            items: { $ref: "#/components/schemas/ProductReview" },
+            type: "array"
+          },
+          total: { minimum: 0, type: "integer" },
+          writable: { type: "boolean" }
+        },
+        required: ["rating", "reviews", "total", "writable"],
+        type: "object"
+      },
+      WriteProductReview: {
+        additionalProperties: false,
+        description:
+          "Writing or replacing one's own review (I62). A repeat submission replaces the previous one rather than adding a second vote — one person, one opinion about one product — which is what keeps the average an average of people.",
+        properties: {
+          body: { maxLength: 2000, minLength: 1, type: ["string", "null"] },
+          rating: { maximum: 5, minimum: 1, type: "integer" }
+        },
+        required: ["rating"],
+        type: "object"
+      },
+      RatingConstraint: {
+        additionalProperties: false,
+        description:
+          "A Rating Constraint (I62): the lowest product score a person will consider. Like the Price Constraint and unlike an Attribute Filter, it is not a Filter — a rating is an aggregate over the reviews of a product group rather than a property of an Offering — so it travels as its own field. A number rather than a decimal string, because half a star is exactly representable and no arithmetic is done on it. Absent means all ratings; a product nobody has scored satisfies no constraint, because a product with no score cannot answer a question about its score.",
+        properties: {
+          minimum: { maximum: 5, minimum: 0.5, multipleOf: 0.5, type: "number" }
+        },
+        required: ["minimum"],
+        type: "object"
+      },
       SearchSubmission: {
         additionalProperties: false,
         properties: {
+          arrangement: {
+            description:
+              "Which of the four arrangements the Results are in (I68): DEFAULT (Tümü) is the ordinary arrangement — out of stock last, then cheapest delivered first; NEWEST (En yeni) is later Initial Published At first; RISING (Yükselenler) averages opens, Affiliate Handoffs and reviews over the last thirty days; POPULAR (Popüler) counts opens over the same window. A closed platform-defined set, never a caller-composed sort: PRD-0002 §12.5's exclusions of paid placement, sponsored priority, promoted cards and Business-controlled ranking are untouched.",
+            enum: ["DEFAULT", "NEWEST", "RISING", "POPULAR"],
+            type: "string"
+          },
           categoryId: {
             description:
               "Narrows the current Search to one active leaf Category. Part of the same Search, not a new path — no Browse Discovery Start is created.",
@@ -1047,7 +1806,35 @@ const document = {
             maxItems: 50,
             type: "array"
           },
-          query: { maxLength: 400, minLength: 1, type: "string" }
+          price: {
+            anyOf: [
+              { $ref: "#/components/schemas/PriceConstraint" },
+              { type: "null" }
+            ],
+            description:
+              "Unlike `filters`, valid with or without `categoryId`: §10.6.1 offers the Price Constraint wherever Results are, because an amount belongs to the Offering rather than to a Category."
+          },
+          inStockOnly: {
+            description:
+              "I64. Only Offerings a seller has stated are available. An Unknown stock level does not satisfy it — PRD-0002 §10.4: an Offering with no value for an applied criterion does not satisfy it — which is deliberately the opposite of the ordering's treatment of Unknown, where absence of a claim is not a claim of absence.",
+            type: "boolean"
+          },
+          page: {
+            description:
+              "I63. Which page of the ordered results to return, one-based. Defaults to the first.",
+            maximum: 400,
+            minimum: 1,
+            type: "integer"
+          },
+          query: { maxLength: 400, minLength: 1, type: "string" },
+          rating: {
+            anyOf: [
+              { $ref: "#/components/schemas/RatingConstraint" },
+              { type: "null" }
+            ],
+            description:
+              "I62. Like `price` and unlike `filters`, valid with or without `categoryId`: a product score is a fact about the product, so the floor applies before a leaf is chosen."
+          }
         },
         required: ["query"],
         type: "object"
@@ -1057,6 +1844,11 @@ const document = {
         properties: {
           businessName: { type: "string" },
           categoryName: { type: "string" },
+          handoffAvailable: {
+            description:
+              "Whether this result may offer an Affiliate Handoff (`US-DSC-F06-001` v1.1 AC-9). The same boolean the Listing Card carries, for the same reason: Search and Browse compose the card in two queries, and a control offered in one surface and not the other would be one platform behaving as two.",
+            type: "boolean"
+          },
           matchLevel: {
             description:
               "The highest applicable relationship of PRD-0002 §12.2. A level, not a score: ordering consumes it, and no ranking algorithm is defined.",
@@ -1068,23 +1860,39 @@ const document = {
             ],
             type: "string"
           },
+          listingNumber: {
+            description:
+              "The listing number a person reads, quotes and types (I67). Digits, as a string: it is an identifier rather than a quantity, and a number long enough to be unique is a number a JSON reader may round. Surfaces print it with the `\u0130LN-` prefix; typing it into Search returns that listing.",
+            pattern: "^\\d+$",
+            type: "string"
+          },
           offeringId: { format: "uuid", type: "string" },
+          pricing: { $ref: "#/components/schemas/OfferingPrice" },
+          productKey: { type: ["string", "null"] },
+          sellerCount: { minimum: 1, type: "integer" },
           primaryVisualUrl: {
             description:
               "The Listing Card's one visual, or null. `null` rather than an empty string: a card carries one visual or none, and the two are different answers. The rest of the set belongs to Presentation, which is why this is not an array.",
             type: ["string", "null"]
           },
           publishedAt: { format: "date-time", type: "string" },
+          rating: { $ref: "#/components/schemas/ProductRating" },
           slug: { type: "string" },
           title: { type: "string" }
         },
         required: [
           "businessName",
           "categoryName",
+          "handoffAvailable",
           "matchLevel",
+          "listingNumber",
           "offeringId",
+          "pricing",
           "primaryVisualUrl",
+          "productKey",
           "publishedAt",
+          "rating",
+          "sellerCount",
           "slug",
           "title"
         ],
@@ -1093,6 +1901,12 @@ const document = {
       SearchView: {
         additionalProperties: false,
         properties: {
+          arrangement: {
+            description:
+              "Which of the four arrangements the Results are in (I68): DEFAULT (Tümü) is the ordinary arrangement — out of stock last, then cheapest delivered first; NEWEST (En yeni) is later Initial Published At first; RISING (Yükselenler) averages opens, Affiliate Handoffs and reviews over the last thirty days; POPULAR (Popüler) counts opens over the same window. A closed platform-defined set, never a caller-composed sort: PRD-0002 §12.5's exclusions of paid placement, sponsored priority, promoted cards and Business-controlled ranking are untouched.",
+            enum: ["DEFAULT", "NEWEST", "RISING", "POPULAR"],
+            type: "string"
+          },
           categoryId: {
             description: "The active leaf Category the Search is narrowed to.",
             format: "uuid",
@@ -1127,6 +1941,11 @@ const document = {
             items: { $ref: "#/components/schemas/BrowseCategory" },
             type: "array"
           },
+          paging: {
+            $ref: "#/components/schemas/Paging",
+            description:
+              "I63. Never null here: a Search always answers with a list, even an empty one."
+          },
           query: {
             description:
               "The exact submitted query, retained as visible Discovery criteria.",
@@ -1145,6 +1964,7 @@ const document = {
           }
         },
         required: [
+          "arrangement",
           "categoryId",
           "discoveryPathId",
           "domain",
@@ -1152,6 +1972,7 @@ const document = {
           "filters",
           "filtersAvailable",
           "narrowing",
+          "paging",
           "query",
           "results",
           "zeroResults"
@@ -1186,11 +2007,45 @@ const document = {
         description:
           "A path already being followed. Absent on the first selection, which is what makes that selection the start of a new path.",
         properties: {
+          arrangement: {
+            description:
+              "Which of the four arrangements the Results are in (I68): DEFAULT (Tümü) is the ordinary arrangement — out of stock last, then cheapest delivered first; NEWEST (En yeni) is later Initial Published At first; RISING (Yükselenler) averages opens, Affiliate Handoffs and reviews over the last thirty days; POPULAR (Popüler) counts opens over the same window. A closed platform-defined set, never a caller-composed sort: PRD-0002 §12.5's exclusions of paid placement, sponsored priority, promoted cards and Business-controlled ranking are untouched.",
+            enum: ["DEFAULT", "NEWEST", "RISING", "POPULAR"],
+            type: "string"
+          },
           discoveryPathId: { format: "uuid", type: "string" },
           filters: {
             items: { $ref: "#/components/schemas/AppliedFilter" },
             maxItems: 50,
             type: "array"
+          },
+          price: {
+            anyOf: [
+              { $ref: "#/components/schemas/PriceConstraint" },
+              { type: "null" }
+            ],
+            description:
+              "Offered on a branch as well as a leaf, where the Attribute Filters above are not."
+          },
+          inStockOnly: {
+            description:
+              "I64. Only Offerings a seller has stated are available. An Unknown stock level does not satisfy it (PRD-0002 §10.4).",
+            type: "boolean"
+          },
+          page: {
+            description:
+              "I63. Which page of the ordered results to return, one-based. A branch withholds Results entirely, so the number is simply unused there.",
+            maximum: 400,
+            minimum: 1,
+            type: "integer"
+          },
+          rating: {
+            anyOf: [
+              { $ref: "#/components/schemas/RatingConstraint" },
+              { type: "null" }
+            ],
+            description:
+              "I62, on the same terms as `price`: a product score is a fact about the product, so the criterion travels wherever products are listed."
           }
         },
         type: "object"
@@ -1198,6 +2053,12 @@ const document = {
       BrowseView: {
         additionalProperties: false,
         properties: {
+          arrangement: {
+            description:
+              "Which of the four arrangements the Results are in (I68): DEFAULT (Tümü) is the ordinary arrangement — out of stock last, then cheapest delivered first; NEWEST (En yeni) is later Initial Published At first; RISING (Yükselenler) averages opens, Affiliate Handoffs and reviews over the last thirty days; POPULAR (Popüler) counts opens over the same window. A closed platform-defined set, never a caller-composed sort: PRD-0002 §12.5's exclusions of paid placement, sponsored priority, promoted cards and Business-controlled ranking are untouched.",
+            enum: ["DEFAULT", "NEWEST", "RISING", "POPULAR"],
+            type: "string"
+          },
           ancestors: {
             items: { $ref: "#/components/schemas/BrowseCategory" },
             type: "array"
@@ -1215,6 +2076,11 @@ const document = {
               "Offered on a leaf; empty on a branch, where no active leaf Category is selected.",
             items: { $ref: "#/components/schemas/AvailableFilter" },
             type: "array"
+          },
+          paging: {
+            description:
+              "I63. Where the person is in the list and how long it is — null exactly where `results` is, because a branch withheld the list and there is no position in one.",
+            oneOf: [{ $ref: "#/components/schemas/Paging" }, { type: "null" }]
           },
           results: {
             description:
@@ -1235,6 +2101,7 @@ const document = {
           }
         },
         required: [
+          "arrangement",
           "ancestors",
           "category",
           "children",
@@ -1242,6 +2109,7 @@ const document = {
           "domain",
           "domainName",
           "filters",
+          "paging",
           "results",
           "siblings",
           "zeroResults"
@@ -1873,6 +2741,48 @@ const document = {
         required: ["destination", "entries", "offering"],
         type: "object"
       },
+      HandoffRate: {
+        additionalProperties: false,
+        description:
+          'A count of Presentation Opens, a count of Affiliate Handoff Completions, and the ratio between them. `rate` is **null and never 0** where `opens` is zero: an Offering nobody has opened has no rate, and `0` would say "nobody chose this" where the truth is "nobody has looked" (PRD-0006 v2.5 §11.6.3).',
+        properties: {
+          handoffs: { minimum: 0, type: "integer" },
+          opens: { minimum: 0, type: "integer" },
+          rate: { maximum: 1, minimum: 0, type: ["number", "null"] }
+        },
+        required: ["handoffs", "opens", "rate"],
+        type: "object"
+      },
+      AffiliateHandoffRate: {
+        additionalProperties: false,
+        description:
+          "Affiliate Handoff Rate (PRD-0006 v2.5 §11.6). Derived from two occurrences the inventory already counts — no event, counter or record exists to produce it. Not advertising reporting: §20.5's exclusion is unchanged, and an Affiliate Handoff is a person choosing a seller they were comparing. It may never order, weight or mark anything in Discovery Results, and appears on no public or Business-facing surface. Per link means per Offering, because PRD-0001 §9.1 gives an Offering zero or one Affiliate Destination.",
+        properties: {
+          byOffering: {
+            description:
+              "The most-opened listings, ordered by Presentation Opens rather than by rate — a listing opened twice and handed off once scores 50% and tells nobody anything.",
+            items: {
+              allOf: [
+                { $ref: "#/components/schemas/HandoffRate" },
+                {
+                  additionalProperties: false,
+                  properties: {
+                    offeringId: { format: "uuid", type: "string" },
+                    slug: { type: "string" },
+                    title: { type: "string" }
+                  },
+                  required: ["offeringId", "slug", "title"],
+                  type: "object"
+                }
+              ]
+            },
+            type: "array"
+          },
+          overall: { $ref: "#/components/schemas/HandoffRate" }
+        },
+        required: ["byOffering", "overall"],
+        type: "object"
+      },
       Analytics: {
         additionalProperties: false,
         description:
@@ -1896,6 +2806,9 @@ const document = {
             },
             required: ["handoffEligibility", "status", "validationResult"],
             type: "object"
+          },
+          affiliateHandoffRate: {
+            $ref: "#/components/schemas/AffiliateHandoffRate"
           },
           businesses: { $ref: "#/components/schemas/Tally" },
           coreFlow: {
@@ -1953,6 +2866,7 @@ const document = {
         },
         required: [
           "actionable",
+          "affiliateHandoffRate",
           "affiliateDestinations",
           "businesses",
           "coreFlow",
@@ -2098,9 +3012,16 @@ const document = {
             type: "array"
           },
           businessId: { format: "uuid", type: ["string", "null"] },
+          businessName: {
+            description:
+              "What the target is called, so a queue of cases can be triaged without opening every row (I81). Identity only: the target's lifecycle, moderation status and access status are read to decide which actions to offer and are never reported here. Null where the case names no Business, or where it was removed after the case was opened.",
+            type: ["string", "null"]
+          },
           closedAt: { format: "date-time", type: ["string", "null"] },
           id: { format: "uuid", type: "string" },
           offeringId: { format: "uuid", type: ["string", "null"] },
+          offeringSlug: { type: ["string", "null"] },
+          offeringTitle: { type: ["string", "null"] },
           openedAt: { format: "date-time", type: "string" },
           reReviewRequired: {
             description:
@@ -2144,9 +3065,12 @@ const document = {
         required: [
           "availableActions",
           "businessId",
+          "businessName",
           "closedAt",
           "id",
           "offeringId",
+          "offeringSlug",
+          "offeringTitle",
           "openedAt",
           "reReviewRequired",
           "resolutions",
@@ -4531,6 +5455,170 @@ const document = {
         tags: ["Platform"]
       }
     },
+    "/api/v1/admin/audit-events": {
+      get: {
+        description:
+          "The Admin audit trail (I84). Reserved to the platform\u0027s own administrator: every route here resolves a super-admin principal rather than an ordinary Admin one. The two are the same check today because there is one Admin tier, and they are different names so that a later revision adding Sub-Admins changes one place rather than silently widening access to the log that exists to watch Admins. Filtered by actor, action and date, and paged with an offset — unlike the report queue, which is work to be emptied; this is a record being searched, and a record you cannot page through is one you cannot audit.",
+        operationId: "listAuditEvents",
+        parameters: [
+          {
+            in: "query",
+            name: "actorId",
+            required: false,
+            schema: { format: "uuid", type: "string" }
+          },
+          {
+            in: "query",
+            name: "action",
+            required: false,
+            schema: {
+              enum: [
+                "PII_VIEW",
+                "REQUEST_CORRECTION",
+                "HIDE_OFFERING",
+                "RESTORE_OFFERING",
+                "RESTRICT_BUSINESS",
+                "RESTORE_BUSINESS",
+                "SUSPEND_USER",
+                "REINSTATE_USER",
+                "CASE_OPEN",
+                "REVIEW_DESTINATION",
+                "VALIDATE_DESTINATION_VALID",
+                "VALIDATE_DESTINATION_INVALID",
+                "ENABLE_DESTINATION",
+                "DISABLE_DESTINATION"
+              ],
+              type: "string"
+            }
+          },
+          {
+            in: "query",
+            name: "from",
+            required: false,
+            schema: { format: "date-time", type: "string" }
+          },
+          {
+            in: "query",
+            name: "to",
+            required: false,
+            schema: { format: "date-time", type: "string" }
+          },
+          {
+            in: "query",
+            name: "offset",
+            required: false,
+            schema: { minimum: 0, type: "integer" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AdminAuditEvents" }
+              }
+            },
+            description: "One page of the trail"
+          },
+          "400": errorResponse("Invalid audit filter"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/audit-events/export": {
+      get: {
+        description:
+          "The same rows as a CSV file, for a security or compliance request (I84). Produced by the server rather than assembled in the browser, so an export can be reproduced identically on demand. Bounded at 10,000 rows; `x-total-count` reports the unbounded total so a reader whose file was truncated can see that it was and narrow the range.",
+        operationId: "exportAuditEvents",
+        parameters: [
+          {
+            in: "query",
+            name: "actorId",
+            required: false,
+            schema: { format: "uuid", type: "string" }
+          },
+          {
+            in: "query",
+            name: "action",
+            required: false,
+            schema: {
+              enum: [
+                "PII_VIEW",
+                "REQUEST_CORRECTION",
+                "HIDE_OFFERING",
+                "RESTORE_OFFERING",
+                "RESTRICT_BUSINESS",
+                "RESTORE_BUSINESS",
+                "SUSPEND_USER",
+                "REINSTATE_USER",
+                "CASE_OPEN",
+                "REVIEW_DESTINATION",
+                "VALIDATE_DESTINATION_VALID",
+                "VALIDATE_DESTINATION_INVALID",
+                "ENABLE_DESTINATION",
+                "DISABLE_DESTINATION"
+              ],
+              type: "string"
+            }
+          },
+          {
+            in: "query",
+            name: "from",
+            required: false,
+            schema: { format: "date-time", type: "string" }
+          },
+          {
+            in: "query",
+            name: "to",
+            required: false,
+            schema: { format: "date-time", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: { "text/csv": { schema: { type: "string" } } },
+            description: "The filtered rows as CSV"
+          },
+          "400": errorResponse("Invalid audit filter"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/user-accounts": {
+      get: {
+        description:
+          "The register of User Accounts (I83). Opened so that Suspend and Reinstate are reachable at all: their routes have existed since US-PLT-F05-001 and could only be triggered from a USER_ACCOUNT Moderation Case, which nothing in the panel could create. **Carries no email address for anybody** — the Owner\u0027s PII rule keeps addresses out of operational lists, and the schema has nowhere to put one. The address is reachable only on a case, behind an explicit reveal, recorded in the audit trail. A fixed page with the total beside it, like every other Admin list.",
+        operationId: "listUserAccounts",
+        parameters: [
+          {
+            in: "query",
+            name: "status",
+            required: false,
+            schema: {
+              enum: ["ENABLED", "PENDING_VERIFICATION", "SUSPENDED"],
+              type: "string"
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AdminUserAccounts" }
+              }
+            },
+            description: "The register"
+          },
+          "400": errorResponse("Invalid account status"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      }
+    },
     "/api/v1/admin/user-accounts/{userId}/suspension": {
       post: {
         description:
@@ -4679,6 +5767,36 @@ const document = {
           "401": errorResponse("Authentication required"),
           "403": errorResponse("Admin context required"),
           "404": errorResponse("No case matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/moderation-cases/{caseId}/target-email": {
+      post: {
+        description:
+          "Reveals the email address of a User Account case's target (I82). A POST rather than a GET although it changes nothing: the Owner's rule makes revealing an address an action that can be attached to an audit trail, and GET is what proxies cache, browsers prefetch and reloads repeat. The address is deliberately absent from the case itself and from every list, so that it travels only when an Admin asks for it on the case they are working. 404 both for a case that is not a User Account case and for one that does not exist, so this cannot be used to learn which case ids exist.",
+        operationId: "revealModerationCaseTargetEmail",
+        parameters: [
+          {
+            in: "path",
+            name: "caseId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CaseTargetEmail" }
+              }
+            },
+            description: "The target's email address"
+          },
+          "400": errorResponse("Invalid identifier"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No User Account case matches that identifier")
         },
         tags: ["Platform"]
       }
@@ -5258,6 +6376,647 @@ const document = {
             },
             description: "The complete public Presentation"
           },
+          "404": errorResponse(
+            "No publicly eligible Offering matches that address"
+          )
+        },
+        tags: ["Offering"]
+      }
+    },
+    "/api/v1/offerings/{slug}/reviews": {
+      get: {
+        description:
+          "What people said about this product (I62). Public: a review is written to be read, and hiding other people's opinions behind a sign-in would ask a person to join before finding out whether they want to buy. Signing in changes exactly one thing — the reader's own review is marked `mine`, so the page can offer to edit it rather than to write a second one. The reviews belong to the product group (PRD-0001 v4.0 §5.12), not to one seller's listing, so every seller of one product answers with the same reviews and the same score.",
+        operationId: "productReviews",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ProductReviews" }
+              }
+            },
+            description: "The product's reviews and the score they produce"
+          },
+          "404": errorResponse(
+            "No publicly eligible Offering matches that address"
+          )
+        },
+        tags: ["Offering"]
+      },
+      post: {
+        description:
+          "Writing, or replacing, one's own review of this product (I62). Authentication is required and the refusal says nothing more than that: a Guest gets 401 and may repeat the identical request after signing in. The response is the reviews as they now stand rather than the row that was written, so a person sees where their score left the product in one request — with no window in which the page shows a review the average beside it has not counted.",
+        operationId: "writeProductReview",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/WriteProductReview" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ProductReviews" }
+              }
+            },
+            description: "The product's reviews, including the one just written"
+          },
+          "400": errorResponse("The submission is not a valid review"),
+          "401": errorResponse("Authentication is required to write a review"),
+          "403": errorResponse("The request origin is not acceptable"),
+          "404": errorResponse(
+            "No publicly eligible Offering matches that address"
+          )
+        },
+        tags: ["Offering"]
+      }
+    },
+    "/api/v1/offerings/{slug}/reports": {
+      post: {
+        description:
+          'Reporting that something on this listing is wrong (I69) — the Owner\'s "Hata Bildir". Open to a Guest deliberately: the people best placed to notice a stale price are the least likely to have an account, and a signed-in reporter is recorded only so a pattern from one account is visible. 202 rather than 200, because what the platform has done is accept a claim rather than agree with it. Bounded per caller; the refusal is a plain 429 rather than a silent drop.',
+        operationId: "reportListing",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/SubmitListingReport" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "202": {
+            content: {
+              "application/json": {
+                schema: {
+                  additionalProperties: false,
+                  properties: { received: { const: true, type: "boolean" } },
+                  required: ["received"],
+                  type: "object"
+                }
+              }
+            },
+            description: "The report was accepted for review"
+          },
+          "400": errorResponse("The submission is not a valid report"),
+          "403": errorResponse("The request origin is not acceptable"),
+          "404": errorResponse(
+            "No publicly eligible Offering matches that address"
+          ),
+          "429": errorResponse("Too many reports from this caller")
+        },
+        tags: ["Offering"]
+      }
+    },
+    "/api/v1/offerings/{slug}/complementary": {
+      get: {
+        description:
+          "What goes with this listing (I70) — the complementary products a Category suggests, inherited down the Category tree so a placement written for a sector applies to every heading under it. Its own route rather than a field of the Presentation, because PRD-0006 §20.3 forbids advertising from changing what a listing is and a separate route makes that structural. An empty list is the ordinary answer: advertising is absent by default (§20.4). Nothing is counted — §20.5 excludes impression, click and revenue reporting.",
+        operationId: "complementaryPlacementsForListing",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ComplementaryPlacements"
+                }
+              }
+            },
+            description: "What this listing suggests, possibly nothing"
+          }
+        },
+        tags: ["Offering"]
+      }
+    },
+    "/api/v1/admin/complementary-placements": {
+      get: {
+        description:
+          "Every complementary placement an Admin manages (I70), active or not.",
+        operationId: "complementaryPlacements",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/AdminComplementaryPlacements"
+                }
+              }
+            },
+            description: "The placements"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      },
+      post: {
+        description:
+          "Writing one placement, or correcting the one already under that Category and label. PRD-0006 §20 gives the platform where advertising may appear and whether it appears; this is both, for this region.",
+        operationId: "writeComplementaryPlacement",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateComplementaryPlacement"
+              }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: {
+                  additionalProperties: false,
+                  properties: { created: { const: true, type: "boolean" } },
+                  required: ["created"],
+                  type: "object"
+                }
+              }
+            },
+            description: "The placement is written"
+          },
+          "400": errorResponse("The placement is not valid"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the request origin is not acceptable"
+          ),
+          "404": errorResponse("No active Category matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/complementary-placements/{placementId}": {
+      delete: {
+        description:
+          'Switching one placement off (I70). Deactivated rather than deleted: a placement is a partner arrangement, and a row that can come back is how "we paused this" is said.',
+        operationId: "deactivateComplementaryPlacement",
+        parameters: [
+          {
+            in: "path",
+            name: "placementId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  additionalProperties: false,
+                  properties: { deactivated: { const: true, type: "boolean" } },
+                  required: ["deactivated"],
+                  type: "object"
+                }
+              }
+            },
+            description: "The placement is off"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the request origin is not acceptable"
+          ),
+          "404": errorResponse("No active placement matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/advertising": {
+      get: {
+        description:
+          "The advertising placement settings (I75): the master switch, the publisher identifier, one unit per permitted region and the Categories kept clear. Always answers — the row is seeded and cannot be deleted — so an unconfigured platform reads as “no advertising” rather than as an absence.",
+        operationId: "advertisingSettings",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AdvertisingSettings" }
+              }
+            },
+            description: "The settings as they stand"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      },
+      put: {
+        description:
+          "Replacing the settings (I75). PUT rather than PATCH because this replaces a state: the switch and the identifiers are read together and submitted together.",
+        operationId: "updateAdvertisingSettings",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateAdvertisingSettings"
+              }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AdvertisingSettings" }
+              }
+            },
+            description: "The settings after the change"
+          },
+          "400": errorResponse("The settings are not valid"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the request origin is not acceptable"
+          )
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/advertising/exclusions": {
+      post: {
+        description:
+          "Marking one Category ad-free (§20.4). Inherited downwards: a sector marked clean stays clean in every heading under it. Naming one already excluded succeeds without changing anything.",
+        operationId: "excludeCategoryFromAdvertising",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ExcludeCategoryFromAdvertising"
+              }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: {
+                  additionalProperties: false,
+                  properties: { excluded: { const: true, type: "boolean" } },
+                  required: ["excluded"],
+                  type: "object"
+                }
+              }
+            },
+            description: "The Category is ad-free"
+          },
+          "400": errorResponse("The exclusion is not valid"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the request origin is not acceptable"
+          ),
+          "404": errorResponse("No active Category matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/advertising/exclusions/{categoryId}": {
+      delete: {
+        description:
+          "Letting advertising back into one Category (I75). Deleted rather than deactivated, unlike a placement: an exclusion is a line somebody drew rather than an arrangement with anybody.",
+        operationId: "includeCategoryInAdvertising",
+        parameters: [
+          {
+            in: "path",
+            name: "categoryId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  additionalProperties: false,
+                  properties: { included: { const: true, type: "boolean" } },
+                  required: ["included"],
+                  type: "object"
+                }
+              }
+            },
+            description: "The exclusion is gone"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the request origin is not acceptable"
+          ),
+          "404": errorResponse("No exclusion matches that Category")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offering-feeds": {
+      get: {
+        description:
+          "Every partner catalogue an Admin manages (I76), with how each last went. The run travels with the feed because a list of partners that does not say which one is broken answers the wrong question.",
+        operationId: "offeringFeeds",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AdminOfferingFeeds" }
+              }
+            },
+            description: "The feeds"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      },
+      post: {
+        description:
+          "Describing one partner catalogue: where the document is, how it is written, and which of its fields hold what. Nothing is imported here — the intake runs on a schedule, because reading somebody else's document is minutes of work against their server.",
+        operationId: "writeOfferingFeed",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateOfferingFeed" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: {
+                  additionalProperties: false,
+                  properties: { created: { const: true, type: "boolean" } },
+                  required: ["created"],
+                  type: "object"
+                }
+              }
+            },
+            description: "The feed is written"
+          },
+          "400": errorResponse("The feed is not valid"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the request origin is not acceptable"
+          ),
+          "404": errorResponse(
+            "No Business matches that identifier, or no active Category does"
+          )
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offering-feeds/runs": {
+      get: {
+        description:
+          "The sync log, newest first — news rather than a queue, because what is broken now is what an operator can act on. `outcome=FAILED` is what the dashboard reads.",
+        operationId: "offeringFeedRuns",
+        parameters: [
+          {
+            in: "query",
+            name: "outcome",
+            required: false,
+            schema: { enum: ["FAILED"], type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OfferingFeedRuns" }
+              }
+            },
+            description: "The runs"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/offering-feeds/{feedId}": {
+      delete: {
+        description:
+          "Pausing one feed (I76). The listings it created stay exactly as they are: pausing says stop reading this partner's document, not withdraw their listings — that would be a moderation decision.",
+        operationId: "deactivateOfferingFeed",
+        parameters: [
+          {
+            in: "path",
+            name: "feedId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  additionalProperties: false,
+                  properties: { deactivated: { const: true, type: "boolean" } },
+                  required: ["deactivated"],
+                  type: "object"
+                }
+              }
+            },
+            description: "The feed is paused"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the request origin is not acceptable"
+          ),
+          "404": errorResponse("No active feed matches that identifier")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/listing-reports": {
+      get: {
+        description:
+          "The queue of reader reports (I69), oldest first — this is work rather than news, and a queue arranged by arrival would let the oldest report sit unread behind a page of new ones. `reportsForListing` counts the open reports about the same listing, which is the fact an Admin acts on.",
+        operationId: "listingReports",
+        parameters: [
+          {
+            in: "query",
+            name: "status",
+            required: false,
+            schema: {
+              enum: ["OPEN", "ACCEPTED", "DISMISSED"],
+              type: "string"
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ListingReports" }
+              }
+            },
+            description: "The reports in that state"
+          },
+          "400": errorResponse("The status is not one of the three"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/listing-reports/{reportId}/review": {
+      post: {
+        description:
+          "Closing one report (I69). Two outcomes and neither touches the listing: ACCEPTED records that an Admin agrees there is something to fix, and what is then done about it happens through the Stories that own the consequences. A report already closed answers 409 rather than being closed twice.",
+        operationId: "reviewListingReport",
+        parameters: [
+          {
+            in: "path",
+            name: "reportId",
+            required: true,
+            schema: { format: "uuid", type: "string" }
+          }
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ReviewListingReport" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: {
+                  additionalProperties: false,
+                  properties: { reviewed: { const: true, type: "boolean" } },
+                  required: ["reviewed"],
+                  type: "object"
+                }
+              }
+            },
+            description: "The report is closed"
+          },
+          "400": errorResponse("The outcome is not ACCEPTED or DISMISSED"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse(
+            "Admin context required, or the request origin is not acceptable"
+          ),
+          "404": errorResponse("No such report"),
+          "409": errorResponse("That report has already been reviewed")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/me/favourites": {
+      get: {
+        description:
+          "Everything this person has kept (I64), as Listing Cards drawn from the cheapest currently eligible seller of each kept product. Authenticated: a favourite is a fact about a person, and a Guest has nowhere for one to live. Newest kept first.",
+        operationId: "favourites",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Favourites" }
+              }
+            },
+            description: "The kept products"
+          },
+          "401": errorResponse("Authentication is required")
+        },
+        tags: ["Offering"]
+      }
+    },
+    "/api/v1/me/favourites/marks": {
+      get: {
+        description:
+          "Which products this person has kept, as keys (I64) — what a page of Listing Cards needs to decide which hearts are filled.",
+        operationId: "favouriteMarks",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/FavouriteMarks" }
+              }
+            },
+            description: "The kept product group keys"
+          },
+          "401": errorResponse("Authentication is required")
+        },
+        tags: ["Offering"]
+      }
+    },
+    "/api/v1/offerings/{slug}/favourite": {
+      delete: {
+        description:
+          "Stops keeping it (I64). The one route that resolves an Offering without the eligibility gate: an Offering whose sellers all withdrew is exactly the favourite a person is most likely to want off their list, and refusing because the catalogue can no longer show it would trap the row there. Nothing about the listing reaches the response. A slug that never existed answers the same way, because distinguishing the two would tell a prober which slugs exist.",
+        operationId: "releaseFavourite",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "204": { description: "It is no longer kept" },
+          "401": errorResponse("Authentication is required"),
+          "403": errorResponse("The request origin is not acceptable")
+        },
+        tags: ["Offering"]
+      },
+      put: {
+        description:
+          "Keeps this product (I64). Keyed on the product group rather than on the listing, so keeping it from the cheapest seller and returning through a dearer one shows it already kept. Repeating the request keeps it once.",
+        operationId: "keepFavourite",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "204": { description: "It is kept" },
+          "401": errorResponse("Authentication is required"),
+          "403": errorResponse("The request origin is not acceptable"),
           "404": errorResponse(
             "No publicly eligible Offering matches that address"
           )

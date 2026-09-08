@@ -55,9 +55,20 @@ export type PublicEligibility = "ELIGIBLE" | "INELIGIBLE";
  */
 export type IneligibilityReason =
   | "BUSINESS_INELIGIBLE"
+  | "INTAKE_UNAVAILABLE"
   | "LIFECYCLE_ARCHIVED"
   | "LIFECYCLE_DRAFT"
   | "LIFECYCLE_HIDDEN";
+
+/**
+ * Whether the source an intake maintains still offers this Offering
+ * (PRD-0001 v4.1 §7.2).
+ *
+ * `AVAILABLE` for every Offering no intake maintains, by construction — §7.3
+ * says an Offering whose Source is not Feed is Eligible on this input, so the
+ * ordinary case needs nobody to think about it.
+ */
+export type IntakeAvailabilityInput = "AVAILABLE" | "UNAVAILABLE";
 
 export interface EligibilityResult {
   reason: IneligibilityReason | null;
@@ -67,7 +78,7 @@ export interface EligibilityResult {
 /**
  * Final Offering Public Eligibility, composed exactly as PRD-0001 §7.3 states
  * it: `Published` is the only lifecycle input that contributes `Eligible`, and
- * the Business input must agree.
+ * both other inputs must agree.
  *
  * PRD-0001 is the Single Information Owner of this result and §7.1 forbids
  * consumers from recalculating it. That is only enforceable if there is one
@@ -77,9 +88,24 @@ export interface EligibilityResult {
  * The lifecycle check comes first because it is the more specific answer: an
  * Archived Offering under a Restricted Business is not usefully described as
  * "the Business is ineligible".
+ *
+ * ## The third input (v4.1)
+ *
+ * `intakeAvailability` is `UNAVAILABLE` when an automated intake has recorded
+ * that its source no longer offers the Offering — the Owner's 72-hour rule of
+ * 2026-09-03. It comes **last** for the same reason the others are ordered as
+ * they are: it is the least specific of the three, and an Archived listing that
+ * also vanished from a feed is a retired listing rather than a withdrawn one.
+ *
+ * It defaults to `AVAILABLE` so that the hundreds of call sites which have
+ * nothing to do with an intake keep their meaning without passing it. That
+ * default is the honest one: §7.3 makes an Offering no intake maintains
+ * Eligible on this input by construction, so "not stated" and "available" are
+ * the same fact rather than a convenience.
  */
 export function composePublicEligibility(input: {
   businessExposure: BusinessExposureInput;
+  intakeAvailability?: IntakeAvailabilityInput;
   lifecycle: OfferingLifecycle;
 }): EligibilityResult {
   if (input.lifecycle === "DRAFT")
@@ -90,6 +116,8 @@ export function composePublicEligibility(input: {
     return { reason: "LIFECYCLE_ARCHIVED", status: "INELIGIBLE" };
   if (input.businessExposure !== "ELIGIBLE")
     return { reason: "BUSINESS_INELIGIBLE", status: "INELIGIBLE" };
+  if (input.intakeAvailability === "UNAVAILABLE")
+    return { reason: "INTAKE_UNAVAILABLE", status: "INELIGIBLE" };
   return { reason: null, status: "ELIGIBLE" };
 }
 

@@ -106,14 +106,33 @@ export default async function RootLayout({
         <header className="site-header">
           <div className="site-header-inner">
             {/* The brand links home from every page, which is the one
-                navigation convention nobody has to be taught. */}
+                navigation convention nobody has to be taught.
+
+                The Owner's logo, served from `public/`. `alt` carries the name
+                because the image is the only place it appears in this header —
+                putting the word beside the logo would say it twice, and the
+                logo already is the word.
+
+                A plain `img` rather than `next/image`: this is one small
+                transparent PNG on every page, already the size it is drawn at,
+                and the optimiser would add a request and a layout pass to save
+                nothing. `width` and `height` are stated so the header reserves
+                its space before the file arrives. */}
             <a className="brand" href="/">
-              {BRAND.name}
+              <img
+                alt={BRAND.name}
+                height={28}
+                src="/scorburn-logo.png"
+                width={102}
+              />
             </a>
 
             <nav aria-label={NAV.label}>
               {signedIn ? (
-                <a href={AUTH_ROUTES.account}>{NAV.account}</a>
+                <>
+                  <a href="/favourites">{NAV.favourites}</a>
+                  <a href={AUTH_ROUTES.account}>{NAV.account}</a>
+                </>
               ) : (
                 <>
                   <a href={AUTH_ROUTES.login}>{NAV.login}</a>
@@ -131,7 +150,22 @@ export default async function RootLayout({
          */}
         <div id="content">{children}</div>
 
+        {/*
+          The notice at the foot of every page (Owner decision, 2026-09-03).
+
+          A list rather than a paragraph: each note is a separate limit, and
+          four limits run together read as small print nobody finishes. It sits
+          on every page rather than on Home alone, because a person who arrives
+          on a product page from a search engine is exactly the person who has
+          not been told any of it.
+        */}
         <footer className="site-footer">
+          <ul className="site-footer-notes">
+            {FOOTER.notes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+          <p className="site-footer-pending">{FOOTER.pending}</p>
           <p>{FOOTER.rights}</p>
         </footer>
       </body>

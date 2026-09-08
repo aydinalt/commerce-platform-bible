@@ -137,6 +137,17 @@ export interface Product {
   brand: string;
   categoryId: string;
   /**
+   * The heading this Offering sits under, inside its Category.
+   *
+   * `null` where the catalogue has an Offering the taxonomy has no heading
+   * for. **Left nullable on purpose rather than defaulted to something
+   * plausible**: a wrong heading is worse than an absent one, because it makes
+   * the Offering unreachable from the heading it should be under *and* wrong
+   * under the heading it landed in. An unassigned Offering still appears in
+   * every list; it is only the heading question that cannot place it.
+   */
+  subcategoryId: string | null;
+  /**
    * The prose a person reads before the table. ReDeal shows an excerpt of it on
    * the listing row and the whole of it on the page.
    */
@@ -188,6 +199,21 @@ export interface Product {
   editorial: Editorial;
 }
 
+/**
+ * One heading inside a Category — the leaf a person actually shops in.
+ *
+ * **The Decision Context moved down a level, and this is the type that moved
+ * it.** A Category like "Sigorta Hizmetleri" is a section of the market, not a
+ * thing anybody buys; "Kasko Sigortası" is. Asking "which should I buy?"
+ * across a whole Category compares a kasko policy with a pet policy, which is
+ * arithmetic rather than advice — the same objection PRD-0004 raises against
+ * running the chat across the whole catalogue, one level down.
+ */
+export interface Subcategory {
+  id: string;
+  name: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -203,6 +229,14 @@ export interface Category {
   intake: OfferSource;
   /** The commission band the analysis records for this sector. */
   commission: string;
+  /**
+   * The headings under this Category.
+   *
+   * Ordered as the Owner wrote them, not alphabetically: the order is a claim
+   * about which headings matter most in the sector, and sorting it away would
+   * throw that away for a tidiness nobody asked for.
+   */
+  children: Subcategory[];
 }
 
 /** The four quick filters, in the order the tabs are drawn. */

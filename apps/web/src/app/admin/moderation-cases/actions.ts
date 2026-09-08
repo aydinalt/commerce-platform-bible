@@ -4,7 +4,13 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { adminPost, fetchModerationCase } from "../../../platform/api";
+import {
+  adminPost,
+  fetchModerationCase,
+  revealCaseTargetEmail
+} from "../../../platform/api";
+import { CASES } from "../../../platform/copy";
+import type { RevealState } from "../../../platform/reveal-state";
 import { actionPath, moderationRefusal } from "../../../platform/moderation";
 import { AUTH_ROUTES, SESSION_COOKIE } from "../../../identity/session";
 import {
@@ -174,4 +180,34 @@ function codeOf(body: unknown): string {
   if (typeof body !== "object" || body === null) return "";
   const code = (body as { code?: unknown }).code;
   return typeof code === "string" ? code : "";
+}
+
+/**
+ * Revealing a User Account case target's email address (I82).
+ *
+ * The Owner's rule, as a mechanism rather than a convention: an address is
+ * sensitive personal data, it never appears in a queue, and on a case page it
+ * appears only after somebody presses the control.
+ *
+ * **The address is fetched here, when the button is pressed.** It is not on the
+ * page waiting to be un-hidden. A `hidden` attribute or a client-side toggle
+ * would look the same to the Admin and be a different thing entirely: the
+ * address would have been sent to the browser for every case anybody opened,
+ * pressing the button would record nothing, and the audit trail the Owner asked
+ * for would have nothing to write down. What makes a reveal auditable is that
+ * it is a request that either happened or did not.
+ *
+ * The state is returned rather than stored: the address is on screen for as
+ * long as the page is, and a reload asks again — which is another reveal, and
+ * so another line in the log.
+ */
+export async function revealTargetEmail(
+  caseId: string,
+  _previous: RevealState
+): Promise<RevealState> {
+  const session = await sessionOrLogin();
+  const email = await revealCaseTargetEmail({ caseId, session });
+  if (email === null)
+    return { kind: "REFUSED", message: CASES.emailUnavailable };
+  return { email, kind: "SHOWN" };
 }

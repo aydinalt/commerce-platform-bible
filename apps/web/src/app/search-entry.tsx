@@ -73,6 +73,13 @@ export function SearchEntry({
           id="discovery-query"
           maxLength={400}
           name="query"
+          /*
+           * I67. The Owner's own words — *"Kelime, ilan no ile ara"* — and they
+           * are a statement of what the box accepts rather than a friendly
+           * prompt. A person who has a listing number in their hand needs to be
+           * told the box will take it; nothing else on the page says so.
+           */
+          placeholder="Kelime, ilan no ile ara"
           // The empty case is worth refusing in the browser too. The rule
           // itself lives on the server, where a submission cannot avoid it.
           required

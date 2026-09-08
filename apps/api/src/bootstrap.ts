@@ -93,9 +93,25 @@ export async function createApiApp(
   if (config.onRoute !== undefined)
     adapter.getInstance().addHook("onRoute", config.onRoute);
 
+  /*
+   * **Nest's bootstrap logger is separate from ours, and ignored `logLevel`.**
+   *
+   * `createLogger` above configures the application's logging; the framework
+   * keeps its own logger for start-up and announces every controller and every
+   * route it maps. So a caller asking for `logLevel: "fatal"` still got about
+   * a hundred and thirty `LOG` lines before anything of its own appeared —
+   * which is how the catalogue importer's report came to be buried under the
+   * routing table of an API the operator never asked to see.
+   *
+   * Silenced only at `fatal`, the quietest level the configuration offers and
+   * the one a caller picks when it means "say nothing unless we are dying".
+   * Production runs at `info`, where the start-up banner is wanted and nothing
+   * here changes.
+   */
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    adapter
+    adapter,
+    config.logLevel === "fatal" ? { logger: false } : {}
   );
 
   /*

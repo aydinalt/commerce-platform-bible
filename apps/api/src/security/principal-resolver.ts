@@ -60,6 +60,25 @@ export class PrincipalResolver {
   }
 
   /**
+   * Who is asking, where nobody has to be (I62).
+   *
+   * A public surface that reads slightly differently for a signed-in person —
+   * the product reviews, where one of them may be theirs — needs to know who
+   * they are without requiring them to be anybody. `null` is the Guest, which
+   * `US-IDN-F01-001` makes a first-class state rather than a failure, and an
+   * expired or suspended session answers the same way: the reader is a Guest,
+   * not an error.
+   */
+  async resolveOptional(request: FastifyRequest): Promise<Principal | null> {
+    if (readSessionCookie(request) === undefined) return null;
+    try {
+      return await this.resolve(request);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * The principal for an Admin-only surface.
    *
    * Authorization alone is not enough: `US-IDN-F08-001` AC-5 makes the Admin
@@ -76,5 +95,33 @@ export class PrincipalResolver {
         message: "This action requires an entered Admin context"
       });
     return principal;
+  }
+
+  /**
+   * The principal for a surface reserved to the Product Owner (I84).
+   *
+   * The Owner's decision of 2026-09-05: the audit trail is readable by the
+   * platform's own administrator and **not** by the Sub-Admins or moderators a
+   * later revision may introduce.
+   *
+   * **Today this is exactly `resolveAdmin`, and saying so is the point.** There
+   * is one Admin tier — `adminContext` — because Sub-Admin was deferred on
+   * 2026-09-03 and inventing a tier here would be building the thing that was
+   * deferred. So this method adds no check that does not already exist, and it
+   * is not a security boundary yet.
+   *
+   * What it is, is **the seam**. When a second tier arrives it will be added in
+   * one place, and every route that must not widen with it already names this
+   * method rather than the general one. The alternative — writing
+   * `resolveAdmin` here and remembering to revisit it — is how a new tier
+   * silently inherits access to the log that exists to watch it. A reader
+   * grepping for who may read the trail finds one name, and a reviewer of the
+   * Sub-Admin revision finds one place to change.
+   *
+   * `i84` asserts that the audit routes call this and not `resolveAdmin`, so
+   * the seam cannot be quietly bypassed by a later edit.
+   */
+  async resolveSuperAdmin(request: FastifyRequest): Promise<Principal> {
+    return this.resolveAdmin(request);
   }
 }

@@ -15,9 +15,15 @@ const CHECK_VIOLATION = "23514";
 export interface ModerationCaseRecord {
   availableActions: ModerationAction[];
   businessId: string | null;
+  /// I81. What the target is called, so a queue can be triaged without opening
+  /// every row. Identity only — the target's state is read to decide which
+  /// actions to offer and is never reported (AC-9).
+  businessName: string | null;
   closedAt: string | null;
   id: string;
   offeringId: string | null;
+  offeringSlug: string | null;
+  offeringTitle: string | null;
   openedAt: string;
   /// True where the owner has saved a correction that nobody has looked at
   /// since. Closure is refused while it holds (`US-PLT-F06-001` AC-10).
@@ -34,10 +40,13 @@ export interface ModerationCaseRecord {
 
 interface CaseRow {
   businessId: string | null;
+  businessName: string | null;
   closedAt: Date | null;
   id: string;
   lifecycle: "ARCHIVED" | "DRAFT" | "HIDDEN" | "PUBLISHED" | null;
   offeringId: string | null;
+  offeringSlug: string | null;
+  offeringTitle: string | null;
   lastEditAt: Date | null;
   lastReviewAt: Date | null;
   openedAt: Date;
@@ -60,6 +69,24 @@ interface CaseRow {
 const CASE_SELECT = `select c.id, c.target_type::text as "targetType",
      c.offering_id as "offeringId", c.business_id as "businessId",
      c.user_id as "userId", c.status::text as status,
+     /*
+      * **Identity, which is not state (I81).** The queue rendered every
+      * Offering case as the word "İlan", so twenty of them were twenty
+      * identical rows and an Admin had to open each to learn which listing it
+      * was about. UX-0006 §17 requires the target's identity to be
+      * perceivable, and a name is what makes it so.
+      *
+      * This is deliberately the target's **name**, never its state. The note
+      * above stands: lifecycle, restricted and suspended decide which actions
+      * to offer and are not reported, because a case that published its
+      * target's product state is the conflation AC-9 forbids. A title is not
+      * that — it is which thing the case is about.
+      *
+      * (No backticks in this comment: it sits inside a template literal, and a
+      * backtick would end the SQL string. Third time in this repository.)
+      */
+     o.title as "offeringTitle", o.slug as "offeringSlug",
+     b.name as "businessName",
      c.opened_at as "openedAt", c.closed_at as "closedAt",
      (coalesce(m.status::text, 'UNRESTRICTED') = 'RESTRICTED') as restricted,
      (u.status::text = 'SUSPENDED') as suspended,
@@ -71,6 +98,7 @@ const CASE_SELECT = `select c.id, c.target_type::text as "targetType",
       where v.case_id = c.id) as "lastReviewAt"
    from moderation_case c
    left join business_moderation_state m on m.business_id = c.business_id
+   left join business b on b.id = c.business_id
    left join user_account u on u.id = c.user_id
    left join offering o on o.id = c.offering_id`;
 
@@ -242,6 +270,39 @@ export class PgModerationRepository {
     return this.find(input.caseId);
   }
 
+  /**
+   * The email address of a User Account case's target (I82).
+   *
+   * **Deliberately not part of the case response.** The Owner's rule is that an
+   * email address never appears in an operational list, and only behind an
+   * explicit reveal on a case's own page. A field on the case would defeat that
+   * by construction: the address would already be in the page payload, and the
+   * "reveal" would be a client-side toggle over data the browser had all along
+   * — showing nothing new, recording nothing, and auditing nothing.
+   *
+   * So it is a separate read, and the reveal is a real request. That is what
+   * makes it loggable: the Owner asked for this to be an action that can be
+   * connected to an audit trail later, and only a server round-trip can be.
+   *
+   * **Scoped to a case rather than to a user id**, so the record of a reveal
+   * carries the reason it happened. "Somebody looked up an address" is a much
+   * worse audit line than "this address was revealed while working case X",
+   * and an endpoint keyed by user id could not produce the second.
+   *
+   * `null` where the case is not a User Account case, so an Offering case
+   * cannot be used as a route to somebody's address.
+   */
+  async targetEmail(caseId: string): Promise<string | null> {
+    const found = await this.pool.query<{ email: string }>(
+      `select u.email
+       from moderation_case c
+       join user_account u on u.id = c.user_id
+       where c.id = $1 and c.target_type = 'USER_ACCOUNT'`,
+      [caseId]
+    );
+    return found.rows[0]?.email ?? null;
+  }
+
   async find(id: string): Promise<ModerationCaseRecord | null> {
     const result = await this.pool.query<CaseRow>(
       `${CASE_SELECT} where c.id = $1`,
@@ -395,9 +456,15 @@ export class PgModerationRepository {
         targetType: row.targetType
       }),
       businessId: row.businessId,
+      // I81. The target's name, so a queue of cases is not a column of one
+      // repeated word. Its *state* stays out, which is what the note above the
+      // select is about.
+      businessName: row.businessName,
       closedAt: row.closedAt?.toISOString() ?? null,
       id: row.id,
       offeringId: row.offeringId,
+      offeringSlug: row.offeringSlug,
+      offeringTitle: row.offeringTitle,
       openedAt: row.openedAt.toISOString(),
       // AC-10. Outstanding exactly while the owner's most recent answer is
       // newer than the most recent look at it — an earlier review cannot

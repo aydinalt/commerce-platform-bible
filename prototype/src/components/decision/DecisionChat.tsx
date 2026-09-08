@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import { ageLabel } from "@/lib/filter";
 import { lira, stars } from "@/lib/format";
-import { categoryById } from "@/lib/products";
+import { categoryById, subcategoryById } from "@/lib/products";
 import type { Product } from "@/lib/types";
 
 /**
@@ -20,9 +20,11 @@ import type { Product } from "@/lib/types";
  * Three rules from PRD-0004 are visible in this component rather than only
  * true of it, because they are the rules that make it trustworthy:
  *
- * 1. **Exactly one Category.** The Decision Context is one leaf, so the chat
- *    cannot wander into another category mid-conversation and recommend
- *    something the criteria were never applied to.
+ * 1. **The Category is chosen before the chat starts.** The Decision Context is
+ *    established by the filter bar above — or by the address, on a category
+ *    page — and the chat then narrows *inside* it. It cannot wander into
+ *    another category mid-conversation and recommend something the criteria
+ *    were never applied to.
  * 2. **The chat executes nothing.** It narrows and explains; the person
  *    selects. There is no path from a reply straight to a merchant, which is
  *    the difference between a guide and an advertisement.
@@ -34,13 +36,44 @@ import type { Product } from "@/lib/types";
  * chat port; this one is a decision tree over the products actually on screen,
  * so the shape can be judged without an API key and without spending anything.
  * Every answer below is computed from the catalogue, never written by hand.
+ *
+ * ## Where the first question comes from
+ *
+ * The Category is a precondition, not a question. Once it is set, **this panel
+ * asks nothing about it — it reads the Category's headings and offers exactly
+ * those.** Choosing "Sigorta Hizmetleri" above means question one is already a
+ * list of kasko, trafik, DASK and the rest; there is no second place to pick a
+ * category and therefore no way for the two to disagree.
+ *
+ * That is also why the taxonomy lives on the Category (`Category.children`)
+ * rather than in this file. A heading list written here would be a second copy
+ * of the catalogue's own structure, and the copy is the thing that goes stale.
+ *
+ * ## Why question one is no longer the budget
+ *
+ * It used to be "Bütçeniz hangi aralıkta?", which asked a second time for
+ * something the page had already been told. **The budget is set in the filter
+ * bar above, and the products handed to this component have already been
+ * narrowed by it** — so a band chosen here could only ever agree with the bar
+ * or contradict it, and there is no useful version of contradicting it. A
+ * control that cannot disagree with another control is not a question; it is a
+ * duplicate. The bar's budget now flows straight through, and the panel says
+ * so rather than re-asking.
+ *
+ * What the question became instead is the one the catalogue could not answer
+ * before: **which heading.** A Category is a section of the market — nobody
+ * buys "Sigorta Hizmetleri". They buy a kasko policy, or a DASK policy, and
+ * those two have nothing in common except the section they are filed under.
+ * Ranking them against each other by rating and stock was arithmetic dressed
+ * as advice. With headings in the catalogue the Decision Context is a leaf,
+ * and the shortlist is finally a comparison of things that compete.
  */
 
 type Priority = "ucuz" | "yeni" | "puan" | "secenek";
 type Urgency = "hemen" | "beklerim";
 
 interface Answers {
-  band: [number, number] | null;
+  subcategoryId: string | null;
   priority: Priority | null;
   urgency: Urgency | null;
 }
@@ -57,28 +90,6 @@ const URGENCY_LABELS: Record<Urgency, string> = {
   hemen: "Hemen lazım, stokta olmalı"
 };
 
-/** Three price bands derived from the products actually in scope. */
-function bands(products: Product[]): { label: string; range: [number, number] }[] {
-  // Unpriced Offerings have no position in a price band, so they do not shape
-  // one either — including a zero would drag every band's floor to nothing.
-  const prices = products
-    .filter((product) => product.pricingKind === "FIXED")
-    .map((product) => product.lowestPrice)
-    .sort((a, b) => a - b);
-  const low = prices[0] ?? 0;
-  const high = prices[prices.length - 1] ?? 0;
-  const third = Math.round((high - low) / 3);
-  if (third < 1) return [{ label: "Fark etmez", range: [0, Number.MAX_SAFE_INTEGER] }];
-  return [
-    { label: `${lira(low)} – ${lira(low + third)}`, range: [0, low + third] },
-    {
-      label: `${lira(low + third)} – ${lira(low + third * 2)}`,
-      range: [low + third, low + third * 2]
-    },
-    { label: `${lira(low + third * 2)} ve üzeri`, range: [low + third * 2, high] }
-  ];
-}
-
 /** Why a candidate is in the shortlist, in the person's own criteria. */
 function reason(product: Product, priority: Priority): string {
   if (product.pricingKind === "ON_REQUEST")
@@ -92,48 +103,143 @@ function reason(product: Product, priority: Priority): string {
   return `${product.offerCount} satıcı fiyat veriyor; en düşüğü ${lira(product.lowestPrice)}.`;
 }
 
+/** The shared chip, so a selected heading and a selected priority look alike. */
+function Chip({
+  children,
+  count,
+  disabled = false,
+  onClick,
+  selected
+}: {
+  children: React.ReactNode;
+  /** Shown when the chip stands for a set of products; omitted otherwise. */
+  count?: number;
+  disabled?: boolean;
+  onClick: () => void;
+  selected: boolean;
+}) {
+  return (
+    <button
+      aria-pressed={selected}
+      className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors ${
+        selected
+          ? "border-sky-600 bg-sky-700 text-white"
+          : disabled
+            ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400"
+            : "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
+      }`}
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      <span>{children}</span>
+      {count === undefined ? null : (
+        <span
+          className={`tabular-nums text-[11px] ${
+            selected ? "text-sky-100" : "text-slate-400"
+          }`}
+        >
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export function DecisionChat({
   products,
-  categoryId
+  categoryId,
+  amount,
+  maxAmount
 }: {
   /** The results currently on screen — the chat narrows these, not the whole
    *  catalogue, so its answer and the list agree. */
   products: Product[];
   categoryId: string;
+  /** The budget ceiling from the bar above, reported rather than re-asked. */
+  amount: number;
+  /** The ceiling's ceiling, so "set" can be told from "not narrowed". */
+  maxAmount: number;
 }) {
   const [open, setOpen] = useState(false);
   const [answers, setAnswers] = useState<Answers>({
-    band: null,
     priority: null,
+    subcategoryId: null,
     urgency: null
   });
 
-  const category = categoryById(categoryId);
   const scoped = products;
-  const priceBands = bands(scoped);
-
-  const reset = () => setAnswers({ band: null, priority: null, urgency: null });
 
   /*
-   * The Decision Context is one Category. Offering the chat across "Tüm
-   * kategoriler" would let it compare a monitor with a moisturiser, and the
-   * shortlist it produced would be arithmetic rather than advice.
+   * The Decision Context is one Category, and it is set before the chat opens.
+   * Offering the chat across "Tüm kategoriler" would let it compare a monitor
+   * with a moisturiser, and the shortlist it produced would be arithmetic
+   * rather than advice.
    */
   const contextMissing = categoryId === "all";
 
+  /**
+   * The Category whose headings question one offers.
+   *
+   * Read from the catalogue by the id the bar above holds — **not stored here
+   * and not chosen here.** A second selector inside this panel would be two
+   * controls over one fact, and on a category page it would also be a control
+   * that can disagree with the URL.
+   */
+  const category = useMemo(
+    () => (contextMissing ? null : (categoryById(categoryId) ?? null)),
+    [categoryId, contextMissing]
+  );
+
+  /**
+   * How many of the products on screen sit under each heading.
+   *
+   * Counted from `scoped`, which is the budget-narrowed list — so a heading
+   * reading `0` is telling the truth about *this* budget, not about the
+   * catalogue. That is the whole reason the budget is not asked for again: it
+   * is already inside every number on this panel.
+   */
+  const headingCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const product of scoped) {
+      if (product.subcategoryId === null) continue;
+      counts[product.subcategoryId] = (counts[product.subcategoryId] ?? 0) + 1;
+    }
+    return counts;
+  }, [scoped]);
+
+  /**
+   * The chosen heading, but only while it still belongs to the Category.
+   *
+   * **Derived rather than cleared in an effect.** Changing the Category in the
+   * bar above leaves `answers.subcategoryId` holding a heading from the old
+   * one; filtering on it would find nothing and the panel would say "bu
+   * ölçütlere uyan ürün yok" — a wrong answer, and a confident one, to a
+   * question the person had not finished asking. Reading the answer through
+   * the current Category makes the stale value unreachable instead of
+   * racing an effect to erase it.
+   */
+  const heading =
+    category?.children.some((child) => child.id === answers.subcategoryId) ===
+    true
+      ? answers.subcategoryId
+      : null;
+
+  const reset = () =>
+    setAnswers({ priority: null, subcategoryId: null, urgency: null });
+
+  const budgetSet = amount < maxAmount;
+
   const shortlist = (() => {
-    if (answers.band === null || answers.priority === null || answers.urgency === null)
+    if (heading === null || answers.priority === null || answers.urgency === null)
       return [];
-    const [low, high] = answers.band;
     const candidates = scoped.filter((product) => {
       /*
-       * A budget band cannot include or exclude something with no amount, so
-       * an On Request Offering stays a candidate on every band — and its
-       * reason line says why it has no figure beside it.
+       * One heading, and only that heading. This is the leaf the criteria are
+       * applied to, and it is the line that makes the shortlist a comparison
+       * rather than a ranking of unrelated things that share a section.
        */
-      if (product.pricingKind === "FIXED") {
-        if (product.lowestPrice < low || product.lowestPrice > high) return false;
-      }
+      if (product.subcategoryId !== heading) return false;
       if (answers.urgency === "hemen")
         return product.offers.some((offer) => offer.stock !== null);
       return true;
@@ -157,7 +263,16 @@ export function DecisionChat({
   })();
 
   const answered =
-    answers.band !== null && answers.priority !== null && answers.urgency !== null;
+    heading !== null && answers.priority !== null && answers.urgency !== null;
+
+  const chosenHeading = heading === null ? null : subcategoryById(heading);
+
+  /** Headings with nothing under them right now, so the panel can say so. */
+  const emptyHeadings =
+    category === null
+      ? 0
+      : category.children.filter((child) => (headingCounts[child.id] ?? 0) === 0)
+          .length;
 
   return (
     <section
@@ -198,7 +313,7 @@ export function DecisionChat({
 
         {!open ? null : (
           <div className="border-t border-sky-200 px-5 py-5">
-            {contextMissing ? (
+            {contextMissing || category === null ? (
               /*
                 Not a failure message — a missing precondition, named. The
                 Decision Context is one Category, and the honest answer to
@@ -206,17 +321,33 @@ export function DecisionChat({
                 question has not been asked yet.
               */
               <p className="text-[15px] text-slate-700">
-                Önce bir kategori seçin. Karar sohbeti tek bir kategori içinde
-                çalışır — çünkü iki kategoriyi karşılaştıran bir öneri, aslında
-                hiçbir şeyi karşılaştırmamış olur.
+                Önce yukarıdan bir kategori seçin. Karar sohbeti tek bir
+                kategori içinde çalışır — çünkü iki kategoriyi karşılaştıran bir
+                öneri, aslında hiçbir şeyi karşılaştırmamış olur. Kategoriyi
+                seçtiğinizde o kategorinin başlıkları buraya kendiliğinden
+                gelir.
               </p>
             ) : (
               <>
                 <p className="mb-4 text-[13px] text-slate-500">
                   <strong className="font-semibold text-slate-700">
-                    {category?.name}
+                    {category.name}
                   </strong>{" "}
-                  içinde {scoped.length} ürün. Bu sohbet yalnızca bu oturum
+                  içinde {scoped.length} ürün
+                  {budgetSet ? (
+                    <>
+                      , yukarıdaki{" "}
+                      <strong className="font-semibold text-slate-700">
+                        {lira(amount)} bütçe sınırı
+                      </strong>{" "}
+                      uygulanmış hâlde.{" "}
+                    </>
+                  ) : (
+                    <> — bütçe sınırı uygulanmıyor. </>
+                  )}
+                  Bütçeyi yukarıdaki çubuktan değiştirdiğinizde bu panel de,
+                  aşağıdaki liste de birlikte değişir; burada ikinci kez
+                  sorulmamasının sebebi bu. Bu sohbet yalnızca bu oturum
                   içindir; hiçbir yanıtınız hesabınıza veya başka bir akışa
                   taşınmaz.
                 </p>
@@ -224,35 +355,62 @@ export function DecisionChat({
                 {/* ------------------------------------------- question one */}
                 <div className="mb-4">
                   <p className="mb-2 text-[15px] font-medium text-slate-900">
-                    1. Bütçeniz hangi aralıkta?
+                    1. Hangi başlıkta ürünü görmek istersin?
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {priceBands.map((band) => {
-                      const chosen =
-                        answers.band?.[0] === band.range[0] &&
-                        answers.band[1] === band.range[1];
+
+                  {/*
+                    A labelled group, not a bare row of buttons.
+
+                    Three sets of chips sit in this panel and they answer three
+                    different questions. Without the labels a screen reader
+                    reads them as one long run of toggles, and the count on a
+                    heading chip — which only means something as "how many
+                    listings are under this heading" — becomes a loose number
+                    beside a word.
+                  */}
+                  <div
+                    aria-label="Başlıklar"
+                    className="flex flex-wrap gap-2"
+                    role="group"
+                  >
+                    {category.children.map((child) => {
+                      const count = headingCounts[child.id] ?? 0;
                       return (
-                        <button
-                          aria-pressed={chosen}
-                          className={`rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors ${
-                            chosen
-                              ? "border-sky-600 bg-sky-700 text-white"
-                              : "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
-                          }`}
-                          key={band.label}
+                        <Chip
+                          count={count}
+                          disabled={count === 0}
+                          key={child.id}
                           onClick={() =>
                             setAnswers((current) => ({
                               ...current,
-                              band: band.range
+                              subcategoryId: child.id
                             }))
                           }
-                          type="button"
+                          selected={heading === child.id}
                         >
-                          {band.label}
-                        </button>
+                          {child.name}
+                        </Chip>
                       );
                     })}
                   </div>
+
+                  {/*
+                    An empty heading is shown rather than hidden, and the count
+                    says why. Hiding it would make the taxonomy look smaller
+                    than it is and leave a person unable to tell "no listings
+                    yet" apart from "we do not cover this" — which are opposite
+                    answers to the question they came with.
+                  */}
+                  {emptyHeadings === 0 ? null : (
+                    <p className="mt-2 text-[12px] text-slate-500">
+                      Soluk görünen {emptyHeadings} başlıkta{" "}
+                      {budgetSet
+                        ? "bu bütçe sınırında listelenecek ilan yok"
+                        : "henüz ilan yok"}
+                      . Başlık duruyor, altı boş — kapsam dışı olduğu için
+                      değil.
+                    </p>
+                  )}
                 </div>
 
                 {/* ------------------------------------------- question two */}
@@ -260,23 +418,21 @@ export function DecisionChat({
                   <p className="mb-2 text-[15px] font-medium text-slate-900">
                     2. Sizin için hangisi daha önemli?
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div
+                    aria-label="Öncelikler"
+                    className="flex flex-wrap gap-2"
+                    role="group"
+                  >
                     {(Object.keys(PRIORITY_LABELS) as Priority[]).map((key) => (
-                      <button
-                        aria-pressed={answers.priority === key}
-                        className={`rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors ${
-                          answers.priority === key
-                            ? "border-sky-600 bg-sky-700 text-white"
-                            : "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
-                        }`}
+                      <Chip
                         key={key}
                         onClick={() =>
                           setAnswers((current) => ({ ...current, priority: key }))
                         }
-                        type="button"
+                        selected={answers.priority === key}
                       >
                         {PRIORITY_LABELS[key]}
-                      </button>
+                      </Chip>
                     ))}
                   </div>
                 </div>
@@ -286,23 +442,21 @@ export function DecisionChat({
                   <p className="mb-2 text-[15px] font-medium text-slate-900">
                     3. Ne zaman lazım?
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div
+                    aria-label="Aciliyet"
+                    className="flex flex-wrap gap-2"
+                    role="group"
+                  >
                     {(Object.keys(URGENCY_LABELS) as Urgency[]).map((key) => (
-                      <button
-                        aria-pressed={answers.urgency === key}
-                        className={`rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors ${
-                          answers.urgency === key
-                            ? "border-sky-600 bg-sky-700 text-white"
-                            : "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
-                        }`}
+                      <Chip
                         key={key}
                         onClick={() =>
                           setAnswers((current) => ({ ...current, urgency: key }))
                         }
-                        type="button"
+                        selected={answers.urgency === key}
                       >
                         {URGENCY_LABELS[key]}
-                      </button>
+                      </Chip>
                     ))}
                   </div>
                 </div>
@@ -323,7 +477,8 @@ export function DecisionChat({
                       Bu ölçütlere uyan ürün yok.
                     </p>
                     <p className="mt-1 text-[13px] text-slate-600">
-                      Bütçeyi genişletmeyi ya da "hemen lazım" koşulunu
+                      Yukarıdaki bütçe sınırını genişletmeyi, başka bir başlık
+                      seçmeyi ya da &ldquo;hemen lazım&rdquo; koşulunu
                       kaldırmayı deneyin.
                     </p>
                     <button
@@ -337,7 +492,10 @@ export function DecisionChat({
                 ) : (
                   <div>
                     <p className="mb-3 text-[15px] text-slate-800">
-                      Ölçütlerinize göre{" "}
+                      <strong className="font-semibold">
+                        {category.name} › {chosenHeading?.name}
+                      </strong>{" "}
+                      başlığında ölçütlerinize göre{" "}
                       <strong className="font-semibold">
                         {shortlist.length} ürün
                       </strong>{" "}
@@ -400,9 +558,9 @@ export function DecisionChat({
                 )}
 
                 <p className="mt-4 border-t border-sky-200 pt-3 text-[12px] leading-relaxed text-slate-500">
-                  Bu öneriler yalnızca ekrandaki ürünler ve verdiğiniz üç yanıt
-                  üzerinden hesaplanır. Sizin adınıza bir satın alma yapılmaz ve
-                  hiçbir satıcıya öncelik tanınmaz.
+                  Bu öneriler yalnızca ekrandaki ürünler, yukarıdaki bütçe sınırı
+                  ve verdiğiniz üç yanıt üzerinden hesaplanır. Sizin adınıza bir
+                  satın alma yapılmaz ve hiçbir satıcıya öncelik tanınmaz.
                 </p>
               </>
             )}

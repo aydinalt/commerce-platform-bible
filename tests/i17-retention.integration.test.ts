@@ -4,7 +4,11 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { PgDecisionRepository } from "../apps/api/src/persistence/pg-decision.repository.js";
-import { OUTBOX_RETENTION_MS } from "../packages/database/src/index.js";
+import {
+  FEED_RUN_RETENTION_MS,
+  LISTING_REPORT_RETENTION_MS,
+  OUTBOX_RETENTION_MS
+} from "../packages/database/src/index.js";
 import { RetentionSweeper } from "../apps/worker/src/retention.sweeper.js";
 
 const enabled = Boolean(process.env.DATABASE_URL);
@@ -56,6 +60,47 @@ suite("Increment I17 retention sweep", () => {
       .replaceAll("-", "")
       .padEnd(64, "0")
       .slice(0, 64);
+
+  /**
+   * A Business and a Published Offering under it, written directly (I77).
+   *
+   * The two windows added by I77 hang off rows this suite otherwise has no
+   * reason to create. Built in SQL rather than through the API because what is
+   * being tested is a `delete`, and going through registration and publication
+   * to reach it would make the case about everything except the sweep.
+   */
+  const reportableOffering = async (): Promise<string> => {
+    const businessId = randomUUID();
+    await pool.query(
+      `insert into business (id,slug,name,status) values ($1,$2,$3,'ACTIVE')`,
+      [businessId, `ret-${businessId}`, `Retention ${businessId.slice(0, 8)}`]
+    );
+    const offeringId = randomUUID();
+    await pool.query(
+      `insert into offering
+         (id,business_id,category_id,slug,title,status,published_at)
+       values ($1,$2,$3,$4,'Retention', 'PUBLISHED', now())`,
+      [offeringId, businessId, categoryId, `ret-${offeringId}`]
+    );
+    return offeringId;
+  };
+
+  const feedForRetention = async (): Promise<string> => {
+    const businessId = randomUUID();
+    await pool.query(
+      `insert into business (id,slug,name,status) values ($1,$2,$3,'ACTIVE')`,
+      [businessId, `retf-${businessId}`, `Retention ${businessId.slice(0, 8)}`]
+    );
+    const feedId = randomUUID();
+    await pool.query(
+      `insert into offering_feed
+         (id,business_id,category_id,name,document_url,format,
+          map_external_id,map_title)
+       values ($1,$2,$3,$4,'https://partner.test/x.xml','XML','sku','name')`,
+      [feedId, businessId, categoryId, `Retention ${feedId.slice(0, 8)}`]
+    );
+    return feedId;
+  };
 
   beforeAll(async () => {
     await pool.query(
@@ -305,15 +350,96 @@ suite("Increment I17 retention sweep", () => {
     // A second pass over ground already swept. The shape is what a caller logs,
     // and a sweep that removed nothing has to be able to say so — otherwise a
     // sweep deleting thousands of rows every cycle looks like every other one.
+    /*
+     * Nine since I77 added the two windows the Owner set on 2026-09-03: a
+     * reviewed Listing Report is deleted after 180 days, and a feed run after
+     * 30. Both are named here rather than counted, so a window added without a
+     * decision fails this case and has to be argued for out loud.
+     */
     expect(Object.keys(counts).sort()).toEqual([
       "authThrottles",
       "comparisonSets",
       "decisionFlows",
+      "feedRuns",
+      "listingReports",
       "outboxEvents",
       "passwordResets",
       "pendingRegistrations",
       "sessions"
     ]);
     expect(Object.values(counts).every((n) => Number.isInteger(n))).toBe(true);
+  });
+
+  it("keeps an Open Listing Report for ever and sweeps a reviewed one at 180 days", async () => {
+    /*
+     * **`status <> 'OPEN'` is the whole rule and it is load-bearing.** A queue
+     * that deleted work nobody had done would lose the report *and* the fact
+     * that it was never answered — and the second is the more damaging loss,
+     * because it is the one that hides a queue nobody is reading.
+     */
+    const offeringId = await reportableOffering();
+    const [open, reviewedOld, reviewedRecent] = [
+      randomUUID(),
+      randomUUID(),
+      randomUUID()
+    ];
+    const days = Math.ceil(LISTING_REPORT_RETENTION_MS / (24 * 60 * 60 * 1000));
+
+    await pool.query(
+      `insert into listing_report
+         (id, offering_id, reason, status, submitted_at, reviewed_by, reviewed_at)
+       values
+         ($1,$4,'PRICE_WRONG','OPEN', now() - ($5 || ' days')::interval, null, null),
+         ($2,$4,'PRICE_WRONG','DISMISSED', now() - ($5 || ' days')::interval,
+          $6, now() - ($5 || ' days')::interval),
+         ($3,$4,'PRICE_WRONG','ACCEPTED', now(), $6, now())`,
+      [open, reviewedOld, reviewedRecent, offeringId, String(days + 1), userId]
+    );
+
+    await sweeper.sweep();
+    const surviving = await pool.query<{ id: string }>(
+      `select id from listing_report where id = any($1::uuid[])`,
+      [[open, reviewedOld, reviewedRecent]]
+    );
+    const ids = surviving.rows.map((row) => row.id).sort();
+    // The old *reviewed* report is gone. The old *open* one is not, whatever
+    // its age, and neither is the one reviewed today.
+    expect(ids).toEqual([open, reviewedRecent].sort());
+  });
+
+  it("takes a feed run's rejections with it", async () => {
+    /*
+     * `offering_feed_rejection` cascades from `offering_feed_run`, which is why
+     * the sweep names only the run. Asserted rather than assumed: a cascade
+     * somebody changes to `RESTRICT` later would make this sweep fail loudly
+     * instead of leaving orphans nobody counts.
+     */
+    const feedId = await feedForRetention();
+    const days = Math.ceil(FEED_RUN_RETENTION_MS / (24 * 60 * 60 * 1000));
+    const old = randomUUID();
+    const recent = randomUUID();
+
+    await pool.query(
+      `insert into offering_feed_run (id, feed_id, outcome, started_at, message)
+       values ($1,$3,'FAILED', now() - ($4 || ' days')::interval, 'x'),
+              ($2,$3,'FAILED', now(), 'y')`,
+      [old, recent, feedId, String(days + 1)]
+    );
+    await pool.query(
+      `insert into offering_feed_rejection (run_id, reason) values ($1,'r')`,
+      [old]
+    );
+
+    await sweeper.sweep();
+    const runs = await pool.query<{ id: string }>(
+      `select id from offering_feed_run where id = any($1::uuid[])`,
+      [[old, recent]]
+    );
+    expect(runs.rows.map((row) => row.id)).toEqual([recent]);
+    const orphans = await pool.query<{ count: string }>(
+      `select count(*) as count from offering_feed_rejection where run_id = $1`,
+      [old]
+    );
+    expect(orphans.rows[0]?.count).toBe("0");
   });
 });

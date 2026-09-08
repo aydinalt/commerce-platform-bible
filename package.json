@@ -28,7 +28,8 @@
       "sharp": "0.35.3"
     },
     "valibot": "1.4.2",
-    "deepmerge-ts": "^8.0.0"
+    "deepmerge-ts": "^8.0.0",
+    "fast-uri": "^3.1.7"
   },
   "scripts": {
     "admin:grant": "node scripts/admin.mjs grant",
@@ -40,19 +41,25 @@
     "db:drift": "prisma migrate diff --from-config-datasource --to-schema packages/database/prisma/schema.prisma --exit-code",
     "db:validate": "prisma validate",
     "dev": "npm run dev --workspace=@commerce/web",
+    "dev:reset": "node scripts/reset-development.mjs",
     "dev:api": "npm run dev --workspace=@commerce/api",
     "dev:worker": "npm run dev --workspace=@commerce/worker",
+    "first-run": "node scripts/first-run.mjs",
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,json}\" \"packages/**/*.{ts,json}\" \"modules/**/*.{ts,json}\" \"tests/**/*.ts\" \"generated/**/*.json\" \"*.{json,mjs,ts,yaml}\"",
     "lint": "eslint .",
     "openapi:generate": "npm run openapi:generate --workspace=@commerce/api",
+    "prototype:typecheck": "tsc --noEmit -p prototype/tsconfig.json",
     "security:audit": "npm audit --audit-level=high",
-    "first-run": "node scripts/first-run.mjs",
+    "seed:attributes": "node scripts/seed-attributes.mjs",
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "import:catalogue": "node scripts/import-catalogue.mjs",
+    "seed:taxonomy": "node scripts/seed-taxonomy.mjs",
     "smoke": "node scripts/smoke.mjs",
     "test": "vitest run",
-    "prototype:typecheck": "tsc --noEmit -p prototype/tsconfig.json",
     "typecheck": "tsc -b --pretty false",
-    "verify": "npm run db:validate && npm run db:drift && npm run openapi:generate && npm run format:check && npm run typecheck && npm run prototype:typecheck && npm run lint && npm run boundaries && npm run test && npm run security:audit && npm run build",
-    "verify:ci": "npm run verify && git diff --exit-code -- generated/openapi.json"
+    "verify:core": "npm run db:validate && npm run db:drift && npm run openapi:generate && npm run format:check && npm run typecheck && npm run prototype:typecheck && npm run lint && npm run boundaries && npm run test && npm run build",
+    "verify": "npm run verify:core && npm run security:audit",
+    "verify:ci": "npm run verify:core && git diff --exit-code -- generated/openapi.json"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -32,8 +32,23 @@ const passwordSchema = z
   .min(PASSWORD_MIN_LENGTH)
   .max(PASSWORD_MAX_LENGTH);
 
+/**
+ * The name the Owner's registration dialog has asked for from the first
+ * prototype ("Adınız"), and the platform used to discard (I62).
+ *
+ * Optional, because it is optional in the form it comes from and because every
+ * account created before this field existed has none. What it buys is a byline:
+ * a product review needs a name on it, and the alternative to a supplied one is
+ * either an email address in public or an invented handle.
+ */
+const displayNameSchema = z.string().trim().min(1).max(80);
+
 export const beginRegistrationSchema = z
-  .object({ email: emailSchema, password: passwordSchema })
+  .object({
+    email: emailSchema,
+    name: displayNameSchema.nullish().transform((value) => value ?? null),
+    password: passwordSchema
+  })
   .strict();
 
 export const confirmRegistrationSchema = z
@@ -1004,6 +1019,50 @@ const coreFlowCountSchema = z
  * nothing else — no entry performs anything, and there is no field for one
  * that would.
  */
+/**
+ * Affiliate Handoff Rate (`PRD-0006-platform.md` v2.5 §11.6).
+ *
+ * **`rate` is `null`, never `0`, when nobody has opened the listing.** The
+ * Owner made the distinction explicitly on 2026-09-03 — an Offering with no
+ * Presentation Opens has *no rate*, and `0%` would read as "nobody chose this"
+ * when the truth is "nobody has looked". §11.6.3 requires the absence to be
+ * stated as an absence.
+ *
+ * Both terms are occurrences §11.2 already counts, so nothing here is measured:
+ * §11.6.1. And §11.6.3 forbids the rate reaching Discovery ordering or any
+ * public surface, which is why it lives in the Admin analytics payload and
+ * nowhere else.
+ */
+const handoffRateSchema = z
+  .object({
+    handoffs: z.number().int().min(0),
+    opens: z.number().int().min(0),
+    /** A fraction between 0 and 1, or `null` where `opens` is zero. */
+    rate: z.number().min(0).max(1).nullable()
+  })
+  .strict();
+
+export const affiliateHandoffRateSchema = z
+  .object({
+    /**
+     * The most-opened listings, with the rate for each.
+     *
+     * Bounded and ordered by Presentation Opens rather than by rate, because a
+     * listing opened twice and handed off once has a rate of 50% and tells
+     * nobody anything. The question an Admin has is about the links people
+     * actually reach.
+     */
+    byOffering: z.array(
+      handoffRateSchema.extend({
+        offeringId: z.string().uuid(),
+        slug: z.string(),
+        title: z.string()
+      })
+    ),
+    overall: handoffRateSchema
+  })
+  .strict();
+
 export const analyticsSchema = z
   .object({
     actionable: z
@@ -1019,6 +1078,8 @@ export const analyticsSchema = z
         validationResult: tally
       })
       .strict(),
+    /** §11.6, added by v2.5 at the Owner's request. */
+    affiliateHandoffRate: affiliateHandoffRateSchema,
     businesses: tally,
     coreFlow: z
       .object({
@@ -1076,6 +1137,22 @@ export const moderationCaseSchema = z
     /// Offering case is the Business that will answer for it.
     businessId: z.string().uuid().nullable(),
     offeringId: z.string().uuid().nullable(),
+    /**
+     * What the target is called (I81).
+     *
+     * **Identity, not state.** UX-0006 §17 requires the target's identity to
+     * be perceivable, and an id is only nominally that: a queue of twenty
+     * Offering cases rendered as twenty copies of the word "İlan" is a queue
+     * nobody can triage. The target's lifecycle, restriction and suspension
+     * stay out of this response for the reason AC-9 gives; a name is which
+     * thing the case concerns, not how that thing is doing.
+     *
+     * Nullable because each is present only for the target type that has it,
+     * and `null` for an Offering deleted since the case was opened.
+     */
+    businessName: z.string().nullable(),
+    offeringSlug: z.string().nullable(),
+    offeringTitle: z.string().nullable(),
     /// True while the owner has answered a correction and nobody has looked
     /// since. Closure is refused while it holds.
     reReviewRequired: z.boolean(),
@@ -1093,6 +1170,112 @@ export const moderationCaseSchema = z
     userId: z.string().uuid().nullable()
   })
   .strict();
+
+/**
+ * The revealed address of a User Account case's target (I82).
+ *
+ * A response of its own rather than a field on the case, because the Owner's
+ * PII rule turns on *when* the address travels: never in a list, and on a case
+ * page only after somebody asks. A field would put it in every payload and
+ * leave the button decorating data the browser already held.
+ */
+export const caseTargetEmailSchema = z
+  .object({ email: z.string().email() })
+  .strict();
+
+/**
+ * One account, as the Admin register shows it (I83).
+ *
+ * **No email address, and that is the schema doing the enforcing.** The Owner's
+ * PII rule says an address never appears in an operational list; a contract
+ * with nowhere to put one cannot be made to leak one by a later change to a
+ * query. The address is reachable on a Moderation Case, behind an explicit
+ * reveal, recorded in the audit trail.
+ *
+ * `isAdmin` is here because it changes what an Admin may do: an
+ * Admin-authorized account may not be suspended from this surface at all
+ * (`US-PLT-F05-001` AC-5), and a control offered and then refused is worse than
+ * one never offered.
+ */
+export const ADMIN_AUDIT_ACTIONS = [
+  "PII_VIEW",
+  "REQUEST_CORRECTION",
+  "HIDE_OFFERING",
+  "RESTORE_OFFERING",
+  "RESTRICT_BUSINESS",
+  "RESTORE_BUSINESS",
+  "SUSPEND_USER",
+  "REINSTATE_USER",
+  "CASE_OPEN",
+  /*
+   * I87. The affiliate destination's Admin acts, which the Owner called the
+   * platform's most consequential: they are what turns a handoff — the thing
+   * that earns — on and off. Validation is two values rather than one because
+   * the row has no free-text field, so a single `VALIDATE_DESTINATION` would
+   * record that an address was judged and lose the judgement.
+   */
+  "REVIEW_DESTINATION",
+  "VALIDATE_DESTINATION_VALID",
+  "VALIDATE_DESTINATION_INVALID",
+  "ENABLE_DESTINATION",
+  "DISABLE_DESTINATION"
+] as const;
+
+/**
+ * One line of the Admin audit trail (I84).
+ *
+ * **Carries no email address and no name**, like everything else on the Admin
+ * surfaces: an actor and a target are account ids. A trail that named people
+ * would be a second place personal data lives, and the one place nobody would
+ * think to look for it.
+ */
+export const adminAuditEventSchema = z
+  .object({
+    actionType: z.enum(ADMIN_AUDIT_ACTIONS),
+    actorId: z.string().uuid(),
+    /// The case the action was taken under, where there was one.
+    caseId: z.string().uuid().nullable(),
+    id: z.string(),
+    occurredAt: z.string().datetime(),
+    targetId: z.string().uuid().nullable()
+  })
+  .strict();
+
+export const adminAuditEventsSchema = z
+  .object({
+    events: z.array(adminAuditEventSchema),
+    /// Where this page starts, so a reader can tell page three from page one.
+    offset: z.number().int().min(0),
+    total: z.number().int().min(0)
+  })
+  .strict();
+
+export type AdminAuditAction = (typeof ADMIN_AUDIT_ACTIONS)[number];
+export type AdminAuditEvent = z.infer<typeof adminAuditEventSchema>;
+export type AdminAuditEvents = z.infer<typeof adminAuditEventsSchema>;
+
+export const adminUserAccountSchema = z
+  .object({
+    /// How many Businesses this account owns. Its own footprint, not anybody
+    /// else's data.
+    businessCount: z.number().int().min(0),
+    isAdmin: z.boolean(),
+    registeredAt: z.string().datetime(),
+    reviewCount: z.number().int().min(0),
+    status: z.enum(["ENABLED", "PENDING_VERIFICATION", "SUSPENDED"]),
+    userId: z.string().uuid()
+  })
+  .strict();
+
+export const adminUserAccountsSchema = z
+  .object({
+    accounts: z.array(adminUserAccountSchema),
+    total: z.number().int().min(0)
+  })
+  .strict();
+
+export type AdminUserAccount = z.infer<typeof adminUserAccountSchema>;
+export type AdminUserAccounts = z.infer<typeof adminUserAccountsSchema>;
 
 export const moderationCasesSchema = z
   .object({ cases: z.array(moderationCaseSchema) })
@@ -1143,6 +1326,7 @@ export const recordReReviewSchema = z
   .strict();
 
 export type ModerationCase = z.infer<typeof moderationCaseSchema>;
+export type CaseTargetEmail = z.infer<typeof caseTargetEmailSchema>;
 export type ModerationCases = z.infer<typeof moderationCasesSchema>;
 export type OpenModerationCase = z.infer<typeof openModerationCaseSchema>;
 export type RecordNoAction = z.infer<typeof recordNoActionSchema>;
@@ -1536,6 +1720,149 @@ export type AvailableFilterResponse = z.infer<typeof availableFilterSchema>;
 export type AppliedFilterInput = z.infer<typeof appliedFilterSchema>;
 
 /**
+ * A Price Constraint (`US-DSC-F11-001`, PRD-0002 v2.5 §5.5A).
+ *
+ * **Deliberately not an `appliedFilterSchema` member.** Every Filter in that
+ * union begins from an `attributeId`, because a Filter *is* an Attribute whose
+ * `filterable` property is enabled — and price is not an Attribute. §5.5A
+ * defines this as the one criterion that is not one, so it travels as its own
+ * field rather than as a fourth kind in a union whose shape would then have to
+ * lie about what it holds.
+ *
+ * The amounts are decimal **strings**, like every other amount in this file. A
+ * budget expressed as a float is a budget that can miss its own boundary by a
+ * kuruş, and the boundary is inclusive precisely so that a person who types
+ * their exact limit sees the thing that costs exactly that.
+ *
+ * `currency` is required and never defaulted. §10.6.2 refuses to convert
+ * between currencies, so a constraint that did not say which currency it was
+ * in would have to guess — and a guessed currency is a wrong answer that looks
+ * like a right one.
+ */
+export const priceConstraintSchema = z
+  .object({
+    currency: currencySchema,
+    /// Inclusive. `null` is "no upper bound", not "zero".
+    maxAmount: optionalMoneyAmountSchema,
+    /// Inclusive. `null` is "no lower bound".
+    minAmount: optionalMoneyAmountSchema
+  })
+  .strict()
+  /*
+   * At least one bound. A constraint with neither is not a narrowing, and
+   * accepting it would put a criterion on screen that changes nothing — which
+   * §9A.3 makes worse, because the surface would then display a bound a person
+   * cannot see the effect of.
+   */
+  .refine((price) => price.maxAmount !== null || price.minAmount !== null, {
+    error: "PRICE_CONSTRAINT_HAS_NO_BOUND"
+  });
+
+export type PriceConstraintInput = z.infer<typeof priceConstraintSchema>;
+
+/**
+ * The constraint as a request carries it: present, or absent.
+ *
+ * §10.6.3 is *not* enforced here. A lower bound above an upper one is a valid
+ * constraint that admits nothing, and the document says so in those words —
+ * refusing it would answer a person's question with an error where the honest
+ * answer is Zero Results and the two bounds they typed, still on screen.
+ */
+export const optionalPriceConstraintSchema = priceConstraintSchema
+  .nullish()
+  .transform((value) => value ?? null);
+
+/**
+ * Where a person is in a list of products, and how long the list is (I63).
+ *
+ * **The platform answered with every result until now**, which was defensible
+ * while a Category held a dozen Offerings and stops being defensible at the
+ * thousand the Owner's own analysis plans for: one response carrying every card
+ * is a slow page for the person and a large query for the database, and neither
+ * gets better with success.
+ *
+ * `total` counts **products**, not Offerings — the same grouping the cards are
+ * drawn from — because a pager that promised forty pages of five hundred
+ * listings and delivered twenty pages of two hundred and fifty products would
+ * be counting one thing and showing another.
+ *
+ * `pageSize` is published rather than assumed. A surface that hard-coded 25
+ * would silently mis-paginate the day the number changed, and a client cannot
+ * check a boundary it has to guess.
+ */
+export const pagingSchema = z
+  .object({
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1),
+    total: z.number().int().min(0)
+  })
+  .strict();
+
+export type Paging = z.infer<typeof pagingSchema>;
+
+/**
+ * The page a request asks for. One-based, because the person counting pages is
+ * the one reading them, and bounded because a page number is a position in a
+ * result set rather than an arbitrary integer.
+ */
+const pageRequestSchema = z.number().int().min(1).max(400).default(1);
+
+/**
+ * "Only what is in stock" (I64).
+ *
+ * A plain boolean rather than a constraint object, because there is one thing
+ * to say and no bound to say it about. Absent and `false` are the same request:
+ * show everything, which is what a person who has not asked otherwise means.
+ *
+ * **`UNKNOWN` does not satisfy it, and that is PRD-0002 §10.4 rather than a
+ * judgement about silence.** An Offering with no value for an applied criterion
+ * does not satisfy it — somebody who ticked this box asked for things a seller
+ * has *said* are available, and an unstated stock level is not that statement.
+ *
+ * Note the deliberate asymmetry with the ordering, which does **not** sink
+ * `UNKNOWN`: absence of a claim is not a claim of absence, so silence is not
+ * punished in an arrangement — but a filter for a stated fact requires the
+ * statement, or it is not a filter.
+ */
+const inStockOnlySchema = z
+  .boolean()
+  .nullish()
+  .transform((value) => value === true);
+
+/**
+ * A Rating Constraint: the lowest product score a person will consider (I62).
+ *
+ * The third of the Owner's three controls, beside Bütçe and Kategori. Like the
+ * Price Constraint and for the same reason, it is **not** an
+ * `appliedFilterSchema` member: a rating is not an Attribute of an Offering,
+ * it is an aggregate over the reviews of a product group, so it travels as its
+ * own field rather than as a fourth kind in a union that would have to lie
+ * about what it holds.
+ *
+ * A **number**, unlike the money amounts, because half a star is exactly
+ * representable and there is no arithmetic to lose: the prototype's stepper
+ * moves in halves from 0,5 to 5, and `multipleOf` says exactly that rather than
+ * trusting the surface to send only the values its own control produces.
+ *
+ * Absent means "all ratings", which is not the same as `minimum: 0`: a floor of
+ * zero would still exclude nothing, but it would put a criterion on screen that
+ * changes no result — the thing §9A.3 exists to prevent.
+ *
+ * **Unrated products fail the constraint.** A product nobody has scored has no
+ * score, and admitting it under "at least four stars" would be answering the
+ * person's question with a product that cannot answer it.
+ */
+export const ratingConstraintSchema = z
+  .object({ minimum: z.number().min(0.5).max(5).multipleOf(0.5) })
+  .strict();
+
+export const optionalRatingConstraintSchema = ratingConstraintSchema
+  .nullish()
+  .transform((value) => value ?? null);
+
+export type RatingConstraintInput = z.infer<typeof ratingConstraintSchema>;
+
+/**
  * The bounded recovery actions of PRD-0002 §13. A closed list, because
  * `US-DSC-F08-001` AC-8 forbids inventing anything beyond it.
  */
@@ -1599,11 +1926,114 @@ const browseCategorySchema = z
  * contact URL, no Affiliate Destination. A public shape that cannot express
  * them cannot leak them.
  */
+/**
+ * What people scored this **product**, and how many of them (I62).
+ *
+ * **A product score, and deliberately not a seller score.** PRD-0001 v4.0 §4
+ * puts seller reputation out of scope and nothing here reopens it: the average
+ * is taken over the reviews of the product group — the Offerings sharing a
+ * `productKey`, §5.12's own definition — so the same phone answers with one
+ * number wherever it is sold, and no shop earns a mark from it. The Owner's
+ * instruction is the whole rule: *puanlama ürüne ait olacak, satıcıya değil*.
+ *
+ * `average` is a **string** for the reason money is: `4.3` cannot be written
+ * exactly in binary floating point, and a score that renders as `4.2999999` in
+ * one client and `4.3` in another is a fact the platform failed to state.
+ * PostgreSQL returns `numeric`, this carries the digits it returned, and the
+ * surface formats them. One decimal place, because that is the precision an
+ * average of whole stars can honestly claim.
+ *
+ * `null` with `count: 0` is the ordinary state of a new product, and a surface
+ * must show it as "not yet rated" rather than as zero stars — a product nobody
+ * has scored is not a product everybody scored badly.
+ */
+export const productRatingSchema = z
+  .object({
+    average: z
+      .string()
+      .regex(/^[1-5](?:\.\d)?$/u)
+      .nullable(),
+    count: z.number().int().min(0)
+  })
+  .strict();
+
+export type ProductRating = z.infer<typeof productRatingSchema>;
+
 export const listingCardSchema = z
   .object({
     businessName: z.string(),
     categoryName: z.string(),
+    /**
+     * Whether this card can send the person to the partner (`US-DSC-F06-001`
+     * v1.1 AC-9).
+     *
+     * **A boolean, and deliberately not an address.** AC-5 keeps the Affiliate
+     * Destination off the card and stays exactly as it was: what travels is
+     * whether a handoff would succeed, not where it would go. The address is
+     * read at the moment the person chooses, by the route that records the
+     * choice — so a destination revoked between the search and the click is
+     * refused rather than followed out of a page that had already copied it.
+     *
+     * `false` is the ordinary case and not a failure: an Offering with no
+     * Affiliate Destination, or one whose destination is disabled or has not
+     * been validated, is simply opened rather than handed off. A surface that
+     * offered the control regardless would be promising something the platform
+     * has no way to deliver.
+     */
+    handoffAvailable: z.boolean(),
+    /**
+     * The listing number a person can read out, type in and quote back (I67).
+     *
+     * **The identifier a person can use.** Everything that named a listing
+     * until now was addressed to a machine: a UUID nobody reads over the
+     * telephone, and a slug that changes when a title is corrected. The Owner's
+     * requirement is one line — *"her ilanın kendine özgü bir ilan numarası
+     * olması gerekiyor. İlan numarasını arama kutusuna yazınca listelensin"* —
+     * and it needs a value that is short, stable and spoken.
+     *
+     * Digits, as a string. A string because it is an identifier rather than a
+     * quantity — nothing adds two of them — and because a number large enough
+     * to be unique is a number a JSON reader may round.
+     *
+     * **Digits are also all a surface prints.** An `İLN-` prefix was rendered
+     * until the Owner's decision of 2026-09-03 removed it: a number exists to
+     * be read out and typed back, and every letter in front of it is one more
+     * thing to get wrong — the Turkish `İ` most of all, having two spellings
+     * and no key on some layouts. Search still *accepts* the prefixed forms,
+     * because people paste what older pages printed.
+     *
+     * Assigned once, at creation, and never reassigned. A number that moved
+     * would break the one promise it makes: that the person who wrote it down
+     * yesterday can find the same listing today.
+     */
+    listingNumber: z.string().regex(/^\d+$/u),
     offeringId: z.string().uuid(),
+    /**
+     * What the Offering costs, in the shape §5.10.1 names.
+     *
+     * **The Listing Card carried no price until now, and on a comparison
+     * platform that was the one omission a person could not work around.**
+     * `US-DSC-F06-001` fixes a product minimum and price was not in it, which
+     * was right while no Offering had an amount — I52 gave every Offering one,
+     * and a card that shows a title and a seller while the amount sits unread
+     * in the same row is withholding the fact the card exists to carry.
+     *
+     * The whole union rather than a formatted string: `ON_REQUEST` is an answer
+     * ("this is quoted after we know what you need"), `UNKNOWN` is an admission
+     * ("we have not read a price"), and a card that flattened both to an empty
+     * space would tell a person the platform failed where it did not. §5.10.1
+     * separates them and so does this.
+     */
+    pricing: offeringPriceSchema,
+    /**
+     * The matching hint this Offering carries, or `null`.
+     *
+     * Published so a surface can tell a grouped card from a lone one without
+     * inferring it from `sellerCount`. §5.12.3 is emphatic that similar titles,
+     * attributes and prices are *not* evidence of the same product — the key is
+     * the only evidence, so the key is what travels.
+     */
+    productKey: z.string().nullable(),
     /**
      * The supplied primary visual, or `null` (`US-DSC-F06-001` AC-4).
      *
@@ -1618,10 +2048,77 @@ export const listingCardSchema = z
      */
     primaryVisualUrl: z.string().nullable(),
     publishedAt: z.string().datetime(),
+    /**
+     * The product's score and how many people gave it (I62).
+     *
+     * On the card rather than only on the Presentation, because the Owner's
+     * prototype puts the stars and the review count on every row: a person
+     * comparing twenty listings reads the score while deciding which one to
+     * open, and a score only visible after opening is a score that arrives
+     * after the decision it exists to inform.
+     */
+    rating: productRatingSchema,
+    /**
+     * How many Offerings this card stands for.
+     *
+     * **`1` for everything until now, and that was the whole problem.** A
+     * comparison platform's card is about a *product*, and three partners
+     * selling one phone were three cards saying the same thing three times —
+     * the person had to do the comparison the site exists to do.
+     *
+     * The number counts what is visible in the context that produced the card:
+     * a budget that sets one seller aside also stops the card claiming it.
+     * Counting sellers the criteria excluded would put a number on screen that
+     * the list beneath it contradicts.
+     */
+    sellerCount: z.number().int().min(1),
     slug: z.string(),
     title: z.string()
   })
   .strict();
+
+/**
+ * What a person has kept (I64).
+ *
+ * **The cards, not the identifiers.** A favourites page is a list of things,
+ * and a client that received keys would have to fetch each one — which is the
+ * N+1 that a list endpoint exists to prevent. They are the same Listing Cards
+ * Discovery composes, drawn from the cheapest currently eligible seller of each
+ * kept product, so a favourite shows today's price rather than the price it was
+ * kept at.
+ *
+ * `unavailable` counts what is kept and no longer reachable: every seller of it
+ * withdrew, or moderation hid it. Those rows are not deleted — the person kept
+ * a product, and the catalogue losing a way to buy it is not them changing
+ * their mind — so the number is how the page can say "two of your saved items
+ * are not listed right now" instead of quietly showing fewer than were saved.
+ */
+export const favouritesSchema = z
+  .object({
+    cards: z.array(listingCardSchema),
+    unavailable: z.number().int().min(0)
+  })
+  .strict();
+
+/**
+ * Which products this person has kept, as the group keys themselves (I64).
+ *
+ * The one place keys are the right answer rather than the wrong one: a page of
+ * Listing Cards needs to know which hearts are filled, and the cards are
+ * already on the page. Asking for the favourite *cards* to answer that would
+ * fetch a second copy of things the surface is holding.
+ *
+ * Deliberately a separate route from the list. A Discovery page needs the marks
+ * and not the list; a favourites page needs the list and not the marks; and one
+ * response carrying both would make every Discovery render fetch a page of
+ * cards nobody was going to look at.
+ */
+export const favouriteMarksSchema = z
+  .object({ productGroupKeys: z.array(z.string()) })
+  .strict();
+
+export type FavouritesResponse = z.infer<typeof favouritesSchema>;
+export type FavouriteMarksResponse = z.infer<typeof favouriteMarksSchema>;
 
 /**
  * The exact Offering identity Discovery hands to Presentation
@@ -1684,6 +2181,30 @@ export const presentedAttributeSchema = z
  * An empty array still means the Offering supplied none, which is the half of
  * AC-4 that was already true.
  */
+/**
+ * One seller's row in the price list (§5.12.1).
+ *
+ * The Business name and its price, and deliberately nothing else: this is not a
+ * second Listing Card, it is the answer to "who else sells this and for how
+ * much". `offeringId` and `slug` are here so the row can be opened, because a
+ * price without a way to reach it is a number a person cannot act on.
+ *
+ * **No seller rating, and no "authorised dealer" mark.** Both are in the design
+ * prototype and neither exists: PRD-0001 v4.0 §4 puts seller score out of
+ * scope, so a shape that could carry one would be a promise the platform has
+ * not made.
+ */
+export const sellerOfferSchema = z
+  .object({
+    businessName: z.string(),
+    offeringId: z.string().uuid(),
+    pricing: offeringPriceSchema,
+    slug: z.string()
+  })
+  .strict();
+
+export type SellerOffer = z.infer<typeof sellerOfferSchema>;
+
 export const offeringPresentationSchema = z
   .object({
     attributes: z.array(presentedAttributeSchema),
@@ -1691,13 +2212,133 @@ export const offeringPresentationSchema = z
     /// Root first. The Category context is the path, not just the leaf.
     categoryPath: z.array(z.string()).min(1),
     description: z.string().nullable(),
+    /**
+     * The same listing number the card carries (I67).
+     *
+     * Repeated rather than left behind on the list, because the page is where a
+     * person is when they need it: quoting a listing to the seller, to support,
+     * or into the report form. A number visible only until it was opened would
+     * be a number nobody could use.
+     */
+    listingNumber: z.string().regex(/^\d+$/u),
     offeringId: z.string().uuid(),
+    /**
+     * The same price shape the Listing Card carries.
+     *
+     * Deliberately identical rather than a richer Presentation-only variant:
+     * a person who chose a card because of a number has to find that number
+     * unchanged on the page it opened, and two shapes are two chances for
+     * Discovery and Presentation to disagree about what something costs.
+     */
+    pricing: offeringPriceSchema,
+    /**
+     * The Offering's own matching hint, or `null`.
+     *
+     * Beside `sellers` rather than instead of it: the key says *why* the rows
+     * below are grouped, and a page that showed the grouping without its reason
+     * would be asking to be trusted about a claim it had not made.
+     */
+    productKey: z.string().nullable(),
     publishedAt: z.string().datetime(),
+    /**
+     * The product's score, over the same group `sellers` is drawn from (I62).
+     *
+     * The list below and the number above are two readings of one grouping: the
+     * sellers of this product, and the people who scored this product. A page
+     * that grouped one way for prices and another way for reviews would be two
+     * pages wearing one title.
+     */
+    rating: productRatingSchema,
+    /**
+     * Every publicly eligible Offering that carries the same Product Key,
+     * cheapest first, including this one.
+     *
+     * Never empty: an Offering with no key is the only seller of itself, and a
+     * page that dropped the list in that case would answer "who sells this"
+     * with silence rather than with "one shop, this one".
+     *
+     * §5.10.5 decides the order and it is not "ascending amount": an Offering
+     * with no amount has no position in a price ordering, so the priced rows
+     * are ordered among themselves and the unpriced ones follow. Sorting them
+     * to either end would state a comparison the platform cannot make.
+     */
+    sellers: z.array(sellerOfferSchema).min(1),
     slug: z.string(),
     title: z.string(),
     visuals: z.array(z.string())
   })
   .strict();
+
+/**
+ * One review, as a public reader sees it (I62).
+ *
+ * **The byline is a masking rule, not a stored value.** What the account holds
+ * is the name the person typed at registration; what leaves the API is "Aylin
+ * K." — given name, surname initial. The full surname is not needed to make a
+ * review credible and publishing it would hand every reader a real person's
+ * full name in exchange for a sentence about a phone. `null` where the account
+ * has no name at all: an anonymous review is honest, an invented byline is not.
+ *
+ * `body` is nullable because a score with no words is a complete review. `mine`
+ * lets a surface show the person their own review in place of the empty form,
+ * without a second request that would have to be trusted to mean the same thing.
+ */
+export const productReviewSchema = z
+  .object({
+    author: z.string().nullable(),
+    body: z.string().nullable(),
+    mine: z.boolean(),
+    rating: z.number().int().min(1).max(5),
+    reviewId: z.string().uuid(),
+    writtenAt: z.string().datetime()
+  })
+  .strict();
+
+/**
+ * The reviews of one product, newest first, with the aggregate they produce.
+ *
+ * The average travels **with** the list rather than being left for the caller
+ * to compute, because the list is a page of the reviews and the average is over
+ * all of them. A surface that averaged what it received would publish a
+ * different number on page two.
+ *
+ * `writable` is the platform's answer to "may I write one", and it is a fact
+ * about the request rather than about the product: an anonymous reader gets
+ * `false` and a sign-in prompt, not a form that fails on submit.
+ */
+export const productReviewsSchema = z
+  .object({
+    rating: productRatingSchema,
+    reviews: z.array(productReviewSchema),
+    /// The complete count, so a surface can say what it is not showing.
+    total: z.number().int().min(0),
+    writable: z.boolean()
+  })
+  .strict();
+
+/**
+ * Writing or replacing one's own review (I62).
+ *
+ * A repeat submission replaces the previous one rather than adding a second
+ * vote — one person, one opinion about one product — which is what keeps the
+ * average an average of people.
+ */
+export const writeProductReviewSchema = z
+  .object({
+    body: z
+      .string()
+      .trim()
+      .min(1)
+      .max(2000)
+      .nullish()
+      .transform((value) => value ?? null),
+    rating: z.number().int().min(1).max(5)
+  })
+  .strict();
+
+export type ProductReviewResponse = z.infer<typeof productReviewSchema>;
+export type ProductReviewsResponse = z.infer<typeof productReviewsSchema>;
+export type WriteProductReview = z.infer<typeof writeProductReviewSchema>;
 
 /**
  * One row of a comparison (`US-DEC-F01-001` AC-7, AC-8).
@@ -2044,8 +2685,46 @@ export const browseRootsSchema = z
  * empty list: `US-DSC-F03-001` AC-5 withholds Results, which is a different
  * statement from "there are none".
  */
+/**
+ * The four arrangements a person may choose between (I68).
+ *
+ * The Owner's own tabs — *Tümü, En yeni, Yükselenler, Popüler* — and a closed
+ * set the platform defines rather than a sort a caller composes. Nothing here
+ * can be bought, requested by a partner or granted to one: what a tab reads is
+ * a fact the platform already recorded about a product, and it reads the same
+ * fact for every product.
+ */
+export const RESULT_ARRANGEMENTS = [
+  "DEFAULT",
+  "NEWEST",
+  "RISING",
+  "POPULAR"
+] as const;
+
+/**
+ * Which arrangement a submission asks for, defaulting to the one every list has
+ * always used.
+ *
+ * Absent means `DEFAULT` rather than an error, for the reason `inStockOnly`
+ * treats absence as `false`: a client that has never heard of the tabs must
+ * keep working, and the arrangement it gets is the one it used to get.
+ */
+const arrangementSchema = z
+  .enum(RESULT_ARRANGEMENTS)
+  .nullish()
+  .transform((value) => value ?? "DEFAULT");
+
 export const browseViewSchema = z
   .object({
+    /**
+     * The arrangement these Results are in (I68).
+     *
+     * Echoed rather than assumed, like `paging` and for the same reason: the
+     * arrangement is visible Discovery criteria, and a surface that drew the
+     * active tab from what it *sent* would show a tab that disagreed with the
+     * list underneath it the first time a request was dropped or replayed.
+     */
+    arrangement: z.enum(RESULT_ARRANGEMENTS),
     ancestors: z.array(browseCategorySchema),
     category: browseCategorySchema,
     children: z.array(browseCategorySchema),
@@ -2055,6 +2734,10 @@ export const browseViewSchema = z
     /// Offered on a leaf; empty on a branch, where no active leaf Category is
     /// selected.
     filters: z.array(availableFilterSchema),
+    /// I63. Where the person is in the list, and how long it is. `null` exactly
+    /// where `results` is: a branch withheld the Results, so there is no list to
+    /// be anywhere in.
+    paging: pagingSchema.nullable(),
     results: z.array(listingCardSchema).nullable(),
     siblings: z.array(browseCategorySchema),
     /// Present only when a leaf matched nothing.
@@ -2066,8 +2749,21 @@ export const browseViewSchema = z
 /// is what makes that selection the start of a new one.
 export const browseSelectionSchema = z
   .object({
+    /// I68. Which of the four arrangements to return the Results in.
+    arrangement: arrangementSchema,
     discoveryPathId: z.string().uuid().optional(),
-    filters: z.array(appliedFilterSchema).max(50).default([])
+    filters: z.array(appliedFilterSchema).max(50).default([]),
+    /// §10.6.1. Offered on a branch as well as a leaf, unlike the Filters
+    /// above: an amount belongs to the Offering rather than to a Category.
+    price: optionalPriceConstraintSchema,
+    /// I64. Only Offerings a seller has stated are available.
+    inStockOnly: inStockOnlySchema,
+    /// I63. Which page of the ordered results to return. A branch withholds
+    /// Results entirely, so the number is simply unused there.
+    page: pageRequestSchema,
+    /// I62, on the same terms as `price`: a product score is a fact about the
+    /// product, so the criterion travels wherever products are listed.
+    rating: optionalRatingConstraintSchema
   })
   .strict();
 
@@ -2087,6 +2783,11 @@ export const SEARCH_MATCH_LEVELS = [
 /// is a person's sentence, not a payload.
 export const searchSubmissionSchema = z
   .object({
+    /// I68. Which arrangement to return the Results in. Inside Search it
+    /// arranges *within* a match level rather than across them: PRD-0002 §12.2
+    /// fixes which tier a result is in, and a tab that reordered the tiers
+    /// would be answering a different question from the one that was typed.
+    arrangement: arrangementSchema,
     /// Narrows the current Search to one active leaf Category
     /// (`US-DSC-F04-001` AC-3). It is part of the same Search, not a new path.
     categoryId: z
@@ -2098,7 +2799,16 @@ export const searchSubmissionSchema = z
     /// Applicable only inside one active leaf Category, so supplying these
     /// without `categoryId` is a contradiction rather than a default.
     filters: z.array(appliedFilterSchema).max(50).default([]),
-    query: z.string().trim().min(1).max(400)
+    /// §10.6.1. Unlike `filters`, valid with or without `categoryId`.
+    price: optionalPriceConstraintSchema,
+    /// I64. Only Offerings a seller has stated are available.
+    inStockOnly: inStockOnlySchema,
+    /// I63. Which page of the ordered results to return.
+    page: pageRequestSchema,
+    query: z.string().trim().min(1).max(400),
+    /// I62. Like `price` and unlike `filters`, valid with or without a
+    /// Category: a product score exists wherever the product does.
+    rating: optionalRatingConstraintSchema
   })
   .strict();
 
@@ -2108,6 +2818,11 @@ export const searchResultSchema = listingCardSchema.extend({
 
 export const searchViewSchema = z
   .object({
+    /// I68. The arrangement these Results are in, echoed for the reason
+    /// `query` and `paging` are: it is criteria the person can see, and a tab
+    /// drawn from what the surface sent rather than from what came back is a
+    /// tab that can disagree with the list beneath it.
+    arrangement: z.enum(RESULT_ARRANGEMENTS),
     categoryId: z.string().uuid().nullable(),
     discoveryPathId: z.string().uuid(),
     /// Available once one active leaf Category is selected. A Search that spans
@@ -2123,6 +2838,9 @@ export const searchViewSchema = z
     /// The active leaf Categories this query reaches, offered when it reaches
     /// more than one.
     narrowing: z.array(browseCategorySchema),
+    /// I63. Where the person is in the list, and how long it is. Never `null`
+    /// here: a Search always answers with a list, even an empty one.
+    paging: pagingSchema,
     /// The exact submitted query, kept as visible Discovery criteria.
     query: z.string(),
     results: z.array(searchResultSchema),
@@ -2139,9 +2857,561 @@ export type BrowseViewResponse = z.infer<typeof browseViewSchema>;
 export type BrowseSelection = z.infer<typeof browseSelectionSchema>;
 export type ListingCardResponse = z.infer<typeof listingCardSchema>;
 
+/**
+ * A Search Result, as the wire carries it.
+ *
+ * Named here rather than inferred at each call site so the persistence layer
+ * has one shape to select into: a repository that described the row itself
+ * would be a second statement of the contract, and the two would drift the
+ * first time a field was added — exactly what happened to `primaryVisualUrl`.
+ */
+export type SearchResultResponse = z.infer<typeof searchResultSchema>;
+
 export type CreateCategory = z.infer<typeof createCategorySchema>;
 export type RenameCategory = z.infer<typeof renameCategorySchema>;
 export type ReparentCategory = z.infer<typeof reparentCategorySchema>;
 export type CategoryResponse = z.infer<typeof categorySchema>;
 export type Categories = z.infer<typeof categoriesSchema>;
 export type SelectableDomain = z.infer<typeof selectableDomainSchema>;
+
+/**
+ * What a reader says is wrong with a listing (I69).
+ *
+ * **The five the Owner's prototype offers, and a closed list on purpose.** A
+ * report that was only free text is a report nobody can count: five people
+ * saying "fiyat yanlış" about one listing is a fact the platform can act on,
+ * and five paragraphs saying it in five ways is a reading task. The words go in
+ * `note`, beside the reason rather than instead of it.
+ */
+export const LISTING_REPORT_REASONS = [
+  "PRICE_WRONG",
+  "STOCK_WRONG",
+  "WRONG_CATEGORY",
+  "MISLEADING_INFORMATION",
+  "LINK_BROKEN"
+] as const;
+
+/**
+ * Reporting a listing (I69).
+ *
+ * No identity, no contact address, nothing about the reporter. Whoever they
+ * are is a fact of the request rather than something they are asked to type: a
+ * signed-in person's account is recorded, a Guest's report is kept anonymous,
+ * and neither is asked for an email address the platform would then hold
+ * without a reason to.
+ */
+export const submitListingReportSchema = z
+  .object({
+    /// The person's own words, where they added any. A report is a sentence.
+    note: z
+      .string()
+      .trim()
+      .max(600)
+      .nullish()
+      .transform((value) =>
+        value === undefined || value === "" ? null : value
+      ),
+    reason: z.enum(LISTING_REPORT_REASONS)
+  })
+  .strict();
+
+/**
+ * One report, as the Admin queue reads it.
+ *
+ * The listing is named by its title, its address and its listing number,
+ * because the queue is a working surface: an Admin reading "PRICE_WRONG" needs
+ * to reach the listing, and the number is what they will quote when they write
+ * to the partner about it.
+ *
+ * `note` is a stranger's text and travels as text. Nothing here interprets it,
+ * and the surface that renders it must not either.
+ */
+export const listingReportSchema = z
+  .object({
+    listingNumber: z.string().regex(/^\d+$/u),
+    note: z.string().nullable(),
+    /// I82. So an Admin who accepts a report can open a Moderation Case against
+    /// the listing without leaving the queue or copying an identifier. The slug
+    /// addresses the public page; opening a case needs the id.
+    offeringId: z.string().uuid(),
+    offeringSlug: z.string(),
+    offeringTitle: z.string(),
+    reason: z.enum(LISTING_REPORT_REASONS),
+    reportId: z.string().uuid(),
+    /// How many reports this listing has open, including this one. A pattern is
+    /// the fact an Admin acts on; one report rarely is.
+    reportsForListing: z.number().int().min(1),
+    status: z.enum(["OPEN", "ACCEPTED", "DISMISSED"]),
+    submittedAt: z.string().datetime()
+  })
+  .strict();
+
+export const listingReportsSchema = z
+  .object({
+    reports: z.array(listingReportSchema),
+    total: z.number().int().min(0)
+  })
+  .strict();
+
+/**
+ * Closing one report (I69).
+ *
+ * Two outcomes and no third. `ACCEPTED` means the platform agreed there is
+ * something wrong and it is now somebody's job — a Moderation Case, a message
+ * to the partner, a correction request — and `DISMISSED` means it looked and
+ * there was not. Neither is an action *on* the listing: PRD-0006 owns what may
+ * be done to an Offering, and a report queue that could hide a listing directly
+ * would be a second moderation system with none of the first one's rules.
+ */
+export const reviewListingReportSchema = z
+  .object({ outcome: z.enum(["ACCEPTED", "DISMISSED"]) })
+  .strict();
+
+export type SubmitListingReportInput = z.infer<
+  typeof submitListingReportSchema
+>;
+export type ListingReportResponse = z.infer<typeof listingReportSchema>;
+export type ListingReportsResponse = z.infer<typeof listingReportsSchema>;
+
+/**
+ * A complementary product a listing suggests (I70).
+ *
+ * **The advertising the Owner asked for, and it travels on its own route.** It
+ * is deliberately not a field of `offeringPresentationSchema`: PRD-0006 §20.3
+ * forbids advertising from changing what is publicly eligible, what matches a
+ * query or what a Listing Card contains, and the cleanest way to keep a
+ * promise like that is to make it structurally true. The Presentation payload
+ * is exactly the product minimum it has always been, and this is fetched
+ * beside it.
+ *
+ * `partnerName` is on the row because a person about to leave the platform is
+ * entitled to know whose site they are about to be on before they press
+ * something, not after — the same rule the Affiliate Handoff control follows.
+ *
+ * No identifier and no counter. §20.5 excludes impression, click and revenue
+ * reporting, so there is nothing here for a surface to report with.
+ */
+export const complementaryPlacementSchema = z
+  .object({
+    destinationUrl: z.string(),
+    label: z.string(),
+    note: z.string().nullable(),
+    partnerName: z.string()
+  })
+  .strict();
+
+/**
+ * What one listing suggests, in the order somebody arranged it.
+ *
+ * Always answers, and answers with an empty list where nothing is configured:
+ * advertising is absent by default (§20.4), and a surface asking "what goes
+ * with this" must be able to tell "nothing is configured" from "the request
+ * failed".
+ */
+export const complementaryPlacementsSchema = z
+  .object({ placements: z.array(complementaryPlacementSchema) })
+  .strict();
+
+/**
+ * Adding one placement (I70).
+ *
+ * The Admin types what a person will read and where it goes. The destination is
+ * checked as a URL rather than pattern-matched — `"https:/\\evil"` defeats a
+ * prefix test and parses to something else entirely — and only `http` and
+ * `https` are admitted, for the reason the image source rule gives.
+ */
+export const createComplementaryPlacementSchema = z
+  .object({
+    categoryId: z.string().uuid(),
+    destinationUrl: z
+      .string()
+      .trim()
+      .min(1)
+      .max(2048)
+      .refine((raw) => {
+        try {
+          return ["http:", "https:"].includes(new URL(raw).protocol);
+        } catch {
+          return false;
+        }
+      }, "Expected an http or https address"),
+    label: z.string().trim().min(1).max(120),
+    note: z
+      .string()
+      .trim()
+      .max(240)
+      .nullish()
+      .transform((value) =>
+        value === undefined || value === "" ? null : value
+      ),
+    partnerName: z.string().trim().min(1).max(160),
+    position: z.number().int().min(0).max(99).default(0)
+  })
+  .strict();
+
+/** One placement as the Admin list shows it, with what the public never sees. */
+export const adminComplementaryPlacementSchema =
+  complementaryPlacementSchema.extend({
+    active: z.boolean(),
+    categoryId: z.string().uuid(),
+    categoryName: z.string(),
+    placementId: z.string().uuid(),
+    position: z.number().int().min(0)
+  });
+
+export const adminComplementaryPlacementsSchema = z
+  .object({ placements: z.array(adminComplementaryPlacementSchema) })
+  .strict();
+
+export type ComplementaryPlacementResponse = z.infer<
+  typeof complementaryPlacementSchema
+>;
+export type AdminComplementaryPlacementResponse = z.infer<
+  typeof adminComplementaryPlacementSchema
+>;
+
+/**
+ * What the platform knows about advertising, as one row somebody wrote (I75).
+ *
+ * PRD-0006 §20 gives the platform two powers and only two — **where**
+ * advertising may appear and **whether** it appears — and until this increment
+ * it had neither in any form a person could reach. I70 built one region and
+ * filled it from rows an Admin types; nothing said who the external network is,
+ * which unit belongs to which region, whether advertising runs at all, or which
+ * Categories must stay clean of it.
+ *
+ * **Named fields, not a settings store.** §12 refuses a standalone generic
+ * Platform Configuration capability, and a key-value table with a form in front
+ * of it is precisely the shape in which one arrives without anybody deciding to
+ * add it. Every field below is a decision that was written down; adding another
+ * takes a migration and this comment.
+ *
+ * `publisherId` and the units are nullable rather than defaulted, because an
+ * empty identifier is not a bad identifier — it is the state §20.4 requires of
+ * a platform nobody has configured, and it means no network advertising
+ * anywhere whatever the units say.
+ */
+export const advertisingUnitsSchema = z
+  .object({
+    category: z.string().nullable(),
+    presentation: z.string().nullable(),
+    results: z.string().nullable()
+  })
+  .strict();
+
+/** One Category kept clear of advertising, and everything beneath it. */
+export const advertisingExclusionSchema = z
+  .object({
+    categoryId: z.string().uuid(),
+    categoryName: z.string(),
+    excludedAt: z.string().datetime()
+  })
+  .strict();
+
+export const advertisingSettingsSchema = z
+  .object({
+    enabled: z.boolean(),
+    exclusions: z.array(advertisingExclusionSchema),
+    publisherId: z.string().nullable(),
+    units: advertisingUnitsSchema,
+    updatedAt: z.string().datetime()
+  })
+  .strict();
+
+/**
+ * Changing them (I75).
+ *
+ * Every field is required, because this is a form somebody reads before they
+ * submit it: a partial update would let a field nobody looked at keep a value
+ * nobody remembers, and the one field where that matters is `enabled`. An empty
+ * string is stored as absence rather than as an empty identifier, which is what
+ * clearing a form field means.
+ *
+ * The kill switch is a plain boolean on the same submission as everything else
+ * and needs no separate route. A switch reachable only through its own endpoint
+ * is a switch somebody has to find in an emergency.
+ */
+export const updateAdvertisingSettingsSchema = z
+  .object({
+    enabled: z.boolean(),
+    publisherId: z
+      .string()
+      .trim()
+      .max(64)
+      .nullish()
+      .transform((value) =>
+        value === undefined || value === "" ? null : value
+      ),
+    units: z
+      .object({
+        category: z
+          .string()
+          .trim()
+          .max(64)
+          .nullish()
+          .transform((value) =>
+            value === undefined || value === "" ? null : value
+          ),
+        presentation: z
+          .string()
+          .trim()
+          .max(64)
+          .nullish()
+          .transform((value) =>
+            value === undefined || value === "" ? null : value
+          ),
+        results: z
+          .string()
+          .trim()
+          .max(64)
+          .nullish()
+          .transform((value) =>
+            value === undefined || value === "" ? null : value
+          )
+      })
+      .strict()
+  })
+  .strict();
+
+/** Marking one Category ad-free (§20.4). */
+export const excludeCategoryFromAdvertisingSchema = z
+  .object({ categoryId: z.string().uuid() })
+  .strict();
+
+export type AdvertisingSettingsResponse = z.infer<
+  typeof advertisingSettingsSchema
+>;
+export type AdvertisingExclusionResponse = z.infer<
+  typeof advertisingExclusionSchema
+>;
+export type UpdateAdvertisingSettingsInput = z.infer<
+  typeof updateAdvertisingSettingsSchema
+>;
+
+/**
+ * A partner catalogue the platform reads on a schedule (I76).
+ *
+ * The Owner asked for product data to arrive as an **affiliate feed rather than
+ * as scraping**, and the difference is not technical: a feed is a document a
+ * partner publishes for this purpose and maintains, while a scrape reads a page
+ * they published for people and breaks silently whenever they redesign it.
+ *
+ * `PRD-0001-offering.md` §5.11 already governs what an intake may do with what
+ * it finds — create and update Offerings whose Source is Feed, and modify no
+ * other — and §135 leaves the mechanism to its own documents. Nothing here asks
+ * for a new product decision.
+ */
+export const feedMappingSchema = z
+  .object({
+    categoryKey: z.string().nullable(),
+    currency: z.string().nullable(),
+    deliveryCost: z.string().nullable(),
+    /**
+     * The partner's own identifier for a product.
+     *
+     * Required, and it is the field the whole intake turns on: without one the
+     * next sync cannot tell an updated product from a new one, so every run is
+     * a fresh import and the catalogue doubles every hour.
+     */
+    externalId: z.string(),
+    imageUrl: z.string().nullable(),
+    price: z.string().nullable(),
+    priorPrice: z.string().nullable(),
+    productKey: z.string().nullable(),
+    stock: z.string().nullable(),
+    summary: z.string().nullable(),
+    title: z.string(),
+    url: z.string().nullable()
+  })
+  .strict();
+
+/**
+ * How one sync went.
+ *
+ * **A failed run is the point of this, not an exception to it.** The Owner
+ * asked for feed failures on the dashboard, and a log recording only successes
+ * would answer "when did this last work" and never "why did it stop".
+ *
+ * `missing` counts products the platform holds that the document no longer
+ * offers. It is a number and not an action: retiring a listing is a lifecycle
+ * decision, and one truncated response from a partner would otherwise delete a
+ * catalogue.
+ */
+/**
+ * Why a run failed, as a value rather than as a sentence (I91).
+ *
+ * `US-PLT-F13-001` AC-9 and `PRD-0006` v2.6 §24.2: three causes, three
+ * different jobs — the partner's engineer, the partner's publisher, and the
+ * Admin who wrote the mapping. `UNCLASSIFIED` exists so that an unexpected
+ * failure is not filed under one of the three, because a category that
+ * swallows the unknown lies the first time something new breaks.
+ */
+export const FEED_FAILURE_KINDS = [
+  "SOURCE_UNREACHABLE",
+  "DOCUMENT_UNREADABLE",
+  "MAPPING_INCOMPLETE",
+  "UNCLASSIFIED"
+] as const;
+
+export type FeedFailureKind = (typeof FEED_FAILURE_KINDS)[number];
+
+export const offeringFeedRunSchema = z
+  .object({
+    /**
+     * Listings this run created.
+     *
+     * **Zero on every run since I88**, when the Owner scoped the intake to
+     * price and stock: _"Feed'in görevi yalnızca eşleşen ve yayında olan
+     * ilanların fiyat ve stok durumunu güncellemektir."_ Kept because the runs
+     * that did create listings happened, and a history that dropped the number
+     * would say they did not.
+     */
+    created: z.number().int().min(0),
+    /** Why it failed. `null` on a run that succeeded (I91). */
+    failureKind: z.enum(FEED_FAILURE_KINDS).nullable(),
+    feedId: z.string().uuid(),
+    feedName: z.string(),
+    finishedAt: z.string().datetime(),
+    /** Why it failed, in words somebody can act on. Absent on success. */
+    message: z.string().nullable(),
+    missing: z.number().int().min(0),
+    outcome: z.enum(["SUCCEEDED", "FAILED"]),
+    read: z.number().int().min(0),
+    /**
+     * A bounded sample of the rows this run refused, with the reason for each.
+     *
+     * Bounded because a feed that rejects forty thousand rows has one problem,
+     * not forty thousand — and the fortieth identical reason tells nobody
+     * anything the first did not.
+     */
+    rejections: z.array(
+      z
+        .object({
+          externalId: z.string().nullable(),
+          reason: z.string()
+        })
+        .strict()
+    ),
+    rejected: z.number().int().min(0),
+    /**
+     * Products the document offered that the run did not act on (I88).
+     *
+     * A partner's document is their whole catalogue and the platform carries a
+     * curated part of it, so a healthy run skips most of what it reads. Its own
+     * number rather than a share of `rejected`: a rejection is a row somebody
+     * has to fix, and burying one of those in four thousand ordinary skips is
+     * how a real problem goes unread.
+     */
+    skipped: z.number().int().min(0),
+    /**
+     * Products that came back and were published again (I78).
+     *
+     * The reversibility PRD-0001 v4.1 §7.2 exists to provide, counted — because
+     * "it comes back on its own" is a promise, and a promise nobody can see
+     * kept is one somebody eventually re-implements by hand.
+     */
+    restored: z.number().int().min(0),
+    runId: z.string().uuid(),
+    startedAt: z.string().datetime(),
+    updated: z.number().int().min(0),
+    /**
+     * Products withdrawn at the end of the Owner's 72-hour tolerance (I78).
+     *
+     * A withdrawal is publicly ineligible **without a lifecycle change**: the
+     * listing is still Published and returns the moment the source offers it
+     * again.
+     */
+    withdrawn: z.number().int().min(0)
+  })
+  .strict();
+
+export const offeringFeedRunsSchema = z
+  .object({ runs: z.array(offeringFeedRunSchema) })
+  .strict();
+
+/** One feed as the Admin list shows it, with how it last went. */
+export const adminOfferingFeedSchema = z
+  .object({
+    active: z.boolean(),
+    businessId: z.string().uuid(),
+    businessName: z.string(),
+    categoryId: z.string().uuid(),
+    categoryName: z.string(),
+    documentUrl: z.string(),
+    feedId: z.string().uuid(),
+    format: z.enum(["XML", "JSON"]),
+    itemPath: z.string().nullable(),
+    /** How many Offerings the platform currently holds from this feed. */
+    listingCount: z.number().int().min(0),
+    mapping: feedMappingSchema,
+    /** Absent until the feed has run once, which is a state rather than a fault. */
+    lastRun: offeringFeedRunSchema.nullable(),
+    name: z.string()
+  })
+  .strict();
+
+export const adminOfferingFeedsSchema = z
+  .object({ feeds: z.array(adminOfferingFeedSchema) })
+  .strict();
+
+/**
+ * Adding one feed (I76).
+ *
+ * The mapping is a **list of named fields, not an expression language**. A
+ * general one would let a partner's feed be configured into anything, which is
+ * the failure PRD-0006 §12 describes: a capability arriving without a decision.
+ * A thirteenth field needs a migration.
+ *
+ * The address is parsed rather than pattern-matched, and only `http` and
+ * `https` are admitted — the rule every outbound address on this platform
+ * follows, and the one that matters most here because the platform will fetch
+ * this one itself.
+ */
+export const createOfferingFeedSchema = z
+  .object({
+    businessId: z.string().uuid(),
+    categoryId: z.string().uuid(),
+    documentUrl: z
+      .string()
+      .trim()
+      .min(1)
+      .max(2048)
+      .refine((raw) => {
+        try {
+          return ["http:", "https:"].includes(new URL(raw).protocol);
+        } catch {
+          return false;
+        }
+      }, "Expected an http or https address"),
+    format: z.enum(["XML", "JSON"]),
+    itemPath: z
+      .string()
+      .trim()
+      .max(240)
+      .nullish()
+      .transform((value) =>
+        value === undefined || value === "" ? null : value
+      ),
+    mapping: z
+      .object({
+        categoryKey: z.string().trim().max(240).nullish(),
+        currency: z.string().trim().max(240).nullish(),
+        deliveryCost: z.string().trim().max(240).nullish(),
+        externalId: z.string().trim().min(1).max(240),
+        imageUrl: z.string().trim().max(240).nullish(),
+        price: z.string().trim().max(240).nullish(),
+        priorPrice: z.string().trim().max(240).nullish(),
+        productKey: z.string().trim().max(240).nullish(),
+        stock: z.string().trim().max(240).nullish(),
+        summary: z.string().trim().max(240).nullish(),
+        title: z.string().trim().min(1).max(240),
+        url: z.string().trim().max(240).nullish()
+      })
+      .strict(),
+    name: z.string().trim().min(1).max(160)
+  })
+  .strict();
+
+export type AdminOfferingFeedResponse = z.infer<typeof adminOfferingFeedSchema>;
+export type OfferingFeedRunResponse = z.infer<typeof offeringFeedRunSchema>;
+export type CreateOfferingFeedInput = z.infer<typeof createOfferingFeedSchema>;
