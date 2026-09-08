@@ -70,48 +70,17 @@ jobs:
       # migration and schema.prisma diverge silently, and the divergence
       # surfaces on somebody else's next `migrate dev`.
       #
-      # The dependency audit is the one check that left this chain, and it left
-      # it as a separate job below rather than as a lowered threshold. See that
-      # job for why.
+      # The dependency audit is the one check that left this chain. It left as a
+      # workflow of its own — `audit.yml` — rather than as a lowered threshold,
+      # and that file carries the reasoning.
       #
       # The subset relation the paragraph above is about still holds, in the
       # safe direction: `npm run verify` locally is `verify:core` **plus** the
       # audit, so a green local run still predicts a green job here. What no
-      # longer holds is that one command names everything CI runs — CI now runs
-      # two, and both are in package.json.
+      # longer holds is that one command names everything CI runs — CI runs two,
+      # and both are in package.json.
+      #
+      # **This workflow's colour is now a fact about the code**, and that is the
+      # point of the split: a red cross here means something broke, and it can
+      # no longer mean "the dependency debt is still outstanding".
       - run: npm run verify:ci
-
-  # Why the dependency audit is its own job.
-  #
-  # `npm audit --audit-level=high` is red on transitive dependencies and is
-  # expected to stay red until upstream `fastify` and `prisma` releases clear
-  # it. The Owner's decision of 2026-09-07 was to keep the gate at `high` and
-  # accept the risk rather than lower it to `critical`, because a gate lowered
-  # to go green stops being a gate.
-  #
-  # Keeping it inside `verify:ci` would have honoured that decision and defeated
-  # it at the same time. One known-red step makes every other check's result
-  # invisible from outside: a genuine test failure and this advisory produce the
-  # same single red cross, and a run that is always red is a run nobody reads.
-  #
-  # **The threshold is unchanged and this job still fails.** What changed is
-  # that it fails on its own, where it can be seen, and stops standing in front
-  # of the checks it is not about.
-  #
-  # `V1_SECURITY_REVIEW.md` §2.3 owns the decision and names who has to watch
-  # for the upstream releases. When they land, this job goes green and the only
-  # question is whether it should move back.
-  audit:
-    name: Dependency audit (known red — see V1_SECURITY_REVIEW.md §2.3)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
-        with:
-          cache: npm
-          node-version-file: .nvmrc
-
-      - run: npm ci
-      - run: npm run security:audit

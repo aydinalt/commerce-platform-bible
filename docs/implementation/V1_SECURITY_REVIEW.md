@@ -2,8 +2,12 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Draft
-- **Version:** 0.3
-- **Date:** 2026-09-06
+- **Version:** 0.4
+- **Date:** 2026-09-08
+- **Changed in 0.4:** §2.3 only. The audit moved from a second job inside
+  `ci.yml` to a workflow of its own, and gained a weekly schedule — which is
+  what discharges the obligation §2.3 itself names ("somebody has to look").
+  No finding, no threshold and no decision changed.
 - **Scope:** what a reader can check in this repository before the first real
   catalogue goes live. It is not a penetration test and does not claim to be
   one: nobody has attacked the deployed system, and this document says what the
@@ -75,18 +79,38 @@ The offered fix downgrades Prisma to `6.19.3`, which npm marks breaking.
 **The gate stays at `--audit-level=high` and stays red.** It is an accepted
 risk, recorded, not a resolved one.
 
-**How the gate is arranged in CI, decided 2026-09-07 in the same round.** The
-audit was inside `verify:ci`, the single command the CI job runs. Keeping it
+**How the gate is arranged in CI, decided 2026-09-07 and completed 2026-09-08.**
+The audit was inside `verify:ci`, the single command the CI job runs. Keeping it
 there would have honoured the decision above and defeated it at the same time:
 one known-red step makes every other check invisible from outside, because a
 genuine test failure and this advisory produce the same single red cross, and a
 run that is always red is a run nobody reads.
 
-`npm audit --audit-level=high` therefore runs as **its own CI job**. The
-threshold is unchanged, the job still fails, and it fails where it can be seen
-instead of standing in front of checks it is not about. This is not option 3 in
-another costume — nothing was lowered, and no advisory that would have failed
-before passes now.
+It was first moved into a **second job** inside `ci.yml`. Run #166 showed that
+this solved half the problem and left the other half standing: the two results
+were distinguishable on the run page, but a workflow's badge is the worst of its
+jobs, so `main` still carried a single red cross in the runs list and on the
+branch. "Did anything break?" was still unanswerable without opening the run.
+
+`npm audit --audit-level=high` therefore now runs as **its own workflow**,
+`.github/workflows/audit.yml`. `CI` answers "does the code work"; `Dependency
+audit` answers "is the dependency debt still outstanding". Each has its own row,
+its own badge and its own history, and neither stands in front of the other.
+
+The threshold is unchanged and the workflow still fails. This is not option 3 in
+another costume — nothing was lowered, no advisory that would have failed before
+passes now, and `npm run verify` locally still runs the audit inside the chain.
+
+Two details of that workflow are decisions rather than defaults:
+
+- **It runs weekly**, on top of pushes, and can be run on demand. The reason is
+  the second obligation below.
+- **It does not run `npm ci`.** `npm audit` resolves the tree from
+  `package-lock.json` alone; this was verified to produce the identical advisory
+  set with no `node_modules` present. A job whose only question is what the
+  lockfile contains should not first perform an install that can fail for a
+  dozen unrelated reasons. `ci.yml` installs, so the lockfile and `package.json`
+  are still proven to agree.
 
 The local command is unchanged: `npm run verify` is `verify:core` **plus** the
 audit, so anyone verifying before handing work over still runs it. CI's verify
@@ -104,12 +128,26 @@ Two things this decision obliges, and they are the price of taking it:
   true. Any future use of ajv, of JSON-schema validation on request data, or of
   `$ref` resolution over anything a caller can influence, invalidates it — and
   would do so silently, because nothing in the build would change colour.
-- **A red gate that nobody is waiting on becomes wallpaper.** Separating the job
-  makes the red legible; it does not make anybody read it. The decision is to
-  wait for upstream releases, so somebody has to look: `fastify` /
+- **A red gate that nobody is waiting on becomes wallpaper.** Separating the
+  workflow makes the red legible; it does not make anybody read it. The decision
+  is to wait for upstream releases, so somebody has to look: `fastify` /
   `@nestjs/platform-fastify` for the `fast-uri` chain, and `prisma` for
-  `mysql2`. Re-run `npm run security:audit` when either publishes, and record
-  the result here rather than in a conversation.
+  `mysql2`.
+
+  **This is the part now automated, and it is the only part that could be.**
+  Triggered by pushes alone, the workflow would never announce the good news —
+  the day upstream publishes, nothing changes colour until somebody happens to
+  commit, so the fix gets found by accident or by a person remembering to run a
+  command. It therefore also runs **every Monday**, and every run writes the
+  outstanding advisories into the run summary. The Monday it goes green is the
+  Monday the debt cleared; that is the day to come back to this document and
+  record it, and to decide whether the workflow should fold back into `CI`.
+
+  Two limits of that automation, so neither is a surprise later. GitHub stops
+  scheduled workflows after 60 days without repository activity, silently — a
+  push or a manual run re-arms it. And a weekly failure notification is the sort
+  of thing that becomes wallpaper in its own right: if it does, the answer is to
+  turn the notification off, never to make the workflow green.
 
 The options as they were put, kept for the record:
 

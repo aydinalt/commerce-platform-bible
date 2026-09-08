@@ -1,0 +1,112 @@
+# Why this is a workflow of its own and not a job inside `ci.yml`.
+#
+# `npm audit --audit-level=high` is red on transitive dependencies and is
+# expected to stay red until upstream `fastify` and `prisma` releases clear it.
+# The Owner's decision of 2026-09-07 was to keep the gate at `high` and accept
+# the risk rather than lower it to `critical`, because a gate lowered to go
+# green stops being a gate. `V1_SECURITY_REVIEW.md` §2.3 owns that decision.
+#
+# It was first moved out of `verify:ci` into a second job inside `ci.yml`. That
+# made the two results distinguishable **on the run page** and left one thing
+# unsolved: a workflow's badge is the worst of its jobs, so every push to `main`
+# still showed a single red cross in the runs list and on the branch. The
+# question "did anything break?" was still unanswerable without opening the run.
+#
+# A separate workflow gives the audit its own row, its own badge and its own
+# history. `CI` now answers "does the code work"; this answers "is the
+# dependency debt still outstanding". Neither stands in front of the other.
+#
+# **The threshold is unchanged and this workflow still fails.** It is not the
+# rejected option in another costume: nothing was lowered, no advisory that
+# would have failed before passes now, and `npm run verify` locally still runs
+# the audit as part of the chain.
+
+name: Dependency audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+  # The obligation this discharges is written down in `V1_SECURITY_REVIEW.md`
+  # §2.3: "A red gate that nobody is waiting on becomes wallpaper. The decision
+  # is to wait for upstream releases, so somebody has to look."
+  #
+  # Triggered only by pushes, this would never announce the good news. The day
+  # Fastify or Prisma publishes, nothing here changes colour until somebody
+  # happens to commit — so the fix would be found by accident, weeks late, or
+  # by a person remembering to run a command. A weekly run makes the repository
+  # notice on its own: the Monday it goes green is the Monday the debt cleared.
+  #
+  # Mondays at 06:17 UTC (09:17 in Istanbul), deliberately off the hour —
+  # GitHub queues scheduled runs at :00 and drops the excess.
+  #
+  # **One thing to know about `schedule`:** GitHub stops running it after 60
+  # days without repository activity, and does so silently. If this workflow's
+  # history goes quiet while the repository is dormant, that is why — a push or
+  # a manual run below re-arms it.
+  schedule:
+    - cron: "17 6 * * 1"
+
+  # So the audit can be re-checked the moment an upstream release is announced,
+  # without inventing a commit to trigger it.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# No `concurrency` block, on purpose. This workflow finishes in seconds, so
+# cancelling an in-flight run would save nothing and would leave a grey
+# "cancelled" row that reads, wrongly, like a third kind of result.
+
+jobs:
+  audit:
+    # Read as a check name: "Dependency audit / known red — see
+    # V1_SECURITY_REVIEW.md §2.3". Somebody who arrives at a red cross knowing
+    # nothing about this project learns from the name alone that it is a
+    # recorded decision and where the reasoning lives.
+    name: known red — see V1_SECURITY_REVIEW.md §2.3
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Both actions are pinned at v5 for the reason recorded in `ci.yml`:
+      # it is the first major of each declaring `using: node24`, and GitHub
+      # removes Node 20 from the runners on 23 September 2026.
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+
+      # No `npm ci`, and no npm cache. `npm audit` resolves the dependency
+      # tree from `package-lock.json` alone — verified to produce byte-identical
+      # advisories with no `node_modules` present. Installing first would add a
+      # minute, a network dependency and a whole class of unrelated failure to a
+      # job whose only question is what the lockfile contains. `ci.yml` installs
+      # and therefore still proves the lockfile and `package.json` agree.
+      - run: npm run security:audit
+
+      # What is outstanding, on the run page rather than at the bottom of a log.
+      #
+      # `if: always()` so it also runs when the gate above fails — which is the
+      # normal case and the one worth reading. The `|| true` belongs to this
+      # step alone: the job's result is decided by the gate step above, and
+      # nothing here can turn its red green.
+      - name: Record the advisories in the run summary
+        if: always()
+        run: |
+          {
+            echo '## Dependency audit'
+            echo
+            echo 'The gate is `--audit-level=high` and is expected to be red until'
+            echo 'upstream `fastify` and `prisma` releases clear it. The decision to'
+            echo 'wait, and the reading of the exposure, are in'
+            echo '`docs/implementation/V1_SECURITY_REVIEW.md` §2.1–§2.3.'
+            echo
+            echo 'A green run here means an upstream release landed: record it in'
+            echo 'that document rather than in a conversation.'
+            echo
+            echo '```'
+            npm audit --audit-level=high 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
