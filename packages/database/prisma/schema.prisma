@@ -1101,7 +1101,25 @@ model Favourite {
   offering Offering    @relation(fields: [offeringId], references: [id], onDelete: Cascade)
 
   @@id([userId, productGroupKey])
-  @@index([userId, createdAt])
+  /// The sort is declared because **the database has it**: `I64`'s migration
+  /// created this index as `("user_id", "created_at" DESC)` and this line
+  /// omitted the direction, so the datamodel and the migrated database were
+  /// describing two different indexes. `prisma migrate diff` reports that as an
+  /// index removed and added on the same columns — a message that reads like a
+  /// no-op and means "these are not the same index".
+  ///
+  /// Recorded because the fix could have gone the other way and should not:
+  /// the migration is applied and is not rewritten to match a datamodel that
+  /// was simply less specific than it.
+  ///
+  /// **What the direction is not doing today.** The migration's comment gives
+  /// the reason as "newest first", and `pg-favourite.repository.ts` does
+  /// present newest-kept first — but it sorts in application code, because the
+  /// query needs its own order for `distinct on`. So this index currently earns
+  /// its keep on `user_id` alone. Whether the direction should stay is a
+  /// question for whoever next touches that read; it is not answered by making
+  /// the datamodel tell the truth about what exists.
+  @@index([userId, createdAt(sort: Desc)])
   @@map("favourite")
 }
 
