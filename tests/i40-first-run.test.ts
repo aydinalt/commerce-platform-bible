@@ -117,6 +117,19 @@ describe("Increment I40 the first run", () => {
         }
       ).scripts;
 
+    /**
+     * Everything `npm run verify` reaches, as one string.
+     *
+     * `verify` delegates to `verify:core`, so an assertion that reads only the
+     * `verify` entry no longer sees the steps it is asking about. For the
+     * absence cases below that is silent: they pass, and they pass because the
+     * text moved rather than because the step is absent.
+     */
+    const verifyChain = (): string => {
+      const all = scripts();
+      return `${all["verify"] ?? ""} ${all["verify:core"] ?? ""}`;
+    };
+
     it("can be run by name", () => {
       expect(scripts()["first-run"]).toBe("node scripts/first-run.mjs");
     });
@@ -142,15 +155,47 @@ describe("Increment I40 the first run", () => {
        * lint something to read. Asserted as an order rather than a presence,
        * because both were already present.
        */
+      /*
+       * **The chain moved and this assertion followed it, in that order.**
+       *
+       * `verify` used to name every step. It now delegates: `verify:core` holds
+       * the ordered chain and `verify` is `verify:core && security:audit`, so
+       * that a dependency advisory that is known-red fails on its own CI job
+       * instead of hiding every other check behind one red cross.
+       *
+       * Read against `verify` alone, this assertion failed loudly — `typecheck`
+       * was no longer in that string — which is the good case and is how the
+       * move was caught. The two assertions below it did not fail: they ask
+       * whether something is **absent**, and a string that no longer contains
+       * the chain satisfies them without checking anything. Both were repaired
+       * in the same pass; see this file's `first-run` case and `I35`'s `smoke`
+       * case.
+       *
+       * The order is still asserted where the order lives, and `verify` is
+       * asserted to still reach it — because the invariant is about what a
+       * developer runs, and a `verify:core` nothing calls would satisfy the
+       * first half while breaking the point of it.
+       */
       const verify = scripts()["verify"] ?? "";
-      expect(verify.indexOf("typecheck")).toBeGreaterThan(-1);
-      expect(verify.indexOf("typecheck")).toBeLessThan(verify.indexOf("lint"));
+      expect(verify).toContain("verify:core");
+
+      const core = scripts()["verify:core"] ?? "";
+      expect(core.indexOf("typecheck")).toBeGreaterThan(-1);
+      expect(core.indexOf("typecheck")).toBeLessThan(core.indexOf("lint"));
     });
 
     it("is not in `verify`, because it writes to a real database", () => {
-      // Same separation as `smoke`: `verify` proves the code and never touches
-      // a deployment's data.
-      expect(scripts()["verify"]).not.toContain("first-run");
+      /*
+       * Same separation as `smoke`: `verify` proves the code and never touches
+       * a deployment's data.
+       *
+       * Asserted against the **whole chain** rather than the `verify` string.
+       * When `verify` delegated to `verify:core`, this case kept passing while
+       * checking nothing — the steps it is about had moved into a string it
+       * was not reading. An absence assertion pointed at the wrong string is
+       * the quietest kind of dead test.
+       */
+      expect(verifyChain()).not.toContain("first-run");
     });
 
     it("is an operator script, not a route", () => {

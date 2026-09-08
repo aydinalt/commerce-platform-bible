@@ -134,7 +134,16 @@ describe("Increment I35 the first end-to-end run", () => {
        * Asserting the separation keeps somebody from closing the gap in the
        * direction that breaks both.
        */
-      expect(packageJson().scripts["verify"]).not.toContain("smoke");
+      /*
+       * Asserted against the **whole chain**. `verify` delegates to
+       * `verify:core`, and reading only the `verify` entry would satisfy this
+       * case without looking at the steps it is about — the same weakening
+       * `I40`'s `first-run` case took, found in the same pass.
+       */
+      const all = packageJson().scripts;
+      expect(
+        `${all["verify"] ?? ""} ${all["verify:core"] ?? ""}`
+      ).not.toContain("smoke");
     });
   });
 });
