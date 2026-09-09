@@ -50,6 +50,9 @@
       "path": "./modules/notification"
     },
     {
+      "path": "./modules/editorial"
+    },
+    {
       "path": "./apps/api"
     },
     {

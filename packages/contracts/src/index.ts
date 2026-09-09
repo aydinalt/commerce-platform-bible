@@ -1218,7 +1218,28 @@ export const ADMIN_AUDIT_ACTIONS = [
   "VALIDATE_DESTINATION_VALID",
   "VALIDATE_DESTINATION_INVALID",
   "ENABLE_DESTINATION",
-  "DISABLE_DESTINATION"
+  "DISABLE_DESTINATION",
+  /*
+   * I93. The five editorial acts of `PRD-0009` **Frozen v0.4** §13.8. They
+   * change what the platform says in its own voice about a product, on a page
+   * that earns a commission: §8 makes the judgement unpurchasable, and the
+   * trail is what makes it answerable.
+   *
+   * `CREATE_EDITORIAL_REVIEW` is recorded by the Owner's decision of
+   * 2026-09-09. §13.8 names five acts and the §22.2 row added in `PRD-0006`
+   * v2.7 names four, "Creating" having been dropped when that amendment was
+   * drafted, while §22.2 also declares its list exhaustive — so each available
+   * reading contradicted one Frozen document. Recording all five was chosen
+   * because under-recording is the failure §22 exists to prevent. `PRD-0006`
+   * v2.8 restores the word.
+   *
+   * Reading a review records nothing. It is published content.
+   */
+  "CREATE_EDITORIAL_REVIEW",
+  "PUBLISH_EDITORIAL_REVIEW",
+  "REVISE_EDITORIAL_REVIEW",
+  "RECHECK_EDITORIAL_REVIEW",
+  "WITHDRAW_EDITORIAL_REVIEW"
 ] as const;
 
 /**
@@ -2339,6 +2360,187 @@ export const writeProductReviewSchema = z
 export type ProductReviewResponse = z.infer<typeof productReviewSchema>;
 export type ProductReviewsResponse = z.infer<typeof productReviewsSchema>;
 export type WriteProductReview = z.infer<typeof writeProductReviewSchema>;
+
+/* -------------------------------------------------------------------------
+ * The editorial review (I93). `EDT F01` reads it, `EDT F02` writes it.
+ * Behaviour owner: `PRD-0009` **Frozen v0.4**.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * `0`–`10` with one decimal (`PRD-0009` §5.2), deliberately not the crowd's
+ * `0`–`5` above. The two are never merged, averaged or derived from each other.
+ *
+ * **This rule is written twice on purpose, and a test holds the copies
+ * together.** `modules/editorial` owns `isValidEditorialScore` for the domain;
+ * a shared package may not import a product module
+ * (`dependency-cruiser.config.mjs`), so the rule is re-expressed here. That is
+ * the same arrangement the Admin audit action list lives under, and it fails
+ * the same way if nobody checks — so `tests/i93-editorial-contracts.test.ts`
+ * asserts the two agree across the whole scale.
+ *
+ * The tolerance is not decoration. `8.4 * 10` is `84.00000000000001` in binary
+ * floating point, so a rule written as `score % 0.1 === 0` rejects a score the
+ * document permits, and rejects it only for some values.
+ */
+export const editorialScoreSchema = z
+  .number()
+  .min(0)
+  .max(10)
+  .refine(
+    (score) => Math.abs(score * 10 - Math.round(score * 10)) < 1e-9,
+    "an editorial score carries at most one decimal"
+  );
+
+/** A headed passage of prose (`PRD-0009` §5). */
+export const editorialSectionSchema = z
+  .object({
+    body: z.string().min(1).max(8000),
+    heading: z.string().min(1).max(160)
+  })
+  .strict();
+
+/**
+ * The review as a reader meets it (`EDT F01`, `UX-0003` **Frozen v1.2** §8.9).
+ *
+ * **Every field a published review must have is required here**, which is
+ * `US-EDT-F02-001` AC-12 seen from the reading end: a shape that allowed a
+ * verdict-less or con-less review to be presented would make the publication
+ * rules a matter of the writer's diligence. `pros` and `cons` are `.min(1)` for
+ * the reason §5 gives — a review with no cons is an advertisement.
+ *
+ * **What is absent is deliberate.** No status, because only a published review
+ * is ever presented (AC-5, AC-6). No acting account, because AC-3 forbids
+ * presenting it and `byline` is a different fact entirely (§13.2). No sponsor,
+ * partner or commission field, and no open document that could carry one — the
+ * reading half of AC-16.
+ */
+export const editorialReviewSchema = z
+  .object({
+    /**
+     * Whose judgement this is offered as. Published content, never derived from
+     * the account that wrote it (`PRD-0009` §13.2).
+     */
+    byline: z.string().min(1).max(120),
+    cons: z.array(z.string().min(1).max(280)).min(1),
+    /**
+     * When it was last **re-checked** — `null` where it never has been, which
+     * is a claim a reader is entitled to see rather than a gap to fill with the
+     * publication date (`PRD-0009` §5.1, AC-4).
+     */
+    lastCheckedAt: z.string().datetime().nullable(),
+    productKey: z.string().min(1).max(64),
+    pros: z.array(z.string().min(1).max(280)).min(1),
+    /** When it was **first** published. Never re-set. */
+    publishedAt: z.string().datetime(),
+    score: editorialScoreSchema,
+    sections: z.array(editorialSectionSchema).min(1),
+    verdict: z.string().min(1).max(280)
+  })
+  .strict();
+
+/**
+ * The answer to "does this product have a review".
+ *
+ * **A wrapper rather than a bare nullable body, because absence and outage are
+ * different answers and `UX-0003` §8.9.2 says so**: _"an outage is not entitled
+ * to make the claim 'there is no review'"_. A successful response with
+ * `review: null` means the product has none; a failed request means the screen
+ * does not know, and must say the reading failed rather than showing the empty
+ * case. The crowd reviews of §8.6 are fetched the same way for the same reason.
+ */
+export const editorialReviewViewSchema = z
+  .object({
+    review: editorialReviewSchema.nullable()
+  })
+  .strict();
+
+export const EDITORIAL_REVIEW_STATUSES = [
+  "DRAFT",
+  "PUBLISHED",
+  "WITHDRAWN"
+] as const;
+
+/**
+ * The review as its writer sees it (`EDT F02`).
+ *
+ * Carries the state and the parts a Draft may still be missing, which the
+ * public shape cannot express. It carries **no acting account**: who wrote it
+ * is in `admin_audit_event`, and §13.2 keeps that fact and the byline apart.
+ */
+export const editorialReviewAdminSchema = z
+  .object({
+    byline: z.string().max(120).nullable(),
+    cons: z.array(z.string().min(1).max(280)),
+    createdAt: z.string().datetime(),
+    id: z.string().uuid(),
+    /**
+     * What `US-EDT-F02-001` AC-17 needs in order to show a review's age in the
+     * Admin list. **The age itself is not computed here**: the list that
+     * presents it is a screen, and no UX document describes the Admin authoring
+     * surface yet, so building one is forbidden by that Story's Freeze Note
+     * until the screen is drawn in the prototype's language and approved.
+     */
+    lastCheckedAt: z.string().datetime().nullable(),
+    productKey: z.string().min(1).max(64),
+    pros: z.array(z.string().min(1).max(280)),
+    publishedAt: z.string().datetime().nullable(),
+    score: editorialScoreSchema.nullable(),
+    sections: z.array(editorialSectionSchema),
+    status: z.enum(EDITORIAL_REVIEW_STATUSES),
+    verdict: z.string().max(280).nullable()
+  })
+  .strict();
+
+/**
+ * What a writer may send when saving.
+ *
+ * **This shape is where AC-9 stops being a convention.** There is no
+ * `lastCheckedAt` here, no `publishedAt` and no `status` — so no save, however
+ * it is written, can move the date a reader is invited to trust or change the
+ * review's state. Re-checking and publishing are separate acts with their own
+ * routes and their own audit entries (§13.4), and `.strict()` means a payload
+ * that tries to carry one of these fields is refused rather than ignored.
+ *
+ * It is also the writing half of AC-16: there is no field here for a sponsor, a
+ * partner, a commission or a reason, and a strict object refuses the ones a
+ * caller invents. A request to mark a review as sponsored arrives at a form
+ * with nowhere to put it.
+ */
+export const editorialDraftInputSchema = z
+  .object({
+    byline: z.string().trim().max(120).nullish(),
+    cons: z.array(z.string().trim().min(1).max(280)).max(20),
+    pros: z.array(z.string().trim().min(1).max(280)).max(20),
+    score: editorialScoreSchema.nullish(),
+    sections: z.array(editorialSectionSchema).max(20),
+    verdict: z.string().trim().max(280).nullish()
+  })
+  .strict();
+
+/**
+ * Creating one. The Product Key is required and must be one the catalogue
+ * carries — AC-14, checked inside the write transaction rather than by a
+ * foreign key, for the reason the migration records.
+ */
+export const editorialCreateInputSchema = z
+  .object({
+    byline: z.string().trim().max(120).nullish(),
+    cons: z.array(z.string().trim().min(1).max(280)).max(20),
+    productKey: z.string().trim().min(1).max(64),
+    pros: z.array(z.string().trim().min(1).max(280)).max(20),
+    score: editorialScoreSchema.nullish(),
+    sections: z.array(editorialSectionSchema).max(20),
+    verdict: z.string().trim().max(280).nullish()
+  })
+  .strict();
+
+export type EditorialReview = z.infer<typeof editorialReviewSchema>;
+export type EditorialReviewAdmin = z.infer<typeof editorialReviewAdminSchema>;
+export type EditorialReviewStatus = (typeof EDITORIAL_REVIEW_STATUSES)[number];
+export type EditorialReviewView = z.infer<typeof editorialReviewViewSchema>;
+export type EditorialSection = z.infer<typeof editorialSectionSchema>;
+export type WriteEditorialDraft = z.infer<typeof editorialDraftInputSchema>;
+export type WriteEditorialReview = z.infer<typeof editorialCreateInputSchema>;
 
 /**
  * One row of a comparison (`US-DEC-F01-001` AC-7, AC-8).

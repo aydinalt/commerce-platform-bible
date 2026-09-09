@@ -1,22 +1,25 @@
 import { Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
-/** The actions the trail records. Mirrors the `AdminAuditAction` enum. */
-export type AdminAuditAction =
-  | "CASE_OPEN"
-  | "DISABLE_DESTINATION"
-  | "ENABLE_DESTINATION"
-  | "HIDE_OFFERING"
-  | "PII_VIEW"
-  | "REINSTATE_USER"
-  | "REQUEST_CORRECTION"
-  | "RESTORE_BUSINESS"
-  | "RESTORE_OFFERING"
-  | "RESTRICT_BUSINESS"
-  | "REVIEW_DESTINATION"
-  | "SUSPEND_USER"
-  | "VALIDATE_DESTINATION_INVALID"
-  | "VALIDATE_DESTINATION_VALID";
+import type { AdminAuditAction } from "@commerce/contracts";
+
+/**
+ * The actions the trail records.
+ *
+ * **Taken from the contract rather than written out again here.** This was a
+ * third hand-maintained copy of the list — the database enum, the contract's
+ * `ADMIN_AUDIT_ACTIONS`, and a union in this file — and the three agreed only
+ * because somebody remembered to update all of them. `tests/i87-destination-
+ * audit.test.ts` catches a disagreement between the first two by reading
+ * `enum_range` out of the database; nothing caught a disagreement with the
+ * third, and adding I93's five editorial acts would have been a fourth chance
+ * to get it wrong silently.
+ *
+ * Two owners is the fewest this can have: a shared package may not import the
+ * database (`dependency-cruiser.config.mjs`), so the contract cannot read the
+ * enum, and the test is what holds them together.
+ */
+export type { AdminAuditAction };
 
 /** One row of the trail, as it is read (I84). */
 export interface AdminAuditRow {

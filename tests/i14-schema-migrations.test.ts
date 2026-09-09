@@ -203,12 +203,19 @@ describe("Increment I14 schema and migration consistency", () => {
     // is deliberate — an audit row must outlive whatever it describes, so a
     // foreign key that could cascade or restrict against it would make the
     // record depend on the thing being accounted for.
-    expect(ownedRelations()).toHaveLength(73);
+    // 75 since I93's editorial review, which owns two: a section and a point
+    // each name the review they belong to. The review itself owns none — it
+    // names a Product Key and deliberately not an Offering, because AC-14 wants
+    // the key to exist when the review is written and AC-9 wants the review to
+    // survive every Offering carrying that key being withdrawn. A foreign key
+    // would serve the first by defeating the second.
+    expect(ownedRelations()).toHaveLength(75);
     // 55 since I30 added `offering_visual`'s foreign key; 59 with the four I62
     // and I64 wrote inline in their `CREATE TABLE` statements, 62 with I69's
     // three, 63 with I70's one, 66 with I75's three and 73 with I76's seven.
     // 74 with I83's one: the audit row's actor. Its `target_id` and `case_id`
     // are deliberately not foreign keys — see the note above.
-    expect(writtenKeys()).toHaveLength(74);
+    // 76 with I93's two: the editorial review's section and point children.
+    expect(writtenKeys()).toHaveLength(76);
   });
 });

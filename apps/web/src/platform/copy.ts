@@ -582,8 +582,13 @@ export const ACCOUNTS = {
 export const AUDIT = {
   actions: {
     CASE_OPEN: `${TERMS.moderationCase} açıldı`,
+    CREATE_EDITORIAL_REVIEW: "Editöryel inceleme oluşturuldu",
     DISABLE_DESTINATION: "Yönlendirme kapatıldı",
     ENABLE_DESTINATION: "Yönlendirme açıldı",
+    PUBLISH_EDITORIAL_REVIEW: "Editöryel inceleme yayımlandı",
+    RECHECK_EDITORIAL_REVIEW: "Editöryel inceleme yeniden denetlendi",
+    REVISE_EDITORIAL_REVIEW: "Editöryel inceleme revize edildi",
+    WITHDRAW_EDITORIAL_REVIEW: "Editöryel inceleme geri çekildi",
     HIDE_OFFERING: `${TERMS.offering} gizlendi`,
     PII_VIEW: "E-posta adresi görüntülendi",
     REINSTATE_USER: "Hesap geri alındı",

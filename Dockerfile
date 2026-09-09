@@ -36,6 +36,7 @@ COPY packages/observability/package.json packages/observability/
 COPY packages/testing/package.json packages/testing/
 COPY modules/analytics/package.json modules/analytics/
 COPY modules/audit/package.json modules/audit/
+COPY modules/editorial/package.json modules/editorial/
 COPY modules/business/package.json modules/business/
 COPY modules/catalog/package.json modules/catalog/
 COPY modules/decision/package.json modules/decision/

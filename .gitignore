@@ -15,3 +15,8 @@ katalog-prototipi.html
 FIX_MESSAGE.txt
 FIX2_MESSAGE.txt
 FIX3_MESSAGE.txt
+
+# Delivery archives. Work reaches this repository extracted, never as an
+# archive: one was staged by `git add -A` on 2026-09-09 when the `rm` that
+# should have removed it was refused by the mount.
+*.tar.gz

@@ -1432,6 +1432,20 @@ enum AdminAuditAction {
   VALIDATE_DESTINATION_INVALID
   ENABLE_DESTINATION
   DISABLE_DESTINATION
+  /// I93. The five editorial acts of `PRD-0009` **Frozen v0.4** §13.8.
+  ///
+  /// **`CREATE_EDITORIAL_REVIEW` is recorded by the Owner's decision of
+  /// 2026-09-09**, taken on a defect found while writing this schema: §13.8
+  /// names five acts and the §22.2 row added in `PRD-0006` v2.7 names four,
+  /// having dropped "Creating" when the amendment was drafted. Recording the
+  /// five was chosen because under-recording is the failure §22 exists to
+  /// prevent. `PRD-0006` v2.8 restores the word to §22.2; until that is Frozen,
+  /// this comment is where the discrepancy lives rather than in a conversation.
+  CREATE_EDITORIAL_REVIEW
+  PUBLISH_EDITORIAL_REVIEW
+  REVISE_EDITORIAL_REVIEW
+  RECHECK_EDITORIAL_REVIEW
+  WITHDRAW_EDITORIAL_REVIEW
 
   @@map("AdminAuditAction")
 }
@@ -1464,4 +1478,139 @@ model AdminAuditEvent {
   @@index([actorId, occurredAt(sort: Desc)])
   @@index([targetId, occurredAt(sort: Desc)])
   @@map("admin_audit_event")
+}
+
+/// The three states of an editorial review. `PRD-0009` **Frozen v0.4** §13.3.
+///
+/// `WITHDRAWN` is why this is an enum and not a boolean. It exists so that
+/// taking down a published judgement is not a database operation: without it
+/// the only remedy for a review that turns out to be wrong is an operator
+/// editing rows, which is the first of the three risks §13 was written to close
+/// arriving through the back door of the document that closes it.
+///
+/// Withdrawal is not deletion. The review stops being presented; that it
+/// existed, and who withdrew it, stays in `admin_audit_event`.
+enum EditorialReviewStatus {
+  DRAFT
+  PUBLISHED
+  WITHDRAWN
+
+  @@map("EditorialReviewStatus")
+}
+
+/// `PRD-0009` §5 — the two lists, kept apart because a review with no cons is
+/// an advertisement.
+enum EditorialPointKind {
+  PRO
+  CON
+
+  @@map("EditorialPointKind")
+}
+
+/// The platform's own judgement of a product (I93). Feature `EDT F01`
+/// presents it; `EDT F02` writes it. Behaviour owner: `PRD-0009` **Frozen
+/// v0.4**.
+///
+/// **`productKey` is a real `offering.product_key` and never the `coalesce`
+/// fallback**, which is the one place this table refuses to follow
+/// `product_review` and `favourite`. Those group by
+/// `coalesce(offering.product_key, offering.id::text)`, so a listing with no
+/// key becomes a group of one named after the listing. A review written
+/// against such a group would be attached to an Offering wearing a Product
+/// Key's name and would vanish with that Offering — the exact failure
+/// `US-EDT-F01-001` AC-9 exists to prevent, reached through the convenience
+/// meant to help. `US-EDT-F02-001` AC-1 and AC-14 leave one reading: a real
+/// key, or no review.
+///
+/// **There is no foreign key to `offering`, and that is a decision rather than
+/// an omission.** AC-14 requires the key to exist in the catalogue when the
+/// review is written; AC-9 requires the review to survive every Offering
+/// carrying that key being retired, hidden or withdrawn. A foreign key would
+/// serve the first by defeating the second. Existence is therefore checked
+/// inside the write transaction, where there is no window between the check and
+/// the write.
+///
+/// **There is no `businessId` either, and the absence is the isolation
+/// boundary.** This is platform-owned material like `category` and
+/// `admin_audit_event`. No seller can reach the judgement written about the
+/// product they sell, because no column expresses the relationship — which is
+/// also the structural half of AC-16: there is no sponsor, partner, commission,
+/// promotion or reason column, and no JSON document that could carry one. A
+/// prohibition is only as good as the shapes that can carry a violation.
+///
+/// **`lastCheckedAt` is deliberately not called `updatedAt`.** Every other
+/// table here sets `updated_at = now()` on write, and the day somebody follows
+/// that habit on this table is the day AC-9 breaks silently: "last re-checked"
+/// would come to mean "last touched", a corrected comma would present as a
+/// fresh verification, and the date a reader is invited to trust would be the
+/// least trustworthy thing on the page. Row bookkeeping is `rowRevisedAt`. No
+/// column here invites the wrong write.
+model EditorialReview {
+  id            String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Unique across every state, withdrawn included (AC-15). A withdrawn review
+  /// therefore occupies its key permanently, because nothing deletes one
+  /// (AC-7); the remedy for a wrong judgement is to revise and republish the
+  /// review that exists, which is what §13.5 means by "a second is a revision
+  /// of the first, not a second review".
+  productKey    String                @unique @map("product_key") @db.VarChar(64)
+  status        EditorialReviewStatus @default(DRAFT)
+  /// One line. Required to publish, absent while a Draft is being written.
+  verdict       String?               @db.VarChar(280)
+  /// `0`–`10` with one decimal, held as exact decimal rather than a float, and
+  /// deliberately not the crowd's `0`–`5` (§5.2). The two are never merged,
+  /// averaged, or derived from one another.
+  score         Decimal?              @db.Decimal(3, 1)
+  /// Published content: whose judgement this is offered as (§13.2). Never
+  /// derived from the acting account, which lives in the audit trail and is
+  /// never presented.
+  byline        String?               @map("byline") @db.VarChar(120)
+  /// Set once, at first publication, and never again — including across a
+  /// withdrawal and a republication.
+  publishedAt   DateTime?             @map("published_at") @db.Timestamptz(6)
+  /// Moved only by a deliberate re-check. See the note above.
+  lastCheckedAt DateTime?             @map("last_checked_at") @db.Timestamptz(6)
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// Ordinary row bookkeeping, carrying no claim to a reader.
+  rowRevisedAt  DateTime              @default(now()) @map("row_revised_at") @db.Timestamptz(6)
+
+  sections EditorialReviewSection[]
+  points   EditorialReviewPoint[]
+
+  @@map("editorial_review")
+}
+
+/// A headed passage of prose (`PRD-0009` §5).
+///
+/// A child table rather than a JSON array, for AC-16's reason: a document field
+/// can express anything, sponsorship included. Named columns cannot.
+model EditorialReviewSection {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewId String @map("review_id") @db.Uuid
+  /// Author-chosen order. Presentation follows it; nothing sorts by content.
+  position Int    @db.SmallInt
+  heading  String @db.VarChar(160)
+  body     String @db.VarChar(8000)
+
+  review EditorialReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, position])
+  @@map("editorial_review_section")
+}
+
+/// One entry in the pros list or the cons list (`PRD-0009` §5).
+///
+/// One table with a `kind` rather than two tables, so that "at least one of
+/// each" — the §13.5 rule that keeps a review from being an advertisement — is
+/// one query rather than two that can disagree.
+model EditorialReviewPoint {
+  id       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reviewId String             @map("review_id") @db.Uuid
+  kind     EditorialPointKind
+  position Int                @db.SmallInt
+  text     String             @db.VarChar(280)
+
+  review EditorialReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, kind, position])
+  @@map("editorial_review_point")
 }
