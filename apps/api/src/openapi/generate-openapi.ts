@@ -21,6 +21,13 @@ const adminOfferingParameter = {
   schema: { format: "uuid", type: "string" }
 };
 
+const adminEditorialParameter = {
+  in: "path",
+  name: "id",
+  required: true,
+  schema: { format: "uuid", type: "string" }
+};
+
 const affiliateDestinationResponse = (description: string) => ({
   content: {
     "application/json": {
@@ -729,6 +736,169 @@ const document = {
           "occurredAt",
           "targetId"
         ],
+        type: "object"
+      },
+      EditorialSection: {
+        additionalProperties: false,
+        properties: {
+          body: { maxLength: 8000, minLength: 1, type: "string" },
+          heading: { maxLength: 160, minLength: 1, type: "string" }
+        },
+        required: ["body", "heading"],
+        type: "object"
+      },
+      EditorialReview: {
+        additionalProperties: false,
+        properties: {
+          byline: { maxLength: 120, minLength: 1, type: "string" },
+          cons: {
+            items: { maxLength: 280, minLength: 1, type: "string" },
+            minItems: 1,
+            type: "array"
+          },
+          lastCheckedAt: { format: "date-time", type: ["string", "null"] },
+          productKey: { maxLength: 64, minLength: 1, type: "string" },
+          pros: {
+            items: { maxLength: 280, minLength: 1, type: "string" },
+            minItems: 1,
+            type: "array"
+          },
+          publishedAt: { format: "date-time", type: "string" },
+          score: { maximum: 10, minimum: 0, type: "number" },
+          sections: {
+            items: { $ref: "#/components/schemas/EditorialSection" },
+            minItems: 1,
+            type: "array"
+          },
+          verdict: { maxLength: 280, minLength: 1, type: "string" }
+        },
+        required: [
+          "byline",
+          "cons",
+          "lastCheckedAt",
+          "productKey",
+          "pros",
+          "publishedAt",
+          "score",
+          "sections",
+          "verdict"
+        ],
+        type: "object"
+      },
+      EditorialReviewView: {
+        additionalProperties: false,
+        properties: {
+          review: {
+            anyOf: [
+              { $ref: "#/components/schemas/EditorialReview" },
+              { type: "null" }
+            ]
+          }
+        },
+        required: ["review"],
+        type: "object"
+      },
+      EditorialReviewAdmin: {
+        additionalProperties: false,
+        properties: {
+          byline: { maxLength: 120, type: ["string", "null"] },
+          cons: {
+            items: { maxLength: 280, minLength: 1, type: "string" },
+            type: "array"
+          },
+          createdAt: { format: "date-time", type: "string" },
+          id: { format: "uuid", type: "string" },
+          lastCheckedAt: { format: "date-time", type: ["string", "null"] },
+          productKey: { maxLength: 64, minLength: 1, type: "string" },
+          pros: {
+            items: { maxLength: 280, minLength: 1, type: "string" },
+            type: "array"
+          },
+          publishedAt: { format: "date-time", type: ["string", "null"] },
+          score: { maximum: 10, minimum: 0, type: ["number", "null"] },
+          sections: {
+            items: { $ref: "#/components/schemas/EditorialSection" },
+            type: "array"
+          },
+          status: { enum: ["DRAFT", "PUBLISHED", "WITHDRAWN"], type: "string" },
+          verdict: { maxLength: 280, type: ["string", "null"] }
+        },
+        required: [
+          "byline",
+          "cons",
+          "createdAt",
+          "id",
+          "lastCheckedAt",
+          "productKey",
+          "pros",
+          "publishedAt",
+          "score",
+          "sections",
+          "status",
+          "verdict"
+        ],
+        type: "object"
+      },
+      EditorialReviewList: {
+        additionalProperties: false,
+        properties: {
+          reviews: {
+            items: { $ref: "#/components/schemas/EditorialReviewAdmin" },
+            type: "array"
+          }
+        },
+        required: ["reviews"],
+        type: "object"
+      },
+      WriteEditorialDraft: {
+        additionalProperties: false,
+        properties: {
+          byline: { maxLength: 120, type: ["string", "null"] },
+          cons: {
+            items: { maxLength: 280, minLength: 1, type: "string" },
+            maxItems: 20,
+            type: "array"
+          },
+          pros: {
+            items: { maxLength: 280, minLength: 1, type: "string" },
+            maxItems: 20,
+            type: "array"
+          },
+          score: { maximum: 10, minimum: 0, type: ["number", "null"] },
+          sections: {
+            items: { $ref: "#/components/schemas/EditorialSection" },
+            maxItems: 20,
+            type: "array"
+          },
+          verdict: { maxLength: 280, type: ["string", "null"] }
+        },
+        required: ["cons", "pros", "sections"],
+        type: "object"
+      },
+      WriteEditorialReview: {
+        additionalProperties: false,
+        properties: {
+          byline: { maxLength: 120, type: ["string", "null"] },
+          cons: {
+            items: { maxLength: 280, minLength: 1, type: "string" },
+            maxItems: 20,
+            type: "array"
+          },
+          productKey: { maxLength: 64, minLength: 1, type: "string" },
+          pros: {
+            items: { maxLength: 280, minLength: 1, type: "string" },
+            maxItems: 20,
+            type: "array"
+          },
+          score: { maximum: 10, minimum: 0, type: ["number", "null"] },
+          sections: {
+            items: { $ref: "#/components/schemas/EditorialSection" },
+            maxItems: 20,
+            type: "array"
+          },
+          verdict: { maxLength: 280, type: ["string", "null"] }
+        },
+        required: ["cons", "productKey", "pros", "sections"],
         type: "object"
       },
       AdminAuditEvents: {
@@ -5522,6 +5692,221 @@ const document = {
           "400": errorResponse("Invalid audit filter"),
           "401": errorResponse("Authentication required"),
           "403": errorResponse("Admin context required")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/products/{productKey}/editorial-review": {
+      get: {
+        description:
+          "The platform's own judgement of a product (I93, `EDT F01`). Keyed by Product Key rather than by listing, so every seller of one product presents the same review and it survives any of them withdrawing (`US-EDT-F01-001` AC-8, AC-9). Fetched separately from the Offering presentation on purpose: `UX-0003` §8.9.2 requires absence and outage to be different answers, and a review folded into the presentation could only report a read failure as `null` — the claim 'there is no review', which that section forbids. A `200` carrying `review: null` means the product has none.",
+        operationId: "readEditorialReview",
+        parameters: [
+          {
+            in: "path",
+            name: "productKey",
+            required: true,
+            schema: { maxLength: 64, minLength: 1, type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EditorialReviewView" }
+              }
+            },
+            description: "The review of this Product Key, or none"
+          },
+          "403": errorResponse("Origin not acceptable"),
+          "503": errorResponse("Dependency unavailable")
+        },
+        tags: ["Offering"]
+      }
+    },
+    "/api/v1/admin/editorial-reviews": {
+      get: {
+        description:
+          "Every editorial review, newest first (I93, `EDT F02`). Carries `lastCheckedAt` so a surface can show each review's age (`PRD-0009` §13.7). No screen presents it yet: no UX document describes the Admin authoring surface, and `US-EDT-F02-001`'s Freeze Note forbids building one until that screen is drawn in the prototype's language and approved.",
+        operationId: "listEditorialReviews",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EditorialReviewList" }
+              }
+            },
+            description: "Every editorial review"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "503": errorResponse("Dependency unavailable")
+        },
+        tags: ["Platform"]
+      },
+      post: {
+        description:
+          "Create an editorial review for a Product Key, as a Draft (`US-EDT-F02-001` AC-14, AC-15). The key must be one the catalogue carries, checked inside the write transaction rather than by a foreign key — AC-14 wants the key to exist now and AC-9 wants the review to outlive every listing that carried it, and a foreign key would serve the first by defeating the second. A key that already carries a review is refused in every state, withdrawn included.",
+        operationId: "createEditorialReview",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/WriteEditorialReview" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "201": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EditorialReviewAdmin" }
+              }
+            },
+            description: "The review, as a Draft"
+          },
+          "400": errorResponse("Invalid editorial review"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "409": errorResponse("That Product Key already carries a review"),
+          "422": errorResponse("No published listing carries that Product Key"),
+          "503": errorResponse("Dependency unavailable")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/editorial-reviews/{productKey}": {
+      get: {
+        description:
+          "The review as its writer sees it, in whatever state it is in.",
+        operationId: "readEditorialReviewForWriter",
+        parameters: [
+          {
+            in: "path",
+            name: "productKey",
+            required: true,
+            schema: { maxLength: 64, minLength: 1, type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EditorialReviewAdmin" }
+              }
+            },
+            description: "The review"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "404": errorResponse("No review exists for that Product Key"),
+          "503": errorResponse("Dependency unavailable")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/editorial-reviews/{id}": {
+      put: {
+        description:
+          "Save a Draft, or revise a published review. **Moves neither date a reader is shown** (`PRD-0009` §13.4, AC-9, AC-11): the body has no field for either and the update does not name them, so a writer who fixes a comma leaves 'last re-checked' where it was. Re-checking is a separate act with its own route.",
+        operationId: "saveEditorialReview",
+        parameters: [adminEditorialParameter],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/WriteEditorialDraft" }
+            }
+          },
+          required: true
+        },
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EditorialReviewAdmin" }
+              }
+            },
+            description: "The saved review"
+          },
+          "400": errorResponse("Invalid editorial review"),
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "422": errorResponse("A published review may not be left incomplete"),
+          "503": errorResponse("Dependency unavailable")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/editorial-reviews/{id}/publication": {
+      post: {
+        description:
+          "Publish a review (AC-12). Refused unless it carries a verdict, a score, at least one section, at least one pro, at least one con and a byline — `PRD-0009` §5's rule that a review with no cons is an advertisement. The first publication date is set once and kept across a withdrawal and a return (AC-8).",
+        operationId: "publishEditorialReview",
+        parameters: [adminEditorialParameter],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EditorialReviewAdmin" }
+              }
+            },
+            description: "The published review"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "409": errorResponse(
+            "The review is not in a state that can be published"
+          ),
+          "422": errorResponse(
+            "The review is missing parts it cannot publish without"
+          ),
+          "503": errorResponse("Dependency unavailable")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/editorial-reviews/{id}/recheck": {
+      post: {
+        description:
+          "Record that a published review has been re-checked — the only act that moves `lastCheckedAt` (`PRD-0009` §13.4, AC-9, AC-10). It takes no body, because there is nothing to state beyond that the check happened, and a payload would invite a caller to send it alongside a save.",
+        operationId: "recheckEditorialReview",
+        parameters: [adminEditorialParameter],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EditorialReviewAdmin" }
+              }
+            },
+            description: "The re-checked review"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "409": errorResponse("Only a published review can be re-checked"),
+          "503": errorResponse("Dependency unavailable")
+        },
+        tags: ["Platform"]
+      }
+    },
+    "/api/v1/admin/editorial-reviews/{id}/withdrawal": {
+      post: {
+        description:
+          "Withdraw a published review (AC-6, AC-7). Not a deletion, and there is no route that is one: the review stops being presented, and that it existed and who withdrew it stays in the audit trail. Withdrawal exists so that removing a wrong judgement is not a database operation.",
+        operationId: "withdrawEditorialReview",
+        parameters: [adminEditorialParameter],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EditorialReviewAdmin" }
+              }
+            },
+            description: "The withdrawn review"
+          },
+          "401": errorResponse("Authentication required"),
+          "403": errorResponse("Admin context required"),
+          "409": errorResponse("Only a published review can be withdrawn"),
+          "503": errorResponse("Dependency unavailable")
         },
         tags: ["Platform"]
       }

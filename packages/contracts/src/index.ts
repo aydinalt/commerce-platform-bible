@@ -2534,10 +2534,18 @@ export const editorialCreateInputSchema = z
   })
   .strict();
 
+/** Every review, for the writer's list. */
+export const editorialReviewListSchema = z
+  .object({
+    reviews: z.array(editorialReviewAdminSchema)
+  })
+  .strict();
+
 export type EditorialReview = z.infer<typeof editorialReviewSchema>;
 export type EditorialReviewAdmin = z.infer<typeof editorialReviewAdminSchema>;
 export type EditorialReviewStatus = (typeof EDITORIAL_REVIEW_STATUSES)[number];
 export type EditorialReviewView = z.infer<typeof editorialReviewViewSchema>;
+export type EditorialReviewList = z.infer<typeof editorialReviewListSchema>;
 export type EditorialSection = z.infer<typeof editorialSectionSchema>;
 export type WriteEditorialDraft = z.infer<typeof editorialDraftInputSchema>;
 export type WriteEditorialReview = z.infer<typeof editorialCreateInputSchema>;

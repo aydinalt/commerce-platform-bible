@@ -29,6 +29,7 @@ import {
 import { anthropicProvider } from "./decision/anthropic.provider.js";
 import { HttpDecisionAssistant } from "./decision/http.assistant.js";
 import { RestatingDecisionAssistant } from "./decision/restating.assistant.js";
+import { EditorialAdminController } from "./platform/editorial.controller.js";
 import { AccessModerationController } from "./platform/access-moderation.controller.js";
 import { AdminPanelController } from "./platform/admin-panel.controller.js";
 import { AdvertisingController } from "./platform/advertising.controller.js";
@@ -54,6 +55,7 @@ import {
   OfferingController
 } from "./offering/offering.controller.js";
 import { OfferingService } from "./offering/offering.service.js";
+import { EditorialReviewController } from "./offering/editorial-review.controller.js";
 import { FavouriteController } from "./offering/favourite.controller.js";
 import { PublicOfferingController } from "./offering/public-offering.controller.js";
 import { PgAffiliateRepository } from "./persistence/pg-affiliate.repository.js";
@@ -77,6 +79,7 @@ import { PgAdvertisingRepository } from "./persistence/pg-advertising.repository
 import { PgComplementaryRepository } from "./persistence/pg-complementary.repository.js";
 import { PgListingReportRepository } from "./persistence/pg-listing-report.repository.js";
 import { PgOfferingFeedRepository } from "./persistence/pg-offering-feed.repository.js";
+import { PgEditorialRepository } from "./persistence/pg-editorial.repository.js";
 import { PgReviewRepository } from "./persistence/pg-review.repository.js";
 import { OriginValidator } from "./security/origin.guard.js";
 import { PrincipalResolver } from "./security/principal-resolver.js";
@@ -163,6 +166,8 @@ export class DatabaseLifecycle implements OnModuleDestroy {
 
 @Module({
   controllers: [
+    EditorialAdminController,
+    EditorialReviewController,
     AuditController,
     AccessModerationController,
     AdminBusinessController,
@@ -222,6 +227,7 @@ export class DatabaseLifecycle implements OnModuleDestroy {
     PgComplementaryRepository,
     PgListingReportRepository,
     PgOfferingFeedRepository,
+    PgEditorialRepository,
     PgReviewRepository,
     PrincipalResolver,
     /*
