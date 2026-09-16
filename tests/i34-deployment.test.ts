@@ -133,6 +133,38 @@ describe("Increment I34 deployment", () => {
       ).toEqual([]);
     });
 
+    /**
+     * Every workspace is in the lock file too.
+     *
+     * **This is the sibling of the assertion above, and it was written after
+     * the failure it describes.** `I93` added `modules/editorial` as a new
+     * workspace and committed its `package.json`; the `package-lock.json` that
+     * `npm install` updated as a side effect was never committed, because the
+     * delivery packed the files that were edited on purpose and not the one
+     * that changed by itself. CI checked out a lock file that had never heard
+     * of the workspace and `npm ci` refused — `EUSAGE`, "Missing:
+     * @commerce/editorial@0.0.0 from lock file" — one second into run #169,
+     * before a single test ran.
+     *
+     * Nothing in the repository could have caught that: the Dockerfile
+     * assertion above checks the manifest list, `npm install` keeps working
+     * locally because it rewrites the lock file on the spot, and the failure
+     * only appears on a clean checkout. This reads the lock file the way `npm
+     * ci` does, so the next workspace added without its lock entry fails here
+     * rather than in CI.
+     */
+    it("names every workspace in the lock file", () => {
+      const lock = JSON.parse(readFileSync("package-lock.json", "utf8")) as {
+        packages: Record<string, unknown>;
+      };
+      const workspaces = ["apps", "packages", "modules"].flatMap((root) =>
+        readdirSync(root, { withFileTypes: true })
+          .filter((entry) => entry.isDirectory())
+          .map((entry) => `${root}/${entry.name}`)
+      );
+      expect(workspaces.filter((path) => !(path in lock.packages))).toEqual([]);
+    });
+
     it("runs as somebody other than root", () => {
       // The base image ships a `node` user. Using it costs nothing and means a
       // compromise inside the process is not a compromise of the container.
