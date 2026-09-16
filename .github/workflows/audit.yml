@@ -101,7 +101,12 @@ jobs:
             echo 'The gate is `--audit-level=high` and is expected to be red until'
             echo 'upstream `fastify` and `prisma` releases clear it. The decision to'
             echo 'wait, and the reading of the exposure, are in'
-            echo '`docs/implementation/V1_SECURITY_REVIEW.md` §2.1–§2.3.'
+            echo '`docs/implementation/V1_SECURITY_REVIEW.md` §2.1–§2.4.'
+            echo
+            echo 'Not everything listed below is an accepted risk. A finding'
+            echo 'against a direct dependency with a non-breaking fix gets'
+            echo 'fixed — see §2.4, which is how the `next` critical of'
+            echo '2026-09-16 was handled.'
             echo
             echo 'A green run here means an upstream release landed: record it in'
             echo 'that document rather than in a conversation.'
