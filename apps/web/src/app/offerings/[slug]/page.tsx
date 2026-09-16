@@ -11,6 +11,7 @@ import {
   readDiscoveryEntry
 } from "../../../discovery/entry";
 import { readProductReviews } from "../../../discovery/reviews";
+import { readEditorialReview } from "../../../editorial/api";
 import { SESSION_COOKIE } from "../../../identity/session";
 import { TERMS } from "../../../vocabulary";
 
@@ -84,6 +85,24 @@ export default async function OfferingPage({
   return (
     <OfferingPresentation
       complementary={await fetchComplementary(slug)}
+      /*
+       * I95, `EDT F01`. Fetched separately from the Presentation and never as a
+       * field inside it, which is `UX-0003` **Frozen v1.2** §8.9.2's doing: a
+       * review folded into the Presentation read would have two ways to end on
+       * failure — take the whole listing down, or answer "no review" — and the
+       * first is disproportionate while the second is the claim §8.9.2 forbids
+       * an outage from making. Fetched apart, the two answers stay apart.
+       *
+       * **Not fetched at all where the listing carries no Product Key.** There
+       * is nothing to ask about, so `undefined` reaches the screen and it
+       * presents nothing and says nothing — §8.9.2's second case, which must not
+       * be allowed to become an outage by way of a request that could fail.
+       */
+      editorial={
+        offering.productKey === null
+          ? undefined
+          : await readEditorialReview(offering.productKey)
+      }
       offering={offering}
       preparation={entry?.kind === "BROWSE" ? entry.preparation : undefined}
       /*

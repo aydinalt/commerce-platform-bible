@@ -675,6 +675,17 @@ export const EDITORIAL = {
   neverChecked: "Hiç yeniden kontrol edilmedi",
   none: "Henüz editöryel inceleme yazılmadı.",
   notFound: "Bu ürün anahtarı için editöryel inceleme yok.",
+  /**
+   * The scale, in words, in the phrasing the crowd's score already uses
+   * (I95). `ProductRatingSummary` reads "5 üzerinden 4,3"; this reads "10
+   * üzerinden 8,4".
+   *
+   * **It exists so that `US-EDT-F01-001` AC-6 does not rest on a slash.** The
+   * two scores appear on one screen and answer different questions, and a
+   * reader who sees `8,4 / 10` beside `★★★★☆ 4,3` has to work out that the
+   * denominators differ. Spelled out, there is nothing to work out.
+   */
+  outOfTen: (score: string) => `10 üzerinden ${score}`,
   preview: "Önizleme",
   /**
    * §12C.7. Said plainly because the alternative reading — that this is a

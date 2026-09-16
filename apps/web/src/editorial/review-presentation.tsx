@@ -42,19 +42,27 @@ export function EditorialReviewPresentation({
       {review.verdict === null ? null : <p>{review.verdict}</p>}
 
       {/*
-        The platform's own score, `0–10` with one decimal. §8.9.1 keeps it apart
-        from the crowd's `0–5` and forbids any third number derived from the
-        two — there is no arithmetic anywhere in this component, and the two
-        scores never meet inside it because only one of them is here.
+        The platform's own score, `0–10` with one decimal (AC-5).
+
+        **The scale is stated in words, in the same phrasing the crowd's score
+        uses**: `ProductRatingSummary` reads "5 üzerinden 4,3" and this reads
+        "10 üzerinden 8,4". On a page carrying both, that is what AC-6 rests on
+        — two numbers whose denominators are spelled out cannot be read as one
+        measurement, where `8,4 / 10` beside `★★★★☆ 4,3` invites exactly that.
+
+        §8.9.1 also forbids any third number derived from the two. There is no
+        arithmetic anywhere in this component, and the two scores never meet
+        inside it because only one of them is here at all.
       */}
       {review.score === null ? null : (
-        <p>
+        <p className="editorial-score">
           {EDITORIAL.score}:{" "}
-          {review.score.toLocaleString("tr-TR", {
-            maximumFractionDigits: 1,
-            minimumFractionDigits: 1
-          })}{" "}
-          / 10
+          {EDITORIAL.outOfTen(
+            review.score.toLocaleString("tr-TR", {
+              maximumFractionDigits: 1,
+              minimumFractionDigits: 1
+            })
+          )}
         </p>
       )}
 

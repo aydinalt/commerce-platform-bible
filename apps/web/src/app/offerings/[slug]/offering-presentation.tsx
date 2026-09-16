@@ -1,5 +1,6 @@
 import type {
   ComplementaryPlacementResponse,
+  EditorialReviewView,
   OfferingPresentationResponse,
   PresentedAttribute,
   ProductReviewsResponse
@@ -14,6 +15,8 @@ import { startDecisionFromOffering } from "../../decision/actions";
 import { CompareEntry } from "../../compare/compare-entry";
 import { ComplementaryBlock } from "./complementary-block";
 import { ReportForm } from "./report-form";
+import { EditorialSection } from "../../../editorial/editorial-section";
+
 import { ReviewsSection } from "./reviews-section";
 
 /**
@@ -156,6 +159,7 @@ function Visuals({ urls }: { urls: string[] }) {
 
 export function OfferingPresentation({
   complementary,
+  editorial,
   offering,
   preparation,
   reviews
@@ -167,6 +171,16 @@ export function OfferingPresentation({
    * structural.
    */
   complementary: ComplementaryPlacementResponse[];
+  /**
+   * I95, `EDT F01`. The platform's own review of this product: the wrapper
+   * where one was asked for, `null` where the reading failed, and `undefined`
+   * where the listing carries no Product Key and there was nothing to ask.
+   *
+   * Three states because `UX-0003` §8.9.2 needs three. Two of them present
+   * nothing at all, and they are still different: a listing with no Product Key
+   * has nothing to fail to read.
+   */
+  editorial: EditorialReviewView | null | undefined;
   offering: OfferingPresentationResponse;
   preparation?: PreparationContext | undefined;
   /**
@@ -279,6 +293,29 @@ export function OfferingPresentation({
          * I62 and the sentences behind them were nowhere — which is the half of
          * a review that says why.
          */}
+        {/*
+         * I95, `EDT F01`. The platform's judgement, next to the crowd's and
+         * never mixed with it.
+         *
+         * **Adjacent on purpose, and that is where §8.9.1 is hardest.** The two
+         * answer different questions — "what do we think" and "what do buyers
+         * say" — on different scales, `0–10` against `0–5`. Separated by half a
+         * page they would be easy to keep apart and easy to miss; side by side
+         * each is read in the light of the other, which is the comparison worth
+         * offering, and is exactly why each carries its own heading and spells
+         * its scale out in words.
+         *
+         * **Nothing here derives a third number from the two.** No average, no
+         * blend, no combined badge. `PRD-0009` §5.2 forbids it and adds the
+         * reason that survives a commercial conversation: a blended figure
+         * answers neither question, nor could it be explained to a partner who
+         * asked how it was calculated.
+         *
+         * It renders nothing at all when the product has no review, which is
+         * most products (AC-14).
+         */}
+        <EditorialSection editorial={editorial} />
+
         <ReviewsSection reviews={reviews} slug={offering.slug} />
 
         <DecisionEntries
