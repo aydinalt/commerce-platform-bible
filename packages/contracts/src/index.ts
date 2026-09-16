@@ -2893,6 +2893,46 @@ export type SelectOffering = z.infer<typeof selectOfferingSchema>;
 export type EnterDecision = z.infer<typeof enterDecisionSchema>;
 export type DecisionContextResponse = z.infer<typeof decisionContextSchema>;
 
+/**
+ * The indexable address set, for `sitemap.xml` (I97).
+ *
+ * **Generated from the catalogue, never maintained.** A hand-written sitemap is
+ * a second list of the site's pages, and the day somebody publishes a listing is
+ * the day the two disagree — silently, because nothing on screen depends on it.
+ *
+ * **Only publicly eligible Offerings appear**, and that is a property of the
+ * source rather than a filter applied here: the Discovery projection holds a row
+ * only while an Offering's final Public Eligibility is Eligible, and retirement
+ * removes it. A sitemap that advertised a retired listing would send a crawler
+ * to a `404` and spend the crawl budget that the listings which do exist need.
+ *
+ * `lastModified` is the real publication moment rather than "now". A sitemap
+ * where every page changed today teaches a crawler that the date means nothing,
+ * and it then ignores the date on the pages that really did change.
+ */
+export const sitemapEntrySchema = z
+  .object({
+    lastModified: z.string().datetime(),
+    slug: z.string().min(1)
+  })
+  .strict();
+
+export const sitemapSchema = z
+  .object({
+    /**
+     * Bounded at the sitemap protocol's own limit of 50,000 URLs.
+     *
+     * Stated rather than assumed: a catalogue that outgrows one file needs a
+     * sitemap index, which is a different document and a decision to take when
+     * the catalogue is near the limit rather than after a crawler has silently
+     * stopped reading at fifty thousand.
+     */
+    offerings: z.array(sitemapEntrySchema).max(50_000)
+  })
+  .strict();
+
+export type SitemapResponse = z.infer<typeof sitemapSchema>;
+
 export const browseRootsSchema = z
   .object({
     domains: z.array(

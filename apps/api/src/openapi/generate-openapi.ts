@@ -2074,6 +2074,29 @@ const document = {
         ],
         type: "object"
       },
+      Sitemap: {
+        additionalProperties: false,
+        description:
+          "The indexable address set, generated from the Discovery projection rather than maintained by hand.",
+        properties: {
+          offerings: {
+            items: { $ref: "#/components/schemas/SitemapEntry" },
+            maxItems: 50000,
+            type: "array"
+          }
+        },
+        required: ["offerings"],
+        type: "object"
+      },
+      SitemapEntry: {
+        additionalProperties: false,
+        properties: {
+          lastModified: { format: "date-time", type: "string" },
+          slug: { minLength: 1, type: "string" }
+        },
+        required: ["lastModified", "slug"],
+        type: "object"
+      },
       SearchView: {
         additionalProperties: false,
         properties: {
@@ -6666,6 +6689,24 @@ const document = {
               }
             },
             description: "Active root Categories"
+          }
+        },
+        tags: ["Discovery"]
+      }
+    },
+    "/api/v1/discovery/sitemap": {
+      get: {
+        description:
+          "Every publicly eligible Offering address, for `sitemap.xml` (I97). Read from the Discovery projection, which holds a row only while an Offering's final Public Eligibility is Eligible and which retirement removes \u2014 so a retired listing is absent rather than filtered. Public and unauthenticated, and it records nothing: fetching a sitemap is not a Discovery Start. `lastModified` is the real publication moment rather than the time of the request. Bounded at the sitemap protocol's limit of 50,000 URLs.",
+        operationId: "sitemap",
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Sitemap" }
+              }
+            },
+            description: "The indexable Offering addresses"
           }
         },
         tags: ["Discovery"]

@@ -266,6 +266,36 @@ export class PgDiscoveryRepository {
    * Choosing from this list is what begins a Browse path, so nothing here
    * records a Discovery Start: no Category has been selected yet.
    */
+  /**
+   * Every address a crawler should know about (I97).
+   *
+   * **Read from the Discovery projection**, which is the same table Search and
+   * Browse read and which holds a row only while an Offering's final Public
+   * Eligibility is Eligible. That is what makes this list correct rather than
+   * merely current: nothing here decides what may be indexed, because the table
+   * has already decided what may be found.
+   *
+   * Ordered newest first and bounded at the sitemap protocol's 50,000 URLs, so
+   * that the file stays valid as the catalogue grows and the most recently
+   * published listings are the ones that survive the cut.
+   */
+  async sitemap(): Promise<{ lastModified: string; slug: string }[]> {
+    const result = await this.pool.query<{
+      publishedAt: Date;
+      slug: string;
+    }>(
+      `select o.slug, p.published_at as "publishedAt"
+       from offering_search_projection p
+       join offering o on o.id = p.offering_id
+       order by p.published_at desc
+       limit 50000`
+    );
+    return result.rows.map((row) => ({
+      lastModified: row.publishedAt.toISOString(),
+      slug: row.slug
+    }));
+  }
+
   async browseRoots(): Promise<
     { categories: BrowseCategory[]; domain: string; domainName: string }[]
   > {

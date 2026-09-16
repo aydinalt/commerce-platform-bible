@@ -16,6 +16,7 @@ import { z } from "zod";
 
 import {
   browseRootsSchema,
+  sitemapSchema,
   browseSelectionSchema,
   browseViewSchema,
   searchSubmissionSchema,
@@ -78,6 +79,22 @@ export class DiscoveryController {
     return browseRootsSchema.parse({
       domains: await this.discovery.browseRoots()
     });
+  }
+
+  /**
+   * The indexable address set (I97).
+   *
+   * **A read, and it records nothing.** Fetching the sitemap is not a Discovery
+   * Start: no person has searched, browsed or selected anything, and a crawler
+   * that produced a Discovery Start on every visit would put a machine's
+   * traversal into the platform's own account of what people did.
+   *
+   * Public and unauthenticated, because a sitemap that needed a session would
+   * be a sitemap no crawler could read.
+   */
+  @Get("sitemap")
+  async sitemap() {
+    return sitemapSchema.parse({ offerings: await this.discovery.sitemap() });
   }
 
   /**
