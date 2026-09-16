@@ -1439,8 +1439,13 @@ enum AdminAuditAction {
   /// names five acts and the §22.2 row added in `PRD-0006` v2.7 names four,
   /// having dropped "Creating" when the amendment was drafted. Recording the
   /// five was chosen because under-recording is the failure §22 exists to
-  /// prevent. `PRD-0006` v2.8 restores the word to §22.2; until that is Frozen,
-  /// this comment is where the discrepancy lives rather than in a conversation.
+  /// prevent. `PRD-0006` **Frozen v2.8** (2026-09-16) restores the word to
+  /// §22.2, so the document and this enum now name the same five acts.
+  ///
+  /// The migration that added these values still describes v2.8 as pending. It
+  /// is left exactly as written: an applied migration is checksummed by
+  /// `prisma migrate deploy`, and editing one — even a comment — makes every
+  /// database that already ran it refuse the next deploy.
   CREATE_EDITORIAL_REVIEW
   PUBLISH_EDITORIAL_REVIEW
   REVISE_EDITORIAL_REVIEW

@@ -1,44 +1,5 @@
 # PRD-0006 — Platform
 
-> **Draft Note (2.8):** This is a **candidate** and carries no authority.
-> **Frozen v2.7 remains the baseline** until the Owner approves and, separately,
-> freezes this revision.
->
-> **Revision Note (2.8):** Superseding revision of Frozen v2.7, begun
-> independently at Draft under `DOCUMENT_LIFECYCLE.md` §7. **One word in §22.2,
-> and the word is "Creating".**
->
-> **This corrects a defect introduced in v2.7, by me, and found the next day
-> while writing the schema the row governs.** `PRD-0009` **Frozen v0.4** §13.8
-> names five acts — _"Creating, publishing, revising, re-checking and
-> withdrawing"_ — and the row added to §22.2 in v2.7 names four. "Creating" was
-> dropped when the amendment was drafted in `PRD-0009` §14, and both documents
-> were frozen with the discrepancy in them.
->
-> **It was not a harmless difference.** §22.2 says of itself that the list is
-> exhaustive and that _"An Admin act that is not on it is not recorded"_, so the
-> two available readings each contradicted a Frozen document: record the
-> creation and §22.2 is wrong about what is recorded; do not record it and
-> §13.8 is wrong about what reaches the trail. There was no third reading in
-> which both documents were true.
->
-> **The Owner decided on 2026-09-09 that all five are recorded**, and the reason
-> is the one §22 was written around: under-recording is the failure this section
-> exists to prevent, and over-recording harms nobody. The implementation carries
-> five `AdminAuditAction` values from `I93` onward; this revision makes the
-> document say what the platform does.
->
-> **Nothing else changes.** Not §22.1, not §22.3's append-only enforcement, not
-> §22.4's retention, not §22.5's exclusion, not §22.6's reading surface, not
-> §22.8's Acceptance Criterion — which reads _"an act listed in §22.2"_ and
-> therefore covers the corrected row without amendment, as it covered the
-> original one.
->
-> **Why a whole revision for one word.** Because §22.2 declares its own list
-> exhaustive and makes adding to it a revision of the section, in those words. A
-> repository that edited the row quietly would be one where that sentence had
-> stopped meaning anything.
-
 > **Freeze Note (2.7):** Explicitly Frozen by the Product Owner / Architecture
 > Owner on 2026-09-08, **first in a four-step order the Owner set out in the same
 > message** — this document, then `PRD-0009` v0.4, then the registry's authoring
@@ -203,18 +164,13 @@
 - **Owner:** Product Owner / Architecture Owner
 - **PRD ID:** PRD-0006
 - **Title:** Platform
-- **Status:** Draft
-- **Version:** 2.8
-- **Approval Date:** Not approved
-- **Approved By:** —
-- **Freeze state:** Not frozen
-- **Freeze Date:** —
-- **Frozen By:** —
-- **Supersedes:** Nothing yet. **Frozen v2.7 remains the baseline** and would be
-  preserved at `PRD-0006-platform-v2.7-superseded.md` only if this candidate is
-  approved and, separately, frozen
-- **Raised by:** a defect in v2.7's own §22.2 row, found on 2026-09-09 while
-  implementing `I93`; the Owner's decision of the same day
+- **Status:** Frozen
+- **Version:** 2.7
+- **Approval Date:** 2026-09-08
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-08
+- **Frozen By:** Product Owner / Architecture Owner
 - **Supersedes:** Frozen v2.6, preserved at `PRD-0006-platform-v2.6-superseded.md`
 - **Raised by:** `PRD-0009` v0.4-candidate §14, approved by the Owner on 2026-09-08
 - **Supersedes:** Frozen v2.5, preserved at `PRD-0006-platform-v2.5-superseded.md`
@@ -2011,7 +1967,7 @@ merely _sees_ something:
 | Opening a Moderation Case (§5.3)                                                       | It is the act that starts a governed process                                                                                                                                                   |
 | **Revealing a personal email address** (§23)                                           | It is a disclosure of personal data, and §23 makes the record a condition of the disclosure                                                                                                    |
 | Affiliate Destination review, validation result, enablement and disablement (§8)       | They decide whether a handoff earns. The Owner, 2026-09-05: _"platformun para kazandıran en kritik eylemleridir"_                                                                              |
-| **Creating**, publishing, revising, re-checking and withdrawing an editorial review (`PRD-0009` §13) | They change what the platform says in its own voice about a product, on a page that earns a commission. `PRD-0009` §8 makes the judgement unpurchasable; the trail is what makes it answerable |
+| Publishing, revising, re-checking and withdrawing an editorial review (`PRD-0009` §13) | They change what the platform says in its own voice about a product, on a page that earns a commission. `PRD-0009` §8 makes the judgement unpurchasable; the trail is what makes it answerable |
 
 A validation is recorded **by its result**, because "an address was judged" and
 "an address was judged invalid" are different facts and only the second explains
