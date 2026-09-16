@@ -25,6 +25,7 @@ import {
   ACCOUNTS,
   ADVERTISING,
   AUDIT,
+  EDITORIAL,
   FEEDS,
   OVERVIEW,
   PANEL,
@@ -196,6 +197,17 @@ export default async function AdminDashboardPage({
                   capability awaiting adoption but the way to read something the
                   platform is already recording. */}
               <Link href="/admin/audit-logs">{AUDIT.title}</Link>
+            </li>
+            <li>
+              {/* I94. Writing the platform's own judgement of a product
+                  (`EDT F02`, `UX-0006` §12C). Unflagged, for the reason the
+                  register and the trail above are: a flag holds a capability
+                  back until the Owner adopts it, and this one is already
+                  adopted — `PRD-0009` Frozen v0.4 §13 owns the behaviour,
+                  `EDITORIAL_FEATURE_REGISTRY` Frozen v1.2 allocates the
+                  Feature, and `US-EDT-F02-001` is Frozen with its last
+                  dependency discharged. */}
+              <Link href="/admin/editorial-reviews">{EDITORIAL.title}</Link>
             </li>
             <li>
               {/* I70. Where the complementary-product advertising comes from.

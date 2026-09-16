@@ -10,6 +10,7 @@ import {
   type AttributeResponse,
   type Categories,
   type DestinationWorkloadItem,
+  type EditorialReviewAdmin,
   type ListingReportResponse,
   type ModerationCase,
   type OfferingFeedRunResponse,
@@ -24,6 +25,8 @@ import {
   caseTargetEmailSchema,
   categoriesSchema,
   destinationWorkloadSchema,
+  editorialReviewAdminSchema,
+  editorialReviewListSchema,
   listingReportsSchema,
   moderationCaseSchema,
   moderationCasesSchema,
@@ -171,6 +174,65 @@ export async function fetchAttributes(
   if (!response.ok)
     return absentUnlessUnavailable(response, "ADMIN_ATTRIBUTES");
   return attributesSchema.parse(await response.json()).attributes;
+}
+
+/**
+ * Every editorial review the platform holds, whatever its state
+ * (`UX-0006` **Frozen v1.2** §12C.3).
+ *
+ * Drafts are included deliberately: _"a Draft nobody can find is a Draft
+ * nobody finishes"_. That is also why this is one read rather than a
+ * state-filtered one — a writer arriving at this screen is looking for work in
+ * progress at least as often as for work already published.
+ *
+ * `null` is "we could not ask", never "there are none". §12C.11 keeps the two
+ * apart for the reason §8.9.2 keeps them apart on the reader's side: an empty
+ * list is the claim *no reviews exist*, and an outage is not entitled to make
+ * it.
+ */
+export async function fetchEditorialReviews(
+  session: string
+): Promise<EditorialReviewAdmin[] | null> {
+  const response = await fetchWithBudget(
+    `${apiBaseUrl()}/admin/editorial-reviews`,
+    {
+      cache: "no-store",
+      headers: adminHeaders(session)
+    },
+    "ADMIN_EDITORIAL_REVIEWS"
+  );
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "ADMIN_EDITORIAL_REVIEWS");
+  return editorialReviewListSchema.parse(await response.json()).reviews;
+}
+
+/**
+ * One review, as its writer sees it — with the state and the parts a Draft may
+ * still be missing.
+ *
+ * **Keyed by Product Key rather than by id**, because that is the thing a
+ * review is about (`US-EDT-F02-001` AC-1 of the reading Story) and the thing a
+ * writer arrives holding. The acts that follow are keyed by id, which the
+ * shape carries.
+ *
+ * A key with no review is `null` — absent, not broken. The same distinction as
+ * the list above, at the level of one row.
+ */
+export async function fetchEditorialReview(
+  session: string,
+  productKey: string
+): Promise<EditorialReviewAdmin | null> {
+  const response = await fetchWithBudget(
+    `${apiBaseUrl()}/admin/editorial-reviews/${encodeURIComponent(productKey)}`,
+    {
+      cache: "no-store",
+      headers: adminHeaders(session)
+    },
+    "ADMIN_EDITORIAL_REVIEW"
+  );
+  if (!response.ok)
+    return absentUnlessUnavailable(response, "ADMIN_EDITORIAL_REVIEW");
+  return editorialReviewAdminSchema.parse(await response.json());
 }
 
 /**

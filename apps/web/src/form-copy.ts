@@ -33,10 +33,23 @@ export const SUBMIT = {
   create: { idle: "Oluştur", working: "Oluşturuluyor…" },
   define: { idle: "Tanımla", working: "Tanımlanıyor…" },
   move: { idle: "Taşı", working: "Taşınıyor…" },
+  /**
+   * The three editorial acts (I94). Each is the verb of the act it performs,
+   * not a generic one, for the reason the rest of this table exists: a person
+   * who pressed *Yayımla* should be told that publishing is happening.
+   *
+   * `recheck` reads as a statement rather than a verb because
+   * `US-EDT-F02-001` AC-10 makes it one — the writer states that the review has
+   * been re-checked. A button reading "Güncelle" beside *Kaydet* would invite
+   * exactly the confusion `PRD-0009` §13.4 separates the two acts to prevent.
+   */
+  publish: { idle: "Yayımla", working: "Yayımlanıyor…" },
+  recheck: { idle: "Kontrol edildi", working: "İşleniyor…" },
   record: { idle: "Kaydet", working: "Kaydediliyor…" },
   rename: { idle: "Yeniden adlandır", working: "Kaydediliyor…" },
   save: { idle: "Kaydet", working: "Kaydediliyor…" },
-  send: { idle: "Gönder", working: "Gönderiliyor…" }
+  send: { idle: "Gönder", working: "Gönderiliyor…" },
+  withdraw: { idle: "Geri çek", working: "Geri çekiliyor…" }
 } as const;
 
 /**

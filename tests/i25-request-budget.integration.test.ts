@@ -196,8 +196,16 @@ describe("Increment I25 request budget", () => {
        * timeout as a failure would claim an outcome this application does not
        * know. UX-0005 §15's "a failed Offering action does not claim a
        * lifecycle transition" cuts both ways.
+       *
+       * Twenty-six since I94: the editorial review list and one review. Both
+       * are reads and both are budgeted, which is what lets `UX-0006` §12C.11
+       * hold — a list that times out says the reading failed, where an
+       * unbudgeted read would hang and then present an empty list, making the
+       * claim "there are no reviews" on an outage's behalf. The five editorial
+       * writes go through `adminPost` and `adminPut` and add no raw `fetch`,
+       * which is why the count below is unchanged.
        */
-      expect(source.match(/fetchWithBudget\(/gu)).toHaveLength(24);
+      expect(source.match(/fetchWithBudget\(/gu)).toHaveLength(26);
       expect(source.match(/await fetch\(/gu)).toHaveLength(18);
     });
 

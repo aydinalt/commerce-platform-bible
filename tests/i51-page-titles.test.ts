@@ -87,7 +87,10 @@ describe("Increment I51 the page titles", () => {
     // it is the missing way to reach a capability approved long ago; 30 since
     // I84 added the audit trail's reading surface, unflagged for the same
     // reason — the platform was already recording it.
-    expect(pages.size).toBe(30);
+    // 32 since I94 added the editorial authoring surface: the list of reviews
+    // and the one review, both unflagged because `EDT F02` is Frozen with its
+    // last dependency discharged rather than a capability awaiting adoption.
+    expect(pages.size).toBe(32);
     expect(untitled).toEqual(["/"]);
   });
 

@@ -638,3 +638,101 @@ export const AUDIT = {
   unreadable: "Denetim kayıtları okunamadı.",
   whenColumn: "Zaman"
 } as const;
+
+/**
+ * Writing an editorial review (I94, `EDT F02`, `UX-0006` **Frozen v1.2** §12C).
+ *
+ * **The words a writer reads are the words the criteria use**, and in two
+ * places that costs a longer label than a designer would choose. "Yeniden
+ * kontrol edildi" is a sentence rather than a verb because AC-10 makes the
+ * re-check a statement the writer makes, not a state the system infers — and a
+ * button reading "Güncelle" beside a save button reading "Kaydet" would invite
+ * exactly the confusion §13.4 separates the two acts to prevent.
+ *
+ * There is no word here for deleting, and none for sponsorship, because there
+ * is no control for either (§12C.12).
+ */
+export const EDITORIAL = {
+  /** §12C.5. Whose judgement this is offered as — typed, never inferred. */
+  byline: "İmza",
+  bylineHelp:
+    "İncelemenin altında görünecek ad. Oturum açan hesaptan alınmaz; ne yazarsanız o görünür.",
+  cons: "Eksileri",
+  /**
+   * The rule stated where it is met, not only where it is enforced. A writer
+   * who learns at publication that a review needs a con has already written
+   * the whole thing.
+   */
+  consHelp:
+    "Her satıra bir madde. Yayımlamak için en az bir tane gerekir: eksisi olmayan bir inceleme reklamdır.",
+  create: "Yeni inceleme yaz",
+  created: "Oluşturuldu",
+  /** §12C.3. The column AC-17 requires. */
+  lastChecked: "Son kontrol",
+  listUnreadable:
+    "Editöryel incelemeler okunamadı. Bu, inceleme olmadığı anlamına gelmez — okuma başarısız oldu.",
+  /** §12C.3, and the claim it refuses to make. */
+  neverChecked: "Hiç yeniden kontrol edilmedi",
+  none: "Henüz editöryel inceleme yazılmadı.",
+  notFound: "Bu ürün anahtarı için editöryel inceleme yok.",
+  preview: "Önizleme",
+  /**
+   * §12C.7. Said plainly because the alternative reading — that this is a
+   * public link — is the one that would break AC-5.
+   */
+  previewNote:
+    "Okuyucunun göreceği hâli. Kayıtlı taslaktan üretilir ve yalnızca bu ekranda görünür; yayımlanmamış bir incelemenin okunabileceği bir adres yoktur.",
+  pros: "Artıları",
+  prosHelp: "Her satıra bir madde. Yayımlamak için en az bir tane gerekir.",
+  productKey: "Ürün anahtarı",
+  productKeyHelp:
+    "İncelemenin hakkında olduğu ürünün anahtarı. Kataloğun taşıdığı bir anahtar olmalıdır.",
+  publish: "Yayımla",
+  /**
+   * AC-12 and AC-8 in one sentence. The first tells a writer what publication
+   * requires before they meet the refusal; the second says what re-publishing a
+   * withdrawn review does *not* do, which is the part nobody expects.
+   */
+  publishHelp:
+    "Hüküm, puan, en az bir bölüm, en az bir artı, en az bir eksi ve imza gerekir. İlk yayım tarihi bir kez konur: geri çekilmiş bir incelemeyi yeniden yayımlamak o tarihi değiştirmez.",
+  published: "Yayımlandı",
+  recheck: "Yeniden kontrol edildi olarak işaretle",
+  /**
+   * AC-9 and AC-10 in one sentence, placed beside the control rather than in a
+   * help page, because this is the moment the distinction matters.
+   */
+  recheckHelp:
+    "Yalnızca son kontrol tarihini bugüne taşır. Metni değiştirmez; kaydetmek bu tarihi taşımaz.",
+  score: "Puan",
+  scoreHelp: "0 ile 10 arasında, tek ondalık.",
+  sectionBody: "Bölüm metni",
+  sectionHeading: "Bölüm başlığı",
+  sections: "Bölümler",
+  /**
+   * Why one empty slot rather than a control that adds them. A page that
+   * re-reads after every save hands back a fresh slot, so the simplest thing
+   * that works needs no client state to survive a refused save.
+   */
+  sectionsHelp:
+    "Başlığı ve metni boş bırakılan bölüm kaydedilmez. Her kayıttan sonra yeni bir boş bölüm açılır.",
+  since: (age: string) => `${age} önce`,
+  status: "Durum",
+  statuses: {
+    DRAFT: "Taslak",
+    PUBLISHED: "Yayımda",
+    WITHDRAWN: "Geri çekildi"
+  },
+  title: "Editöryel incelemeler",
+  unreadable: "Bu editöryel inceleme okunamadı.",
+  verdict: "Hüküm",
+  verdictHelp: "İncelemenin tek cümlelik sonucu.",
+  withdraw: "Geri çek",
+  /**
+   * §12C.10. Withdrawal is the act that stops presentation, and the sentence
+   * says what survives — because "geri çek" is a word a person can reasonably
+   * read as "sil", and the two would be very different acts.
+   */
+  withdrawHelp:
+    "İnceleme hiçbir ilanda gösterilmez. Silinmez: var olduğu ve kimin geri çektiği kayıtlı kalır, ve yeniden yayımlanabilir.",
+  edit: "İncelemeyi düzenle"
+} as const;
