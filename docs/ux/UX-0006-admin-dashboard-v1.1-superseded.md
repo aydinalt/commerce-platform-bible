@@ -3,78 +3,15 @@
 - **UX ID:** UX-0006
 - **Title:** Admin Dashboard
 - **Status:** Frozen
-- **Version:** 1.2
-- **Supersedes:** Frozen v1.1, preserved unchanged at
-  `UX-0006-admin-dashboard-v1.1-superseded.md`; Frozen v1.0 at
+- **Version:** 1.1
+- **Supersedes:** Frozen v1.0, preserved unchanged at
   `UX-0006-admin-dashboard-v1.0-superseded.md`
-- **Approval Date:** 2026-09-16
+- **Approval Date:** 2026-09-07
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
-- **Freeze Date:** 2026-09-16
+- **Freeze Date:** 2026-09-07
 - **Frozen By:** Product Owner / Architecture Owner
 - **Scope level:** UX behaviour (non-visual, non-technical)
-
-**Freeze Note (1.2):** Explicitly Frozen by the Product Owner / Architecture
-Owner on 2026-09-16. Frozen v1.2 is the locked UX baseline for UX-0006 — Admin
-Dashboard. This exact version must not be edited in place. Any future change
-requires a controlled revision under `DOCUMENT_LIFECYCLE.md`,
-`REVIEW_PROCESS.md`, and, where architecture is affected, `ADR_PROCESS.md`.
-Frozen v1.1 is preserved unchanged at
-`UX-0006-admin-dashboard-v1.1-superseded.md` and Frozen v1.0 at
-`UX-0006-admin-dashboard-v1.0-superseded.md`.
-
-**This Freeze discharges the one dependency `US-EDT-F02-001` **Frozen v0.1** §9
-left open**, and with it the binding condition its Freeze Note placed on
-delivery. From this Freeze, the visual implementation of `EDT F02` may be built.
-
-**Approval Note (1.2):** Explicitly approved by the Product Owner / Architecture
-Owner on 2026-09-16 — _"UX-0006 Draft v1.2 adayını onaylıyorum. §12C kapsamı
-yeterli. 7 akışın tamamı, 22 AC ve kod tarafındaki mevcut davranışla uyumlu
-olduğu doğrulandı."_ Approval and Freeze were taken in one decision.
-
-**The scope of what may now be built is bounded by this Freeze, in the Owner's
-words**, and the bound is recorded here rather than left in a conversation:
-_"Kodlama kapsamı yalnızca mevcut UX-0006 §12C + US-EDT-F02-001 AC'leri olmalı.
-Yeni mimari, yeni capability, yeni rol/izin, yeni tasarım sistemi veya başka
-admin özellikleri ekleme."_
-
-**Revision Note (1.2):** Superseding revision of Frozen v1.1, begun
-independently at Draft under `DOCUMENT_LIFECYCLE.md` §7. **It adds one section
-and amends three; it alters no existing behaviour.**
-
-Raised by the Owner's instruction of 2026-09-16: close the one dependency
-`US-EDT-F02-001` **Frozen v0.1** §9 leaves open, and nothing wider —
-_"Amaç yeni bir UX projesi oluşturmak değil."_
-
-`US-EDT-F02-001` was frozen on 2026-09-08 with one dependency still open, which
-departed from the precedent `US-EDT-F01-001` set and was recorded rather than
-smoothed over: **no UX document described the Admin authoring screen.** Its
-Freeze Note made that a binding condition on delivery — no part of the Story
-that puts pixels on a screen may be built until the screen is described and
-approved. **§12C is what discharges it.** `EDITORIAL_FEATURE_REGISTRY.md`
-**Frozen v1.1** §1 carries "Section pending" in `EDT F02`'s Experience column
-for the same gap.
-
-**This surface does not exist yet**, which is the one way §12C differs from
-§12A and §12B. Those two recorded what `I76` and `I84` had already built. This
-one is written before the screen, because the Owner's standing rule is that
-nothing visible gets built until it is described in the prototype's language and
-approved. What exists today is the behaviour beneath it — the states, the dates,
-the refusals and the trail — built in `I93` and deliberately not visual.
-
-**It defines no new visual vocabulary and adds no capability.** Every control it
-names is one the Admin surfaces already use, and every rule it states traces to
-a Frozen criterion of `US-EDT-F02-001` or to `PRD-0009` **Frozen v0.4** §13. It
-invents no role, no tier and no permission; §16's new rows restate `AC-1` and
-the audit rules already in force.
-
-Three amendments to existing sections: §5.1 gains the subarea, §16 gains its
-permission rows, and §18 gains the Story, the PRD section and the registry.
-
-**Nothing in §§6–12B changes.** The new section is numbered **12C** rather than
-inserted as 13, for the reason v1.1 numbered its own additions 12A and 12B: every
-existing section number in this document, and every reference to one from another
-document, still points at the same content.
 
 **Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture
 Owner on 2026-09-07. Frozen v1.1 is the locked V1 UX baseline for UX-0006 —
@@ -183,7 +120,7 @@ UX-0006 may be entered when UX-0008 sends:
 - an existing Admin authorization relationship;
 - an explicit person choice to enter Admin context.
 
-UX-0006 may resume from one of its own Admin subareas while preserving the same authorized Admin context. Its subareas include Feed Management (§12A), Audit Trail Reading (§12B) and Editorial Review Authoring (§12C); the second is reachable only by the platform administrator, per §12B.1.
+UX-0006 may resume from one of its own Admin subareas while preserving the same authorized Admin context. Its subareas include Feed Management (§12A) and Audit Trail Reading (§12B); the second is reachable only by the platform administrator, per §12B.1.
 
 Audit Trail Reading may also be entered by an address carrying filters (§12B.2). The entry conditions in §5.2 are evaluated first: a filtered address is a view of the trail, not a way into it.
 
@@ -640,269 +577,6 @@ operational surface rather than describing one.
   empty table — which would say "nothing has happened", the most misleading
   sentence this surface could produce.
 
-## 12C. Editorial Review Authoring
-
-The surface on which the platform administrator writes the platform's own
-judgement of a product, publishes it, re-checks it and takes it down. Behaviour
-owner: `PRD-0009` **Frozen v0.4** §13. Feature: `EDT F02`
-(`EDITORIAL_FEATURE_REGISTRY.md` **Frozen v1.1**). Story: `US-EDT-F02-001`
-**Frozen v0.1**. Its acts are recorded under `PRD-0006` **Frozen v2.8** §22.2.
-
-**A review is about a product, not about a listing.** It is written against a
-Product Key and answers for every seller of that product at once. The reader's
-side of it is `UX-0003` **Frozen v1.2** §8.9 and is not restated here.
-
-**This section defines no new visual vocabulary.** The surface is the one the
-other Admin subareas already use: a list of things, the acts for a thing beside
-it, a form for the one that does not exist yet, and refusals stated in place
-while the form is still open. §20 defers exact layout and this section does not
-take that back.
-
-**What it is not.** It writes one kind of content and nothing else. It creates
-no listing, changes no word a Business wrote, and touches no price, stock or
-lifecycle state. It chooses nothing: no part of it decides which products get a
-review (`EDITORIAL_FEATURE_REGISTRY.md` §2.2). And it moves nothing in
-Discovery — the editorial score orders nothing anywhere (`PRD-0009` §9.2, open).
-
-**§4's "Draft publication by Admin" is a different Draft, and §12C does not
-reach it.** That exclusion is about a Business's listing, which an Admin may not
-publish. An editorial review's Draft is the platform's own unfinished text,
-written by the administrator and published by the same person. The word
-collides; the objects do not.
-
-### 12C.1 The three states, and the moves between them
-
-```text
-Draft      → presented to no reader
-Published  → presented on every Offering carrying its Product Key
-Withdrawn  → presented nowhere; the record that it existed remains
-```
-
-The moves this surface offers, and the only ones:
-
-```text
-Draft      → Published    publish
-Published  → Withdrawn    withdraw
-Withdrawn  → Published    publish again
-```
-
-**Nothing returns to Draft.** A review that has been published has been read, and
-"never published" is not a state it can re-enter. A published review that is
-wrong is corrected in place or withdrawn, and both are offered.
-
-**No state is reached by deletion, because no deletion exists.** No control on
-this surface removes a review in any state. §12C.12 says it again, because it is
-the kind of absence that gets filled in by accident.
-
-### 12C.2 Seven things a writer does, five entries in the trail
-
-The acts a person recognises and the acts the trail records are not the same
-list. Confusing them is how a trail drifts from the document that governs it.
-
-| What the writer does                      | The act  | Recorded as                 |
-| ----------------------------------------- | -------- | --------------------------- |
-| Creates the first draft for a Product Key | create   | `CREATE_EDITORIAL_REVIEW`   |
-| Edits a draft                             | save     | `REVISE_EDITORIAL_REVIEW`   |
-| Previews what a reader would see          | —        | nothing                     |
-| Publishes                                 | publish  | `PUBLISH_EDITORIAL_REVIEW`  |
-| Revises a published review                | save     | `REVISE_EDITORIAL_REVIEW`   |
-| States that it has been re-checked        | re-check | `RECHECK_EDITORIAL_REVIEW`  |
-| Withdraws                                 | withdraw | `WITHDRAW_EDITORIAL_REVIEW` |
-
-**Creating and editing are one control to the writer and two acts in the trail**,
-and the split is where the Owner put it on 2026-09-08: _"CREATE yalnızca ilk
-taslak oluşturmadır. Draft üzerindeki normal düzenleme `REVISE` olarak kalır."_
-A key is created once and only once — §12C.4 refuses a second review for it in
-every state — so a second creation entry for one review is unreachable rather
-than merely unlikely.
-
-**Previewing records nothing**, because nothing happened. Reading a review is
-reading, whoever does it (`PRD-0009` §13.8).
-
-### 12C.3 The list
-
-The surface opens on every review the platform holds, whatever its state,
-because a Draft nobody can find is a Draft nobody finishes.
-
-Each row carries the Product Key, the state, and **how long it has been since
-that review was last re-checked**.
-
-**A review that has never been re-checked says so.** It does not show the age of
-its publication in that column. "Published eight months ago" and "checked eight
-months ago" are different claims; the column makes the second one, and borrowing
-the first to fill the space would make it a lie exactly where it carries the most
-weight.
-
-**The age is shown and never enforced.** No review is refused an act, marked
-expired, sorted down or hidden on account of its age. The column informs a
-decision a person takes; it does not take it. `PRD-0009` §13.7 sets no interval
-deliberately, on the ground that an interval nobody keeps is worse than none.
-
-**No row names the account that wrote, published or withdrew anything.** Who
-acted is in the audit trail, which §12B governs and only the platform
-administrator reads.
-
-### 12C.4 Creating a review
-
-A creation carries the Product Key and the review's parts, and produces a
-**Draft**. Creating never publishes.
-
-Two refusals belong to this step, and both reach the writer while the form is
-still open:
-
-- **A Product Key the catalogue does not carry is refused.** A review of a key
-  nothing carries is a judgement about nothing. The refusal says the catalogue
-  does not carry that key, and offers nothing that would create the product.
-- **A key that already carries a review is refused, in every state** — including
-  when the existing one is a Draft or has been Withdrawn. One product, one
-  review. The refusal says the key already has one and leads to it, because the
-  act the writer wanted is almost always a revision of that review.
-
-### 12C.5 The parts, and the fields that do not exist
-
-A review's parts are a **closed list**: a verdict, a score, headed sections,
-pros, cons, a byline.
-
-**The byline is content, not an identity.** It is typed, and the surface does not
-offer to fill it from the account that is signed in. A review signed "Editör
-ekibi" is signed that whoever published it.
-
-**There is no free-text field beyond the parts named above** — no internal note,
-no memo, no comment, no label, no tag. This is the rule against commerce, and it
-is why the list is closed rather than extensible: `PRD-0009` §13.6 forbids any
-field, flag, state or note through which a commercial relationship could be
-expressed, and a general-purpose notes box is that field wearing a different
-name. A partner who asks for their product's review to be marked as sponsored
-meets a surface with nowhere to put it.
-
-**The score runs `0`–`10` and is held to one decimal.** A score outside that is
-refused on the way in rather than rounded into range.
-
-### 12C.6 Saving — editing a draft, and revising a published review
-
-One act, two occasions, and the same control in both.
-
-**Saving moves neither date.** Not when a Draft is edited, and not when a
-published review is corrected. A writer who fixes a comma leaves "last
-re-checked" where it was.
-
-This is the criterion the whole reading surface stands on. `US-EDT-F01-001` AC-4
-asks for two dates that mean different things, and they stop meaning different
-things the moment a save moves the second one. **A correct reading surface built
-over a writing surface that touches the second date on every save presents a lie
-carefully.**
-
-**The save form carries no control that moves either date and none that changes
-the state** — not a field, not a checkbox, not a default. Re-checking is its own
-act (§12C.9) and publication is its own act (§12C.8), because `PRD-0009` §13.4
-makes them separate acts in as many words.
-
-### 12C.7 Previewing
-
-A writer may see the review as a reader would meet it before deciding to publish
-it.
-
-**The preview is the reader's presentation** — `UX-0003` **Frozen v1.2** §8.9 —
-rendered from the draft in hand. It is not a second design of the review, and
-this section defines none.
-
-**It happens inside the Admin surface and nowhere else.** No address exists at
-which an unpublished review can be read, with or without a token or an
-unguessable link. No Draft reaches any reader-facing surface, and a preview URL
-that could be sent to a reader is a reader-facing surface with an apology
-attached.
-
-**It shows the draft's absences as absences.** A preview of a review with no cons
-shows no cons rather than a placeholder, because the point of looking is to see
-what is missing before §12C.8 refuses it.
-
-### 12C.8 Publishing
-
-Publication is refused unless the review carries all of: a verdict, a score, at
-least one section, at least one pro, at least one con, and a byline.
-
-**The refusal names everything that is missing, at once** — not the first gap,
-and not one gap per attempt. A writer told "no cons", then "no score", then "no
-byline" across three attempts is doing the surface's work for it.
-
-**A review with no cons is an advertisement and readers know it**, which is why
-"at least one con" is a condition of publication rather than a note on style.
-
-**The first-published date is set once and never moves.** Publishing a Withdrawn
-review does not reset it — see §12C.10.
-
-### 12C.9 Re-checking
-
-The act of stating that the review has been looked at again and still stands.
-
-**It is a separate act with its own control.** Not a checkbox on the save form,
-not a field, and never defaulted to true — a re-check that happens by default is
-a claim the platform makes without anybody having made it.
-
-**It states nothing but the decision.** There is nothing to record beyond that
-the check happened, and anything it carried would invite it to be sent alongside
-a save, which is the collapse §13.4 forbids.
-
-**It moves the last-re-checked date and nothing else** — not the first-published
-date, not the state, not a word of the text.
-
-**It is offered on a Published review and on no other.** A Draft has never been
-presented, so there is nothing about it a reader could be relying on; a Withdrawn
-review is presented nowhere, and re-checking it would claim currency for
-something no one can read. The surface does not offer the act where it would
-mean nothing.
-
-### 12C.10 Withdrawal, and publishing again
-
-**Withdrawal is how a wrong judgement comes down.** The review stops being
-presented on every Offering carrying its key. That it existed, and who withdrew
-it, stays in the trail.
-
-**It is not a deletion, and there is no deletion.** `PRD-0009` §13.3 provides
-withdrawal precisely so that removal is not a database operation.
-
-**A withdrawn review may be published again, and that does not reset the
-first-published date.** A review first published in March, withdrawn in May and
-published again in July was first published in March: the date answers when the
-platform first said this, and it did.
-
-### 12C.11 Empty, loading, error
-
-§14 and §15 apply unchanged. Four cases this surface adds:
-
-- **No review written yet** is stated as a fact, not as an error.
-- **A list that cannot be read says the reading failed.** It does not present an
-  empty list, which would read as "no reviews" and is a different claim — the
-  rule §12A.5 applies to feeds and §8.9.2 applies to the reader's side.
-- **A refused act claims no transition.** A publication that fails leaves the
-  review in Draft; a withdrawal that fails leaves it Published. The surface
-  reports the state the review is in, never the one the act was reaching for.
-- **A lost audit entry does not fail the act** (`PRD-0006` §22.3). The act has
-  already happened by the time the entry is written, and refusing it would report
-  a failure that did not occur. The entry is logged where operators look. Nothing
-  on this screen reports it to the writer, because it is not a refusal and there
-  is nothing the writer could do with it.
-
-### 12C.12 Not in this surface
-
-- Deleting a review, in any state.
-- Any field, flag, state or note expressing sponsorship, partnership, commission
-  rate or payment.
-- Any presentation of the account that wrote, published, re-checked or withdrew
-  a review.
-- An editor or contributor tier. `PRD-0009` §13.1 reserves authoring to the
-  platform administrator and states plainly that this does not scale; a tier is
-  an authorization decision and belongs with a `PRD-0008` successor, with the
-  audit question of §22.5 answered beside it.
-- A cadence interval, a staleness threshold, or any act refused on account of
-  age.
-- Any influence of the editorial score on Discovery ordering (`PRD-0009` §9.2,
-  open).
-- Choosing which products get a review
-  (`EDITORIAL_FEATURE_REGISTRY.md` §2.2).
-- Video (`PRD-0009` §9.4, open).
-- Any reader-facing address for an unpublished review.
-
 ## 13. User and Owner Authority Boundaries
 
 Ordinary Admin may suspend or reinstate only non-Admin-authorized User Accounts.
@@ -936,33 +610,28 @@ These Owner actions occur outside the V1 Admin UI.
 
 ## 16. Permissions
 
-| Action                                                           | Guest | User | Business | Ordinary Admin | Product Owner / Architecture Owner |
-| ---------------------------------------------------------------- | ----: | ---: | -------: | -------------: | ---------------------------------: |
-| Enter Admin Dashboard                                            |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
-| View Basic Analytics                                             |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
-| Use seven General Moderation actions                             |     ✗ |    ✗ |        ✗ |    Conditional |                        Conditional |
-| Suspend/Reinstate Admin-authorized User                          |     ✗ |    ✗ |        ✗ |              ✗ |                         Owner only |
-| Review/Validate/Enable/Disable Affiliate Destination             |     ✗ |    ✗ |        ✗ |    Conditional |                        Conditional |
-| Manage Categories                                                |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
-| Manage Attributes                                                |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
-| Register, map or pause a partner feed                            |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
-| Read feed runs and refusals                                      |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
-| Read or export the Admin audit trail                             |     ✗ |    ✗ |        ✗ |              ✗ |                         Owner only |
-| Write, edit or remove an audit entry                             |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
-| Write, publish, revise, re-check or withdraw an editorial review |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
-| Read an unpublished editorial review                             |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
-| Delete an editorial review                                       |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
-| Grant/remove Admin authorization in UI                           |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
-| Use generic Platform Settings                                    |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
-| Use Messaging moderation                                         |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
+| Action                                               | Guest | User | Business | Ordinary Admin | Product Owner / Architecture Owner |
+| ---------------------------------------------------- | ----: | ---: | -------: | -------------: | ---------------------------------: |
+| Enter Admin Dashboard                                |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| View Basic Analytics                                 |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Use seven General Moderation actions                 |     ✗ |    ✗ |        ✗ |    Conditional |                        Conditional |
+| Suspend/Reinstate Admin-authorized User              |     ✗ |    ✗ |        ✗ |              ✗ |                         Owner only |
+| Review/Validate/Enable/Disable Affiliate Destination |     ✗ |    ✗ |        ✗ |    Conditional |                        Conditional |
+| Manage Categories                                    |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Manage Attributes                                    |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Register, map or pause a partner feed                |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Read feed runs and refusals                          |     ✗ |    ✗ |        ✗ |              ✓ |                                  ✓ |
+| Read or export the Admin audit trail                 |     ✗ |    ✗ |        ✗ |              ✗ |                         Owner only |
+| Write, edit or remove an audit entry                 |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
+| Grant/remove Admin authorization in UI               |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
+| Use generic Platform Settings                        |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
+| Use Messaging moderation                             |     ✗ |    ✗ |        ✗ |              ✗ |                                  ✗ |
 
 Two rows above say something the others do not, and both are deliberate.
 
 **Reading the audit trail is Owner-only**, unlike every other Admin capability in this table. §22.5 excludes any future Sub-Admin or moderator tier. The platform has one Admin tier today, so the row describes a boundary with nothing yet on the far side of it; it is written now so that adding a tier is a decision about that tier and not a rediscovery of this rule.
 
 **Writing to the trail is refused to everyone, including the Owner.** It is not an authority anybody holds. The trail is append-only at the database, and no interface in this document offers a control that edits or removes an entry.
-
-**Deleting an editorial review is refused to everyone, for the same kind of reason and a different rule.** `PRD-0009` §13.3 provides withdrawal precisely so that removal is not a database operation, so the row is not a permission anybody could be granted — it describes an operation that does not exist. `PRD-0009` §13.1 reserves the authoring rows above to the platform administrator and says plainly that this does not scale; **no editor tier is invented here**, and the two rows are written at the one tier that exists today.
 
 ## 17. Accessibility Requirements
 
@@ -989,13 +658,7 @@ Two rows above say something the others do not, and both are deliberate.
 - `US-PLT-F13-001-feed-management.md` v0.2 — Feed Management. The authoritative version is **v0.2**; Frozen v0.1 is preserved with a statement about the code that was wrong.
 - `US-PLT-F14-001-audit-trail-reading-and-export.md` v0.1 — Audit Trail Reading and export.
 - `PLATFORM_FEATURE_REGISTRY.md` v1.3 — `F13` and `F14`, and the record that no Feature is allocated for §23.
-- `traceability.md` v2.3 §5D — the chains §12A and §12B complete.
-- `PRD-0009-editorial-review.md` **Frozen v0.4** §13 — the authoring surface: who may write (§13.1), the byline kept apart from the acting account (§13.2), the three states (§13.3), what moves the dates (§13.4), what publication requires (§13.5), what the surface cannot express (§13.6), cadence (§13.7), and that every write is recorded and no read is (§13.8). §12C describes the experience of it and decides nothing it left open.
-- `PRD-0006-platform.md` **Frozen v2.8** §22.2 — the row that records the five editorial acts. v2.8 restored the word "Creating" to it; §12C.2 is the mapping that keeps the surface and that row in step.
-- `US-EDT-F02-001-editorial-review-authoring.md` **Frozen v0.1** — Editorial Review Authoring, and the Story whose §9 dependency §12C discharges.
-- `US-EDT-F01-001-editorial-review-presentation.md` — the reader's side. Its AC-4 is why §12C.6 refuses to let a save move the second date.
-- `UX-0003-offering-detail.md` **Frozen v1.2** §8.9 — the review as a reader meets it. §12C.7 renders the preview in that presentation rather than defining another.
-- `EDITORIAL_FEATURE_REGISTRY.md` **Frozen v1.1** — `EDT F02`, whose Experience column carries "Section pending" for the gap §12C closes.
+- `traceability.md` v2.3 §5D — the chains these two sections complete.
 
 ## 19. Acceptance Criteria
 
@@ -1155,163 +818,6 @@ Scenario: No personal identifier appears
   Given entries name the accounts that acted
   When the trail is read or exported
   Then no email address and no personal name appears in either
-```
-
-### 19B. Editorial Review Authoring (1.2)
-
-Every scenario below is the experience side of a Frozen criterion of
-`US-EDT-F02-001` v0.1. The criterion each one answers is named, so that a
-reader can check the mapping rather than trust it, and so that a criterion that
-loses its scenario is visible.
-
-```gherkin
-Scenario: Only the platform administrator may write (AC-1)
-  Given a caller is not an authorized Admin
-  When the caller requests any authoring act
-  Then the request is refused
-
-Scenario: The byline is typed, not taken from the account (AC-2)
-  Given the administrator is signed in
-  When the authoring form is opened
-  Then the byline is an authored field
-  And no control fills it from the signed-in account
-
-Scenario: The writer's account reaches no reader (AC-3)
-  Given a review is published
-  When a person reads it
-  Then the account that published it is not presented
-  And no Admin list row names it either
-
-Scenario: A created review is a Draft (AC-4)
-  Given a Product Key the catalogue carries and no review for it
-  When the administrator creates one
-  Then it is held in Draft
-  And nothing is published by the act of creating it
-
-Scenario: A Draft reaches nobody, including by link (AC-5)
-  Given a review is in Draft
-  When any reader-facing address for it is sought
-  Then none exists
-  And the preview is reachable only inside the Admin surface
-
-Scenario: Withdrawal stops presentation and keeps the record (AC-6)
-  Given a published review is found to be wrong
-  When the administrator withdraws it
-  Then it is presented on no Offering carrying its Product Key
-  And the record that it existed remains
-
-Scenario: No surface offers to delete a review (AC-7)
-  Given a review in any state
-  When the available operations are examined
-  Then no operation removes it
-
-Scenario: Publishing a withdrawn review does not reset the first date (AC-8)
-  Given a review first published in March and withdrawn in May
-  When the administrator publishes it again in July
-  Then the first-published date still reads March
-
-Scenario: A typo is not a re-check (AC-9, AC-11)
-  Given a review published in March and re-checked in June
-  When the administrator corrects a comma and saves
-  Then the last-re-checked date still reads June
-  And the first-published date still reads March
-
-Scenario: The re-check is its own act and is never defaulted (AC-10)
-  Given the administrator is saving a review
-  When the save form is examined
-  Then it carries no control that states a re-check
-  And the re-check is offered as a separate act
-
-Scenario: The re-check is offered only where it would mean something (AC-10)
-  Given a review is in Draft or has been Withdrawn
-  When the available acts are examined
-  Then no re-check is offered
-
-Scenario: Publication names every missing part at once (AC-12)
-  Given a review carries a verdict, a score, a section, a byline and two pros
-  And it carries no cons
-  When the administrator attempts to publish it
-  Then publication is refused
-  And the refusal names every part that is missing, not the first
-
-Scenario: A score outside the scale is refused, not rounded (AC-13)
-  Given the administrator enters a score of 11, or of 8.45
-  When the review is saved
-  Then the score is refused
-  And no value is stored in its place
-
-Scenario: A key the catalogue does not carry is refused (AC-14)
-  Given a Product Key no published listing carries
-  When the administrator attempts to create a review for it
-  Then creation is refused
-  And the refusal reaches the administrator while the form is open
-
-Scenario: One product, one review, in every state (AC-15)
-  Given an editorial review exists for a Product Key, in any state
-  When the administrator attempts to create a second one for that key
-  Then creation is refused
-  And the refusal leads to the review that already exists
-
-Scenario: The request that has nowhere to go (AC-16)
-  Given a partner asks for their product's review to be marked as sponsored
-  When the administrator opens the authoring surface
-  Then no field, flag, note or free-text box exists in which that could be recorded
-
-Scenario: The list says how long since each review was re-checked (AC-17)
-  Given reviews exist
-  When the administrator opens the list
-  Then each row states how long it has been since that review was last re-checked
-
-Scenario: A review never re-checked says so rather than borrowing a date (AC-17)
-  Given a review has been published and never re-checked
-  When the administrator reads its row
-  Then the column states that it has never been re-checked
-  And it does not show the age of the publication
-
-Scenario: Age informs and never blocks (AC-18)
-  Given a review has not been re-checked for a year
-  When the administrator performs any act on it
-  Then the act is not refused on account of its age
-  And no surface marks it expired
-
-Scenario: Five acts, five entries (AC-19)
-  Given the administrator creates, publishes, revises, re-checks and withdraws a review
-  When the trail is read
-  Then one entry exists for each of the five acts
-
-Scenario: Editing a draft records a revision, not a creation (AC-19)
-  Given a review exists in Draft
-  When the administrator edits and saves it twice
-  Then two revision entries are recorded
-  And no second creation entry is recorded
-
-Scenario: Reading records nothing (AC-20)
-  Given a published review
-  When the administrator opens it, previews it and closes it unchanged
-  Then no entry is recorded
-
-Scenario: No personal identifier enters an entry (AC-21)
-  Given the five acts have been recorded
-  When the trail is read
-  Then no email address and no personal name appears in any entry
-
-Scenario: A lost entry does not fail the act (AC-22)
-  Given an authoring act succeeds and its audit entry cannot be written
-  When the administrator sees the result
-  Then the act is reported as having happened
-  And the lost entry is logged where operators look
-
-Scenario: A refused act claims no transition
-  Given a publication is refused
-  When the administrator reads the review
-  Then it is still in Draft
-  And no surface reports the state the act was reaching for
-
-Scenario: An unreadable list is not an empty one
-  Given the review list cannot be read
-  When the administrator opens the surface
-  Then the surface states that the reading failed
-  And it does not present an empty list
 ```
 
 ## 20. Accepted UX Deferrals

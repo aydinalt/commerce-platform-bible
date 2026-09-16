@@ -1,46 +1,5 @@
 # EDITORIAL FEATURE REGISTRY
 
-> **Freeze Note (1.2):** Explicitly Frozen by the Product Owner / Architecture
-> Owner on 2026-09-16, immediately after `UX-0006` reached Frozen **v1.2** with
-> §12C authoritative — in that order, so that this registry cites a section that
-> was authoritative when it was frozen. This exact version must not be edited in
-> place; a further change requires a controlled superseding revision under
-> `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v1.1 is preserved unchanged at
-> `EDITORIAL_FEATURE_REGISTRY-v1.1-superseded.md` and Frozen v1.0 at
-> `EDITORIAL_FEATURE_REGISTRY-v1.0-superseded.md`.
->
-> **Approval Note (1.2):** Explicitly approved by the Product Owner /
-> Architecture Owner on 2026-09-16 — _"`EDITORIAL_FEATURE_REGISTRY F02`
-> içindeki 'Section pending' ifadesini yalnızca gerekli mekanik düzeltme
-> kapsamında güncelle. Bunun dışında Frozen belgelere dokunma."_ Approval and
-> Freeze were taken in one decision.
->
-> **Revision Note (1.2): one table cell, and the citation inside it.** `F02`'s
-> Experience column read _"**Section pending** — no UX document owns the Admin
-> authoring screen yet"_. `UX-0006` **Frozen v1.2** §12C now does, so the column
-> cites it. **This is the same revision `F01` received at v1.0**, for the same
-> reason and in the same words; the precedent is followed rather than reasoned
-> out again.
->
-> The same cell's Notes cited `PRD-0006` **v2.7** §22.2. That citation is
-> refreshed to **v2.8** in this revision and the refresh is declared rather than
-> made quietly, because it is one word beyond the instruction's letter: v2.8
-> changed **exactly the row being cited** — it restored the word "Creating" to
-> it — so leaving v2.7 would have pointed the registry's only statement about
-> where these acts are recorded at the superseded version of that very row.
-> `EDT F02`'s allocation, description, behaviour owner and status are unchanged,
-> and no other citation in this document was touched.
->
-> **Nothing else changed, and the claim is stated precisely because a table is
-> involved.** Exactly two cells differ from v1.1: `F02`'s Experience column and
-> the `PRD-0006` citation in its Notes. `F01`'s every cell is identical in
-> content; its **column padding** shifted, because shortening `F02`'s Experience
-> cell makes the formatter realign the whole table. §2.2, §3 and §5 are
-> unchanged, and §2.1 is unchanged apart from the paragraph beneath the table
-> that stated the gap in the same words the column used, which now records its
-> closure. Verified by comparing cell contents rather than lines, so that a
-> realignment could not hide a change and could not be mistaken for one.
->
 > **Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture
 > Owner on 2026-09-08, **third in the four-step order he set out**, and before
 > `US-EDT-F02-001` so that the Story cites a Feature that is authoritative when
@@ -165,16 +124,15 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Frozen
-- **Version:** 1.2
-- **Supersedes:** Frozen v1.1, preserved unchanged at
-  `EDITORIAL_FEATURE_REGISTRY-v1.1-superseded.md`; Frozen v1.0 at
+- **Version:** 1.1
+- **Supersedes:** Frozen v1.0, preserved unchanged at
   `EDITORIAL_FEATURE_REGISTRY-v1.0-superseded.md`
-- **Approval Date:** 2026-09-16
+- **Approval Date:** 2026-09-08
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
-- **Freeze Date:** 2026-09-16
+- **Freeze Date:** 2026-09-08
 - **Frozen By:** Product Owner / Architecture Owner
-- **Last Updated:** 2026-09-16
+- **Last Updated:** 2026-09-08
 - **Story Domain:** Editorial
 - **Domain Code:** EDT
 - **Behaviour owner:** `PRD-0009-editorial-review.md` **Frozen v0.4**
@@ -188,24 +146,16 @@ allocated by a downstream document.
 
 ## 1. Feature Registry
 
-| Feature ID | Name                          | Status | Description                                                                                                                                                                                                             | Behaviour owner                  | Experience                                        | Notes                                                                                                                                                                |
-| ---------- | ----------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `F01`      | Editorial Review Presentation | Active | The editorial review as a reader meets it: its parts, its two dates, its score kept apart from the crowd's, and its attachment to a Product Key rather than to an Offering.                                             | `PRD-0009` **Frozen v0.4** §§5–8 | `UX-0003-offering-detail.md` **Frozen v1.2** §8.9 | Presented on an Offering surface; owned by `PRD-0009`. `PRD-0001` v4.3 §8.2 records the same split from the Offering side.                                           |
-| `F02`      | Editorial Review Authoring    | Active | The surface on which a review is written, published, re-checked and withdrawn: who may write, the byline kept apart from the acting account, the three states, what publication requires, and what the form cannot say. | `PRD-0009` **Frozen v0.4** §13   | `UX-0006-admin-dashboard.md` **Frozen v1.2** §12C | An Admin surface whose behaviour `PRD-0009` owns, which is why it is here and not in the Platform registry. Its acts are recorded: `PRD-0006` **Frozen v2.8** §22.2. |
+| Feature ID | Name                          | Status | Description                                                                                                                                                                                                             | Behaviour owner                  | Experience                                                               | Notes                                                                                                                                                                |
+| ---------- | ----------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `F01`      | Editorial Review Presentation | Active | The editorial review as a reader meets it: its parts, its two dates, its score kept apart from the crowd's, and its attachment to a Product Key rather than to an Offering.                                             | `PRD-0009` **Frozen v0.4** §§5–8 | `UX-0003-offering-detail.md` **Frozen v1.2** §8.9                        | Presented on an Offering surface; owned by `PRD-0009`. `PRD-0001` v4.3 §8.2 records the same split from the Offering side.                                           |
+| `F02`      | Editorial Review Authoring    | Active | The surface on which a review is written, published, re-checked and withdrawn: who may write, the byline kept apart from the acting account, the three states, what publication requires, and what the form cannot say. | `PRD-0009` **Frozen v0.4** §13   | **Section pending** — no UX document owns the Admin authoring screen yet | An Admin surface whose behaviour `PRD-0009` owns, which is why it is here and not in the Platform registry. Its acts are recorded: `PRD-0006` **Frozen v2.7** §22.2. |
 
-**`F02`'s Experience column carried a gap from v1.1 until 2026-09-16, and it is
-now closed.** It read "Section pending": no UX document described the Admin
-authoring screen. That was a real dependency for `US-EDT-F02-001`, named in the
-Story and in this column rather than discovered during implementation — and it
-was never a reason to withhold the Feature, because the behaviour owner existed
-and the identifier is what the Story references.
-
-`UX-0006` **Frozen v1.2** §12C closes it. **Both Editorial Features now cite a
-Frozen UX section**, and the pattern held in both cases: the Feature was
-allocated when its behaviour owner existed, and the Experience column was filled
-when its section did — `F01` at v1.0, `F02` here. The gap was carried in the open
-for eight days and discharged by a revision, which is the outcome §2.1 was
-written to make repeatable.
+**`F02`'s Experience column is honest about a gap.** No UX document describes the
+Admin authoring screen. That is a real dependency for the Story and is named in
+it rather than discovered during implementation; it is not a reason to withhold
+the Feature, because the behaviour owner exists and the identifier is what the
+Story references.
 
 ## 2. Allocation history and closed questions
 
@@ -263,12 +213,11 @@ any field through which a commercial relationship could reach a review.
 
 ## 4. Revision History
 
-| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0.1     | 2026-09-07 | Registry opened at the Owner's commissioning of the editorial Stories. Allocates `F01`. Records why authoring is not allocated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| 1.0     | 2026-09-07 | Approved and Frozen. The `F01` UX column, which read "section pending" while `UX-0003` had no section for it, now cites `UX-0003` **Frozen v1.2** §8.9 — the only content change between v0.1 and v1.0.                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| 1.1     | 2026-09-08 | **Approved and Frozen.** Allocates `F02` Editorial Review Authoring, the condition §2.1 set having been met by `PRD-0009` **Frozen v0.4** §13 and `PRD-0006` **Frozen v2.7** §22.2. Allocated here rather than in the Platform registry the Owner's earlier instruction named; the departure was raised as a Draft and the Owner confirmed `EDT F02` on 2026-09-08. Every `PRD-0009` citation moves v0.3 → v0.4. Records the stale citation in `US-EDT-F01-001` at §5.                                                                                                                                                           |
-| 1.2     | 2026-09-16 | **Approved and Frozen.** One table cell. `F02`'s Experience column read "Section pending"; `UX-0006` **Frozen v1.2** §12C now owns the Admin authoring screen, so the column cites it — the same revision `F01` received at v1.0, for the same reason. The citation inside that cell moves `PRD-0006` v2.7 → **v2.8**, declared in the Freeze Note because v2.8 changed exactly the §22.2 row being cited. The prose beneath the table, which stated the gap in the same words as the column, records its closure instead. No allocation, description, behaviour owner or status changed, and §§2.1, 2.2, 3 and 5 are unchanged. |
+| Version | Date       | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1     | 2026-09-07 | Registry opened at the Owner's commissioning of the editorial Stories. Allocates `F01`. Records why authoring is not allocated.                                                                                                                                                                                                                                                                                                                                        |
+| 1.0     | 2026-09-07 | Approved and Frozen. The `F01` UX column, which read "section pending" while `UX-0003` had no section for it, now cites `UX-0003` **Frozen v1.2** §8.9 — the only content change between v0.1 and v1.0.                                                                                                                                                                                                                                                                |
+| 1.1     | 2026-09-08 | **Approved and Frozen.** Allocates `F02` Editorial Review Authoring, the condition §2.1 set having been met by `PRD-0009` **Frozen v0.4** §13 and `PRD-0006` **Frozen v2.7** §22.2. Allocated here rather than in the Platform registry the Owner's earlier instruction named; the departure was raised as a Draft and the Owner confirmed `EDT F02` on 2026-09-08. Every `PRD-0009` citation moves v0.3 → v0.4. Records the stale citation in `US-EDT-F01-001` at §5. |
 
 ## 5. A consequence of freezing `PRD-0009` v0.4, recorded rather than fixed
 
