@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -218,6 +220,108 @@ describe("Increment I93 the editorial contracts", () => {
       expect(
         editorialDraftInputSchema.safeParse({ ...draft, score: 8.45 }).success
       ).toBe(false);
+    });
+  });
+
+  /**
+   * The five acts, and which route writes which entry.
+   *
+   * `PRD-0009` §13.8 names five — "Creating, publishing, revising, re-checking
+   * and withdrawing" — and `PRD-0006` **v2.8** restores "Creating" to the §22.2
+   * row that v2.7 left out. This asserts the mapping the controller actually
+   * implements, so that the document and the code cannot drift apart quietly.
+   *
+   * It reads the source rather than driving HTTP, in the manner of
+   * `tests/i87-destination-audit.test.ts`'s label check. What it guards is
+   * one-to-one-ness: an act recorded twice, or a route that records the wrong
+   * act, fails here rather than in a trail somebody reads a year later.
+   */
+  describe("the five editorial acts, one route each", () => {
+    const controller = (): string =>
+      readFileSync("apps/api/src/platform/editorial.controller.ts", "utf8");
+
+    const EXPECTED: readonly [string, string][] = [
+      ["CREATE_EDITORIAL_REVIEW", "@Post()"],
+      ["REVISE_EDITORIAL_REVIEW", '@Put(":id")'],
+      ["PUBLISH_EDITORIAL_REVIEW", '@Post(":id/publication")'],
+      ["RECHECK_EDITORIAL_REVIEW", '@Post(":id/recheck")'],
+      ["WITHDRAW_EDITORIAL_REVIEW", '@Post(":id/withdrawal")']
+    ];
+
+    it("records each act exactly once", () => {
+      const source = controller();
+      for (const [action] of EXPECTED) {
+        const written = source.split(`action: "${action}"`).length - 1;
+        expect(written, `${action} is recorded ${written} times`).toBe(1);
+      }
+    });
+
+    it("pairs each act with the route that performs it", () => {
+      const source = controller();
+      for (const [action, route] of EXPECTED) {
+        const at = source.indexOf(route);
+        const records = source.indexOf(`action: "${action}"`, at);
+        expect(at, `${route} is missing`).toBeGreaterThan(-1);
+        expect(records, `${route} does not record ${action}`).toBeGreaterThan(
+          at
+        );
+        // No other route decorator may sit between the route and its entry, or
+        // the entry belongs to a different act than the one it is named for.
+        const between = source.slice(at + route.length, records);
+        expect(between).not.toMatch(/@(Post|Put|Get|Patch|Delete)\(/u);
+      }
+    });
+
+    /**
+     * A draft edited twice is revised twice and created once. The only route
+     * that can write a creation is the one that creates, and `AC-15` refuses a
+     * second review for a key in every state — so a second creation entry for
+     * one review is unreachable rather than merely unlikely.
+     */
+    it("gives ordinary draft editing no way to record a creation", () => {
+      const source = controller();
+      const save = source.slice(
+        source.indexOf('@Put(":id")'),
+        source.indexOf('@Post(":id/publication")')
+      );
+      expect(save).toContain('action: "REVISE_EDITORIAL_REVIEW"');
+      expect(save).not.toContain("CREATE_EDITORIAL_REVIEW");
+      expect(save).not.toContain("editorial.create");
+    });
+
+    /**
+     * An entry follows the act it describes. Every route awaits the work and
+     * records afterwards, so a refused create — an unknown Product Key, a key
+     * that already carries a review — writes nothing. A trail of attempts is a
+     * different document from a trail of acts.
+     */
+    it("records only after the act succeeded", () => {
+      const source = controller();
+      for (const [action] of EXPECTED) {
+        const records = source.indexOf(`action: "${action}"`);
+        const acts = source.lastIndexOf("this.act(", records);
+        expect(
+          acts,
+          `${action} is recorded without awaiting the act`
+        ).toBeGreaterThan(-1);
+        expect(records).toBeGreaterThan(acts);
+      }
+    });
+
+    /** Reading a review records nothing (`PRD-0009` §13.8). */
+    it("records nothing on either reading route", () => {
+      const source = controller();
+      const reads = source.slice(
+        source.indexOf("@Get()"),
+        source.indexOf("@Post()")
+      );
+      expect(reads).not.toContain("audit.record");
+      expect(
+        readFileSync(
+          "apps/api/src/offering/editorial-review.controller.ts",
+          "utf8"
+        )
+      ).not.toContain("audit");
     });
   });
 
