@@ -1849,6 +1849,11 @@ const document = {
             type: "array"
           },
           description: { type: ["string", "null"] },
+          handoffAvailable: {
+            description:
+              'Whether this screen may offer the affiliate action (I96). A boolean and never an address: the Affiliate Destination stays out of this payload, and the partner\'s URL is read on the server at the instant a person presses. It answers "would it work"; only the press answers "where to". `UX-0003` §9.4.1 requires the action to be absent rather than disabled where no eligible destination exists.',
+            type: "boolean"
+          },
           listingNumber: {
             description:
               "The listing number a person reads, quotes and types (I67). Digits, as a string: it is an identifier rather than a quantity, and a number long enough to be unique is a number a JSON reader may round. Surfaces print it with the `\u0130LN-` prefix; typing it into Search returns that listing.",
@@ -1876,6 +1881,7 @@ const document = {
           "business",
           "categoryPath",
           "description",
+          "handoffAvailable",
           "listingNumber",
           "offeringId",
           "pricing",

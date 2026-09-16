@@ -8,6 +8,7 @@ import type {
 import { publicBusinessIdentity } from "@commerce/business";
 
 import {
+  HANDOFF_AVAILABLE_SQL,
   OFFERING_PRICE_SQL,
   TOTAL_COST_SQL,
   composePrice,
@@ -37,6 +38,16 @@ interface SellerRow extends OfferingPriceColumns {
 
 interface PresentationRow extends OfferingPriceColumns, ProductRatingColumns {
   businessLogoUrl: string | null;
+  /**
+   * Whether this Offering has an Eligible Affiliate Destination (I96).
+   *
+   * The same two conditions the handoff itself checks, asked one step earlier —
+   * `HANDOFF_AVAILABLE_SQL`, the expression the Listing Card has used since the
+   * card gained its own control. It answers _"would it work"_ and nothing more:
+   * the handoff re-reads the destination at the moment of the press, and only
+   * that read may answer _"where to"_.
+   */
+  handoffAvailable: boolean;
   businessName: string;
   productKey: string | null;
   businessShortDescription: string | null;
@@ -127,6 +138,7 @@ export class PgPresentationRepository {
            b.short_description as "businessShortDescription",
            b.public_exposure::text as "publicExposure",
            o.product_key as "productKey",
+           ${HANDOFF_AVAILABLE_SQL},
            ${OFFERING_PRICE_SQL},
            ${PRODUCT_RATING_SQL}
          from offering_search_projection p
@@ -161,6 +173,14 @@ export class PgPresentationRepository {
         business,
         categoryPath: await this.categoryPath(client, row.categoryId),
         description: row.summary,
+        /*
+         * I96, `UX-0003` **Frozen v1.2** §9.4.1. Whether the page may offer the
+         * affiliate action at all. The screen presents it only where this is
+         * true and presents nothing at all where it is false — not a disabled
+         * control and not "coming soon", because a control a person can see and
+         * cannot use is a promise the screen cannot keep.
+         */
+        handoffAvailable: row.handoffAvailable,
         // I67. The number the card carried, on the page the card opened.
         listingNumber: row.listingNumber,
         offeringId: row.offeringId,

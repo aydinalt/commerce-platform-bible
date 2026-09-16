@@ -2269,6 +2269,23 @@ export const offeringPresentationSchema = z
      * that grouped one way for prices and another way for reviews would be two
      * pages wearing one title.
      */
+    /**
+     * Whether this screen may offer the affiliate action (I96, `UX-0003`
+     * **Frozen v1.2** §9.4).
+     *
+     * §9.4.1 makes this a presence question rather than a state one: the action
+     * is offered only where both eligibility results permit it, and **otherwise
+     * it is not presented at all** — not disabled, not greyed, not "coming
+     * soon". A control a person can see and cannot use is a promise the screen
+     * cannot keep, and the listing is complete without it.
+     *
+     * **It is not the destination and never becomes one.** No address appears
+     * in this payload: the partner's URL is read on the server at the instant a
+     * person presses, which is what keeps `US-DEC-F05-001` AC-5's prohibition
+     * intact while the control sits on a public page. This field answers
+     * "would it work", and only the press may answer "where to".
+     */
+    handoffAvailable: z.boolean(),
     rating: productRatingSchema,
     /**
      * Every publicly eligible Offering that carries the same Product Key,

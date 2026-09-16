@@ -212,3 +212,36 @@ export const DIRECT_CONTACT_COMPLETION =
 /// §12. No account is asked for after either Completion. The journey ended;
 /// asking now would be asking for something the person no longer needs.
 export const AFTER_COMPLETION = "Karar yolculuğunuz burada bitiyor.";
+
+/**
+ * The affiliate action, where a person meets it (I96).
+ *
+ * **One definition for a control that now appears in three places** — the
+ * Listing Card, the Decision panel and, since I96, the Offering Presentation.
+ * The card and the panel each wrote their own "Güncel fiyatı incele"; a third
+ * copy would have been the one that drifted, and the label is the last thing a
+ * person reads before leaving the platform.
+ */
+export const AFFILIATE = {
+  /**
+   * The Owner's own words, approved on 2026-09-16 and reproduced exactly.
+   *
+   * **`PRD-0009` §8 requires this and `US-EDT-F01-001` AC-13 is the criterion
+   * it answers**: _"Where the platform earns a commission on a handoff from a
+   * page carrying a review — which is every such page — that relationship is
+   * disclosed on the page."_ It sits beside the control that earns the
+   * commission rather than in a footer, because that is where a reader is
+   * standing when the disclosure matters.
+   */
+  disclosure:
+    "Bu sayfadaki bazı bağlantılar iş ortaklarımıza yönlendirir. Bu bağlantılardan alışveriş yapıldığında platformumuz komisyon kazanabilir.",
+  /**
+   * The words the Owner's prototype puts on this control, unchanged.
+   *
+   * It names what the person gets rather than what the platform does: the
+   * question they came with is what this costs today, and the partner's page is
+   * where that answer lives.
+   */
+  cta: "Güncel fiyatı incele",
+  heading: "Bu ilanı satın alın"
+} as const;

@@ -11,7 +11,11 @@ import { imageSource } from "../../../image-source";
 import { PresentationPrice, SellerPrices } from "../../../discovery/price";
 import { ListingNumber } from "../../../discovery/listing-number";
 import { ProductRatingSummary } from "../../../discovery/rating";
-import { startDecisionFromOffering } from "../../decision/actions";
+import {
+  handoffFromCard,
+  startDecisionFromOffering
+} from "../../decision/actions";
+import { AFFILIATE } from "../../../decision/copy";
 import { CompareEntry } from "../../compare/compare-entry";
 import { ComplementaryBlock } from "./complementary-block";
 import { ReportForm } from "./report-form";
@@ -317,6 +321,61 @@ export function OfferingPresentation({
         <EditorialSection editorial={editorial} />
 
         <ReviewsSection reviews={reviews} slug={offering.slug} />
+
+        {/*
+         * I96, `UX-0003` **Frozen v1.2** §9.4. The affiliate action for *this*
+         * listing, offered on the screen a person has already chosen it on.
+         *
+         * **It reuses the Listing Card's action rather than adding a route.**
+         * §9.4.2 settles what pressing it means: _"the action carries this one
+         * Offering into UX-0009 as a single-Offering Decision Context and the
+         * handoff executes there, exactly as it does today. What changes is
+         * where the person may press it, not what happens when they do."_
+         * `handoffFromCard` already does exactly that — enter the flow, select
+         * the Offering, initiate the handoff — so the page gained a place to
+         * press, not a private path to the partner.
+         *
+         * **A form, never a link**, for the reason the card gives: a link out
+         * can be followed by a prefetch, a crawler or a middle-click, and each
+         * would record a handoff nobody performed.
+         *
+         * **Absent, not disabled, where no eligible destination exists**
+         * (§9.4.1). Not greyed and not "coming soon": an Admin may never enable
+         * that destination and a partner may never sign, so a visible control
+         * that cannot work is a promise this screen cannot keep. The listing is
+         * complete without it.
+         */}
+        {offering.handoffAvailable ? (
+          <section aria-labelledby="affiliate-action">
+            <h2 id="affiliate-action">{AFFILIATE.heading}</h2>
+            <form action={handoffFromCard} className="offering-handoff">
+              <input
+                name="offeringId"
+                type="hidden"
+                value={offering.offeringId}
+              />
+              <input name="slug" type="hidden" value={offering.slug} />
+              <button type="submit">
+                {AFFILIATE.cta}
+                {/* The partner is named on the control itself. A person about
+                    to leave the platform is entitled to know whose site they
+                    are about to be on before they press it, not after. */}
+                <span className="offering-handoff-target">
+                  {offering.business.name}
+                </span>
+              </button>
+            </form>
+            {/*
+              The disclosure, in the Owner's own approved words. It sits with
+              the control that earns the commission rather than in a footer,
+              because `PRD-0009` §8 requires the relationship to be disclosed on
+              a page carrying a review and a reader meets it here.
+            */}
+            <p className="offering-handoff-disclosure">
+              {AFFILIATE.disclosure}
+            </p>
+          </section>
+        ) : null}
 
         <DecisionEntries
           offeringId={offering.offeringId}

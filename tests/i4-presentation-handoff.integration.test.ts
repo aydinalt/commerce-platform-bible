@@ -290,6 +290,22 @@ suite("Increment I4 Offering Presentation handoff", () => {
       "business",
       "categoryPath",
       "description",
+      /*
+       * I96. Whether this screen may offer the affiliate action — a boolean,
+       * and never the address.
+       *
+       * It is the same field the Listing Card has carried since it gained its
+       * own control, and it does not widen what AC-5 forbids: no Affiliate
+       * Destination appears in this payload, and the partner's URL is still
+       * read on the server at the instant a person presses. This answers
+       * "would it work"; only the press answers "where to".
+       *
+       * `UX-0003` **Frozen v1.2** §9.4.1 needs it here because the action must
+       * be **absent** rather than disabled where no eligible destination
+       * exists, and a screen cannot leave out a control it has not been told
+       * about.
+       */
+      "handoffAvailable",
       // I67. The listing number, so a person on this page can quote which
       // listing they are on — the identifier the UUID and the slug are not.
       "listingNumber",
