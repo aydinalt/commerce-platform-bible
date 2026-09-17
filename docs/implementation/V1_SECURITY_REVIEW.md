@@ -2,8 +2,14 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Draft
-- **Version:** 0.5
-- **Date:** 2026-09-16
+- **Version:** 0.6
+- **Date:** 2026-09-17
+- **Changed in 0.6:** **Both `high` advisories are closed, and no `--force` was
+  used.** Upstream published what §2.3 was waiting for, so §2.1 and §2.2 stop
+  being accepted risks and become fixed. §2.5 is new and is the reason the
+  version is not simply "audit green": the release that fixes `fastify` also
+  **removes the mechanism this platform throttles with**, and taking it is a
+  deployment decision rather than a version bump. The threshold is unchanged.
 - **Changed in 0.5:** §2.4 is new and §2.3 gained one paragraph. Two advisories
   arrived against `next` and `sharp` — one of them **critical** — and unlike
   §2.1 and §2.2 they were **fixed rather than accepted**. The threshold is
@@ -41,44 +47,70 @@ readable by somebody who was not here when they were built.
 
 ## 2. What the dependency audit says, and what it means here
 
-`npm run security:audit` runs `npm audit --audit-level=high`. **It currently
-exits non-zero**, which means `npm run verify` is red on that step. It was red
-before this review as well; recording it is the point.
+`npm run security:audit` runs `npm audit --audit-level=high`. **It now exits
+zero.** From 2026-09-07 to 2026-09-17 it did not, and recording that was the
+point; recording what closed it is the same point continued.
 
 Not every finding in this section has the same standing, and the difference
-matters more than the count. §2.1 and §2.2 are **accepted risks**: transitive,
-unreachable on the argument recorded there, and waiting on upstream. §2.4 is
-**closed**: it was reachable in principle, a fix existed that required no
-breaking upgrade, and it was taken. A reader who takes "the audit is red" to
-mean "everything in it was waved through" would be reading this section wrongly.
+matters more than the count. §2.1 and §2.2 were **accepted risks** and are now
+**fixed** — `I98`, 2026-09-17, by overrides alone. §2.4 was fixed on 2026-09-16.
+§2.5 is the one thing in this section that is **open**, and it is open for a
+reason no version number expresses: the release that would close it takes
+something away.
 
-### 2.1 `fast-uri` — high
+### 2.1 `fast-uri` — high — **fixed 2026-09-17 (`I98`)**
 
 Advisories `GHSA-5jgf-p345-68v8`, `GHSA-f65p-4m7j-42xc`, `GHSA-fph4-wmhf-6fwf`,
 `GHSA-jqff-g426-hqxp`: host confusion and SSRF through malformed URI parsing.
 
-- **Partly fixed here.** An override pins `fast-uri@^3.1.7` and the copy Fastify
-  actually validates with is now patched.
-- **Two nested copies resist it**: `fast-json-stringify`'s own `4.1.2` and the
-  `ajv` beneath it at `3.1.5`. npm records the override and installs the old
-  version anyway. Forcing them needs a `fastify` / `@nestjs/platform-fastify`
-  major, which npm marks as breaking and which is not a thing to do in the week
-  of a launch.
-- **The reading of the exposure, offered as a reading and not as a
-  reassurance:** `fast-uri` is reached through JSON-schema URI handling —
-  `$ref` resolution and `format: "uri"` validation. This platform validates
-  every request body with **Zod**, not with ajv, so no user-supplied string is
-  known to reach these parsers; what they process is the application's own
-  schema documents at startup. That is an argument for it not being exploitable
-  _here_, not a proof, and it should be re-checked when the upstream release
-  lands.
+**What was stuck, and why it came unstuck.** v0.5 recorded that one override
+pinned `fast-uri@^3.1.7` while **two nested copies resisted it** —
+`fast-json-stringify`'s own `4.1.2` and the `ajv` beneath it at `3.1.5` — and
+that forcing them looked like it needed a breaking `@nestjs/platform-fastify`
+major. That reading was right about the state and wrong about the cause. A
+single `fast-uri` override cannot serve two consumers on **different major
+ranges**: the `^3.1.7` it names is unsatisfiable for a dependant asking for
+`^4`, so npm recorded the override and installed the old version anyway. Nothing
+about `fastify` was in the way; the override was.
 
-### 2.2 `mysql2` — high, through `prisma`
+**The fix is one path-scoped override**, now that a patched `4.x` exists
+(`fast-uri@4.1.3`, published after v0.5 was written):
+
+```json
+"fast-uri": "^3.1.7",
+"fast-json-stringify": { "fast-uri": "^4.1.5" }
+```
+
+Resolved: `3.1.8` on the `3.x` path, `4.1.5` on the `4.x` path, **no vulnerable
+copy anywhere in the tree**, and `@nestjs/platform-fastify` untouched at
+`11.1.28`.
+
+**The §2.1 reading is retired rather than revised.** It argued the parsers were
+not reachable because request bodies are validated with Zod rather than ajv.
+That argument was always a reading and not a proof, and the obligation §2.3
+attached to it — re-check it if ajv, JSON-schema validation of request data, or
+`$ref` resolution over caller-influenced input is ever introduced — is now moot
+for this advisory, because the parsers are patched. The obligation itself stays
+worth keeping for the next one.
+
+### 2.2 `mysql2` — high, through `prisma` — **fixed 2026-09-17 (`I98`)**
 
 `prisma` is a **devDependency** and a build-time tool: this platform's every
 runtime read and write is hand-written SQL over `pg`. `mysql2` is a driver
 Prisma ships for a database this project does not use, and nothing loads it.
-The offered fix downgrades Prisma to `6.19.3`, which npm marks breaking.
+
+**npm's offered fix was to downgrade Prisma to `6.19.3`**, which it marks
+breaking — and which is the wrong instrument: the fault is in `mysql2`, not in
+Prisma. `mysql2@3.24.4` is published and patched, so an override names it
+directly and Prisma stays at `7.9.0`:
+
+```json
+"mysql2": "^3.24.4"
+```
+
+**This was never the dangerous one and it is still worth closing.** An
+unreachable driver with a credential-leak advisory is unreachable until somebody
+adds a MySQL datasource, and nothing would go red on the day they did.
 
 ### 2.3 What to do about the red gate — **decided: option 1**
 
@@ -88,8 +120,23 @@ The offered fix downgrades Prisma to `6.19.3`, which npm marks breaking.
 > kırmızı uyarı teknik borç listemizde bilinçli bir 'kabul edilmiş risk' olarak
 > kalacak."_
 
-**The gate stays at `--audit-level=high` and stays red.** It is an accepted
-risk, recorded, not a resolved one.
+**The gate stays at `--audit-level=high`. It went green on 2026-09-17.** The
+decision above was never "live with it": it was to hold the threshold, trust the
+Zod barrier in the meantime, and wait for upstream. Upstream arrived, and §2.1
+and §2.2 were taken the same day, with overrides and **without `--force`**.
+
+**What was actually waiting, corrected.** §2.3 named the thing to watch as
+_"`fastify` / `@nestjs/platform-fastify` for the `fast-uri` chain, and `prisma`
+for `mysql2`"_. Neither turned out to be the lever. `fast-uri` was blocked by
+this repository's own override, which named a `3.x` range that a `4.x` dependant
+could not satisfy — a `4.1.3` publication and a path-scoped override cleared it
+with `fastify` and Nest untouched. `mysql2` was closed by naming `mysql2`, not
+by moving Prisma. **The weekly run was still what made the day findable**; what
+it found was smaller than the upgrade that had been imagined.
+
+**The gate is green and §2.5 is open.** They are not in tension: §2.5 is a pair
+of `moderate` advisories, below this threshold by the Owner's own decision to
+hold it at `high`, and it is recorded rather than hidden.
 
 **How the gate is arranged in CI, decided 2026-09-07 and completed 2026-09-08.**
 The audit was inside `verify:ci`, the single command the CI job runs. Keeping it
@@ -190,11 +237,11 @@ carried a **critical** that had not been there the week before.
 Two advisories, both against direct or first-level dependencies rather than the
 transitive chains of §2.1 and §2.2:
 
-| Advisory                                                                      | Package | Severity     | Vulnerable range                             |
-| ----------------------------------------------------------------------------- | ------- | ------------ | -------------------------------------------- |
-| [`GHSA-2xp9-vwfh-vxw4`](https://github.com/advisories/GHSA-2xp9-vwfh-vxw4)     | `next`  | **critical** | `9.3.4-canary.0` – `16.3.2` (installed: `16.2.11`) |
-| [`GHSA-p293-qw3h-jr36`](https://github.com/advisories/GHSA-p293-qw3h-jr36)     | `next`  | **critical** | as above                                     |
-| [`GHSA-rgj7-g3m4-5g8c`](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c)     | `sharp` | high         | `< 0.35.4` (installed: `0.35.3`)             |
+| Advisory                                                                   | Package | Severity     | Vulnerable range                                   |
+| -------------------------------------------------------------------------- | ------- | ------------ | -------------------------------------------------- |
+| [`GHSA-2xp9-vwfh-vxw4`](https://github.com/advisories/GHSA-2xp9-vwfh-vxw4) | `next`  | **critical** | `9.3.4-canary.0` – `16.3.2` (installed: `16.2.11`) |
+| [`GHSA-p293-qw3h-jr36`](https://github.com/advisories/GHSA-p293-qw3h-jr36) | `next`  | **critical** | as above                                           |
+| [`GHSA-rgj7-g3m4-5g8c`](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c) | `sharp` | high         | `< 0.35.4` (installed: `0.35.3`)                   |
 
 The first is unauthenticated remote code execution in the **Image Optimization
 API when AVIF files are used**; the second is unauthenticated remote code
@@ -299,6 +346,73 @@ tree that `--package-lock-only` and `--dry-run` hit identically. The manifests
 were therefore edited by hand to the versions `npm audit` named, and the tree
 regenerated with `npm install`. Anyone expecting the command to work will
 conclude the repository is broken; it is npm.
+
+### 2.5 `fastify` — moderate — **open, and the fix is the problem**
+
+Advisories `GHSA-w2qp-rph6-63g4` (schema validation bypass via root primitive
+coercion) and **`GHSA-3m5p-2c4r-xxw2` (X-Forwarded-\* spoofing under trustProxy
+hop-count)**. Both are fixed in `fastify@5.12.1`; `5.12.5` is current. The
+platform stays at **`5.10.0`, now pinned exactly** rather than by a `^` range.
+
+**Why a `moderate` gets its own section.** The second advisory is not a
+transitive parser nobody reaches. It is about the exact configuration this
+platform's throttling key is built on, and `I39` exists because getting that key
+wrong throttles either everybody or nobody.
+
+**What `5.12.1` changed, in its own words.** `lib/request.js`:
+
+```js
+if (typeof tp === "number") {
+  // Hop-count-only trust cannot validate the immediate peer. Fail closed so
+  // direct clients cannot spoof X-Forwarded-* values by supplying enough hops.
+  return function () {
+    return false;
+  };
+}
+```
+
+**`trustProxy: <number>` is no longer a trust setting. It is a no-op that fails
+closed.** The reasoning is correct: a hop count says how far to walk the header
+and says nothing about whether the machine that connected is entitled to have
+written it, so a direct caller can supply enough hops to land wherever they
+like.
+
+**Taking the fix would break the throttle, and the tests said so before any
+reasoning did.** `I39` drives a real socket and asserts what `request.ip`
+becomes. On `5.12.5`, with one proxy declared and `x-forwarded-for:
+9.9.9.9, 8.8.8.8`, it returns `127.0.0.1` instead of `8.8.8.8`. That is the
+first row of `trusted-proxy.ts`'s own table: _"the proxy's address for every
+caller — the whole internet shares one counter, and the first few dozen attempts
+globally lock everybody out."_ The upgrade would not have failed loudly in
+production. It would have answered `200` to every request and locked out every
+account behind the proxy.
+
+**`TRUSTED_PROXY_HOPS` is therefore a dead mechanism upstream**, and that is the
+real finding here — larger than the advisory. The replacement fastify now
+expects is a **trusted-proxy address or CIDR list** (`proxy-addr` compiles a
+string, an array, or the presets `loopback`, `linklocal`, `uniquelocal`), which
+validates the peer rather than counting hops.
+
+**Why it is not done in `I98`.** It is not a version bump. It replaces a
+deployment setting with a different kind of setting, and the value it needs is a
+fact about where this API runs and what sits in front of it — which is an Owner
+decision, exactly as `DEFAULT_TRUSTED_PROXY_HOPS` was. Doing it needs
+`trusted-proxy.ts`, `.env.example`, the `I39` tests and the deployment
+documentation to move together.
+
+**What holds until then, stated plainly.** `5.10.0` still honours the hop count,
+so the throttle key is correct for the declared deployment and `I39`'s twelve
+assertions pass. The spoofing the advisory describes is available to a caller who
+reaches the API **without passing through the declared proxy** — which is the
+same exposure the hop-count mechanism always had and which `trusted-proxy.ts`
+already names: over-declaring hops _"is the same failure as trusting the whole
+chain"_. The advisory does not make this newly true; it makes it named upstream.
+
+**The pin is deliberate and will not drift.** `apps/api/package.json` carries
+`"fastify": "5.10.0"` exactly. Left at `^5.10.0`, the next lockfile refresh would
+have taken `5.12.5` silently, and the only thing that would have gone red is
+`I39` — in a repository where somebody could plausibly read two failing proxy
+tests as flakes.
 
 ## 3. What this review did **not** cover
 

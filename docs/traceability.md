@@ -1,9 +1,23 @@
 # Traceability
 
-> **Candidate Status (2.4):** **controlled revision candidate** under
-> `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v2.3 remains authoritative and is
-> preserved unchanged at `docs/traceability-v2.3-superseded.md`. Nothing here is
-> authoritative until the Owner approves and Freezes it.
+> **Freeze Note (2.4):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-17. This exact version must not be edited in place; a further
+> change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
+> Frozen v2.3 is preserved unchanged at `docs/traceability-v2.3-superseded.md`.
+>
+> **Approval Note (2.4):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-17, choosing **"Onayla ve dondur"** when the
+> candidate and its two open findings were put to him. Approval and Freeze were
+> taken in one decision. The approval is recorded as a choice rather than as a
+> quoted sentence because that is how it was given.
+>
+> **What the approval accepts, and it is the part that matters.** This version
+> does not close the two gaps it names — it fixes them as **open**, on the
+> record, where the `F13`/`F14` gap has sat since 2026-09-07. The Category
+> address has an Experience owner and no Feature, no Story and no
+> behaviour-owning PRD; `I97`'s sitemap enforces an indexable-address rule that
+> no document states. Both await an Owner decision, and neither is resolved by
+> being written down.
 >
 > **Raised by (2.4):** §10's own maintenance rule, twice over. `UX-0002` reached
 > **Frozen v1.4** on 2026-09-17 with a new authoritative section, which is the
@@ -13,6 +27,15 @@
 > **Revision Note (2.4):** Adds **§5E**, which records both. It changes no
 > Feature allocation, no Story, no count in §5B, and no line of §§1–5D, §6, §7,
 > §8 or §10. §9 gains four rows and none is removed.
+>
+> **One thing it deliberately does not refresh.** `REPOSITORY_INDEX.md` listed
+> this document among six that cite `PRD-0006` as **v2.6**, to be refreshed at
+> _"esaslı bir değişiklik"_ — which this is. The citations stay, because §5D
+> records **what closed each gap on 2026-09-07**, and on that date the
+> authoritative version was v2.6. Rewriting them to v2.8 would make a correct
+> history wrong in order to make a version label current. §5E, which records
+> today, cites **Frozen v2.8**. The index row for this document is updated
+> instead.
 >
 > **What it records, and the part that is uncomfortable.** `UX-0002` **Frozen
 > v1.4** §8A gives the Category address an Experience owner. **Nothing owns its
@@ -169,10 +192,15 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Document:** Cross-Tier Traceability
-- **Status:** Draft — candidate for v2.4, awaiting Owner approval
-- **Version:** 2.4 (candidate)
+- **Status:** Frozen
+- **Version:** 2.4
+- **Approval Date:** 2026-09-17
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-17
+- **Frozen By:** Product Owner / Architecture Owner
 - **Maintenance Mode:** Living
-- **Supersedes on Freeze:** Frozen v2.3, preserved unchanged at
+- **Supersedes:** Frozen v2.3, preserved unchanged at
   `docs/traceability-v2.3-superseded.md`
 - **Last Updated:** 2026-09-17
 - **Raised by:** `UX-0002` **Frozen v1.4** (2026-09-17) and increments `I93`
@@ -676,7 +704,7 @@ Repository treatment:
 | This superseding revision (v2.3)                         | **Frozen v2.3**                           | Complete. Approved and Frozen 2026-09-07. This document is the baseline; v2.2 is preserved at `docs/traceability-v2.2-superseded.md`                                                                                                                                                                                                  |
 | Increments `I76`–`I90`                                   | **Traced — recorded in §5C**              | Complete. All fifteen now have an owner: the three that had none on 2026-09-06 were commissioned and Frozen on 2026-09-07 (§5D.1)                                                                                                                                                                                                     |
 | Increments `I91`, `I92`                                  | **Traced — recorded in §5D.3**            | Complete. `I91` discharges `US-PLT-F13-001` `AC-9`; `I92` is operator tooling enforcing a rule `PRD-0001` v4.2 §5.11.1 owns                                                                                                                                                                                                           |
-| This superseding revision (v2.4)                         | **Draft — candidate**                     | Awaiting Owner approval and, separately, Freeze. Frozen v2.3 remains the baseline until both are taken and is preserved at `docs/traceability-v2.3-superseded.md`                                                                                                                                                                     |
+| This superseding revision (v2.4)                         | **Frozen v2.4**                           | Complete. Approved and Frozen 2026-09-17 in one decision. This document is the baseline; v2.3 is preserved at `docs/traceability-v2.3-superseded.md`                                                                                                                                                                                  |
 | Increments `I93`–`I97`                                   | **Traced — recorded in §5E.2**            | Complete as a record. `I93`–`I95` are `EDT F01`/`F02`; `I96` closes a `UX-0003` §9.4 conformance gap under `DEC F05`; `I97` has no Feature and is listed below                                                                                                                                                                        |
 | **The Category address** (`UX-0002` Frozen v1.4 §8A)     | **Open**                                  | The UX section is Frozen and **no Feature, no Story and no behaviour-owning PRD exist**. `PRD-0006` **Frozen v2.8** §20.1 presumes the surface as an advertising placement and defines no behaviour. The inverse of the `F13`/`F14` gap above; recorded in §5E.1. Owner decision required on whether a Discovery Feature is allocated |
 | **The indexable-address rule** (`I97`'s sitemap)         | **Open**                                  | The sitemap decides which addresses are advertised to a crawler and derives them from the Discovery projection, so retired and ineligible Offerings never appear. The rule is implemented and **stated in no document**. Recorded in §5E.2                                                                                            |

@@ -231,4 +231,57 @@ describe("Increment I39 the throttling key", () => {
       ).toMatch(/~~[\s\S]*?no rate limiting anywhere[\s\S]*?~~/iu);
     });
   });
+
+  describe("the version this mechanism depends on (I98)", () => {
+    /**
+     * **`fastify@5.12.1` deletes the setting every case above measures.** Its
+     * `lib/request.js` now answers a numeric `trustProxy` with a function that
+     * returns `false` for every peer — _"Hop-count-only trust cannot validate
+     * the immediate peer. Fail closed"_ — so `request.ip` becomes the socket
+     * address again no matter what hop count is declared.
+     *
+     * The upstream reasoning is right. The consequence here is the **first row**
+     * of `trusted-proxy.ts`'s table: every caller behind the proxy shares one
+     * throttling bucket, and the first few dozen attempts globally lock
+     * everybody out. It fails safe and it fails totally.
+     *
+     * **This is asserted rather than left to the two cases above**, which do
+     * catch it — they are the reason it was caught at all. But they fail as
+     * _"expected '127.0.0.1' to be '8.8.8.8'"_, which reads like a flaky proxy
+     * test to somebody who did not upgrade anything on purpose. A range would
+     * take `5.12.x` on the next lockfile refresh with nobody deciding to.
+     */
+    it("pins fastify exactly, because a range would take the release that breaks it", () => {
+      const api = JSON.parse(readFileSync("apps/api/package.json", "utf8")) as {
+        dependencies: Record<string, string>;
+      };
+      const pinned = api.dependencies["fastify"];
+
+      // An exact version: no `^`, no `~`, no range of any kind.
+      expect(pinned).toMatch(/^\d+\.\d+\.\d+$/u);
+
+      /*
+       * And below the release that removes hop-count trust, which is the whole
+       * point of the pin rather than an incidental fact about today's version.
+       * `5.12.1` is the boundary; anything at or above it fails the cases above.
+       */
+      const [major, minor] = String(pinned).split(".").map(Number);
+      expect(major).toBe(5);
+      expect(minor).toBeLessThan(12);
+    });
+
+    it("says in the security review why the pin is there", () => {
+      /*
+       * A pin with no recorded reason is a pin somebody relaxes while tidying.
+       * `§2.5` carries the reason and the replacement — a trusted-proxy address
+       * or CIDR list rather than a hop count — and this asserts it stays.
+       */
+      const review = readFileSync(
+        "docs/implementation/V1_SECURITY_REVIEW.md",
+        "utf8"
+      );
+      expect(review).toMatch(/GHSA-3m5p-2c4r-xxw2/u);
+      expect(review).toMatch(/TRUSTED_PROXY_HOPS/u);
+    });
+  });
 });

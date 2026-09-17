@@ -25,7 +25,11 @@
     "js-yaml": "5.2.2",
     "valibot": "1.4.2",
     "deepmerge-ts": "^8.0.0",
-    "fast-uri": "^3.1.7"
+    "fast-uri": "^3.1.7",
+    "fast-json-stringify": {
+      "fast-uri": "^4.1.5"
+    },
+    "mysql2": "^3.24.4"
   },
   "scripts": {
     "admin:grant": "node scripts/admin.mjs grant",
