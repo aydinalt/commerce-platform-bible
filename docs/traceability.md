@@ -1,9 +1,34 @@
 # Traceability
 
-> **Candidate Status (2.5):** **controlled revision candidate** under
-> `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v2.4 remains authoritative and is
-> preserved unchanged at `docs/traceability-v2.4-superseded.md`. Nothing here is
-> authoritative until the Owner approves and Freezes it.
+> **Freeze Note (2.5):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-17. This exact version must not be edited in place; a further
+> change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
+> Frozen v2.4 is preserved unchanged at `docs/traceability-v2.4-superseded.md`.
+>
+> **Approval Note (2.5):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-17 — _"Traceability Draft v2.5'i ONAYLIYORUM ve
+> FROZEN v2.5 olarak donduruyorum. Kapsam aynen korunacaktır."_ Approval and
+> Freeze were taken in one decision, and the scope was fixed as written: the
+> `I98` and `I99` records, the UX-ownership gaps in the three externally served
+> advertising regions, the Category address's own ownership gap, the sitemap's
+> indexable-address rule kept as an open record, and every other open item kept
+> as a record awaiting a decision.
+>
+> **What this Freeze does not authorise, in the Owner's own list.** He set six
+> boundaries with the approval, and they are recorded here because a reader of
+> §5F could otherwise take a named gap for a commission to close it:
+>
+> - creating a new Feature, Story, PRD or UX document;
+> - reopening any Frozen document;
+> - writing advertising-region code;
+> - assigning speculative Feature or Story ownership to the Category address;
+> - deciding anything about `TRUSTED_PROXY_HOPS` without the deployment facts;
+> - changing sitemap behaviour.
+>
+> **A named gap is a record, not a commission.** That is what §2 has always
+> meant by recording ownership rather than conferring it, and this Freeze is the
+> first time the distinction has been stated as an instruction rather than as a
+> principle.
 >
 > **Raised by (2.5):** §10's maintenance rule, and a commission that turned out
 > to be empty. `I98` and `I99` shipped after v2.4 was Frozen this morning; and
@@ -223,9 +248,14 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Document:** Cross-Tier Traceability
-- **Status:** Draft — candidate for v2.5, awaiting Owner approval
-- **Version:** 2.5 (candidate)
-- **Supersedes on Freeze:** Frozen v2.4, preserved unchanged at
+- **Status:** Frozen
+- **Version:** 2.5
+- **Approval Date:** 2026-09-17
+- **Approved By:** Product Owner / Architecture Owner
+- **Freeze state:** Frozen
+- **Freeze Date:** 2026-09-17
+- **Frozen By:** Product Owner / Architecture Owner
+- **Supersedes:** Frozen v2.4, preserved unchanged at
   `docs/traceability-v2.4-superseded.md`
 - **Raised by (2.5):** increments `I98` and `I99`, and the advertising-region
   commission of 2026-09-17
@@ -809,7 +839,7 @@ Repository treatment:
 | Increments `I76`–`I90`                                                | **Traced — recorded in §5C**              | Complete. All fifteen now have an owner: the three that had none on 2026-09-06 were commissioned and Frozen on 2026-09-07 (§5D.1)                                                                                                                                                                                                                            |
 | Increments `I91`, `I92`                                               | **Traced — recorded in §5D.3**            | Complete. `I91` discharges `US-PLT-F13-001` `AC-9`; `I92` is operator tooling enforcing a rule `PRD-0001` v4.2 §5.11.1 owns                                                                                                                                                                                                                                  |
 | This superseding revision (v2.4)                                      | **Frozen v2.4**                           | Complete. Approved and Frozen 2026-09-17 in one decision. This document is the baseline; v2.3 is preserved at `docs/traceability-v2.3-superseded.md`                                                                                                                                                                                                         |
-| This superseding revision (v2.5)                                      | **Draft — candidate**                     | Awaiting Owner approval and, separately, Freeze. Frozen v2.4 remains the baseline until both are taken and is preserved at `docs/traceability-v2.4-superseded.md`                                                                                                                                                                                            |
+| This superseding revision (v2.5)                                      | **Frozen v2.5**                           | Complete. Approved and Frozen 2026-09-17 in one decision. This document is the baseline; v2.4 is preserved at `docs/traceability-v2.4-superseded.md`                                                                                                                                                                                                         |
 | Increments `I98`, `I99`                                               | **Traced — recorded in §5F.1**            | Complete as a record. `I98` is engineering with no Feature; `I99` built the Category address, whose chain is still the open item below                                                                                                                                                                                                                       |
 | **`UX` sections for the three externally served advertising regions** | **Open**                                  | `PRD-0006` **Frozen v2.8** §20.1 permits four regions. The platform's own has `UX-0003` v1.2 §8.7; Discovery Results, Offering Presentation and the Category page have **none**, and none is built. The fourth instance of the `EDT F02` / `F13`-`F14` gap. Recorded in §5F.2. Owner decision required — a prototype drawing and a UX section, in that order |
 | **The `fastify` hop-count pin** (`I98`)                               | **Open**                                  | `fastify@5.12.1` removes the numeric `trustProxy` mechanism `I39`'s throttling key depends on, so the version is pinned at `5.10.0` and two `moderate` advisories stay open. Replacing the hop count with a trusted-proxy address list is a deployment decision. `V1_SECURITY_REVIEW.md` v0.6 §2.5                                                           |
