@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { composePublicEligibility } from "../modules/offering/src/index.js";
+import { listingReference } from "../modules/discovery/src/index.js";
 import { PROJECT_OFFERING } from "../packages/database/src/index.js";
 import { FeedSyncer } from "../apps/worker/src/feed.sync.js";
 import { OutboxProcessor } from "../apps/worker/src/outbox.processor.js";
@@ -58,6 +59,25 @@ const suite = enabled ? describe : describe.skip;
 const ORIGIN = "http://localhost:3000";
 const PASSWORD = "correct horse battery staple";
 
+/**
+ * A marker that can never be read as a listing number.
+ *
+ * **This was a real intermittent failure, and the mechanism is exact.** The
+ * marker was `randomUUID().slice(0, 8)` and one case below searches for it
+ * **bare**. `listingReference` — `I67`, and correct — reads a query that is
+ * nothing but five or more digits as a listing-number lookup, so Search
+ * becomes `o.listing_number = $1` and matches nothing. Eight hex characters
+ * are all digits **2.35% of the time** (measured over 200,000 draws, and
+ * `(10/16)^8` predicts it), so roughly one full-suite run in forty-three
+ * failed here with `expected [] to include …` and nothing about the product
+ * wrong. CI run #180 was one of them, on a documentation-only commit.
+ *
+ * The leading letter removes the whole class: the digits are no longer the
+ * entire query, so `listingReference` answers `null` and the query reaches
+ * Search as the text it was meant to be.
+ */
+const newMarker = () => `m${randomUUID().slice(0, 8)}`;
+
 class RecordingDispatcher implements EmailDispatcher {
   readonly delivered: EmailMessage[] = [];
   deliver(message: EmailMessage): Promise<void> {
@@ -90,6 +110,23 @@ describe("Increment I78 composing the third input", () => {
         lifecycle: "PUBLISHED"
       })
     ).toEqual({ reason: null, status: "ELIGIBLE" });
+  });
+
+  it("mints markers a listing-number lookup can never swallow", () => {
+    /*
+     * **A guard on this file's own fixture, and it earned its place.** One case
+     * below searches for the marker bare, and `listingReference` reads a query
+     * of nothing but five or more digits as a listing number — correctly, since
+     * `I67`. An eight-character hex marker is all digits about one time in
+     * forty-three, and on those runs Search looked for a listing number that
+     * does not exist and the case failed with `expected [] to include …`.
+     *
+     * Ten thousand draws rather than one: a single sample would pass 97.65% of
+     * the time whatever the generator did, which is the same flake wearing a
+     * different hat.
+     */
+    for (let draw = 0; draw < 10_000; draw += 1)
+      expect(listingReference(newMarker())).toBeNull();
   });
 
   it("keeps the more specific reason when more than one input disagrees", () => {
@@ -329,7 +366,7 @@ suite("Increment I78 withdrawing what a feed stopped offering", () => {
   });
 
   it("withdraws past the tolerance without changing the lifecycle", async () => {
-    const marker = randomUUID().slice(0, 8);
+    const marker = newMarker();
     const { row, url } = await seeded(marker);
     expect((await state(row.id, marker))?.projected).toBe(1);
 
@@ -354,7 +391,7 @@ suite("Increment I78 withdrawing what a feed stopped offering", () => {
   });
 
   it("records why, in the eligibility history", async () => {
-    const marker = randomUUID().slice(0, 8);
+    const marker = newMarker();
     const { row, url } = await seeded(marker);
     await syncerFor({ [url]: document("") }).sync(row);
     await age(row.id, marker);
@@ -381,7 +418,7 @@ suite("Increment I78 withdrawing what a feed stopped offering", () => {
      * **The property that made a third eligibility input the right mechanism.**
      * `Hidden` would have needed an Admin here, for every listing.
      */
-    const marker = randomUUID().slice(0, 8);
+    const marker = newMarker();
     const { row, url } = await seeded(marker);
     await syncerFor({ [url]: document("") }).sync(row);
     await age(row.id, marker);
@@ -415,7 +452,7 @@ suite("Increment I78 withdrawing what a feed stopped offering", () => {
      * takes their whole catalogue out of Search — which is the failure the
      * Owner's tolerance exists to prevent, arriving by a different door.
      */
-    const marker = randomUUID().slice(0, 8);
+    const marker = newMarker();
     const { row } = await seeded(marker);
     await age(row.id, marker);
 
@@ -436,7 +473,7 @@ suite("Increment I78 withdrawing what a feed stopped offering", () => {
      * owner, and answering both with one action would put a withdrawn product
      * back into Search.
      */
-    const marker = randomUUID().slice(0, 8);
+    const marker = newMarker();
     const { row, url } = await seeded(marker);
     await syncerFor({ [url]: document("") }).sync(row);
     await age(row.id, marker);
@@ -467,7 +504,7 @@ suite("Increment I78 withdrawing what a feed stopped offering", () => {
      * would put withdrawn products back into Search on the day a restriction
      * was lifted, a fault nobody would connect to the restore.
      */
-    const marker = randomUUID().slice(0, 8);
+    const marker = newMarker();
     const { row, url } = await seeded(marker);
     await syncerFor({ [url]: document("") }).sync(row);
     await age(row.id, marker);
