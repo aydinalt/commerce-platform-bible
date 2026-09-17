@@ -1,87 +1,5 @@
 # UX-0002 — Discovery
 
-> **Freeze Note (1.4):** Explicitly Frozen by the Product Owner / Architecture
-> Owner on 2026-09-17. This exact version must not be edited in place; a further
-> change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
-> Frozen v1.3 is preserved unchanged at `UX-0002-discovery-v1.3-superseded.md`.
-> This Freeze does not by itself change Delivery Status, traceability,
-> repository indexes or GitHub content; each is updated by its own decision.
->
-> **Approval Note (1.4):** Explicitly approved by the Product Owner /
-> Architecture Owner on 2026-09-17 — _"Onaylıyorum. UX-0002 Draft v1.4 adayı bu
-> haliyle doğru yönde."_ Approval and Freeze were taken in one decision.
->
-> In the same message the Owner recorded **what this Freeze fixes as decided**,
-> and these nine lines are the authoritative reading of §8A:
->
-> 1. _"`/kategori/{slug}` kalıcı bir katalog adresidir; Discovery kriterlerinin
->    URL state'i değildir."_
-> 2. _"Leaf → Offering Results, non-leaf → yalnızca hiyerarşi/çocuk
->    kategoriler."_
-> 3. _"Non-leaf kategoride descendant offering aggregation, birleşik sonuç
->    sayısı veya bunu sağlayan yeni kontrol yok."_
-> 4. _"Kategori sayfasında mevcut Listing Card ve sıralama korunuyor."_
-> 5. _"Kategori sayfası Discovery Start üretmiyor; crawler trafiği insan
->    davranışı olarak kaydedilmiyor."_
-> 6. _"Tek canonical adres yaklaşımı korunuyor."_
-> 7. _"Sitemap'e kategori URL'leri eklenmesi ancak bu revizyonun ardından
->    geliyor."_
-> 8. _"Reklam bölgesinin varlığı, harici reklam ağı entegrasyonu için yetki
->    anlamına gelmiyor."_
-> 9. _"Attribution hâlâ ertelenmiş durumda."_
->
-> The Owner also recorded why the revision is the size it is: _"§4, §5.6, §19 ve
-> §21'de yalnızca zorunlu çelişki düzeltmelerinin yapılması ve geri kalan Frozen
-> kararların korunması, revizyonun gereksiz büyümesini engelliyor."_ Four lines
-> of the Frozen v1.3 body were removed and nothing else; everything further is
-> addition.
->
-> **Revision Note (1.4):** Adds **§8A — the Category Address** and its
-> acceptance criteria **§20A**, together with the four places that would
-> otherwise contradict them: §4, §5.6, §19 and §21. Requested by the Owner on
-> 2026-09-17, deliberately narrow: _"Yalnızca kategori sayfasını mümkün kılan
-> gerekli bölüm/karar."_
->
-> **Where the surface comes from.** `PRD-0006-platform.md` **Frozen v2.8**
-> §20.1 lists the permitted advertising regions and names a **Category page**,
-> positioned _"below the results grid"_. An approved, Frozen document therefore
-> already presumes this surface and even presumes it has a results grid — while
-> no document defines it. §8A closes that gap the way `EDT F02`'s was closed:
-> by writing the missing section, not by building the surface and leaving the
-> documents behind.
->
-> **Why this needed a revision rather than a route.** A category page is a
-> shareable address that presents Offering Results, and §4 excludes _"persistent
-> or shareable URL state"_ while §21 forbids any deferral from adding
-> _"persistent URL-state capability"_. Building the page and calling it an
-> implementation detail would have been the quiet breach of a Frozen decision
-> this document exists to prevent. It is put here instead, in the open.
->
-> **What the exclusion was actually protecting, read from §5.3.** That section
-> describes the Compare-preparation context and says it _"is not represented as
-> persistent or shareable URL state"_ — a sentence about **criteria**, about one
-> person's transient working state. The concern is that a Discovery path becomes
-> a thing that is saved, shared and restored: a query, a Filter set, a budget, a
-> preparation context. **A Category address carries none of that.** It names a
-> branch of the catalogue and nothing about anybody's session, so §8A carves out
-> the address and leaves every word of the exclusion standing for criteria.
->
-> **§8's leaf rule is not touched, and §8A is built out of it.** §8.2 says a
-> non-leaf Category continues hierarchy navigation and does not aggregate
-> descendant Offering Results; §8A applies exactly that rule at an address — a
-> leaf Category address presents Results, a non-leaf one presents its children
-> and no Results at all. This revision therefore adds **no** non-leaf Browse
-> aggregation, which §21 also forbids and which stays forbidden.
->
-> **Nothing about Discovery's own state model changes.** Criteria still travel
-> in the short-lived carrier they travel in today; no Filter, budget, query,
-> arrangement or availability control becomes part of any address. A person who
-> wants to narrow what a Category address shows moves into Discovery and meets
-> §§6–9D unchanged. The Category address is an entrance, not a working surface.
->
-> **Not revised:** §6, §7, §8, §9, §9A–§9D, §10, §11, §12, §13, §14, §15, §16,
-> §17's refusal of a Sort control, §18, and every other line of §21.
->
 > **Freeze Note (1.3):** Explicitly Frozen by the Product Owner /
 > Architecture Owner on 2026-09-03, together with the other documents of this
 > decision — freezing a subset would leave one of them asserting something its
@@ -90,8 +8,9 @@
 > `DOCUMENT_LIFECYCLE.md` §7–§8.
 >
 > **Approval Note (1.3):** Explicitly approved by the Product Owner /
-> Architecture Owner on 2026-09-03 — _"onaylıyorum işleme alabilirsin"_.
+> Architecture Owner on 2026-09-03 — *"onaylıyorum işleme alabilirsin"*.
 > The Discovery surface now describes the six controls and two card fields the platform ships, including the Owner's decision of the same day that a listing number is printed as digits with no prefix.
+
 
 > **Revision Note (1.3):** Controlled revision candidate **built on the v1.2
 > candidate**, not on the Frozen version. v1.2 states the Price Constraint's
@@ -118,17 +37,7 @@
 - **UX ID:** UX-0002
 - **Title:** Discovery
 - **Status:** Frozen
-- **Version:** 1.4
-- **Approval Date:** 2026-09-17
-- **Approved By:** Product Owner / Architecture Owner
-- **Freeze state:** Frozen
-- **Freeze Date:** 2026-09-17
-- **Frozen By:** Product Owner / Architecture Owner
-- **Supersedes:** Frozen v1.3, preserved unchanged at
-  `UX-0002-discovery-v1.3-superseded.md`
-- **Revision Requested By:** Product Owner / Architecture Owner, 2026-09-17
-- **Status (1.3):** Frozen
-- **Version (1.3):** 1.3
+- **Version:** 1.3
 - **Approval Date:** 2026-09-03
 - **Approved By:** Product Owner / Architecture Owner
 - **Freeze state:** Frozen
@@ -213,23 +122,10 @@ The experience reduces effort by preserving person-controlled criteria, exposing
 - Search history;
 - Saved Search;
 - Notifications;
-- persistent or shareable URL state **for Discovery criteria** — see the note
-  below, and §8A for the one address this exclusion does not reach;
+- persistent or shareable URL state;
 - Favorites;
 - Messaging;
 - result-delivery implementation such as Pagination or infinite loading.
-
-**On the URL-state exclusion (1.4).** What it excludes is **criteria**: a query,
-a Category selection made inside a path, an Attribute Filter set, a Price
-Constraint, a Product Score floor, a stated-availability choice, a Result
-Arrangement, or a Compare-preparation context. None of these becomes a saved,
-shared or restored address — which is the same thing §5.3 already says of the
-preparation context, in those words.
-
-It does **not** exclude the Category's own permanent address. That address
-carries no criteria at all; it names a branch of the catalogue, which is a fact
-about the platform rather than a record of what one person was doing. §8A
-defines it and states its limits.
 
 ## 5. Entry Points
 
@@ -301,24 +197,6 @@ For a Search-originated Discovery Start:
 - where a valid Search is submitted while one active leaf Category is already selected, that Domain association is available immediately.
 
 UX-0002 supplies only the available occurrence and Domain context. UX-0006 consumes them for Basic Analytics without redefining them.
-
-### 5.6 Arrival at a Category address
-
-Anyone may arrive directly at the Category address §8A defines — a person
-following a shared link, or a search engine — without passing through Home and
-without a Discovery path being open.
-
-That arrival:
-
-- presents what §8A.2 and §8A.3 decide for that Category, and nothing further;
-- produces **no** Discovery Start, because nothing was selected (§8A.4);
-- opens no Discovery path and sets no current criteria;
-- leaves criteria the person already had exactly as they were.
-
-**It is an entrance, not a path.** Moving from the address into Discovery — by
-selecting a child Category, or by Searching — is an ordinary §5.1 or §5.2 entry
-and produces the occurrence §5.5 already describes for it, on the same terms.
-This section adds no occurrence, and §5.5 is unchanged.
 
 ## 6. Discovery Criteria
 
@@ -406,99 +284,6 @@ Browse Results use later `Initial Published At` first.
 Remaining ties remain stable.
 
 No Sort control is presented.
-
-## 8A. The Category Address
-
-A Category has a **permanent address** of its own: `/kategori/{slug}`.
-
-### 8A.1 What it is, and what it is not
-
-It is the catalogue's own structure, at an address that stays put. It is
-**not** a saved Discovery path.
-
-|                        | Discovery (§§5–9D)                 | The Category address (§8A)                        |
-| ---------------------- | ---------------------------------- | ------------------------------------------------- |
-| What it answers        | "what matches what I asked for"    | "what does this branch of the catalogue hold"     |
-| Whose state it carries | one person's criteria, transiently | nobody's — the catalogue's                        |
-| Where that state lives | the short-lived carrier, unchanged | nowhere; the address names a Category and no more |
-| Who may arrive         | a person, mid-path                 | anyone, including a search engine, at any time    |
-| Is it shareable        | no, and §4 keeps it that way       | yes; that is the whole point of it                |
-
-**The address carries the Category and nothing else.** No query, no Filter, no
-budget, no availability state, no arrangement, no preparation context. §4's
-exclusion of persistent or shareable URL state is untouched and means what it
-has always meant: **a person's criteria do not become a saved, shared or
-restored thing.** A Category is not a person's criteria — it is a fact about the
-catalogue, which is why it may have an address when a Discovery path may not.
-
-### 8A.2 Leaf and non-leaf, exactly as §8.2 decides
-
-```text
-active leaf Category      → the address presents Offering Results
-active non-leaf Category  → the address presents its child Categories, and no Offering Results
-retired Category          → the address presents nothing; it is not an active destination (§8.1)
-```
-
-**This is §8.2 at an address, not an exception to it.** A non-leaf Category
-address aggregates no descendant Offering Results, presents no combined count,
-and offers no control that would produce one. The V1 rule that Offering Results
-begin only after an active leaf Category holds here in the same words.
-
-### 8A.3 What it presents, reusing what exists
-
-A leaf Category address presents the same Listing Cards §10 defines, in the same
-order §8.3 fixes — later `Initial Published At` first, ties stable, **no Sort
-control**. Nothing new is defined about a result, a card or an order.
-
-**It presents no Filter controls.** Narrowing is Discovery's, and a person who
-wants it moves into Discovery and meets §§9–9D unchanged. This is the line that
-keeps the address from becoming the saved-criteria surface §4 excludes: an
-address that grew Filters would grow a Filter state, and a Filter state at a
-shareable address is exactly the thing.
-
-A Category with no eligible Offerings presents that as a fact, as §12 requires of
-Zero Results, and never as an error.
-
-### 8A.4 Arriving records no Discovery Start
-
-**Arrival at a Category address creates no Discovery Start**, and this is a
-boundary rather than a new rule: §5.5 makes a Browse Discovery Start something
-that occurs when _the person selects_ the first active Category of a path, and
-arriving at an address is not a selection. PRD-0002 still owns the definition and
-§5.5 is unchanged.
-
-The reason it has to be said is that this address is the first surface in the
-platform a **crawler** reaches by design. An arrival that produced a Discovery
-Start would put a machine's traversal into the platform's own account of what
-people did, and it would do so at whatever rate a crawler chose.
-
-**A consequence, named rather than hidden:** the platform will therefore not see
-how many people arrive through these addresses. That is a measurement question,
-it belongs to `PRD-0006`'s analytics rather than here, and it is left open
-rather than answered with an occurrence invented in a UX document.
-
-### 8A.5 One address, and it is the canonical one
-
-A Category has exactly one address. Where a Category is reachable by more than
-one route, the address in this section is the canonical one and the others point
-at it.
-
-**This is what the address is for.** A catalogue branch that a person can link
-to, a search engine can index and the platform can name in a sitemap is a
-different thing from a result set that exists for the length of one visit — and
-until now the platform had only the second.
-
-### 8A.6 What §8A does not decide
-
-- **Advertising.** `PRD-0006` §20.1 names a region on the Category page, below
-  the results grid. That the region has a place here follows from this section
-  existing; **nothing about serving it is decided here**, and no external
-  advertising integration is authorised by this revision.
-- **Any change to Discovery's criteria model**, its carrier, its occurrences or
-  its Filters.
-- **Non-leaf aggregation**, in any form, under any control.
-- **A Category description, editorial text or any authored content** on the
-  address. What it presents is the catalogue.
 
 ## 9. Filter Behaviour
 
@@ -839,26 +624,11 @@ No role receives paid, promoted, or private results through UX-0002.
 - `PRD-0002-discovery.md` — Discovery product behaviour.
 - `PRD-0003-identity.md` — public role-neutral baseline.
 - `PRD-0005-business.md` — public Business display name.
-- `PRD-0006-platform.md` — Category and Attribute definitions; and §20.1's
-  permitted advertising regions, whose table names a **Category page** with a
-  position _"below the results grid"_. That table is the only approved document
-  that presumes this surface, and §8A defines the surface it presumes. Whether
-  and how the region is served stays PRD-0006's, and §8A.6 decides none of it.
+- `PRD-0006-platform.md` — Category and Attribute definitions.
 - `UX-0001-home.md` — initial Search and Browse entry.
 - `UX-0003-offering-detail.md` — result handoff and transient Compare-preparation context preservation.
 - `UX-0004-compare.md` — current-flow Compare-preparation return and resumed set formation.
 - `UX-0006-admin-dashboard.md` — Basic Analytics consumer of Discovery Start and available Domain association.
-
-**Reused by §8A without change (1.4).** §8A defines no result, card, order or
-Zero-Results behaviour of its own; it presents what these already decide:
-
-- `US-DSC-F03-001-browse.md` — the leaf-only result context §8A.2 applies at an
-  address.
-- `US-DSC-F06-001-discovery-results-and-listing-cards.md` — the Listing Card
-  §8A.3 presents.
-- `US-DSC-F07-001-default-result-ordering.md` — the order §8A.3 keeps.
-- `US-DSC-F08-001-zero-results-recovery.md` — the empty Category as a stated
-  fact rather than an error.
 
 ## 20. Acceptance Criteria
 
@@ -958,77 +728,6 @@ Scenario: Opening a result hands off to Offering Detail
   And Compare, Decision Chat, and handoff do not start automatically
 ```
 
-## 20A. Acceptance Criteria — the Category Address
-
-```gherkin
-Scenario: A leaf Category address presents that Category's Results
-  Given an active leaf Category with eligible Offerings
-  When anyone opens that Category's address
-  Then the Offerings of that leaf Category are presented as Listing Cards
-  And they are in later Initial Published At order with ties stable
-  And no Sort control is presented
-
-Scenario: A non-leaf Category address presents its children and no Results
-  Given an active non-leaf Category
-  When anyone opens that Category's address
-  Then its active child Categories are presented
-  And no Offering Results are presented
-  And no descendant Offering count is presented
-  And no control is offered that would aggregate descendant Results
-
-Scenario: A retired Category address is not an active destination
-  Given a retired Category
-  When anyone opens that Category's address
-  Then it is not presented as an active destination
-  And no Offering Results are presented for it
-
-Scenario: The address carries the Category and nothing else
-  Given a leaf Category address
-  When it is presented
-  Then no query, Attribute Filter, Price Constraint, Product Score floor,
-    stated-availability choice, Result Arrangement or Compare-preparation
-    context is carried by the address
-  And no Filter controls are presented on it
-
-Scenario: Arriving at a Category address records no Discovery Start
-  Given no Discovery path is open
-  When anyone arrives directly at a Category address
-  Then no Search Discovery Start occurs
-  And no Browse Discovery Start occurs
-  And no current criteria are set
-
-Scenario: Arriving does not disturb criteria the person already had
-  Given a person with current Discovery criteria
-  When that person arrives at a Category address
-  Then their existing criteria are unchanged
-  And returning to Discovery finds the Results they left
-
-Scenario: Moving from the address into Browse is an ordinary Browse entry
-  Given a non-leaf Category address is open
-  And no Browse path is active
-  When the person selects one of its active child Categories
-  Then a Browse Discovery Start occurs exactly as §5.5 describes
-  And no additional occurrence is created by the address
-
-Scenario: A leaf Category with no eligible Offerings states it as a fact
-  Given an active leaf Category with no eligible Offerings
-  When anyone opens that Category's address
-  Then the absence is presented as a stated result and not as an error
-  And recovery is offered as §12 requires
-
-Scenario: A Category has exactly one address and it is canonical
-  Given a Category reachable by more than one route
-  When its address is presented
-  Then the address in §8A is the canonical one
-  And the other routes point at it
-
-Scenario: The address does not become an advertising decision
-  Given a Category address
-  When it is presented
-  Then nothing about serving the PRD-0006 §20.1 region is decided here
-  And no external advertising integration is authorised by §8A
-```
-
 ## 21. Accepted UX Deferrals
 
 The following do not block review:
@@ -1038,13 +737,6 @@ The following do not block review:
 - visual layout of Filters and Listing Cards;
 - Search linguistic-processing implementation;
 - exact copy for Zero Results and errors;
-- technical URL behaviour, other than the Category address §8A names.
+- technical URL behaviour.
 
-No deferral may add Autocomplete, Sort, sponsored ordering, Recommendations, saved criteria, persistent URL-state capability **for Discovery criteria**, Favorites, Messaging, or non-leaf Browse aggregation.
-
-**The Category address is not a deferral exercising that capability (1.4).** It
-is decided here, in the open, by §8A, and it carries a Category and nothing
-else; §8A.1 and §4's note state the limit. Every other prohibition in the
-sentence above stands exactly as written — in particular **non-leaf Browse
-aggregation**, which §8A.2 refuses at an address in the same words §8.2 refuses
-it in a path.
+No deferral may add Autocomplete, Sort, sponsored ordering, Recommendations, saved criteria, persistent URL-state capability, Favorites, Messaging, or non-leaf Browse aggregation.

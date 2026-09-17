@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.24
-Last Updated: 2026-09-16
+Version:      1.25
+Last Updated: 2026-09-17
 -->
 
 # REPOSITORY INDEX
@@ -100,7 +100,7 @@ Software Architecture v1.0 baseline.
 | Document                   | State                                              |
 | -------------------------- | -------------------------------------------------- |
 | UX-0001 Home               | Frozen v1.1                                        |
-| UX-0002 Discovery          | Frozen v1.3                                        |
+| UX-0002 Discovery          | **Frozen v1.4**                                    |
 | UX-0003 Offering Detail    | Frozen v1.2                                        |
 | UX-0004 Compare            | Frozen v1.0                                        |
 | UX-0005 Business Dashboard | Frozen v1.0                                        |
