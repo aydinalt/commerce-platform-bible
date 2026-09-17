@@ -90,7 +90,11 @@ describe("Increment I51 the page titles", () => {
     // 32 since I94 added the editorial authoring surface: the list of reviews
     // and the one review, both unflagged because `EDT F02` is Frozen with its
     // last dependency discharged rather than a capability awaiting adoption.
-    expect(pages.size).toBe(32);
+    // 33 since I99 added the Category address, `UX-0002` **Frozen v1.4** §8A.
+    // It is the one route whose title matters to somebody who has never been
+    // here: it is the page a search engine prints, so it carries a
+    // `generateMetadata` that names the Category rather than the site.
+    expect(pages.size).toBe(33);
     expect(untitled).toEqual(["/"]);
   });
 

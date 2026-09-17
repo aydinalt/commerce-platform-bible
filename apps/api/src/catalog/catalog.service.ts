@@ -180,8 +180,16 @@ export class CatalogService {
       return new ConflictException({
         code: "CATEGORY_KEY_CONFLICT",
         message:
+          /*
+           * I99 widened this from "in the Domain". A slug is an address now
+           * (`UX-0002` **Frozen v1.4** §8A), so it is unique across the
+           * platform, and telling an Admin the conflict is within their Domain
+           * would send them looking in the wrong place when the Category
+           * holding the slug is in another one — or is retired, and therefore
+           * invisible on the screen they are reading.
+           */
           error.conflict === "SLUG"
-            ? "A Category with this slug already exists in the Domain"
+            ? "A Category with this slug already exists"
             : "A Category with this stable key already exists"
       });
     return error;

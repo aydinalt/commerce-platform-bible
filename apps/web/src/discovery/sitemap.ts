@@ -16,9 +16,7 @@ function apiBaseUrl(): string {
   return process.env.API_BASE_URL ?? "http://127.0.0.1:4000/api/v1";
 }
 
-export async function readSitemap(): Promise<
-  SitemapResponse["offerings"] | null
-> {
+export async function readSitemap(): Promise<SitemapResponse | null> {
   try {
     const response = await fetchWithBudget(
       `${apiBaseUrl()}/discovery/sitemap`,
@@ -26,7 +24,7 @@ export async function readSitemap(): Promise<
       "SITEMAP"
     );
     if (!response.ok) return null;
-    return sitemapSchema.parse(await response.json()).offerings;
+    return sitemapSchema.parse(await response.json());
   } catch {
     return null;
   }

@@ -2079,13 +2079,54 @@ const document = {
         description:
           "The indexable address set, generated from the Discovery projection rather than maintained by hand.",
         properties: {
+          categories: {
+            description:
+              "The Category addresses (I99, `UX-0002` Frozen v1.4 §8A.5). Active Categories only — §8.1 makes a retired Category not an active destination — and only those with something published beneath them, because asking a crawler to spend budget on a page that says “nothing here” teaches it that this sitemap is not worth reading. `lastModified` is the newest publication in the subtree, which is what actually changes at a Category address.",
+            items: { $ref: "#/components/schemas/SitemapEntry" },
+            maxItems: 50000,
+            type: "array"
+          },
           offerings: {
             items: { $ref: "#/components/schemas/SitemapEntry" },
             maxItems: 50000,
             type: "array"
           }
         },
-        required: ["offerings"],
+        required: ["categories", "offerings"],
+        type: "object"
+      },
+      CategoryAddress: {
+        additionalProperties: false,
+        description:
+          "What a Category's own address presents (I99, `UX-0002` Frozen v1.4 §8A). Deliberately smaller than BrowseView, and every absence is a decision §8A took: no discoveryPathId, because arrival records no Discovery Start (§8A.4); no filters, because the address presents no Filter controls (§8A.3) and a Filter state at a shareable address is what §4 excludes; no arrangement, because no Sort control is offered and exactly one order is fixed — §8.3's, later Initial Published At first; no paging, because the address carries the Category and nothing else (§8A.1); no siblings; and no zeroResults, because that object carries recovery built from applied criteria and there are none here.",
+        properties: {
+          ancestors: {
+            items: { $ref: "#/components/schemas/BrowseCategory" },
+            type: "array"
+          },
+          category: { $ref: "#/components/schemas/BrowseCategory" },
+          children: {
+            description: "Presented on a non-leaf, empty on a leaf (§8A.2).",
+            items: { $ref: "#/components/schemas/BrowseCategory" },
+            type: "array"
+          },
+          domain: { type: "string" },
+          domainName: { type: "string" },
+          results: {
+            description:
+              "The first page of this Category's Results on a leaf, and null on a branch. null says “withheld” and an empty array says “none here”; §8A.2 needs both, and a branch aggregates no descendant Results in either form.",
+            items: { $ref: "#/components/schemas/ListingCard" },
+            type: ["array", "null"]
+          }
+        },
+        required: [
+          "ancestors",
+          "category",
+          "children",
+          "domain",
+          "domainName",
+          "results"
+        ],
         type: "object"
       },
       SitemapEntry: {
@@ -6706,8 +6747,37 @@ const document = {
                 schema: { $ref: "#/components/schemas/Sitemap" }
               }
             },
-            description: "The indexable Offering addresses"
+            description: "The indexable Offering and Category addresses"
           }
+        },
+        tags: ["Discovery"]
+      }
+    },
+    "/api/v1/discovery/categories/{slug}": {
+      get: {
+        description:
+          "A Category at its own permanent address (I99, `UX-0002` Frozen v1.4 §8A). A GET, and that is a decision rather than a convention: Browse selection and Search are POSTs because each creates a Discovery Start, and §8A.4 makes arrival here create none — this is the first surface in the platform a crawler reaches by design, and an arrival that produced an occurrence would put a machine's traversal into the platform's own account of what people did. By slug rather than by id, because the slug is what the address carries and what a person shares; it is unique across the platform as of the same increment. A leaf presents its Results in §8.3's order with no Filter and no Sort control; a non-leaf presents its child Categories and no Results at all, aggregating nothing beneath it (§8A.2). A retired Category and one that never existed answer alike, so the response leaks neither a retirement nor a moderation decision.",
+        operationId: "categoryAddress",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CategoryAddress" }
+              }
+            },
+            description: "The Category and what its address presents"
+          },
+          "404": errorResponse(
+            "No active Category carries that slug — retired or never present, alike"
+          )
         },
         tags: ["Discovery"]
       }

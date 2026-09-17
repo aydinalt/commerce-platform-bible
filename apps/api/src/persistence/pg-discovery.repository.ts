@@ -296,6 +296,167 @@ export class PgDiscoveryRepository {
     }));
   }
 
+  /**
+   * The Category addresses worth advertising (`UX-0002` **Frozen v1.4** §8A.5).
+   *
+   * **Active Categories only**, which is §8.1 and not a filter chosen here: a
+   * retired Category is not an active destination, and its address presents
+   * nothing.
+   *
+   * **A Category with nothing published anywhere beneath it is left out.** It
+   * is a real address and it presents an honest empty statement, but asking a
+   * crawler to spend budget on a page that says "nothing here" is asking it to
+   * learn that this site's sitemap is not worth reading. The recursive walk is
+   * what makes a non-leaf qualify on its descendants' listings rather than on
+   * its own, which it has none of by definition.
+   *
+   * `lastModified` is the newest publication in the subtree, for the reason the
+   * Offering sitemap uses the real publication moment rather than "now": a
+   * sitemap where everything changed today teaches a crawler to ignore the date.
+   */
+  async categorySitemap(): Promise<{ lastModified: string; slug: string }[]> {
+    const result = await this.pool.query<{
+      publishedAt: Date;
+      slug: string;
+    }>(
+      `with recursive subtree as (
+         select c.id as root_id, c.id as node_id
+         from category c where c.active = true
+         union all
+         select subtree.root_id, child.id
+         from category child
+         join subtree on child.parent_id = subtree.node_id
+         where child.active = true
+       )
+       select c.slug, max(p.published_at) as "publishedAt"
+       from subtree
+       join category c on c.id = subtree.root_id
+       join offering o on o.category_id = subtree.node_id
+       join offering_search_projection p on p.offering_id = o.id
+       group by c.id, c.slug
+       order by max(p.published_at) desc
+       limit 50000`
+    );
+    return result.rows.map((row) => ({
+      lastModified: row.publishedAt.toISOString(),
+      slug: row.slug
+    }));
+  }
+
+  /**
+   * A Category at its own address (`UX-0002` **Frozen v1.4** §8A).
+   *
+   * **Nothing is written here, and that is the whole difference from
+   * `browse()`.** §8A.4 makes arrival record no Discovery Start, because this
+   * is the first surface in the platform a crawler reaches by design and an
+   * arrival that produced an occurrence would put a machine's traversal into
+   * the platform's own account of what people did — at whatever rate the
+   * crawler chose. `browse()` inserts into `discovery_start`; this does not,
+   * and it takes no `pathId` to insert with.
+   *
+   * **By slug, which is why `category.slug` is globally unique** as of the
+   * migration that accompanies this method. The schema previously constrained
+   * only `(domain_id, slug)`, so two Domains could hold the same slug and this
+   * lookup would have had to choose between them silently. An address that can
+   * mean two things is not an address, and §8A.5 calls this the canonical one.
+   *
+   * **Retired reads as absent** (§8A.2, §8.1), the same answer `browse()` gives
+   * and for the same reason: a not-found says nothing about why, which leaks
+   * neither a retirement nor a moderation decision.
+   */
+  async categoryAddress(slug: string): Promise<{
+    ancestors: BrowseCategory[];
+    category: BrowseCategory;
+    children: BrowseCategory[];
+    domain: string;
+    domainName: string;
+    results: ListingCard[] | null;
+  } | null> {
+    const client = await this.pool.connect();
+    try {
+      /*
+       * A transaction for the snapshot rather than for any write: the four
+       * reads below compose one answer, and a Category retired between the
+       * first and the last would produce a page describing two different
+       * catalogues.
+       */
+      await client.query("begin");
+
+      const found = await client.query<
+        BrowseCategory & { domain: string; domainName: string }
+      >(
+        `select ${BROWSE_CATEGORY}, d.stable_key as domain, d.name as "domainName"
+         from category c
+         join domain d on d.id = c.domain_id
+         where c.slug = $1 and c.active = true`,
+        [slug]
+      );
+      const current = found.rows[0];
+      if (!current) {
+        await client.query("rollback");
+        return null;
+      }
+
+      const { domain, domainName, ...category } = current;
+
+      /*
+       * §8A.2, which is §8.2 applied at an address rather than an exception to
+       * it. A non-leaf presents its children and **no** Offering Results: not
+       * an empty list, not a combined count, and nothing that aggregates what
+       * is beneath it. `null` is what says "withheld"; `[]` would say "none".
+       */
+      const children = category.leaf
+        ? []
+        : await this.categories(
+            client,
+            `c.parent_id = $1 and c.active = true`,
+            [category.id]
+          );
+
+      /*
+       * §8A.3's order, and it is `§8.3`'s: later `Initial Published At` first,
+       * ties stable. `NEWEST` is named because it is the arrangement whose
+       * `order by` is exactly that — **not** because the address offers the
+       * arrangements. It offers no Sort control at all, so exactly one order is
+       * fixed and this is the one the Frozen section names.
+       *
+       * Worth knowing while reading §8.3: the arrangement Discovery *defaults*
+       * to is `DEFAULT`, which orders by total cost rather than by publication.
+       * §8A.3 cites §8.3 rather than "whatever Discovery does", so the address
+       * follows §8.3 literally.
+       */
+      const listed = category.leaf
+        ? await this.results(
+            client,
+            "NEWEST",
+            category.id,
+            [],
+            null,
+            null,
+            1,
+            false
+          )
+        : null;
+
+      const ancestors = await this.ancestors(client, category.id);
+
+      await client.query("commit");
+      return {
+        ancestors,
+        category,
+        children,
+        domain,
+        domainName,
+        results: listed === null ? null : listed.cards
+      };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async browseRoots(): Promise<
     { categories: BrowseCategory[]; domain: string; domainName: string }[]
   > {

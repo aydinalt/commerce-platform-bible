@@ -116,7 +116,13 @@ describe("Increment I48 the management surfaces", () => {
       // Discovery draws, on a page a person arrives at from the header — so it
       // carries the public layout classes for the same reason `/compare` does.
       // A management page gaining one still fails here.
-      "/favourites"
+      "/favourites",
+      // I99. The Category address, `UX-0002` **Frozen v1.4** §8A. The same
+      // reading: it presents the Listing Cards §10 defines, in the same grid
+      // Discovery draws them in, so it carries the public layout classes rather
+      // than a set of its own. It is also the one page the platform is found
+      // by, which is a reason for it to look like the results it shows.
+      "/kategori/[slug]"
     ]);
   });
 

@@ -19,7 +19,18 @@ const CHECK_VIOLATION = "23514";
 
 const PARENT_DOMAIN_CONSTRAINT = "category_parent_id_domain_id_fkey";
 const ANCESTRY_CYCLE_CONSTRAINT = "category_no_ancestry_cycle";
-const SLUG_CONSTRAINT = "category_domain_id_slug_key";
+/**
+ * Two constraints answer for one rule, and both have to be translated.
+ *
+ * `I99` made the slug an address (`UX-0002` **Frozen v1.4** §8A), so it is now
+ * unique across the platform as well as within a Domain. Which index catches a
+ * repeat depends on where the repeat is, and a violation this function did not
+ * recognise would reach the Admin as a `500` rather than as the conflict it is.
+ */
+const SLUG_CONSTRAINTS = [
+  "category_slug_key",
+  "category_domain_id_slug_key"
+] as const;
 const STABLE_KEY_CONSTRAINT = "category_stable_key_key";
 
 /**
@@ -391,7 +402,11 @@ function translate(error: unknown): unknown {
     return new CategoryCycleError();
   if (violates(error, FOREIGN_KEY_VIOLATION, PARENT_DOMAIN_CONSTRAINT))
     return new CategoryDomainMismatchError();
-  if (violates(error, UNIQUE_VIOLATION, SLUG_CONSTRAINT))
+  if (
+    SLUG_CONSTRAINTS.some((constraint) =>
+      violates(error, UNIQUE_VIOLATION, constraint)
+    )
+  )
     return new CategoryKeyConflictError("SLUG");
   if (violates(error, UNIQUE_VIOLATION, STABLE_KEY_CONSTRAINT))
     return new CategoryKeyConflictError("STABLE_KEY");

@@ -2927,7 +2927,22 @@ export const sitemapSchema = z
      * the catalogue is near the limit rather than after a crawler has silently
      * stopped reading at fifty thousand.
      */
-    offerings: z.array(sitemapEntrySchema).max(50_000)
+    offerings: z.array(sitemapEntrySchema).max(50_000),
+    /**
+     * The Category addresses (`UX-0002` **Frozen v1.4** §8A.5).
+     *
+     * **Only active Categories appear**, which is §8.1 rather than a filter
+     * invented here: a retired Category is not an active destination, so
+     * advertising its address would send a crawler to a page that presents
+     * nothing.
+     *
+     * `lastModified` is the most recent publication inside the Category rather
+     * than the Category's own creation, because what changes at a Category
+     * address is the list of listings under it. A non-leaf carries the latest
+     * moment beneath it for the same reason: its children's addresses are what
+     * it presents, and those change when their listings do.
+     */
+    categories: z.array(sitemapEntrySchema).max(50_000)
   })
   .strict();
 
@@ -3011,6 +3026,49 @@ export const browseViewSchema = z
     zeroResults: zeroResultsSchema.nullable()
   })
   .strict();
+
+/**
+ * What a Category's own address presents (`UX-0002` **Frozen v1.4** §8A).
+ *
+ * **It is deliberately smaller than `browseViewSchema`, and every absence is a
+ * decision §8A took.**
+ *
+ * - No `discoveryPathId`, because arriving at an address records no Discovery
+ *   Start (§8A.4). There is no path for one to belong to.
+ * - No `filters`, because the address presents no Filter controls (§8A.3).
+ *   An address that grew Filters would grow a Filter state, and a Filter state
+ *   at a shareable address is the thing §4 excludes.
+ * - No `arrangement`, because no Sort control is presented and exactly one
+ *   order is fixed — §8.3's, later `Initial Published At` first.
+ * - No `paging`, because the address carries the Category and nothing else
+ *   (§8A.1). What it presents is the first page of the Category's Results;
+ *   §21 defers result delivery, and a page number in the address would be
+ *   state the address is not allowed to carry.
+ * - No `siblings`, because they are a navigation aid for a Browse path rather
+ *   than a fact about this Category. `ancestors` stays: it is the Category's
+ *   own place in the catalogue, which is what a breadcrumb and a person
+ *   arriving cold both need.
+ * - No `zeroResults`, because that object carries recovery suggestions built
+ *   from applied criteria, and there are no criteria here. An empty leaf sends
+ *   an empty `results` array and the surface states the fact (§8A.3).
+ *
+ * `results` is `null` on a non-leaf and an array on a leaf — the same
+ * distinction `browseViewSchema` makes, for the same reason: `null` says "not
+ * shown" and `[]` says "none here", and §8A.2 needs both.
+ */
+export const categoryAddressSchema = z
+  .object({
+    ancestors: z.array(browseCategorySchema),
+    category: browseCategorySchema,
+    /// Presented on a non-leaf, empty on a leaf (§8A.2).
+    children: z.array(browseCategorySchema),
+    domain: domainKeySchema,
+    domainName: domainNameSchema,
+    results: z.array(listingCardSchema).nullable()
+  })
+  .strict();
+
+export type CategoryAddressResponse = z.infer<typeof categoryAddressSchema>;
 
 /// A path a person is already following. Absent on the first selection, which
 /// is what makes that selection the start of a new one.

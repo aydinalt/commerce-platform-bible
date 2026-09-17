@@ -16,12 +16,14 @@ import { z } from "zod";
 
 import {
   browseRootsSchema,
+  categoryAddressSchema,
   sitemapSchema,
   browseSelectionSchema,
   browseViewSchema,
   searchSubmissionSchema,
   searchViewSchema,
-  type BrowseRoots
+  type BrowseRoots,
+  type CategoryAddressResponse
 } from "@commerce/contracts";
 import {
   FilterContextMissingError,
@@ -94,7 +96,36 @@ export class DiscoveryController {
    */
   @Get("sitemap")
   async sitemap() {
-    return sitemapSchema.parse({ offerings: await this.discovery.sitemap() });
+    return sitemapSchema.parse({
+      categories: await this.discovery.categorySitemap(),
+      offerings: await this.discovery.sitemap()
+    });
+  }
+
+  /**
+   * A Category at its own address (`UX-0002` **Frozen v1.4** §8A).
+   *
+   * **A `GET`, and that is the decision rather than the convention.** Browse
+   * selection and Search are `POST`s because each creates a Discovery Start —
+   * an occurrence rather than a page being fetched. §8A.4 makes arrival at this
+   * address create none, so it is a read, and a read of a permanent address is
+   * a `GET`. Anything else would be unindexable.
+   *
+   * By slug rather than by id, because the slug is what the address carries and
+   * what a person shares. It is globally unique from the migration that landed
+   * with this route.
+   *
+   * A Category that is retired, or that never existed, answers `404` alike —
+   * the same silence `browse()` keeps, which leaks neither a retirement nor a
+   * moderation decision.
+   */
+  @Get("categories/:slug")
+  async categoryAddress(
+    @Param("slug") slug: string
+  ): Promise<CategoryAddressResponse> {
+    const view = await this.discovery.categoryAddress(slug);
+    if (view === null) throw new NotFoundException();
+    return categoryAddressSchema.parse(view);
   }
 
   /**

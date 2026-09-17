@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { readSitemap } from "../discovery/sitemap";
-import { absoluteUrl, offeringPath, siteOrigin } from "../seo";
+import { absoluteUrl, categoryPath, offeringPath, siteOrigin } from "../seo";
 
 /**
  * The sitemap, derived from the catalogue (I97).
@@ -36,12 +36,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: siteOrigin()
   };
 
-  const offerings = await readSitemap();
-  if (offerings === null) return [home];
+  const read = await readSitemap();
+  if (read === null) return [home];
 
   return [
     home,
-    ...offerings.map((entry) => ({
+    /*
+     * The Category addresses (I99), ahead of the listings because they are the
+     * shallower surface and the one the listings are reached through.
+     *
+     * **`weekly`, where a listing is `daily`.** What changes at a Category
+     * address is which listings sit under it, and a branch of a catalogue does
+     * not turn over the way one product's price does. Claiming daily change
+     * here would spend crawl budget re-reading pages that had not moved.
+     *
+     * Only Categories the API listed appear, and it lists active Categories
+     * with something published beneath them — §8.1 and a refusal to advertise
+     * an address that says "nothing here". Neither rule is applied in this
+     * file, because a sitemap that filtered its own source would be a second
+     * opinion about what is indexable.
+     */
+    ...read.categories.map((entry) => ({
+      changeFrequency: "weekly" as const,
+      lastModified: new Date(entry.lastModified),
+      url: absoluteUrl(categoryPath(entry.slug))
+    })),
+    ...read.offerings.map((entry) => ({
       /*
        * Daily, and it is true rather than optimistic: a comparison page changes
        * whenever a seller moves a price, which is the one thing on it a person

@@ -313,7 +313,10 @@ describe("Increment I97 the SEO surface", () => {
      */
     it("answers an outage with the home page rather than an empty file", () => {
       expect(reader).toContain("return null");
-      expect(sitemapSource).toContain("if (offerings === null) return [home]");
+      /* I99 renamed the binding when the read grew a second list; the rule it
+         guards is unchanged — `null` from the reader yields the home page
+         alone, never an empty file claiming this site has no pages. */
+      expect(sitemapSource).toContain("if (read === null) return [home]");
     });
 
     /**
@@ -330,6 +333,7 @@ describe("Increment I97 the SEO surface", () => {
 
     it("is bounded at the protocol's own limit", () => {
       const tooMany = {
+        categories: [],
         offerings: Array.from({ length: 50_001 }, (_, index) => ({
           lastModified: "2026-03-01T00:00:00.000Z",
           slug: `s${String(index)}`

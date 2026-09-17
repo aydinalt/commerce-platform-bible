@@ -1,0 +1,24 @@
+-- A Category slug becomes globally unique, because it is now an address.
+--
+-- `UX-0002-discovery.md` **Frozen v1.4** §8A gives a Category a permanent
+-- address of its own, `/kategori/{slug}`, and §8A.5 calls it the canonical one.
+-- The schema did not support that claim: the only constraint was
+-- `category_domain_id_slug_key`, unique per Domain, so two Domains could hold
+-- the same slug and the address would have identified two Categories.
+--
+-- **Nothing was broken and nothing would have gone red.** The authored
+-- taxonomy holds 127 headings across 11 Domains with no repeated slug, so the
+-- address is unambiguous today. What was missing is the reason it stays that
+-- way: an Admin creating a Category is told a slug must be free "in the
+-- Domain", and the first cross-Domain repeat would have made one Category
+-- silently unreachable at an address the other answered.
+--
+-- The per-Domain index is kept. It is implied by this one and costs nothing,
+-- and `pg-catalog.repository.ts` names it when it turns a unique violation into
+-- the Admin's message; dropping it would change that message into a crash.
+--
+-- **Retired Categories take part.** The index is not partial on `active`, so a
+-- retired Category's slug stays reserved. An address that a person shared, a
+-- crawler indexed and a bookmark holds must not start answering about a
+-- different Category because the first one was retired.
+CREATE UNIQUE INDEX "category_slug_key" ON "category" ("slug");

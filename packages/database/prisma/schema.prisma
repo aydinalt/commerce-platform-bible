@@ -693,6 +693,13 @@ model Category {
   offeringFeeds           OfferingFeed[]
 
   @@unique([id, domainId])
+  /// I99. Globally unique, because `UX-0002` **Frozen v1.4** §8A makes the slug
+  /// an address: `/kategori/{slug}` must identify one Category and §8A.5 calls
+  /// it the canonical one. Retired Categories take part, so a shared address
+  /// never starts answering about a different Category.
+  @@unique([slug], map: "category_slug_key")
+  /// Kept though the one above implies it: `pg-catalog.repository.ts` names
+  /// this constraint when it turns a unique violation into the Admin's message.
   @@unique([domainId, slug])
   @@index([parentId])
   @@map("category")
