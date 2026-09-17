@@ -2,7 +2,7 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.26
+Version:      1.27
 Last Updated: 2026-09-17
 -->
 
@@ -19,13 +19,13 @@ Last Updated: 2026-09-17
 
 ## Repository Management
 
-| Document                                                                                 | Purpose                                                                                                                               |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/repository/REPOSITORY_INDEX.md`                                                    | Canonical document inventory                                                                                                          |
-| `docs/repository/DOCUMENT_DEPENDENCY_MAP.md`                                             | Documentation dependency direction                                                                                                    |
-| `docs/traceability.md`                                                                   | **Frozen v2.4** cross-tier traceability baseline                                                                                      |
-| `docs/glossary.md`                                                                       | Canonical terminology reference; records terms, resolves none                                                                         |
-| `docs/traceability-v1.0-superseded.md`, `-v1.1-`, `-v2.0-`, `-v2.1-`, `-v2.2-`, `-v2.3-` | Six superseded baselines, preserved unchanged. Each is kept because a superseded baseline is the evidence that the correction was one |
+| Document                                                                                           | Purpose                                                                                                                                 |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/repository/REPOSITORY_INDEX.md`                                                              | Canonical document inventory                                                                                                            |
+| `docs/repository/DOCUMENT_DEPENDENCY_MAP.md`                                                       | Documentation dependency direction                                                                                                      |
+| `docs/traceability.md`                                                                             | **Frozen v2.4**; Draft v2.5 candidate awaiting Owner approval                                                                           |
+| `docs/glossary.md`                                                                                 | Canonical terminology reference; records terms, resolves none                                                                           |
+| `docs/traceability-v1.0-superseded.md`, `-v1.1-`, `-v2.0-`, `-v2.1-`, `-v2.2-`, `-v2.3-`, `-v2.4-` | Seven superseded baselines, preserved unchanged. Each is kept because a superseded baseline is the evidence that the correction was one |
 
 ## Governance and Standards
 
