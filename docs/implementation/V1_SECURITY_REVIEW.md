@@ -2,8 +2,12 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Draft
-- **Version:** 0.6
-- **Date:** 2026-09-17
+- **Version:** 0.7
+- **Date:** 2026-09-18
+- **Changed in 0.7:** §4 gains a sixth item. The catalogue importer minted an
+  Admin account per run and revoked nothing, so every import left a standing
+  Super Admin that no document named. `I100` stands it down; the checklist now
+  says how to verify that.
 - **Changed in 0.6:** **Both `high` advisories are closed, and no `--force` was
   used.** Upstream published what §2.3 was waiting for, so §2.1 and §2.2 stop
   being accepted risks and become fixed. §2.5 is new and is the reason the
@@ -443,3 +447,17 @@ Saying so is the useful part of a security document.
 5. The catalogue imported with `--dry-run` first, and the affiliate links
    **clicked**, not merely counted: criterion 3 of §5.3 is the one no query can
    check.
+6. **After the import, `npm run admin:list` shows the first Admin and nobody
+   else.** A real run registers its own operator and grants it Admin, because
+   the three destination acts go through the API and the standing Admin's
+   password is deliberately not available to a script. It is stood down in a
+   `finally` — authorization deleted, Admin context dropped, sessions revoked,
+   account `SUSPENDED` — and the run prints a line saying so. The list is how
+   you check that the line was true; `V1_LAUNCH_RUNBOOK.md` §3.0 has the manual
+   equivalent if it was not.
+
+**This item is new in v0.7 and it was a real exposure, not a tidiness rule.**
+Until `I100` nothing revoked that operator: every run left a permanent Super
+Admin whose password is `IMPORT_PASSWORD`, and the word `import-operator`
+appeared in no document and no test. An operator following this checklist would
+have had no reason to look.

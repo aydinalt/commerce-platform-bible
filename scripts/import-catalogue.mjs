@@ -468,11 +468,105 @@ let partnersSkipped = 0;
 let listingsCreated = 0;
 let listingsSkipped = 0;
 
+/**
+ * The operator's account id, held outside the `try` so the `finally` can stand
+ * it down however the run ended.
+ * @type {string | null}
+ */
+let operatorUserId = null;
+
+/**
+ * Stands the import operator down, and it runs however the run ended.
+ *
+ * **The account is retired, not deleted, and that is the schema's decision
+ * rather than convenience.** `admin_audit_event.actor_id` is `onDelete:
+ * Restrict`, and the schema says why in as many words: _"an account that has
+ * acted as an Admin cannot be deleted out from under its own audit rows,
+ * because cascading would let removing a user erase the record of what they
+ * did."_ This operator performs three audited acts per listing with a
+ * destination — review, validation, enablement — so deleting it would either
+ * be refused by the database or, if the reference were ever relaxed, erase the
+ * provenance of every destination in the catalogue.
+ *
+ * So the row stays as evidence and every capability is taken away. Three
+ * statements, and none is new machinery:
+ *
+ * 1. **`admin_authorization`**, which is what Admin *is* — `US-IDN-F08-001`
+ *    AC-11 re-evaluates it per request, so the authority stops at the next
+ *    call rather than at the next login.
+ * 2. **`admin_context` on any session**, which is the second statement
+ *    `scripts/admin.mjs revoke` makes and for the reason recorded there: AC-9
+ *    requires an entered context to drop at once.
+ * 3. **`revoked_at` on every session, and `status = 'SUSPENDED'` on the
+ *    account** — the platform's own two ways of ending access, used as they
+ *    are used everywhere else. A suspended account fails the
+ *    `status = 'ENABLED'` check every write path already makes.
+ *
+ * `IMPORT_PASSWORD` is never printed: the line below names the account and what
+ * was taken from it, and nothing else.
+ */
+const standDownOperator = async () => {
+  if (operatorUserId === null) return;
+  const id = operatorUserId;
+  operatorUserId = null;
+  try {
+    await pool.query(`delete from admin_authorization where user_id = $1`, [
+      id
+    ]);
+    await pool.query(
+      `update user_session set admin_context = false
+       where user_id = $1 and admin_context`,
+      [id]
+    );
+    await pool.query(
+      `update user_session set revoked_at = now()
+       where user_id = $1 and revoked_at is null`,
+      [id]
+    );
+    await pool.query(
+      `update user_account set status = 'SUSPENDED' where id = $1`,
+      [id]
+    );
+    process.stdout.write(
+      `\n  operatör: yetki geri alındı, oturumlar kapatıldı, hesap askıya ` +
+        `alındı (denetim kaydı için silinmedi)\n`
+    );
+  } catch (error) {
+    /*
+     * **Loud, because this is the one failure an operator must not miss.** A
+     * run whose listings imported but whose operator stayed an Admin has left
+     * a standing Super Admin behind, and a line buried in the summary would be
+     * read as a detail. `npm run admin:revoke` is the manual equivalent, and
+     * naming it here is the difference between a warning and an instruction.
+     */
+    process.stderr.write(
+      `\nUYARI: import operatörünün yetkisi geri alınamadı — ` +
+        `${error instanceof Error ? error.message : String(error)}\n` +
+        `  Hesap hâlâ Süper Admin. Elle kapatın:\n` +
+        `  npm run admin:list   # import-operator-… satırını bulun\n` +
+        `  npm run admin:revoke -- --email <o adres>\n`
+    );
+    process.exitCode = 1;
+  }
+};
+
 try {
   /* ── the operator, who signs in as the Admin for the destination chain ─── */
+  /*
+   * **Made for this run and stood down at the end of it.** Reusing a permanent
+   * Admin was the better shape and this architecture cannot offer it: the three
+   * destination acts go through the API as that Admin, which needs their
+   * session, which needs their password — and `V1_LAUNCH_RUNBOOK` §4 keeps the
+   * first Admin's password with one person on purpose. A script that could sign
+   * in as the standing Admin would be a script that had been given it.
+   *
+   * So the operator is temporary in fact and not only in name: see
+   * `standDownOperator`, which the `finally` runs however this ends.
+   */
   const operatorEmail = `import-operator-${randomUUID()}@${EMAIL_DOMAIN}`;
   const operator = dryRun ? null : await signUp(operatorEmail);
   if (operator !== null) {
+    operatorUserId = operator.userId;
     await pool.query(
       `insert into admin_authorization (user_id, granted_by)
        values ($1, 'import-catalogue') on conflict (user_id) do nothing`,
@@ -514,6 +608,62 @@ try {
   /* ── partners ──────────────────────────────────────────────────────────── */
   /** @type {Record<string, { businessId: string; cookie: string }>} */
   const partner = {};
+
+  /**
+   * A partner this run did not create, found in the database by slug.
+   *
+   * **`V1_LAUNCH_RUNBOOK` §2.2 has always promised this**: `businessSlug` "must
+   * match `businesses.csv` **or an existing Business**". Only the first half was
+   * true, and the half that was missing is the second import batch — the run
+   * where an operator adds more listings and leaves the partners out of
+   * `businesses.csv` because they already exist. Every row of that batch failed.
+   *
+   * **The owner's address is read rather than derived.** `emailFor` guesses
+   * `partner-<slug>@…` when a row names none, and that guess is right only for
+   * partners this importer created with no `ownerEmail` column. The owning
+   * account is a fact the database holds — one owner per Business
+   * (`US-BUS-F01-001` AC-8) — so it is asked for.
+   *
+   * **What it does not do:** it creates nothing. A slug that names no Business
+   * answers `undefined` and the caller raises the error it always raised. Only
+   * the resolution order changed.
+   *
+   * @param {string} slug
+   * @returns {Promise<{ businessId: string; cookie: string } | undefined>}
+   */
+  const existingPartner = async (slug) => {
+    const found = /** @type {{ rows: { email: string; id: string }[] }} */ (
+      await pool.query(
+        `select b.id, u.email
+           from business b
+           join business_owner o on o.business_id = b.id
+           join user_account u on u.id = o.user_id
+          where b.slug = $1`,
+        [slug]
+      )
+    );
+    const business = found.rows[0];
+    if (business === undefined) return undefined;
+
+    /*
+     * Signing in can fail honestly: a Business created by hand rather than by
+     * this importer has an owner whose password is not `IMPORT_PASSWORD`.
+     * `undefined` sends the caller to the error, which now names that as the
+     * thing to check.
+     */
+    const account = await signIn(business.email);
+    if (account === null) return undefined;
+    ok(
+      await send("PUT", "/auth/me/business-context", {
+        body: { businessId: business.id },
+        cookie: account.cookie
+      }),
+      `business context ${slug}`
+    );
+    /* Memoised, so a hundred listings for one partner sign in once. */
+    partner[slug] = { businessId: business.id, cookie: account.cookie };
+    return partner[slug];
+  };
 
   /*
    * An index loop rather than `.entries()`: under the lint project these
@@ -838,11 +988,14 @@ try {
             `adresleri düzeltip tekrar çalıştırın`
         );
 
-      const seller = partner[businessSlug];
+      const seller =
+        partner[businessSlug] ??
+        (dryRun ? undefined : await existingPartner(businessSlug));
       if (seller === undefined && !dryRun)
         throw new Error(
-          `partner ${businessSlug} bu çalıştırmada oluşturulmadı; ` +
-            `zaten var olan bir partnere ilan eklemek için önce onun hesabıyla giriş gerekir`
+          `partner ${businessSlug} ne bu çalıştırmada oluşturuldu ne de ` +
+            `veritabanında bulunabildi; slug doğru mu, ve hesabının şifresi ` +
+            `IMPORT_PASSWORD ile aynı mı?`
         );
 
       if (dryRun) {
@@ -1121,6 +1274,14 @@ try {
     process.exitCode = 1;
   }
 } finally {
+  /*
+   * **Before the pool closes, and before anything else in here.** The stand-down
+   * is four SQL statements on this pool; ending the pool first would leave the
+   * operator an Admin on every path that reaches this block — including the
+   * ones that reach it by throwing, which are exactly the runs nobody watches
+   * to the end.
+   */
+  await standDownOperator();
   await app.close();
   await workerPool.end();
   await pool.end();

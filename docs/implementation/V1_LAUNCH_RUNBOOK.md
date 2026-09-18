@@ -2,8 +2,16 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Draft
-- **Version:** 0.3
-- **Date:** 2026-09-07
+- **Version:** 0.4
+- **Date:** 2026-09-18
+- **Changed in 0.4:** §3.0 is new — the import operator existed and this
+  document never named it, so nobody knew a run left a Super Admin behind. It
+  is now stood down in a `finally` and §3.0 says what that means. §2.2's
+  `businessSlug` row promised that an existing Business would be accepted; the
+  importer only accepted rows from the same `businesses.csv`, and it now does
+  both. §6 gains one entry: a registration throttle caps an import at nine new
+  partners per quarter hour, found while testing §3.0 and recorded rather than
+  fixed. Nothing else changed: no step, no column, no decision.
 - **Changed in 0.3:** `productKey` became a required import column and §2.3
   records why. Two entries in §6 were describing gaps that have since been
   closed — the traceability baseline and the destination audit trail — and a
@@ -93,7 +101,7 @@ past step 6 without them.
 
 | Column              | Required   | Notes                                                                                                                                                                                                                                                                                                                                                                                          |
 | ------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `businessSlug`      | yes        | Must match `businesses.csv` or an existing Business.                                                                                                                                                                                                                                                                                                                                           |
+| `businessSlug`      | yes        | Must match `businesses.csv` or an existing Business. An existing one is resolved by slug and its owner signed in with `IMPORT_PASSWORD`, so a second batch need not relist partners the first run created — but a Business created by hand, whose owner has a different password, cannot be written to.                                                                                        |
 | `slug`              | yes        | Unique **within** the Business.                                                                                                                                                                                                                                                                                                                                                                |
 | `title`             | yes        |                                                                                                                                                                                                                                                                                                                                                                                                |
 | `summary`           | no         |                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -156,6 +164,34 @@ export IMPORT_EMAIL_DOMAIN='partners.example.com'
 
 npm run import:catalogue -- data/businesses.csv data/offerings.csv --dry-run
 npm run import:catalogue -- data/businesses.csv data/offerings.csv
+```
+
+### 3.0 The import operator, and why one exists
+
+A real run registers an account of its own —
+`import-operator-<uuid>@$IMPORT_EMAIL_DOMAIN` — grants it Admin, and uses it for
+the three destination acts every listing with a `destinationUrl` needs: review,
+validation, enablement. **It is not the first Admin from step 5 and it must not
+be.** Those acts go through the API as that Admin, which needs their session,
+which needs their password — and §4 of `V1_SECURITY_REVIEW.md` keeps the first
+Admin's password with one person on purpose.
+
+**It is stood down when the run ends, however it ends.** The authorization is
+deleted, any entered Admin context is dropped, every session is revoked and the
+account is set `SUSPENDED`. The run prints one line saying so. This happens in a
+`finally`, so a run that fails halfway leaves no Admin behind either.
+
+**The account row stays, and that is deliberate.** It performed audited acts, and
+`admin_audit_event.actor_id` refuses to let an actor be deleted out from under
+its own rows — deleting it would erase the record of who enabled each affiliate
+destination. What is removed is every capability, not the evidence.
+
+If the stand-down itself fails, the run says so on stderr, exits non-zero and
+prints the manual equivalent:
+
+```bash
+npm run admin:list                          # find the import-operator-… row
+npm run admin:revoke -- --email <o adres>
 ```
 
 ### 3.1 The pictures
@@ -372,6 +408,22 @@ campaign. The query narrows that work to the listings that could possibly work.
 - **No rollback.** The importer adds and never deletes. Removing a mistaken
   import is a manual database operation, and `admin_audit_event` cannot be
   deleted at all.
+- **An import creating more than nine new partners is throttled, and says so
+  badly.** Found while testing §3.0, and recorded rather than fixed because it
+  is neither of the two defects that work was for. Every account the importer
+  needs is registered through `POST /auth/registrations`, which
+  `IdentityService` limits to **ten attempts per fifteen minutes per caller**
+  (`ATTEMPT_LIMIT`), and every request the script makes arrives as the same
+  caller. The operator account is one of those ten. Worse than the ceiling is
+  the report: the begin-registration call is the one call the script does not
+  check the status of, so a throttled attempt is silent and the run dies further
+  down with `NO_CONFIRMATION_FOR_<address>`, which reads like a broken mailer
+  and sends an operator to look at email delivery. **Until this is decided,
+  import new partners in batches of at most nine and leave fifteen minutes
+  between batches** — §2.2 already allows a later batch to name partners that
+  exist, so this costs nothing but time. The remedies (exempting the importer's
+  caller, raising the limit, or registering partner accounts outside the API)
+  are identity decisions and belong to the Owner, not to the import script.
 - **The catalogue's field sets have no PRD.** `I66_ATTRIBUTE_CATALOGUE.md` says
   it plainly: 404 definitions of product judgement with no Story behind them.
   Not a launch blocker; the largest undocumented product decision in the
