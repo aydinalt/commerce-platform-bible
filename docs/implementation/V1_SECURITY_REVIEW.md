@@ -2,8 +2,13 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Draft
-- **Version:** 0.7
-- **Date:** 2026-09-18
+- **Version:** 0.8
+- **Date:** 2026-09-19
+- **Changed in 0.8:** §4 gains a seventh item. The importer raises the API
+  in-process, so `ALLOWED_ORIGINS` has to contain `PUBLIC_WEB_URL` or every
+  write it makes is refused — a configuration requirement no launch document
+  named. The same item records that `CHAT_*` stopped being a boot condition in
+  `I101` while the production Chat guard itself is unchanged.
 - **Changed in 0.7:** §4 gains a sixth item. The catalogue importer minted an
   Admin account per run and revoked nothing, so every import left a standing
   Super Admin that no document named. `I100` stands it down; the checklist now
@@ -455,6 +460,23 @@ Saying so is the useful part of a security document.
    account `SUSPENDED` — and the run prints a line saying so. The list is how
    you check that the line was true; `V1_LAUNCH_RUNBOOK.md` §3.0 has the manual
    equivalent if it was not.
+7. **`ALLOWED_ORIGINS` contains `PUBLIC_WEB_URL`.** Item 3 sets the origin the
+   importer sends; this is the list the Origin guard checks it against, and the
+   two are configured separately. A mismatch is silent and total — every
+   authenticated write the import makes is refused, and nothing on the failing
+   side says why. Neither value is a secret and both are wrong by default.
+
+   **`CHAT_TRANSPORT`, `CHAT_API_KEY` and `CHAT_MODEL` are _not_ on this list**,
+   and that is a decision rather than an omission. They were an accidental
+   requirement: `AppModule` built the Decision Chat assistant while assembling
+   the container, so a production process that served no Chat still had to
+   satisfy Chat's rules to start — and the catalogue importer is exactly such a
+   process. `I101` defers that construction to the first question. **The guard
+   is unchanged where it counts:** a production deployment that names no vendor
+   still refuses to answer a Decision Chat question. What it no longer does is
+   refuse to start an import that was never going to ask one. Requiring a live
+   LLM credential wherever a catalogue is loaded would have spread a secret into
+   a blast radius with no reason to hold it.
 
 **This item is new in v0.7 and it was a real exposure, not a tidiness rule.**
 Until `I100` nothing revoked that operator: every run left a permanent Super

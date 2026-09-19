@@ -2,8 +2,14 @@
 
 - **Owner:** Product Owner / Architecture Owner
 - **Status:** Draft
-- **Version:** 0.4
-- **Date:** 2026-09-18
+- **Version:** 0.5
+- **Date:** 2026-09-19
+- **Changed in 0.5:** §2.5 is new — the importer raises the API in-process, so
+  the API's own production configuration is the import's configuration too, and
+  no launch document said so. `ALLOWED_ORIGINS` must contain `PUBLIC_WEB_URL` or
+  every write the importer makes is refused; `CHAT_*` used to be a boot
+  condition and is not one any more (`I101`). Nothing else changed: no step, no
+  column, no decision.
 - **Changed in 0.4:** §3.0 is new — the import operator existed and this
   document never named it, so nobody knew a run left a Super Admin behind. It
   is now stood down in a `finally` and §3.0 says what that means. §2.2's
@@ -153,6 +159,40 @@ place to put a row somebody could not be bothered to key.
 ### 2.4 The decisions, as the Owner made them
 
 Recorded in §5. They were the three open items in v0.1.
+
+### 2.5 The environment the import runs in
+
+**The importer is not a client of the API — it _is_ the API.** It raises the
+application in-process with `createApiApp` and drives it through
+`app.inject()`, so every rule the deployed API enforces at start-up applies to
+the import as well. That was true from the first version of this script and
+named in no document until now, which is how an operator came to meet it as a
+process that printed one line and exited.
+
+| Variable | Why the import needs it |
+| --- | --- |
+| `DATABASE_URL` | The database being written to. |
+| `IMPORT_PASSWORD` | §5.1. **The same value on every run, for ever** — a changed value makes a re-run fail on every partner the first run created. |
+| `IMPORT_EMAIL_DOMAIN` | Where derived partner addresses live. Defaults to `partners.invalid`; set it deliberately, because it decides the addresses every future run will look for. |
+| **`PUBLIC_WEB_URL`** | **The real production origin.** The importer sends it as the `Origin` header on every request it makes. |
+| **`ALLOWED_ORIGINS`** | **Must contain `PUBLIC_WEB_URL`.** The Origin guard checks one against the other, and a mismatch refuses every authenticated write — an import where nothing succeeds and nothing explains why. Neither value is a secret; both are configuration, and both are wrong by default. |
+| `NODE_ENV` | `production` in the deployed environment (`V1_SECURITY_REVIEW.md` §4). |
+
+**`CHAT_*` is not required, and the reason is worth knowing.** Until `I101` the
+`DECISION_ASSISTANT` provider was built while the container was being
+assembled, so `NODE_ENV=production` with no `CHAT_TRANSPORT` refused to start
+_any_ process that built `AppModule` — including this one, which serves no
+`/decision/*` route and asks no question. The assistant is now resolved on the
+first question instead. A production deployment that names no vendor still
+refuses to **answer** a Decision Chat question; it no longer refuses to **start**
+a catalogue import. So `CHAT_TRANSPORT`, `CHAT_API_KEY` and `CHAT_MODEL` are a
+requirement of the deployed API that serves Chat, not of the import.
+
+**A boot failure now says what it was.** The same increment stopped
+`createApiApp` handing Nest `logger: false` at the quietest log level, which had
+been silencing Nest's own exception handler along with the routing table. A run
+that cannot start prints the reason; a run that works prints exactly what it
+printed before.
 
 ---
 

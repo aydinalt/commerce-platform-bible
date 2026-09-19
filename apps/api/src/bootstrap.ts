@@ -107,11 +107,24 @@ export async function createApiApp(
    * the one a caller picks when it means "say nothing unless we are dying".
    * Production runs at `info`, where the start-up banner is wanted and nothing
    * here changes.
+   *
+   * **`["error", "fatal"]` rather than `false`, and the difference is a whole
+   * class of bug.** `logger: false` silenced the routing table, and it also
+   * silenced Nest's own `ExceptionHandler` — the thing that prints why the
+   * container failed to build. A provider that threw took the process down
+   * with an empty stdout, an empty stderr and `exit 1`, and Nest calls
+   * `process.exit` itself, so the caller's own `try`/`catch` never sees it
+   * either. That is how a misconfigured deployment came to look like the
+   * catalogue importer dying for no reason at all.
+   *
+   * The two levels admitted here carry nothing but failures, so the quiet this
+   * caller asked for is intact: a run that works prints exactly what it printed
+   * before, and a run that cannot start says why.
    */
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     adapter,
-    config.logLevel === "fatal" ? { logger: false } : {}
+    config.logLevel === "fatal" ? { logger: ["error", "fatal"] } : {}
   );
 
   /*

@@ -28,6 +28,7 @@ import {
 } from "./decision/decision.controller.js";
 import { anthropicProvider } from "./decision/anthropic.provider.js";
 import { HttpDecisionAssistant } from "./decision/http.assistant.js";
+import { LazyDecisionAssistant } from "./decision/lazy.assistant.js";
 import { RestatingDecisionAssistant } from "./decision/restating.assistant.js";
 import { EditorialAdminController } from "./platform/editorial.controller.js";
 import { AccessModerationController } from "./platform/access-moderation.controller.js";
@@ -113,6 +114,10 @@ function allowedOrigins(): readonly string[] {
  * vendor without a credential or a model, so the values exist by the time this
  * runs. There is no fallback to the brief-restating adapter: a production Chat
  * answered by it would be the platform pretending to have an assistant.
+ *
+ * **Called on the first question, not at boot** — see `LazyDecisionAssistant`
+ * and the provider below. Everything this function does is unchanged; only the
+ * moment it runs is.
  */
 function buildAssistant(): DecisionAssistant {
   const config = loadChatConfig();
@@ -250,9 +255,22 @@ export class DatabaseLifecycle implements OnModuleDestroy {
     MetricsCollector,
     DatabaseLifecycle,
     { provide: AUDIT_WRITER, useExisting: PgCommerceRepository },
-    // Which assistant answers is a deployment decision rather than a source-file
-    // one. `buildAssistant` reads it from configuration validated at boot.
-    { provide: DECISION_ASSISTANT, useFactory: buildAssistant },
+    /*
+     * Which assistant answers is a deployment decision rather than a
+     * source-file one, and `buildAssistant` reads it from configuration.
+     *
+     * **Wrapped, because a Nest provider is eager and this configuration is
+     * not everyone's business.** Reading it here meant every process that
+     * builds `AppModule` had to satisfy the Chat rules to start, including
+     * `scripts/import-catalogue.mjs`, which raises the API in-process to write
+     * a catalogue and never serves a `/decision/*` route. The wrapper defers
+     * the read to the first question; the production guard is unchanged and
+     * still refuses to answer one. `LazyDecisionAssistant` has the reasoning.
+     */
+    {
+      provide: DECISION_ASSISTANT,
+      useFactory: () => new LazyDecisionAssistant(buildAssistant)
+    },
     {
       provide: OriginValidator,
       useFactory: () => new OriginValidator(allowedOrigins())
