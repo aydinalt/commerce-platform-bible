@@ -4,15 +4,15 @@
   "crons": [
     {
       "path": "/api/feeds",
-      "schedule": "0 * * * *"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/outbox",
-      "schedule": "* * * * *"
+      "schedule": "0 4 * * *"
     },
     {
       "path": "/api/sweep",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 2 * * *"
     }
   ],
   "framework": null,

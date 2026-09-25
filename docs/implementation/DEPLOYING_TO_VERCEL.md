@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.0
-Last Updated: 2026-08-26
+Version:      1.1
+Last Updated: 2026-09-25
 -->
 
 # Deploying to Vercel and Supabase
@@ -11,10 +11,16 @@ Last Updated: 2026-08-26
 The Owner chose **Vercel and Supabase** on 2026-08-26, staged: ship on Vercel
 first, move the API to a process host if the measurements demand it.
 
-**Nothing below has been executed.** No Vercel project exists, no Supabase
-instance has been created, and no deployment has happened. This is the procedure
-as the repository is built to support it, and the first person to run it should
-expect to correct it.
+~~**Nothing below has been executed.** No Vercel project exists, no Supabase
+instance has been created, and no deployment has happened.~~ **No longer true
+as of 2026-09-25.** A Supabase project exists and is the production database,
+and a `commerce-web` project exists whose build has run on Vercel — failing at
+`bbaba04` because no workspace package had been compiled, fixed in `15d396c`;
+the API and worker builds were fixed before their first run, in `387e41e`. The
+API and worker projects and the migration step below have not been confirmed
+yet. This is still the procedure as the repository is built to support it, and
+the first person to run it should expect to correct it — which is what the
+corrections in this revision are.
 
 ## Three Vercel projects, one repository
 
@@ -23,20 +29,49 @@ Next.js project already owns its own routing. The two conflict, and the
 documented answer is **two projects** — which a monorepo supports, each with its
 Root Directory pointing at a workspace.
 
-| Project | Root Directory      | Config                    | Serves                                        |
-| ------- | ------------------- | ------------------------- | --------------------------------------------- |
-| web     | _(repository root)_ | `vercel.json`             | the Next.js application                       |
-| api     | `apps/api`          | `apps/api/vercel.json`    | `apps/api/api/index.js`                       |
-| worker  | `apps/worker`       | `apps/worker/vercel.json` | `api/outbox.js`, `api/sweep.js` on a schedule |
+| Project | Root Directory      | Config                    | Serves                                                        |
+| ------- | ------------------- | ------------------------- | ------------------------------------------------------------- |
+| web     | _(repository root)_ | `vercel.json`             | the Next.js application                                       |
+| api     | `apps/api`          | `apps/api/vercel.json`    | `apps/api/api/index.js`                                       |
+| worker  | `apps/worker`       | `apps/worker/vercel.json` | `api/outbox.js`, `api/sweep.js`, `api/feeds.js` on a schedule |
 
 All three need **Include source files outside of the Root Directory** enabled, because
 `npm ci` reads the root lockfile and every workspace manifest.
 
-**The worker's frequency is a plan decision, not a code one.** Vercel's Hobby
+**The worker's frequency is a plan decision, not a code one.** ~~Vercel's Hobby
 plan runs a cron **once per day**; Pro runs it every minute. `vercel.json` asks
 for every minute, which Hobby will silently reduce — and a registration
 confirmation that arrives up to 24 hours later is not a working sign-up. The
-worker needs the Pro plan or a process host.
+worker needs the Pro plan or a process host.~~
+
+**Corrected 2026-09-25: Hobby does not reduce a frequent schedule, it refuses
+the deployment.** Vercel's cron limits page, read that day: "Cron expressions
+that would run more frequently will fail during deployment", with the error
+_"Hobby accounts are limited to daily cron jobs. This cron expression would run
+more than once per day."_ Precision is per-hour as well: `0 1 * * *` runs
+anywhere between 01:00 and 01:59. **Under the old `vercel.json` the worker
+project could not have been deployed at all** — which is a different failure
+from a slow one, and the one this paragraph had promised would not happen.
+
+**The Owner chose Hobby on 2026-09-25 and ruled out paid upgrades.** So
+`apps/worker/vercel.json` asks for each job once a day, staggered (UTC): sweep
+`0 2 * * *`, feeds `0 3 * * *`, outbox `0 4 * * *`.
+`tests/i38-scheduled-worker.test.ts` holds every entry to a fixed minute and a
+fixed hour, so a frequent schedule cannot return without a red test before it
+becomes a failed deployment.
+
+**Those three are a floor, not the platform's cadence.** The outbox carries
+registration confirmations and password recovery; drained once a day, a new
+account waits up to about twenty-five hours for its link, and that is not a
+working sign-up. The cadences the platform needs have not changed — outbox every
+minute, sweep every five, feeds hourly — and on Hobby they have to come from a
+scheduler outside Vercel calling the same three endpoints with
+`Authorization: Bearer $CRON_SECRET`. The endpoints already accept any caller
+holding the secret; nothing in the worker has to change for that. **Which
+scheduler is an open decision** — see Known gaps.
+
+`CRON_BUDGET_MS`'s default of 45 000 ms fits the plan: with Fluid compute, on
+by default, a Hobby function's default and maximum duration are both 300 s.
 
 ## Supabase
 
@@ -79,6 +114,14 @@ set. For a Vercel deployment against Supabase, the ones that are not obvious:
 Preview deployments get the same variables unless overridden, which means **a
 preview branch will write to production data**. Point previews at a separate
 Supabase project or accept that.
+
+**Decided 2026-09-25: previews do not reach the production database.** In each
+of the three projects, scope `DATABASE_URL` — and every other secret — to the
+**Production** environment only. A preview that has no `DATABASE_URL` fails to
+start rather than writing anywhere, which is the safe way for it to fail. If
+previews need a working database, that is a **separate Supabase Free project**:
+the Free plan allows two active free projects, and paused ones do not count
+towards that. Never the production project, and never a paid plan or branching.
 
 ## The first Admin
 
@@ -154,6 +197,10 @@ failure that looks fine in a browser.
 - **Outbox delivery moves from ~2 seconds to the cron cadence** — up to 60
   seconds on Pro, and **up to 24 hours on Hobby**, where a cron may run only
   once a day. On Hobby nobody can practically complete a sign-up.
+  **Open since 2026-09-25, and the one gap that blocks launch on Hobby:** which
+  free scheduler outside Vercel calls `/api/outbox` every minute (and
+  `/api/sweep`, `/api/feeds` at their cadences). Without one, the daily floor
+  above is all there is and a new account waits up to about twenty-five hours.
 - **The drain stops before a batch it could not finish**, so a busy minute
   leaves work queued. `drained: false` in the response is the signal that the
   schedule is not keeping up; nothing watches for it yet.

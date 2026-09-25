@@ -232,26 +232,33 @@ describe("Increment I38 the scheduled worker", () => {
       expect(paths).toEqual(["/api/feeds", "/api/outbox", "/api/sweep"]);
     });
 
-    it("reads partner catalogues hourly, not on the outbox's cadence", () => {
+    it("asks Vercel for nothing more often than once a day", () => {
       /*
-       * The number is a decision about partners rather than about this code: a
-       * feed is regenerated at roughly that cadence at the other end, so reading
-       * more often fetches the same document repeatedly.
+       * **The Owner chose the Hobby plan on 2026-09-25**, and Hobby does not
+       * reduce a frequent schedule — it refuses the deployment. Vercel's own
+       * words, checked the same day: "Cron expressions that would run more
+       * frequently will fail during deployment", with the error _"Hobby
+       * accounts are limited to daily cron jobs. This cron expression would run
+       * more than once per day."_
+       *
+       * `DEPLOYING_TO_VERCEL.md` said Hobby would "silently reduce" the
+       * schedule. That was wrong, and it was the difference between a slow
+       * worker and a worker project that cannot be deployed at all.
+       *
+       * Until then this file pinned the cadences the loop has — the outbox
+       * every minute, the sweep every five, the feeds hourly — and those were
+       * right for a plan that runs them. **They are still the cadences the
+       * platform needs**; what changed is who asks for them. On Hobby these
+       * three entries are the floor, once a day each, and anything faster has
+       * to come from a scheduler outside Vercel calling the same endpoints with
+       * the same `CRON_SECRET`.
+       *
+       * The pattern accepts a fixed minute and a fixed hour and nothing else,
+       * which is stricter than "at most daily" has to be and is the point: a
+       * schedule that reads as daily at a glance is one nobody has to evaluate.
        */
-      const feeds = (config().crons ?? []).find(
-        (entry) => entry.path === "/api/feeds"
-      );
-      expect(feeds?.schedule).toBe("0 * * * *");
-    });
-
-    it("sweeps less often than it delivers", () => {
-      // Nothing waits on a deleted row. Sweeping as often as delivering would
-      // buy nothing and cost a table-wide scan every minute.
-      const crons = config().crons ?? [];
-      const outbox = crons.find((entry) => entry.path === "/api/outbox");
-      const sweep = crons.find((entry) => entry.path === "/api/sweep");
-      expect(outbox?.schedule).toBe("* * * * *");
-      expect(sweep?.schedule).not.toBe("* * * * *");
+      for (const entry of config().crons ?? [])
+        expect(entry.schedule).toMatch(/^\d{1,2} \d{1,2} \* \* \*$/u);
     });
 
     it("keeps the loop, so the hosting decision stays reversible", () => {
