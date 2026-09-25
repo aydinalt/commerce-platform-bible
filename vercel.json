@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build --workspace @commerce/web",
+  "buildCommand": "npm run build --workspace @commerce/contracts && npm run build --workspace @commerce/web",
   "framework": "nextjs",
   "installCommand": "npm ci",
   "outputDirectory": "apps/web/.next"
