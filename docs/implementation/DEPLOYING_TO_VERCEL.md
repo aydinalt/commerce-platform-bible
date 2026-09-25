@@ -67,8 +67,14 @@ working sign-up. The cadences the platform needs have not changed — outbox eve
 minute, sweep every five, feeds hourly — and on Hobby they have to come from a
 scheduler outside Vercel calling the same three endpoints with
 `Authorization: Bearer $CRON_SECRET`. The endpoints already accept any caller
-holding the secret; nothing in the worker has to change for that. **Which
-scheduler is an open decision** — see Known gaps.
+holding the secret; nothing in the worker has to change for that. ~~**Which
+scheduler is an open decision** — see Known gaps.~~ **Decided 2026-09-25:
+Supabase Cron**, in the production project — `pg_cron` for the schedule,
+`pg_net` for the HTTP call, Vault for the secret and the address. It runs every
+minute on the Free plan, adds no service, and keeps the secret with the rest of
+the production data rather than in a third place. GitHub Actions was the
+alternative, and its free minutes on a private repository do not cover a
+five-minute schedule, let alone a one-minute one. See step 4 of Supabase below.
 
 `CRON_BUDGET_MS`'s default of 45 000 ms fits the plan: with Fluid compute, on
 by default, a Hobby function's default and maximum duration are both 300 s.
@@ -92,6 +98,32 @@ by default, a Hobby function's default and maximum duration are both 300 s.
    the worker ask the server what these are at boot and **refuse to start** if
    they are not the configured values, so a forgotten step here is a failed
    deploy with a message naming the setting.
+4. **Schedule the worker** — after the worker project is deployed, because the
+   schedule calls its production address. `scripts/supabase-worker-schedule.sql`
+   carries the whole procedure in its header; in short:
+   - Enable **Integrations → Cron** and **Database → Extensions → pg_net**.
+     **Stop if either asks for an upgrade.**
+   - Generate a `CRON_SECRET` — Vercel asks for a random string of at least 16
+     characters and **does not provision one itself** — and set it on the
+     worker project, Production environment only.
+   - Put the same value, and the worker's **production domain**, in Vault, by
+     hand in the SQL editor:
+     ```sql
+     select vault.create_secret('<CRON_SECRET>', 'worker_cron_secret');
+     select vault.create_secret('https://<worker production domain>', 'worker_base_url');
+     ```
+     The production domain, not a deployment URL: deployment URLs sit behind
+     Deployment Protection and would answer the scheduler with a login page.
+   - Run the script. It refuses, naming what is missing, until both extensions
+     and both secrets exist; re-running it replaces the three jobs rather than
+     adding three more.
+   - Check it a minute later with the two queries at the end of the script. A
+     `200` from `/api/outbox` is working; a `404` is a wrong secret or a wrong
+     address, because the worker answers 404 to a caller it does not recognise.
+
+   **Rotating `CRON_SECRET` means both places, together** — the worker project
+   and `worker_cron_secret` — or one of the two callers stops being able to
+   call.
 
 ## Environment variables
 
@@ -110,6 +142,7 @@ set. For a Vercel deployment against Supabase, the ones that are not obvious:
 | `EMAIL_TRANSPORT`          | `postmark`                        | `development` **refuses to construct** under `NODE_ENV=production`                                                                                                                                                                                                                       |
 | `CHAT_TRANSPORT`           | `anthropic`                       | Same                                                                                                                                                                                                                                                                                     |
 | `TRUSTED_PROXY_HOPS`       | `1`                               | Set on the **api** project. How far `x-forwarded-for` may be believed. Left at `0` the throttle counts the proxy and puts every caller in one bucket; set to trust the whole chain it counts a value the caller wrote. **Verify the number against a real request before relying on it** |
+| `CRON_SECRET`              | a random string, 16+ characters   | Set on the **worker** project, Production only. **You generate it; Vercel does not.** The same value goes into Supabase Vault as `worker_cron_secret` (Supabase step 4)                                                                                                                  |
 
 Preview deployments get the same variables unless overridden, which means **a
 preview branch will write to production data**. Point previews at a separate
@@ -197,10 +230,15 @@ failure that looks fine in a browser.
 - **Outbox delivery moves from ~2 seconds to the cron cadence** — up to 60
   seconds on Pro, and **up to 24 hours on Hobby**, where a cron may run only
   once a day. On Hobby nobody can practically complete a sign-up.
-  **Open since 2026-09-25, and the one gap that blocks launch on Hobby:** which
+  ~~**Open since 2026-09-25, and the one gap that blocks launch on Hobby:** which
   free scheduler outside Vercel calls `/api/outbox` every minute (and
   `/api/sweep`, `/api/feeds` at their cadences). Without one, the daily floor
-  above is all there is and a new account waits up to about twenty-five hours.
+  above is all there is and a new account waits up to about twenty-five hours.~~
+  **Decided the same day: Supabase Cron** (Supabase step 4). With it, delivery
+  is back to within a minute. **Not yet run against the production project** —
+  the script was executed against a throwaway cluster with the real `pg_cron`
+  and a stand-in for `pg_net`, which proves the SQL and not that Supabase
+  accepts it. Until step 4 has run, the daily floor is all there is.
 - **The drain stops before a batch it could not finish**, so a busy minute
   leaves work queued. `drained: false` in the response is the signal that the
   schedule is not keeping up; nothing watches for it yet.
