@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b tsconfig.json",
     "dev": "tsx watch src/main.ts",
     "openapi:generate": "node --import tsx src/openapi/generate-openapi.ts",
     "start": "node dist/main.js"
@@ -19,6 +19,7 @@
     "@commerce/database": "0.0.0",
     "@commerce/decision": "0.0.0",
     "@commerce/discovery": "0.0.0",
+    "@commerce/editorial": "0.0.0",
     "@commerce/identity": "0.0.0",
     "@commerce/moderation": "0.0.0",
     "@commerce/notification": "0.0.0",

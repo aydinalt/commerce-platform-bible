@@ -28,7 +28,27 @@ describe("Increment I34 deployment", () => {
           walk(path);
           continue;
         }
-        if (!entry.name.endsWith(".ts") && !entry.name.endsWith(".tsx"))
+        /*
+         * **`.mjs` as well, because `scripts/` is where the operator lives.**
+         *
+         * This walked `.ts` and `.tsx` under `apps`, `packages` and `modules`
+         * only, so the eight operator scripts were outside it — and
+         * `IMPORT_PASSWORD` and `IMPORT_EMAIL_DOMAIN`, which
+         * `import-catalogue.mjs` has read since I85, were undocumented without
+         * anything noticing. The file's own header said it was compared
+         * against "every `process.env` read in the repository", which was a
+         * wider claim than the walk below made good on.
+         *
+         * An operator following `.env.example` reaches the catalogue import
+         * step and finds the one variable it refuses to start without missing
+         * from the only list there is — the same failure the environment
+         * contract was written to prevent, one directory over.
+         */
+        if (
+          !entry.name.endsWith(".ts") &&
+          !entry.name.endsWith(".tsx") &&
+          !entry.name.endsWith(".mjs")
+        )
           continue;
         const source = readFileSync(path, "utf8");
         /*
@@ -55,7 +75,7 @@ describe("Increment I34 deployment", () => {
         }
       }
     };
-    for (const root of ["apps", "packages", "modules"]) walk(root);
+    for (const root of ["apps", "packages", "modules", "scripts"]) walk(root);
     return [...found].sort();
   };
 
@@ -253,5 +273,150 @@ describe("Increment I34 deployment", () => {
       expect(scripts["build"] ?? "").not.toContain("db:deploy");
       expect(readFileSync("vercel.json", "utf8")).not.toContain("db:deploy");
     });
+  });
+
+  describe("what a clean checkout can build", () => {
+    /*
+     * **Every workspace package publishes a `dist/` that git does not carry.**
+     *
+     * `packages/*` and `modules/*` all declare `exports: "./dist/index.js"` and
+     * `types: "./dist/index.d.ts"`, and `.gitignore` names `dist/`. So on a
+     * fresh clone — which is what a deployment host has — none of those files
+     * exist until something compiles them. A build that compiles only the
+     * application resolves nothing and fails with as many errors as there are
+     * imports.
+     *
+     * That is not hypothetical. Vercel's web build failed exactly this way at
+     * `bbaba04`: thirty-two `Module not found: Can't resolve
+     * '@commerce/contracts'`, while CI stayed green because the root `build`
+     * script compiles `--workspaces --if-present` first and Vercel was the only
+     * place that did not.
+     *
+     * The three applications answer it differently because their builders
+     * differ, and the cases below hold each to its own answer:
+     *
+     *   web   `next build`, which is not TypeScript's, so the Vercel build
+     *         command names the one package it imports — see *what Vercel is
+     *         told* above.
+     *   api   `tsc`, which already has the dependency graph in `references`.
+     *   worker  the same.
+     */
+    const manifest = (path: string): Record<string, unknown> =>
+      JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+
+    /** Package name → its directory, read from the workspaces themselves. */
+    const directoryOf = (): Map<string, string> => {
+      const found = new Map<string, string>();
+      for (const root of ["apps", "packages", "modules"]) {
+        for (const entry of readdirSync(root, { withFileTypes: true })) {
+          if (!entry.isDirectory()) continue;
+          const directory = `${root}/${entry.name}`;
+          const name = manifest(`${directory}/package.json`)["name"];
+          if (typeof name === "string") found.set(name, directory);
+        }
+      }
+      return found;
+    };
+
+    /** The `@commerce/*` packages an application's own source imports. */
+    const imported = (directory: string): string[] => {
+      const found = new Set<string>();
+      const walk = (dir: string): void => {
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+          const path = `${dir}/${entry.name}`;
+          if (entry.isDirectory()) {
+            walk(path);
+            continue;
+          }
+          if (!entry.name.endsWith(".ts") && !entry.name.endsWith(".tsx"))
+            continue;
+          for (const [, name] of readFileSync(path, "utf8").matchAll(
+            /["'](@commerce\/[a-z-]+)["']/gu
+          ))
+            if (name !== undefined) found.add(name);
+        }
+      };
+      walk(`${directory}/src`);
+      return [...found].sort();
+    };
+
+    const declared = (directory: string): string[] =>
+      Object.keys(
+        (manifest(`${directory}/package.json`)["dependencies"] ?? {}) as Record<
+          string,
+          string
+        >
+      )
+        .filter((name) => name.startsWith("@commerce/"))
+        .sort();
+
+    const referenced = (directory: string): string[] => {
+      const paths = (manifest(`${directory}/tsconfig.json`)["references"] ??
+        []) as { path: string }[];
+      const names = new Map(
+        [...directoryOf()].map(([name, dir]) => [dir, name])
+      );
+      return paths
+        .map(
+          (entry) => names.get(entry.path.replace("../../", "")) ?? entry.path
+        )
+        .sort();
+    };
+
+    for (const application of ["apps/api", "apps/worker"]) {
+      it(`${application} compiles its dependencies, not just itself`, () => {
+        /*
+         * **`tsc -b`, not `tsc -p`, and the difference is the deployment.**
+         *
+         * `-p` compiles one project and takes referenced projects' declarations
+         * as given — which is correct locally, where a previous build left them
+         * there, and wrong on a host that has never built anything. `-b` builds
+         * the references first, which is what `references` is for.
+         *
+         * Measured on a checkout with every `dist/` and `*.tsbuildinfo`
+         * removed: `-p` gives the worker twenty-four `TS2307: Cannot find
+         * module '@commerce/…'` and exit 2; `-b` gives exit 0 and compiles
+         * exactly the six packages the worker declares, and nothing else.
+         */
+        const build = (
+          manifest(`${application}/package.json`)["scripts"] as Record<
+            string,
+            string
+          >
+        )["build"];
+
+        expect(build).toBe("tsc -b tsconfig.json");
+      });
+
+      it(`${application} declares every workspace package it imports`, () => {
+        /*
+         * **`apps/api` imported `@commerce/editorial` in two files and declared
+         * it nowhere** — not in its manifest, not in its `references`. It
+         * compiled anyway, because npm links every workspace into the root
+         * `node_modules` whether or not anybody asked for it, so the import
+         * resolved through a package the application had no stated relationship
+         * with.
+         *
+         * Undeclared is not harmless once the build follows the declaration:
+         * `tsc -b` compiles what `references` names, and a package named
+         * nowhere is a package nobody builds.
+         */
+        expect(
+          imported(application).filter(
+            (name) => !declared(application).includes(name)
+          )
+        ).toEqual([]);
+      });
+
+      it(`${application} references every workspace package it declares`, () => {
+        /*
+         * The manifest and `references` say the same thing to two different
+         * readers — npm and TypeScript — and nothing but this keeps them
+         * saying it. The build now depends on the second list, so a dependency
+         * added to the first alone is a dependency that is not compiled.
+         */
+        expect(referenced(application)).toEqual(declared(application));
+      });
+    }
   });
 });
