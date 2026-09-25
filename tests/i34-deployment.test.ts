@@ -193,15 +193,31 @@ describe("Increment I34 deployment", () => {
   });
 
   describe("what Vercel is told", () => {
-    it("builds the web workspace and nothing else", () => {
+    it("builds the web workspace and the package it imports, and nothing else", () => {
       /*
-       * The build command names the workspace, so a Vercel project pointed at
+       * The build command names the workspaces, so a Vercel project pointed at
        * this repository cannot accidentally build the API — which would succeed
        * and then serve nothing, because Vercel has nowhere to run it.
+       *
+       * **`@commerce/contracts` is built first, and that is not a convenience.**
+       * The package publishes `./dist/index.js` through `exports` and `dist/` is
+       * ignored by git, so on a clean checkout the file does not exist until
+       * `tsc` has run. A command that built only `@commerce/web` left every
+       * `@commerce/contracts` import unresolvable and Turbopack stopped with
+       * thirty-two `Module not found` errors — **while this suite and CI stayed
+       * green**, because the root `build` script runs `--workspaces
+       * --if-present` first and Vercel was the only place that did not.
+       *
+       * It names that one package rather than the root script because
+       * `apps/web/package.json` depends on exactly one workspace package. A
+       * second one appearing in this string should be a decision somebody made
+       * about what the web deployment needs, not a copy of a build that also
+       * compiles the API and the worker.
        */
       const config: unknown = JSON.parse(readFileSync("vercel.json", "utf8"));
       expect(config).toMatchObject({
-        buildCommand: "npm run build --workspace @commerce/web",
+        buildCommand:
+          "npm run build --workspace @commerce/contracts && npm run build --workspace @commerce/web",
         framework: "nextjs",
         outputDirectory: "apps/web/.next"
       });
