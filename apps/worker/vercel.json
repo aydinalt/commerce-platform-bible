@@ -16,5 +16,6 @@
     }
   ],
   "framework": null,
-  "installCommand": "npm ci"
+  "installCommand": "npm ci",
+  "regions": ["fra1"]
 }

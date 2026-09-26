@@ -2,8 +2,8 @@
 Owner:        Architecture Owner
 Status:       Draft
 Maintenance Mode: Living
-Version:      1.1
-Last Updated: 2026-09-25
+Version:      1.2
+Last Updated: 2026-09-26
 -->
 
 # Deploying to Vercel and Supabase
@@ -78,6 +78,29 @@ five-minute schedule, let alone a one-minute one. See step 4 of Supabase below.
 
 `CRON_BUDGET_MS`'s default of 45 000 ms fits the plan: with Fluid compute, on
 by default, a Hobby function's default and maximum duration are both 300 s.
+
+## Where the functions run
+
+**All three `vercel.json` files set `"regions": ["fra1"]`, and this is not
+optional (I103).** Vercel's default region is `iad1`, Washington D.C.; the
+Supabase project the Owner created on 2026-09-26 is in `eu-central-1`. Left at
+the default, every one of the three services would have run a continent away
+from its own database, and each query would have crossed the Atlantic twice —
+while the build stayed green, the deployment succeeded and every smoke check
+below passed. The platform would simply have been slow, in a way that reads as
+the code being slow.
+
+`fra1` is Vercel's Frankfurt region and `eu-central-1` is AWS Frankfurt: the
+same city, which is as close as the two vendors' region names get. Keeping the
+functions beside the data is also the KVKK-defensible arrangement, since the
+personal data and the code that reads it then stay inside the EU.
+
+**Hobby allows exactly one region**, so a second entry is a deployment that does
+not happen — the same shape of refusal as a too-frequent cron above.
+`tests/i103-function-region.test.ts` holds all three files to one region, to the
+same one, to `fra1`, and asserts the **set** of `vercel.json` files rather than a
+list of three paths: a fourth project added later would otherwise default to
+Washington with nothing saying so.
 
 ## Supabase
 

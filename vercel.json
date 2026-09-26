@@ -3,5 +3,6 @@
   "buildCommand": "npm run build --workspace @commerce/contracts && npm run build --workspace @commerce/web",
   "framework": "nextjs",
   "installCommand": "npm ci",
-  "outputDirectory": "apps/web/.next"
+  "outputDirectory": "apps/web/.next",
+  "regions": ["fra1"]
 }
