@@ -1,5 +1,53 @@
 # US-DSC-F06-001 — Discovery Results and Listing Cards
 
+> **Freeze Note (1.2):** Explicitly Frozen by the Product Owner / Architecture
+> Owner on 2026-09-26, **together with `PRD-0002-discovery.md` v3.1**, because
+> that PRD's §22.3 points at this Story for the depth bound and AC-13 here would
+> otherwise state a number no Frozen PRD sends it. Frozen v1.2 is the
+> authoritative Story baseline; Frozen v1.1 is preserved at
+> `US-DSC-F06-001-discovery-results-and-listing-cards-v1.1-superseded.md`. This
+> exact version must not be edited in place; a further change requires a
+> controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8.
+>
+> **Approval Note (1.2):** Explicitly approved by the Product Owner /
+> Architecture Owner on 2026-09-26, in these terms: *"onaylıyorum"*, given to a
+> proposition that named both documents and both acts. Approval and Freeze were
+> taken as one decision on the same day.
+>
+> **Delivery Status is not advanced by this Freeze.** AC-12 records what the
+> platform has done since I63 and is satisfied today; **AC-11 and AC-13 are not**
+> — there is no direct answer and no depth bound in the code. A Story whose
+> Delivery Status said `Done` on the strength of this Freeze would be claiming
+> two behaviours that do not exist.
+>
+> **Revision Note (1.2):** Adds **AC-11, AC-12 and AC-13** and nothing else. No
+> existing Acceptance Criterion, BDD scenario, dependency, size or scope is
+> changed; AC-1 to AC-10 are byte-identical to Frozen v1.1.
+>
+> **What was missing, and how it stayed missing.** PRD-0002 §22.4 says page size
+> and the depth bound "are product decisions recorded in the Story". **No Story
+> recorded either.** The page size has been twenty-five since I63 on 2026-09-02,
+> on the Owner's own instruction — *"Sayfa başına 25 kart gösterilsin… aşağıda
+> sayfa ilerleme butonları olsun"* — and the only place that number exists is
+> `PAGE_SIZE` in `apps/api/src/persistence/pg-discovery.repository.ts`. A product
+> decision living in one repository constant is a decision nobody can review, and
+> §22.4's sentence pointed at a document that did not contain it. The depth bound
+> was never decided at all.
+>
+> **The two numbers, and where they come from.** Page size is **25**, recorded
+> here for the first time and unchanged from what the platform has done since
+> I63 — this Story is catching up to the code, not altering it. The depth bound
+> is **40 pages**, decided by the Owner on 2026-09-26: 25 × 40 is 1000, the full
+> size the Owner's own catalogue analysis plans for, so every Result a person
+> could reach stays reachable and what lies beyond the bound is crawler traffic
+> rather than readers.
+>
+> **AC-11 is the one that describes behaviour the platform does not yet have.**
+> There is no `hasNext` in the repository: every pager must compute
+> `page × pageSize < total` for itself, and two of them computing it differently
+> is a disagreement about whether a last page is last that no single screen
+> reveals.
+
 > **Freeze Note (1.1):** Explicitly Frozen by the Product Owner / Architecture Owner on 2026-09-02. Frozen v1.1 is the authoritative Story baseline and Frozen v1.0 is preserved at `US-DSC-F06-001-discovery-results-and-listing-cards-v1.0-superseded.md`. This exact version must not be edited in place; a further change requires a controlled revision under `DOCUMENT_LIFECYCLE.md` §7–§8. No upstream document is Frozen alongside it, because none states the revised rule — the check is recorded in §15 and was made before this Freeze. Delivery Status, traceability and repository indexes are unchanged by the Freeze itself.
 >
 > **Approval Note (1.1):** Explicitly approved by the Product Owner / Architecture Owner on 2026-09-02. The Owner's recorded reasoning, in their own words: the revision was requested as *"kuralı revize edip partnere bağla"* and approved, after reviewing the built behaviour, as *"böyle kalsın"*. Approval and Freeze were taken as one decision on the same day, after the Owner had seen the revised behaviour working against real data rather than from the document alone.
@@ -131,6 +179,9 @@ A Listing Card may offer one explicitly chosen Affiliate Handoff to the owning B
 - **AC-8** — The system shall apply the same public result and Listing Card behaviour regardless of login or role context.
 - **AC-9** — The system shall permit one explicitly chosen Affiliate Handoff from a Listing Card, shall resolve the Affiliate Destination only at the moment of that choice, and shall record it as the Affiliate Handoff `US-DEC-F05-001` owns.
 - **AC-10** — The system shall offer no Affiliate Handoff affordance on a Listing Card whose Offering has no Eligible Affiliate Destination, and shall take the person to complete Offering Presentation where a handoff is refused at the moment of choice.
+- **AC-11** — The system shall state directly, with every page of Discovery Results, whether a further page exists, and shall not require a surface to derive that answer from the total, the page number and the page size.
+- **AC-12** — The system shall carry at most **25** Discovery Results on one page, as one decision applied to every page rather than a value a caller may set per request.
+- **AC-13** — The system shall bound Result depth at **40** pages, shall state Zero Results with the criteria intact for any page beyond the bound, and shall offer narrowing there rather than a further page.
 
 ---
 
@@ -211,6 +262,40 @@ And the person is a Guest, Enabled User, Business, Admin, or Suspended-account G
 When Discovery Results and Listing Cards are presented
 Then the same public result eligibility and Listing Card minimum apply
 And no role-specific field, contact detail, destination information, or ordering advantage appears
+```
+
+---
+
+### Scenario: Whether another page exists is answered, not inferred
+
+```gherkin
+Given more Results match than one page carries
+When a page of Discovery Results is presented
+Then the presence of a further page is stated with that page
+And no surface computes it from the total, the page number and the page size
+```
+
+---
+
+### Scenario: A page carries at most twenty-five Results
+
+```gherkin
+Given more than twenty-five Results match
+When a page of Discovery Results is presented
+Then at most twenty-five Results are presented
+And a request naming a different page size does not change how many are presented
+```
+
+---
+
+### Scenario: Depth is bounded at forty pages
+
+```gherkin
+Given a person asks for a page beyond the fortieth
+When Results are presented
+Then Zero Results is stated with the criteria intact
+And narrowing is offered rather than a further page
+And the database is not asked to scan for the page that was refused
 ```
 
 ---

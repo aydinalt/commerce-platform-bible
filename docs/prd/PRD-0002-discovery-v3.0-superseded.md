@@ -1,51 +1,5 @@
 # PRD-0002 — Discovery
 
-> **Candidate Status (3.1):** **controlled revision candidate** under
-> `DOCUMENT_LIFECYCLE.md` §7–§8. Frozen v3.0 remains authoritative and is
-> untouched at `PRD-0002-discovery.md`. Nothing here is authoritative until the
-> Owner approves and Freezes it, and those remain two decisions.
->
-> **Revision Note (3.1):** Revises **§22.2 and §22.3** and nothing else.
-> Requested by the Owner on 2026-09-26 after the increment that was to build
-> Result Delivery found that **I63 had already built most of it, and that §22.2
-> forbids one thing I63 ships**.
->
-> **The contradiction this resolves.** I63 delivered paging on 2026-09-02 —
-> twenty-five products to a page, ordered cheapest-first — and publishes
-> `paging: { page, pageSize, total }` in the Discovery response. §22 was frozen
-> the following day, 2026-09-03, and its §22.2 says a person is told whether
-> another page exists *"without being told how many there are in total. A total
-> is a second question with a second cost."* The two have disagreed ever since,
-> in the direction nobody notices: the document forbids a field the code
-> publishes, and neither a test nor a reviewer compared them.
->
-> **Why the document yields rather than the code.** §22.2 refused the total on a
-> **cost** premise, and that premise is false against this implementation. I63
-> does not run a second query: it reads `count(*) over ()` from the window of the
-> query it already runs, so the total arrives with the page for no additional
-> round trip and no additional scan. A rule whose stated reason does not apply is
-> a rule that should be restated rather than enforced — and enforcing it here
-> would mean removing a published field from a shipped response contract, which
-> is a breaking change bought with nothing.
->
-> **What §22.2 keeps.** The product half of its reasoning is untouched and is now
-> stated as a requirement rather than as a justification: *"is there more"* is the
-> answer that changes what a person does, so the platform must answer it directly
-> and must not make a surface derive it by arithmetic on the total. **That is what
-> the code is missing**, and the revision makes it explicit: there is no `hasNext`
-> anywhere in the repository today, so every pager on the platform has to compute
-> `page * pageSize < total` for itself. Two surfaces doing that arithmetic
-> differently is the defect this sentence now prevents.
->
-> **§22.3 gains nothing new and loses nothing.** The depth bound it already
-> requires is unbuilt; the revision only adds a pointer to where the number now
-> lives, because §22.4 promised the Story would carry it and no Story did.
->
-> **What does not change.** §22.1, §22.4 and §22.5 are byte-identical. Every
-> other section of this PRD is byte-identical to Frozen v3.0. The page size
-> itself is not decided here and is not changed: it is twenty-five, and §22.4
-> has always left that number to the Story.
-
 > **Freeze Note (3.0):** Explicitly Frozen by the Product Owner / Architecture
 > Owner on 2026-09-03, **together with the four documents that state this
 > decision between them**: `PRD-0002-discovery.md` v3.0, `UX-0002-discovery.md`
@@ -1558,19 +1512,9 @@ product cannot pay:
   is one decision made once, not a per-request parameter a caller may set.
 - Each page is reachable by **its own address**, and that address is stable: the
   same criteria and the same page number produce the same page.
-- A person can always tell **whether another page exists**, and the platform
-  **answers that question directly** rather than leaving a surface to work it out.
-  "Is there more" is the answer that changes what a person does; a surface that
-  has to derive it — from a total, a page number and a page size — is a surface
-  that can derive it differently from the next one, and two pagers disagreeing
-  about whether a last page is last is a defect no single screen reveals.
-- The **total may also be stated**, and is. This permission replaces v3.0's
-  refusal of it. That refusal rested on a total being "a second question with a
-  second cost", and the cost is not there: the total is read from the window of
-  the query that fetches the page, so it arrives with the page rather than
-  after a second scan. **What the refusal was protecting is kept by the bullet
-  above** — the total is an addition to the direct answer, never a substitute
-  for it.
+- A person can always tell **whether another page exists**, without being told
+  how many there are in total. A total is a second question with a second cost,
+  and the answer to "is there more" is the one that changes what a person does.
 - Moving between pages **does not begin a Discovery path** and produces no
   further Discovery Start. It is narrowing within a path, exactly as a changed
   query or an Attribute Filter is (§5.10).
@@ -1582,10 +1526,7 @@ product cannot pay:
   a stale link is told what they asked for and how to change it.
 - Depth is **bounded**. Beyond the bound the platform offers narrowing rather
   than a further page: nobody reads the fiftieth page of Results, and a crawler
-  that tries costs the database a full scan for a page no person will see. The
-  bound itself is the Story's (§22.4), and `US-DSC-F06-001` carries it — named
-  here because v3.0 promised a Story would hold it and, for the whole of v3.0's
-  life, none did.
+  that tries costs the database a full scan for a page no person will see.
 
 ### 22.4 What §22 does not decide
 

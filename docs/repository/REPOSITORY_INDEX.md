@@ -86,7 +86,7 @@ Software Architecture v1.0 baseline.
 | Document                  | State                                                  |
 | ------------------------- | ------------------------------------------------------ |
 | PRD-0001 Offering         | Frozen v4.3                                            |
-| PRD-0002 Discovery        | Frozen v3.0                                            |
+| PRD-0002 Discovery        | Frozen v3.1                                            |
 | PRD-0003 Identity         | Frozen v3.1                                            |
 | PRD-0004 Decision         | Frozen v1.2                                            |
 | PRD-0005 Business         | Frozen v1.4                                            |
